@@ -224,6 +224,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get libraryEmptyTitle => '还没有来源';
 
   @override
+  String get libraryImportModels => '导入模型';
+
+  @override
   String get libraryKeywords => '接受关键词';
 
   @override
@@ -254,6 +257,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get libraryName => '名称';
+
+  @override
+  String get libraryNoNewModels => '没有可添加的新模型';
 
   @override
   String get libraryOverridden => '已被你修改';
@@ -764,6 +770,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get libraryEmptyTitle => '還沒有來源';
 
   @override
+  String get libraryImportModels => '匯入模型';
+
+  @override
   String get libraryKeywords => '接受關鍵字';
 
   @override
@@ -794,6 +803,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get libraryName => '名稱';
+
+  @override
+  String get libraryNoNewModels => '沒有可新增的模型';
 
   @override
   String get libraryOverridden => '已被你修改';

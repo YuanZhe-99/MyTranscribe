@@ -519,6 +519,12 @@ abstract class AppLocalizations {
   /// **'No sources yet'**
   String get libraryEmptyTitle;
 
+  /// No description provided for @libraryImportModels.
+  ///
+  /// In en, this message translates to:
+  /// **'Import models'**
+  String get libraryImportModels;
+
   /// No description provided for @libraryKeywords.
   ///
   /// In en, this message translates to:
@@ -566,6 +572,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Name'**
   String get libraryName;
+
+  /// No description provided for @libraryNoNewModels.
+  ///
+  /// In en, this message translates to:
+  /// **'No new models to add'**
+  String get libraryNoNewModels;
 
   /// No description provided for @libraryOverridden.
   ///

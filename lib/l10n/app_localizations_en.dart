@@ -232,6 +232,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryEmptyTitle => 'No sources yet';
 
   @override
+  String get libraryImportModels => 'Import models';
+
+  @override
   String get libraryKeywords => 'Accepts keywords';
 
   @override
@@ -263,6 +266,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get libraryName => 'Name';
+
+  @override
+  String get libraryNoNewModels => 'No new models to add';
 
   @override
   String get libraryOverridden => 'Changed by you';

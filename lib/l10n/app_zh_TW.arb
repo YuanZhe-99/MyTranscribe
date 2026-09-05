@@ -84,6 +84,7 @@
   "libraryDisplayName": "顯示為",
   "libraryEmptyBody": "來源是一個 API 端點，例如 OpenAI 或 OpenRouter，以及它提供的模型。",
   "libraryEmptyTitle": "還沒有來源",
+  "libraryImportModels": "匯入模型",
   "libraryKeywords": "接受關鍵字",
   "libraryLimits": "限制",
   "libraryMaxDuration": "單次請求音訊上限（秒）",
@@ -100,6 +101,7 @@
     }
   },
   "libraryName": "名稱",
+  "libraryNoNewModels": "沒有可新增的模型",
   "libraryOverridden": "已被你修改",
   "libraryPrompt": "接受上下文",
   "libraryResetToTemplate": "還原內建設定",

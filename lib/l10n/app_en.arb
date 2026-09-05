@@ -84,6 +84,7 @@
   "libraryDisplayName": "Shown as",
   "libraryEmptyBody": "A source is an API endpoint such as OpenAI or OpenRouter, together with the models it offers.",
   "libraryEmptyTitle": "No sources yet",
+  "libraryImportModels": "Import models",
   "libraryKeywords": "Accepts keywords",
   "libraryLimits": "Limits",
   "libraryMaxDuration": "Longest recording per request (seconds)",
@@ -100,6 +101,7 @@
     }
   },
   "libraryName": "Name",
+  "libraryNoNewModels": "No new models to add",
   "libraryOverridden": "Changed by you",
   "libraryPrompt": "Accepts context",
   "libraryResetToTemplate": "Reset to the built-in values",

@@ -18,6 +18,7 @@ import '../../../shared/widgets/empty_state.dart';
 import '../../secrets/services/secrets_store.dart';
 import '../models/model_config.dart';
 import '../models/provider_config.dart';
+import '../widgets/add_source_sheet.dart';
 import '../services/settings_repository.dart';
 import 'model_editor_page.dart';
 import 'provider_editor_page.dart';
@@ -150,13 +151,59 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   /// Inputs: [l10n].
   /// Returns: `Widget`.
   /// Side effects: None.
-  /// Notes: Internal helper used within this file only. Adding a source is not
-  /// yet wired, so the button is visibly disabled rather than silently inert.
+  /// Notes: Internal helper used within this file only.
   Widget _addButton(AppLocalizations l10n) => FloatingActionButton.extended(
-    onPressed: null,
+    onPressed: _addSource,
     icon: const Icon(Icons.add),
     label: Text(l10n.libraryAddSource),
   );
+
+  /// Purpose: Add a source from one of the starter presets.
+  /// Inputs: None.
+  /// Returns: None.
+  /// Side effects: Writes the settings file and opens the new source's editor.
+  /// Notes: Internal helper used within this file only. The new record is saved
+  /// immediately and then opened, rather than being built in a dialog and saved
+  /// at the end: an address and a key are enough to get going, and the editor
+  /// is where the rest belongs anyway.
+  Future<void> _addSource() async {
+    final preset = await showAddSourceSheet(context);
+    if (preset == null || !mounted) return;
+
+    final repository = ref.read(settingsRepositoryProvider);
+    final id = repository.newProviderId();
+    final provider = ProviderConfig(
+      id: id,
+      name: preset.template.name.isEmpty ? preset.label : preset.template.name,
+      dialect: preset.template.dialect,
+      baseUrl: preset.template.baseUrl,
+      authScheme: preset.template.authScheme,
+      maxFileBytes: preset.template.maxFileBytes,
+      requestTimeoutSeconds: preset.template.requestTimeoutSeconds,
+    );
+    await repository.saveProvider(provider);
+
+    if (preset.model case final model?) {
+      final modelId = repository.newModelId();
+      await repository.saveModel(
+        ModelConfig(
+          id: modelId,
+          providerId: id,
+          modelName: model.modelName,
+          displayName: model.displayName,
+          maxFileBytes: model.maxFileBytes,
+          segmentTimestamps: model.segmentTimestamps,
+          responseFormats: model.responseFormats,
+        ),
+      );
+      await repository.saveProvider(
+        provider.copyWith(defaultModelId: modelId, markOverridden: false),
+      );
+    }
+
+    ref.refresh(settingsLibraryProvider);
+    if (mounted) _open(ProviderSelection(id));
+  }
 
   /// Purpose: Build the grouped list of sources and their models.
   /// Inputs: [l10n].

@@ -61,7 +61,7 @@ configuration that follows you to another device.
       within 15% of the planner's 8000 bytes a second, which is the number the two have to agree
       on. `flutter build windows` still succeeds on ARM64 with the plugin in the tree
 
-### M2 — Sources, models and keys (mostly done)
+### M2 — Sources, models and keys ✅
 
 - [x] `ProviderConfig` and `ModelConfig` over the settings record payload, with capabilities as a
       three-state answer so "not verified" can be said out loud
@@ -75,9 +75,8 @@ configuration that follows you to another device.
       and `test/settings_storage_test.dart` proves no key reaches the settings file
 - [x] **Done**: two fresh devices seed byte-identical documents, so the first sync merges instead of
       duplicating (`test/settings_repository_test.dart`)
-- [ ] Adding a source by hand, and importing models from a provider's own model list — **still to
-      do**; the built-in sources and their models are complete and editable, but the "Add a source"
-      button is visibly disabled
+- [x] Adding a source from a starter preset, and importing models from a provider's own model
+      list — capabilities come from a matching template or stay unknown, never from a guess
 
 ### M3 — Transcription jobs
 
