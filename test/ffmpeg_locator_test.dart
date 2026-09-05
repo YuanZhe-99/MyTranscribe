@@ -101,9 +101,7 @@ void main() {
     final expected = makeTool(first, 'ffprobe');
     makeTool(second, 'ffprobe');
 
-    final locator = FfmpegLocator(
-      searchPath: [first.path, second.path],
-    );
+    final locator = FfmpegLocator(searchPath: [first.path, second.path]);
     final tool = await locator.locate('ffprobe');
 
     expect(tool!.path, expected);
@@ -116,22 +114,25 @@ void main() {
     expect(await locator.locate('ffmpeg'), isNull);
   });
 
-  test('an override pointing at nothing falls through to the search',
-      () async {
-    final onPath = Directory(p.join(root.path, 'onpath'));
-    final found = makeTool(onPath, 'ffmpeg');
+  test(
+    'an override pointing at nothing falls through to the search',
+    () async {
+      final onPath = Directory(p.join(root.path, 'onpath'));
+      final found = makeTool(onPath, 'ffmpeg');
 
-    final locator = FfmpegLocator(
-      ffmpegOverride: p.join(root.path, 'does-not-exist', 'ffmpeg.exe'),
-      searchPath: [onPath.path],
-    );
-    final tool = await locator.locate('ffmpeg');
+      final locator = FfmpegLocator(
+        ffmpegOverride: p.join(root.path, 'does-not-exist', 'ffmpeg.exe'),
+        searchPath: [onPath.path],
+      );
+      final tool = await locator.locate('ffmpeg');
 
-    // Falling through rather than failing means a stale setting from a machine
-    // that no longer has that file does not break the app.
-    expect(tool!.path, found);
-    expect(tool.source, FfmpegSource.systemPath);
-  }, skip: !Platform.isWindows);
+      // Falling through rather than failing means a stale setting from a machine
+      // that no longer has that file does not break the app.
+      expect(tool!.path, found);
+      expect(tool.source, FfmpegSource.systemPath);
+    },
+    skip: !Platform.isWindows,
+  );
 
   test('the two tools are resolved independently', () async {
     // One on PATH and the other only in the download directory is exactly what

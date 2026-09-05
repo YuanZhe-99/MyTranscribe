@@ -121,7 +121,10 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
   /// Notes: Clamped rather than rejected, so a value written by another build
   /// still lands somewhere usable. The default is stored as an absent key.
   void setViewerFontSize(int size) {
-    final clamped = size.clamp(AppSettings.minFontSize, AppSettings.maxFontSize);
+    final clamped = size.clamp(
+      AppSettings.minFontSize,
+      AppSettings.maxFontSize,
+    );
     state = state.copyWith(viewerFontSize: clamped);
     TranscribeStorage.setViewerFontSize(
       clamped == AppSettings.defaultFontSize ? null : clamped,

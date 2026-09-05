@@ -55,8 +55,8 @@ MediaBackend get mediaBackend => switch (defaultTargetPlatform) {
   TargetPlatform.android ||
   TargetPlatform.iOS ||
   TargetPlatform.macOS => MediaBackend.embedded,
-  TargetPlatform.windows || TargetPlatform.linux =>
-    MediaBackend.externalBinaries,
+  TargetPlatform.windows ||
+  TargetPlatform.linux => MediaBackend.externalBinaries,
   TargetPlatform.fuchsia => MediaBackend.none,
 };
 

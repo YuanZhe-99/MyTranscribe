@@ -31,12 +31,15 @@ void main() {
       expect(canSplitLayout(755, 791), isTrue); // Pixel 10 Pro Fold, portrait
     });
 
-    test('rejects a Galaxy Z Fold 8 in portrait and accepts it in landscape', () {
-      // The reason the rule is not a plain width breakpoint: one device, one
-      // width, two answers. Its 4:3 inner panel is 0.755 held in portrait.
-      expect(canSplitLayout(704, 933), isFalse);
-      expect(canSplitLayout(933, 704), isTrue);
-    });
+    test(
+      'rejects a Galaxy Z Fold 8 in portrait and accepts it in landscape',
+      () {
+        // The reason the rule is not a plain width breakpoint: one device, one
+        // width, two answers. Its 4:3 inner panel is 0.755 held in portrait.
+        expect(canSplitLayout(704, 933), isFalse);
+        expect(canSplitLayout(933, 704), isTrue);
+      },
+    );
 
     test('rejects a tablet in portrait, by design', () {
       // A 4:3 tablet in portrait is 0.75. "My tablet does not split in

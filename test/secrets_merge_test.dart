@@ -118,8 +118,14 @@ void main() {
 
     test('encodes identically for identical content', () {
       // What lets the exchange skip an upload that would say nothing new.
-      final a = file({'provider:b': ('two', later), 'provider:a': ('one', later)});
-      final b = file({'provider:a': ('one', later), 'provider:b': ('two', later)});
+      final a = file({
+        'provider:b': ('two', later),
+        'provider:a': ('one', later),
+      });
+      final b = file({
+        'provider:a': ('one', later),
+        'provider:b': ('two', later),
+      });
       expect(encodeSecrets(a), encodeSecrets(b));
     });
 
@@ -145,7 +151,10 @@ void main() {
     test('a malformed entry does not take the whole file down', () {
       final parsed = SecretsFile.fromJson({
         'keys': {
-          'provider:ok': {'apiKey': 'sk-ok', 'updatedAt': later.toIso8601String()},
+          'provider:ok': {
+            'apiKey': 'sk-ok',
+            'updatedAt': later.toIso8601String(),
+          },
           'provider:bad': 'not an object',
         },
       });
@@ -153,18 +162,21 @@ void main() {
       expect(parsed.keys.containsKey('provider:bad'), isFalse);
     });
 
-    test('an unreadable timestamp loses every merge rather than winning it', () {
-      final parsed = SecretsFile.fromJson({
-        'keys': {
-          'provider:x': {'apiKey': 'sk-damaged', 'updatedAt': 'not a date'},
-        },
-      });
-      final merged = mergeSecrets(
-        parsed,
-        file({'provider:x': ('sk-real', earlier)}),
-      );
-      expect(merged.keyFor('provider:x'), 'sk-real');
-    });
+    test(
+      'an unreadable timestamp loses every merge rather than winning it',
+      () {
+        final parsed = SecretsFile.fromJson({
+          'keys': {
+            'provider:x': {'apiKey': 'sk-damaged', 'updatedAt': 'not a date'},
+          },
+        });
+        final merged = mergeSecrets(
+          parsed,
+          file({'provider:x': ('sk-real', earlier)}),
+        );
+        expect(merged.keyFor('provider:x'), 'sk-real');
+      },
+    );
 
     test('fields from a newer build survive a round trip', () {
       final parsed = SecretsFile.fromJson({

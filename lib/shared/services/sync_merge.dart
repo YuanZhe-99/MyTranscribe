@@ -102,7 +102,9 @@ SettingsMergeResult mergeSettingsData(
     jsonDecode(remoteJson) as Map<String, dynamic>,
   );
   final baseData = baseJson != null
-      ? TranscribeSettings.fromJson(jsonDecode(baseJson) as Map<String, dynamic>)
+      ? TranscribeSettings.fromJson(
+          jsonDecode(baseJson) as Map<String, dynamic>,
+        )
       : null;
   final localMap = {for (final r in localData.records) r.id: r};
   final remoteMap = {for (final r in remoteData.records) r.id: r};

@@ -122,7 +122,10 @@ void main() {
 
   test('deleting a source takes its models with it', () async {
     await repository.load();
-    expect((await repository.load()).modelsOf(openrouterProviderId), isNotEmpty);
+    expect(
+      (await repository.load()).modelsOf(openrouterProviderId),
+      isNotEmpty,
+    );
 
     await repository.deleteProvider(openrouterProviderId);
     final after = await repository.load();
@@ -137,15 +140,17 @@ void main() {
     expect(after.provider(openaiProviderId), isNotNull);
   });
 
-  test('deleting every source lets the built-in ones be seeded again',
-      () async {
-    await repository.load();
-    await repository.deleteProvider(openaiProviderId);
-    await repository.deleteProvider(openrouterProviderId);
+  test(
+    'deleting every source lets the built-in ones be seeded again',
+    () async {
+      await repository.load();
+      await repository.deleteProvider(openaiProviderId);
+      await repository.deleteProvider(openrouterProviderId);
 
-    final after = await repository.load();
-    expect(after.providers, hasLength(2));
-  });
+      final after = await repository.load();
+      expect(after.providers, hasLength(2));
+    },
+  );
 
   group('API keys', () {
     test('are stored in their own file, not in the settings', () async {

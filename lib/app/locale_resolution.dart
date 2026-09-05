@@ -46,7 +46,8 @@ Locale normalizeChinese(Locale locale) {
 /// answer, which is the first supported locale — English, the template.
 Locale resolveAppLocale(List<Locale>? preferred, Iterable<Locale> supported) {
   final normalized = [
-    for (final locale in preferred ?? const <Locale>[]) normalizeChinese(locale),
+    for (final locale in preferred ?? const <Locale>[])
+      normalizeChinese(locale),
   ];
   return basicLocaleListResolution(normalized, supported);
 }

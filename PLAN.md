@@ -78,15 +78,25 @@ configuration that follows you to another device.
 - [x] Adding a source from a starter preset, and importing models from a provider's own model
       list — capabilities come from a matching template or stay unknown, never from a guess
 
-### M3 — Transcription jobs
+### M3 — Transcription jobs ✅
 
-- [ ] Dialect layer: OpenAI multipart, OpenRouter multipart and JSON, generic compatible
-- [ ] Chunk planner and the diarization availability decision
-- [ ] Job runner: the stage machine, per-chunk persistence, resume, cancel, retry policy, wakelock
-- [ ] Overlap merge, both the token rule and the timestamp cut point
-- [ ] Transcribe tab, new-job page, job detail, Markdown and text output
-- [ ] **Done when** a recording over the upload limit transcribes in windows, survives being killed
-      mid-run, and the output matches the scripts' format
+- [x] Dialect layer: OpenAI multipart, OpenRouter multipart and JSON, generic compatible
+- [x] Chunk planner, with the reasons for its choice carried through to the page that shows them
+- [x] Job runner: the stage machine, per-window persistence, resume, cancel, retry policy, wakelock
+- [x] Overlap merge, both the token rule and the timestamp cut point, with a CJK-aware tokeniser
+      the original scripts did not have
+- [x] Transcribe tab, new-job page with a plan preview, job detail, Markdown and text output
+- [x] **Done**: `test/job_runner_test.dart` proves the whole machine against a fake toolkit and a
+      fake server — chunking, a failure at one window followed by a resume that reuses the rest, a
+      settings change that discards the cache, cancellation, and each failure a user can meet. It
+      found two real defects on the way: a failed job was written back from its initial record, and
+      an atomic write could lose a job to a momentary Windows file lock
+- [ ] Still to verify with a key: a real recording over the upload limit, end to end, against
+      OpenAI and OpenRouter. Nothing else in M3 depends on it
+
+Whether speaker labels are offered comes from the model's three-state capability, read directly by
+the new-job page. The rest of what this plan first called a diarization policy — JSON mode,
+enrollment, dropping the prompt for the diarizing model — belongs with M5 and is written there.
 
 ### M4 — Transcript viewer
 

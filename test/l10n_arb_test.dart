@@ -38,10 +38,9 @@ void main() {
   Set<String> placeholdersOf(Map<String, dynamic> arb, String key) {
     final message = arb[key];
     if (message is! String) return const {};
-    return RegExp(r'\{(\w+)\s*[,}]')
-        .allMatches(message)
-        .map((m) => m.group(1)!)
-        .toSet();
+    return RegExp(
+      r'\{(\w+)\s*[,}]',
+    ).allMatches(message).map((m) => m.group(1)!).toSet();
   }
 
   test("every catalog carries exactly the template's keys", () {
@@ -99,11 +98,7 @@ void main() {
   test('no message is left in English in a Chinese catalog', () {
     // Catches a key added to all three files with the English text pasted in.
     // Proper nouns and language names are the deliberate exceptions.
-    const allowed = {
-      'appTitle',
-      'settingsWebDAVNextcloud',
-      'settingsVersion',
-    };
+    const allowed = {'appTitle', 'settingsWebDAVNextcloud', 'settingsVersion'};
     final english = read(template);
     for (final path in translations) {
       final other = read(path);

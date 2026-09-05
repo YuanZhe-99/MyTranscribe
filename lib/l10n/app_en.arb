@@ -56,9 +56,94 @@
   "delete": "Delete",
   "exportData": "Export to ZIP",
   "importData": "Import from ZIP",
+  "jobDeleteConfirm": "Delete this transcription? The converted audio and the transcript files kept by this app go with it. The original recording is not touched.",
+  "jobDeleted": "Transcription deleted",
+  "jobDiskUsage": "Uses {size} on this device",
+  "@jobDiskUsage": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "jobFieldFinished": "Finished",
+  "jobFieldLength": "Length",
+  "jobFieldModel": "Model",
+  "jobFieldSize": "Size",
+  "jobFieldSource": "Source",
+  "jobFieldStarted": "Started",
+  "jobPathCopied": "Path copied",
+  "jobResume": "Resume",
+  "jobRetry": "Try again",
+  "jobRetryWithoutSpeakers": "Try again without speaker names",
+  "jobSectionOutputs": "Transcript files",
+  "jobSectionPlan": "How it was sent",
+  "jobSectionProblem": "What went wrong",
+  "jobSectionRecording": "Recording",
+  "jobSegmentsDone": "{done} of {total} segments",
+  "@jobSegmentsDone": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "jobSentInSegments": "{count} segments of about {minutes} minutes, overlapping by {overlap} seconds",
+  "@jobSentInSegments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "String"
+      },
+      "overlap": {
+        "type": "String"
+      }
+    }
+  },
+  "jobSentWhole": "Sent in one piece",
+  "jobStageCancelled": "Stopped",
+  "jobStageCutting": "Cutting segment {index} of {total}",
+  "@jobStageCutting": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "jobStageDone": "Finished",
+  "jobStageFailed": "Did not finish",
+  "jobStageMerging": "Joining the segments",
+  "jobStageNormalizing": "Converting the audio",
+  "jobStagePlanning": "Planning",
+  "jobStageProbing": "Reading the recording",
+  "jobStageQueued": "Waiting",
+  "jobStageRendering": "Writing the transcript",
+  "jobStageSpeakers": "Matching speakers",
+  "jobStageUploading": "Transcribing segment {index} of {total}",
+  "@jobStageUploading": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "jobStart": "Start",
+  "jobStop": "Stop",
   "jobsEmptyBody": "Choose a recording to transcribe. Long files are split automatically and can be resumed if a run is interrupted.",
   "jobsEmptyTitle": "No transcriptions yet",
   "jobsNew": "New transcription",
+  "jobsSelectPrompt": "Select a transcription to see how it went.",
   "jobsTitle": "Transcribe",
   "libraryAddModel": "Add a model",
   "libraryAddSource": "Add a source",
@@ -114,7 +199,67 @@
   "navLibrary": "Library",
   "navSettings": "Settings",
   "navTranscribe": "Transcribe",
+  "newJobChange": "Choose another",
+  "newJobChoose": "Choose a recording",
+  "newJobDiarize": "Identify speakers",
+  "newJobDiarizeUnknown": "It is not known whether this model labels speakers. If it refuses, you will be offered a run without them.",
+  "newJobDiarizeUnsupported": "This model does not label speakers.",
+  "newJobKeepChunks": "Keep the split audio",
+  "newJobKeepChunksHint": "For working out why a segment came back wrong. Uses more space.",
+  "newJobKeywords": "Keywords",
+  "newJobKeywordsHint": "Terms the recording is likely to contain.",
+  "newJobLanguages": "Language hints",
+  "newJobLanguagesHint": "Codes such as en or zh, most likely first. Leave empty to let the model decide.",
+  "newJobNoFile": "No recording chosen yet",
+  "newJobNoKey": "No API key is set for this source.",
+  "newJobNoModels": "Add a source in the library first.",
+  "newJobOpenLibrary": "Open the library",
+  "newJobOptions": "Options",
+  "newJobPlanPending": "Choose a recording to see how it will be sent.",
+  "newJobPlanTitle": "How it will be sent",
+  "newJobPrompt": "Context",
+  "newJobPromptHint": "Names, jargon, or a sentence about the recording. Helps the model spell things the way you would.",
+  "newJobStart": "Start transcribing",
+  "newJobTitle": "New transcription",
   "ok": "OK",
+  "planFitsWhole": "Small enough to send in one piece.",
+  "planOverlapForSpeakers": "Segments overlap by {seconds} seconds so speakers can be matched across them.",
+  "@planOverlapForSpeakers": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "planSplitByDuration": "Longer than this model accepts in one request.",
+  "planSplitByFormat": "This format has to be converted first.",
+  "planSplitBySize": "Too large to send in one piece.",
+  "planWindowByCeiling": "Segment length capped at {seconds} seconds for safety.",
+  "@planWindowByCeiling": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "planWindowByModel": "Segment length set by the model's limit of {seconds} seconds.",
+  "@planWindowByModel": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "planWindowByProvider": "Segment length set by the source's limit of {seconds} seconds.",
+  "@planWindowByProvider": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "planWindowBySize": "Segment length chosen to stay under the size limit.",
+  "planWindowByUser": "Segment length set by you.",
   "save": "Save",
   "settingsAbout": "About",
   "settingsData": "Data",

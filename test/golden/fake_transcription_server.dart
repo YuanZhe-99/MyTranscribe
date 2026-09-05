@@ -91,8 +91,7 @@ class FakeReply {
   /// Returns: A reply in the simple JSON shape.
   /// Side effects: None.
   /// Notes: None.
-  factory FakeReply.text(String text) =>
-      FakeReply(jsonEncode({'text': text}));
+  factory FakeReply.text(String text) => FakeReply(jsonEncode({'text': text}));
 
   /// Purpose: A transcript with times.
   /// Inputs: [segments] as `(start, end, text)` triples.
@@ -114,17 +113,16 @@ class FakeReply {
   /// Returns: A reply in the diarized shape.
   /// Side effects: None.
   /// Notes: None.
-  factory FakeReply.diarized(
-    List<(double, double, String, String)> segments,
-  ) => FakeReply(
-    jsonEncode({
-      'text': segments.map((s) => s.$4).join(' '),
-      'segments': [
-        for (final (start, end, speaker, text) in segments)
-          {'start': start, 'end': end, 'speaker': speaker, 'text': text},
-      ],
-    }),
-  );
+  factory FakeReply.diarized(List<(double, double, String, String)> segments) =>
+      FakeReply(
+        jsonEncode({
+          'text': segments.map((s) => s.$4).join(' '),
+          'segments': [
+            for (final (start, end, speaker, text) in segments)
+              {'start': start, 'end': end, 'speaker': speaker, 'text': text},
+          ],
+        }),
+      );
 
   /// Purpose: A refusal, in the shape these services use.
   /// Inputs: [status], [message].
@@ -197,9 +195,7 @@ class FakeTranscriptionServer extends http.BaseClient {
           // other way to repeat a name, and the app uses it for `languages[]`
           // and `keywords[]`.
           final bytes = await file.finalize().toBytes();
-          fields
-              .putIfAbsent(file.field, () => [])
-              .add(utf8.decode(bytes));
+          fields.putIfAbsent(file.field, () => []).add(utf8.decode(bytes));
         } else {
           fileNames[file.field] = file.filename!;
         }

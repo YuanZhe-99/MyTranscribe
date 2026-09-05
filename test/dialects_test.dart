@@ -126,20 +126,23 @@ void main() {
       expect(request.headers['Authorization'], 'Bearer sk-test');
     });
 
-    test('sends a language list as a list for a model that takes one', () async {
-      // The single difference that makes gpt-transcribe work: it wants
-      // `languages[]`, and rejects the singular field the others use.
-      final server = FakeTranscriptionServer([FakeReply.text('hello')]);
-      final request = await send(
-        provider: source(ProviderDialect.openai),
-        chosen: model(languageStyle: LanguageParamStyle.languages),
-        server: server,
-        languages: const ['en', 'zh'],
-      );
+    test(
+      'sends a language list as a list for a model that takes one',
+      () async {
+        // The single difference that makes gpt-transcribe work: it wants
+        // `languages[]`, and rejects the singular field the others use.
+        final server = FakeTranscriptionServer([FakeReply.text('hello')]);
+        final request = await send(
+          provider: source(ProviderDialect.openai),
+          chosen: model(languageStyle: LanguageParamStyle.languages),
+          server: server,
+          languages: const ['en', 'zh'],
+        );
 
-      expect(request.valuesOf('languages[]'), ['en', 'zh']);
-      expect(request.field('language'), isNull);
-    });
+        expect(request.valuesOf('languages[]'), ['en', 'zh']);
+        expect(request.field('language'), isNull);
+      },
+    );
 
     test('sends a single language code for a model that takes one', () async {
       final server = FakeTranscriptionServer([FakeReply.text('hello')]);
@@ -281,16 +284,13 @@ void main() {
 
       expect(request.isJson, isTrue);
       expect(request.json!['model'], 'test-model');
-      expect(
-        request.json!['provider'],
-        {
-          'options': {
-            'azure': {
-              'diarization': {'enabled': true},
-            },
+      expect(request.json!['provider'], {
+        'options': {
+          'azure': {
+            'diarization': {'enabled': true},
           },
         },
-      );
+      });
       final audioField = request.json!['input_audio'] as Map<String, dynamic>;
       expect(audioField['format'], 'mp3');
       expect(base64Decode(audioField['data'] as String), hasLength(2048));
@@ -332,7 +332,10 @@ void main() {
     test('sends the smallest request a local server would accept', () async {
       final server = FakeTranscriptionServer([FakeReply.text('hello')]);
       final request = await send(
-        provider: source(ProviderDialect.openaiCompatible, auth: AuthScheme.none),
+        provider: source(
+          ProviderDialect.openaiCompatible,
+          auth: AuthScheme.none,
+        ),
         chosen: model(),
         server: server,
         apiKey: null,
@@ -391,12 +394,15 @@ void main() {
       );
     }
 
-    test('a plain transcript becomes one segment covering the window', () async {
-      final result = await read(FakeReply.text('the whole window'));
-      expect(result.text, 'the whole window');
-      expect(result.hasRealTimestamps, isFalse);
-      expect(result.segments.single.endSeconds, 600);
-    });
+    test(
+      'a plain transcript becomes one segment covering the window',
+      () async {
+        final result = await read(FakeReply.text('the whole window'));
+        expect(result.text, 'the whole window');
+        expect(result.hasRealTimestamps, isFalse);
+        expect(result.segments.single.endSeconds, 600);
+      },
+    );
 
     test('a timed transcript keeps its segments', () async {
       final result = await read(

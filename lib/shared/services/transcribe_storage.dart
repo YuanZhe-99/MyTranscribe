@@ -339,7 +339,8 @@ class TranscribeStorage {
   /// Returns: None.
   /// Side effects: Rewrites `storage_config.json`.
   /// Notes: The system default is stored as an absent key.
-  static Future<void> setThemeMode(String? mode) => _setString('themeMode', mode);
+  static Future<void> setThemeMode(String? mode) =>
+      _setString('themeMode', mode);
 
   /// Purpose: Read the persisted interface language.
   /// Inputs: None.

@@ -139,6 +139,118 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importData => '从 ZIP 导入';
 
   @override
+  String get jobDeleteConfirm => '删除这条转写记录？本应用保存的转换后音频和转写文件会一并删除，原始录音不受影响。';
+
+  @override
+  String get jobDeleted => '转写记录已删除';
+
+  @override
+  String jobDiskUsage(String size) {
+    return '在本设备占用 $size';
+  }
+
+  @override
+  String get jobFieldFinished => '完成于';
+
+  @override
+  String get jobFieldLength => '时长';
+
+  @override
+  String get jobFieldModel => '模型';
+
+  @override
+  String get jobFieldSize => '大小';
+
+  @override
+  String get jobFieldSource => '来源';
+
+  @override
+  String get jobFieldStarted => '开始于';
+
+  @override
+  String get jobPathCopied => '路径已复制';
+
+  @override
+  String get jobResume => '继续';
+
+  @override
+  String get jobRetry => '重试';
+
+  @override
+  String get jobRetryWithoutSpeakers => '不识别说话人再试一次';
+
+  @override
+  String get jobSectionOutputs => '转写文件';
+
+  @override
+  String get jobSectionPlan => '发送方式';
+
+  @override
+  String get jobSectionProblem => '出了什么问题';
+
+  @override
+  String get jobSectionRecording => '录音';
+
+  @override
+  String jobSegmentsDone(int done, int total) {
+    return '已完成 $done / $total 段';
+  }
+
+  @override
+  String jobSentInSegments(int count, String minutes, String overlap) {
+    return '$count 段，每段约 $minutes 分钟，重叠 $overlap 秒';
+  }
+
+  @override
+  String get jobSentWhole => '整段发送';
+
+  @override
+  String get jobStageCancelled => '已停止';
+
+  @override
+  String jobStageCutting(int index, int total) {
+    return '正在切分第 $index 段，共 $total 段';
+  }
+
+  @override
+  String get jobStageDone => '已完成';
+
+  @override
+  String get jobStageFailed => '未能完成';
+
+  @override
+  String get jobStageMerging => '正在合并分段';
+
+  @override
+  String get jobStageNormalizing => '正在转换音频';
+
+  @override
+  String get jobStagePlanning => '正在规划';
+
+  @override
+  String get jobStageProbing => '正在读取录音';
+
+  @override
+  String get jobStageQueued => '等待中';
+
+  @override
+  String get jobStageRendering => '正在写入转写稿';
+
+  @override
+  String get jobStageSpeakers => '正在匹配说话人';
+
+  @override
+  String jobStageUploading(int index, int total) {
+    return '正在转写第 $index 段，共 $total 段';
+  }
+
+  @override
+  String get jobStart => '开始';
+
+  @override
+  String get jobStop => '停止';
+
+  @override
   String get jobsEmptyBody => '选择一个录音开始转写。长文件会自动分段，中断后可以继续。';
 
   @override
@@ -146,6 +258,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get jobsNew => '新建转写';
+
+  @override
+  String get jobsSelectPrompt => '选择一条转写记录，查看它的情况。';
 
   @override
   String get jobsTitle => '转写';
@@ -298,7 +413,111 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navTranscribe => '转写';
 
   @override
+  String get newJobChange => '重新选择';
+
+  @override
+  String get newJobChoose => '选择录音';
+
+  @override
+  String get newJobDiarize => '识别说话人';
+
+  @override
+  String get newJobDiarizeUnknown => '尚不清楚该模型是否标注说话人。若被拒绝，会提示你不带此选项重试。';
+
+  @override
+  String get newJobDiarizeUnsupported => '该模型不标注说话人。';
+
+  @override
+  String get newJobKeepChunks => '保留切分后的音频';
+
+  @override
+  String get newJobKeepChunksHint => '便于排查某一段为何出错，会占用更多空间。';
+
+  @override
+  String get newJobKeywords => '关键词';
+
+  @override
+  String get newJobKeywordsHint => '录音中可能出现的词语。';
+
+  @override
+  String get newJobLanguages => '语言提示';
+
+  @override
+  String get newJobLanguagesHint => '如 en 或 zh，可能性最高的放前面。留空则由模型自行判断。';
+
+  @override
+  String get newJobNoFile => '尚未选择录音';
+
+  @override
+  String get newJobNoKey => '该来源尚未设置 API Key。';
+
+  @override
+  String get newJobNoModels => '请先在库中添加来源。';
+
+  @override
+  String get newJobOpenLibrary => '打开库';
+
+  @override
+  String get newJobOptions => '选项';
+
+  @override
+  String get newJobPlanPending => '选择录音后即可看到发送方式。';
+
+  @override
+  String get newJobPlanTitle => '将如何发送';
+
+  @override
+  String get newJobPrompt => '上下文';
+
+  @override
+  String get newJobPromptHint => '人名、术语，或一句话说明录音内容。有助于模型按你的习惯书写。';
+
+  @override
+  String get newJobStart => '开始转写';
+
+  @override
+  String get newJobTitle => '新建转写';
+
+  @override
   String get ok => '确定';
+
+  @override
+  String get planFitsWhole => '文件够小，可以整段发送。';
+
+  @override
+  String planOverlapForSpeakers(String seconds) {
+    return '分段之间重叠 $seconds 秒，以便跨段匹配说话人。';
+  }
+
+  @override
+  String get planSplitByDuration => '超过该模型单次请求可接受的时长。';
+
+  @override
+  String get planSplitByFormat => '这种格式需要先转换。';
+
+  @override
+  String get planSplitBySize => '文件过大，无法整段发送。';
+
+  @override
+  String planWindowByCeiling(String seconds) {
+    return '为稳妥起见，分段长度上限为 $seconds 秒。';
+  }
+
+  @override
+  String planWindowByModel(String seconds) {
+    return '分段长度受模型 $seconds 秒的限制。';
+  }
+
+  @override
+  String planWindowByProvider(String seconds) {
+    return '分段长度受来源 $seconds 秒的限制。';
+  }
+
+  @override
+  String get planWindowBySize => '分段长度按大小上限选定。';
+
+  @override
+  String get planWindowByUser => '分段长度由你指定。';
 
   @override
   String get save => '保存';
@@ -685,6 +904,118 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get importData => '從 ZIP 匯入';
 
   @override
+  String get jobDeleteConfirm => '刪除這筆轉寫記錄？本應用保存的轉換後音訊與轉寫檔案會一併刪除，原始錄音不受影響。';
+
+  @override
+  String get jobDeleted => '轉寫記錄已刪除';
+
+  @override
+  String jobDiskUsage(String size) {
+    return '在本裝置佔用 $size';
+  }
+
+  @override
+  String get jobFieldFinished => '完成於';
+
+  @override
+  String get jobFieldLength => '長度';
+
+  @override
+  String get jobFieldModel => '模型';
+
+  @override
+  String get jobFieldSize => '大小';
+
+  @override
+  String get jobFieldSource => '來源';
+
+  @override
+  String get jobFieldStarted => '開始於';
+
+  @override
+  String get jobPathCopied => '路徑已複製';
+
+  @override
+  String get jobResume => '繼續';
+
+  @override
+  String get jobRetry => '重試';
+
+  @override
+  String get jobRetryWithoutSpeakers => '不辨識說話人再試一次';
+
+  @override
+  String get jobSectionOutputs => '轉寫檔案';
+
+  @override
+  String get jobSectionPlan => '傳送方式';
+
+  @override
+  String get jobSectionProblem => '出了什麼問題';
+
+  @override
+  String get jobSectionRecording => '錄音';
+
+  @override
+  String jobSegmentsDone(int done, int total) {
+    return '已完成 $done / $total 段';
+  }
+
+  @override
+  String jobSentInSegments(int count, String minutes, String overlap) {
+    return '$count 段，每段約 $minutes 分鐘，重疊 $overlap 秒';
+  }
+
+  @override
+  String get jobSentWhole => '整段傳送';
+
+  @override
+  String get jobStageCancelled => '已停止';
+
+  @override
+  String jobStageCutting(int index, int total) {
+    return '正在切分第 $index 段，共 $total 段';
+  }
+
+  @override
+  String get jobStageDone => '已完成';
+
+  @override
+  String get jobStageFailed => '未能完成';
+
+  @override
+  String get jobStageMerging => '正在合併分段';
+
+  @override
+  String get jobStageNormalizing => '正在轉換音訊';
+
+  @override
+  String get jobStagePlanning => '正在規劃';
+
+  @override
+  String get jobStageProbing => '正在讀取錄音';
+
+  @override
+  String get jobStageQueued => '等待中';
+
+  @override
+  String get jobStageRendering => '正在寫入轉寫稿';
+
+  @override
+  String get jobStageSpeakers => '正在比對說話人';
+
+  @override
+  String jobStageUploading(int index, int total) {
+    return '正在轉寫第 $index 段，共 $total 段';
+  }
+
+  @override
+  String get jobStart => '開始';
+
+  @override
+  String get jobStop => '停止';
+
+  @override
   String get jobsEmptyBody => '選擇一個錄音開始轉寫。長檔案會自動分段，中斷後可以繼續。';
 
   @override
@@ -692,6 +1023,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get jobsNew => '新增轉寫';
+
+  @override
+  String get jobsSelectPrompt => '選擇一筆轉寫記錄，查看它的情況。';
 
   @override
   String get jobsTitle => '轉寫';
@@ -844,7 +1178,111 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get navTranscribe => '轉寫';
 
   @override
+  String get newJobChange => '重新選擇';
+
+  @override
+  String get newJobChoose => '選擇錄音';
+
+  @override
+  String get newJobDiarize => '辨識說話人';
+
+  @override
+  String get newJobDiarizeUnknown => '尚不清楚該模型是否標註說話人。若被拒絕，會提示你不帶此選項重試。';
+
+  @override
+  String get newJobDiarizeUnsupported => '該模型不標註說話人。';
+
+  @override
+  String get newJobKeepChunks => '保留切分後的音訊';
+
+  @override
+  String get newJobKeepChunksHint => '便於釐清某一段為何出錯，會佔用更多空間。';
+
+  @override
+  String get newJobKeywords => '關鍵詞';
+
+  @override
+  String get newJobKeywordsHint => '錄音中可能出現的詞語。';
+
+  @override
+  String get newJobLanguages => '語言提示';
+
+  @override
+  String get newJobLanguagesHint => '如 en 或 zh，可能性最高的放前面。留空則由模型自行判斷。';
+
+  @override
+  String get newJobNoFile => '尚未選擇錄音';
+
+  @override
+  String get newJobNoKey => '該來源尚未設定 API Key。';
+
+  @override
+  String get newJobNoModels => '請先在資料庫中新增來源。';
+
+  @override
+  String get newJobOpenLibrary => '開啟資料庫';
+
+  @override
+  String get newJobOptions => '選項';
+
+  @override
+  String get newJobPlanPending => '選擇錄音後即可看到傳送方式。';
+
+  @override
+  String get newJobPlanTitle => '將如何傳送';
+
+  @override
+  String get newJobPrompt => '上下文';
+
+  @override
+  String get newJobPromptHint => '人名、術語，或一句話說明錄音內容。有助於模型依你的習慣書寫。';
+
+  @override
+  String get newJobStart => '開始轉寫';
+
+  @override
+  String get newJobTitle => '新增轉寫';
+
+  @override
   String get ok => '確定';
+
+  @override
+  String get planFitsWhole => '檔案夠小，可以整段傳送。';
+
+  @override
+  String planOverlapForSpeakers(String seconds) {
+    return '分段之間重疊 $seconds 秒，以便跨段比對說話人。';
+  }
+
+  @override
+  String get planSplitByDuration => '超過該模型單次請求可接受的長度。';
+
+  @override
+  String get planSplitByFormat => '這種格式需要先轉換。';
+
+  @override
+  String get planSplitBySize => '檔案過大，無法整段傳送。';
+
+  @override
+  String planWindowByCeiling(String seconds) {
+    return '為求穩妥，分段長度上限為 $seconds 秒。';
+  }
+
+  @override
+  String planWindowByModel(String seconds) {
+    return '分段長度受模型 $seconds 秒的限制。';
+  }
+
+  @override
+  String planWindowByProvider(String seconds) {
+    return '分段長度受來源 $seconds 秒的限制。';
+  }
+
+  @override
+  String get planWindowBySize => '分段長度依大小上限選定。';
+
+  @override
+  String get planWindowByUser => '分段長度由你指定。';
 
   @override
   String get save => '儲存';

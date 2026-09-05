@@ -17,7 +17,6 @@ import 'package:myapps_data/myapps_data.dart'
 
 import '../../app/data_modules.dart';
 
-
 import '../../features/providers/models/transcribe_settings.dart';
 import '../../l10n/app_localizations.dart';
 import '../services/auto_sync_service.dart';
@@ -45,7 +44,9 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
   final _urlController = TextEditingController();
   final _userController = TextEditingController();
   final _passController = TextEditingController();
-  final _pathController = TextEditingController(text: transcribeDefaultRemotePath);
+  final _pathController = TextEditingController(
+    text: transcribeDefaultRemotePath,
+  );
   bool _loading = true;
   bool _testing = false;
   bool _syncing = false;

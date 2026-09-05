@@ -87,32 +87,17 @@ void main() {
   group('removeRepeatedPrefix in Chinese', () {
     test('removes an overlap in text with no spaces', () {
       // The case the original scripts could not handle at all.
-      expect(
-        removeRepeatedPrefix(
-          '我们今天要讲的是第二个例子',
-          '第二个例子其实很有意思',
-        ),
-        '其实很有意思',
-      );
+      expect(removeRepeatedPrefix('我们今天要讲的是第二个例子', '第二个例子其实很有意思'), '其实很有意思');
     });
 
     test('needs more characters than it needs English words', () {
       // Three characters of Chinese carry far less than three English words,
       // so a short coincidental match must not trigger a removal.
-      expect(
-        removeRepeatedPrefix('这个问题很重要', '重要的是下一步'),
-        '重要的是下一步',
-      );
+      expect(removeRepeatedPrefix('这个问题很重要', '重要的是下一步'), '重要的是下一步');
     });
 
     test('handles Japanese kana', () {
-      expect(
-        removeRepeatedPrefix(
-          'それでは次の項目にうつります',
-          '次の項目にうつりますが',
-        ),
-        'が',
-      );
+      expect(removeRepeatedPrefix('それでは次の項目にうつります', '次の項目にうつりますが'), 'が');
     });
 
     test('handles a mixture of scripts', () {
@@ -149,7 +134,10 @@ void main() {
         600,
       );
       expect(merged, hasLength(2));
-      expect(merged.first.text, 'the first part of the lecture and then the second');
+      expect(
+        merged.first.text,
+        'the first part of the lecture and then the second',
+      );
       expect(merged.last.text, 'part follows');
     });
 
@@ -201,15 +189,19 @@ void main() {
       final merged = mergeTimedSegments(
         [
           [seg(0, 50, 'first', 0), seg(100, 104, 'before the cut', 0)],
-          [seg(100, 104, 'before the cut', 1), seg(106, 110, 'after the cut', 1)],
+          [
+            seg(100, 104, 'before the cut', 1),
+            seg(106, 110, 'after the cut', 1),
+          ],
         ],
         [0, 100],
         10,
       );
-      expect(
-        merged.map((s) => s.text),
-        ['first', 'before the cut', 'after the cut'],
-      );
+      expect(merged.map((s) => s.text), [
+        'first',
+        'before the cut',
+        'after the cut',
+      ]);
     });
 
     test('keeps everything from a single window', () {
@@ -232,7 +224,10 @@ void main() {
         [0, 100],
         20,
       );
-      expect(merged.map((s) => s.text), ['the end of the first window', 'continues here']);
+      expect(merged.map((s) => s.text), [
+        'the end of the first window',
+        'continues here',
+      ]);
     });
 
     test('drops a segment left empty by the trim', () {
@@ -279,7 +274,13 @@ void main() {
         [0, 100, 200],
         10,
       );
-      expect(merged.map((s) => s.text), ['one', 'two', 'three', 'four', 'five']);
+      expect(merged.map((s) => s.text), [
+        'one',
+        'two',
+        'three',
+        'four',
+        'five',
+      ]);
     });
   });
 }

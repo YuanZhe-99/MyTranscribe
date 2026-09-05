@@ -351,6 +351,210 @@ abstract class AppLocalizations {
   /// **'Import from ZIP'**
   String get importData;
 
+  /// No description provided for @jobDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this transcription? The converted audio and the transcript files kept by this app go with it. The original recording is not touched.'**
+  String get jobDeleteConfirm;
+
+  /// No description provided for @jobDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcription deleted'**
+  String get jobDeleted;
+
+  /// No description provided for @jobDiskUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses {size} on this device'**
+  String jobDiskUsage(String size);
+
+  /// No description provided for @jobFieldFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished'**
+  String get jobFieldFinished;
+
+  /// No description provided for @jobFieldLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Length'**
+  String get jobFieldLength;
+
+  /// No description provided for @jobFieldModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get jobFieldModel;
+
+  /// No description provided for @jobFieldSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get jobFieldSize;
+
+  /// No description provided for @jobFieldSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get jobFieldSource;
+
+  /// No description provided for @jobFieldStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Started'**
+  String get jobFieldStarted;
+
+  /// No description provided for @jobPathCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Path copied'**
+  String get jobPathCopied;
+
+  /// No description provided for @jobResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get jobResume;
+
+  /// No description provided for @jobRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get jobRetry;
+
+  /// No description provided for @jobRetryWithoutSpeakers.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again without speaker names'**
+  String get jobRetryWithoutSpeakers;
+
+  /// No description provided for @jobSectionOutputs.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcript files'**
+  String get jobSectionOutputs;
+
+  /// No description provided for @jobSectionPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'How it was sent'**
+  String get jobSectionPlan;
+
+  /// No description provided for @jobSectionProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'What went wrong'**
+  String get jobSectionProblem;
+
+  /// No description provided for @jobSectionRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording'**
+  String get jobSectionRecording;
+
+  /// No description provided for @jobSegmentsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} segments'**
+  String jobSegmentsDone(int done, int total);
+
+  /// No description provided for @jobSentInSegments.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} segments of about {minutes} minutes, overlapping by {overlap} seconds'**
+  String jobSentInSegments(int count, String minutes, String overlap);
+
+  /// No description provided for @jobSentWhole.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent in one piece'**
+  String get jobSentWhole;
+
+  /// No description provided for @jobStageCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get jobStageCancelled;
+
+  /// No description provided for @jobStageCutting.
+  ///
+  /// In en, this message translates to:
+  /// **'Cutting segment {index} of {total}'**
+  String jobStageCutting(int index, int total);
+
+  /// No description provided for @jobStageDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished'**
+  String get jobStageDone;
+
+  /// No description provided for @jobStageFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Did not finish'**
+  String get jobStageFailed;
+
+  /// No description provided for @jobStageMerging.
+  ///
+  /// In en, this message translates to:
+  /// **'Joining the segments'**
+  String get jobStageMerging;
+
+  /// No description provided for @jobStageNormalizing.
+  ///
+  /// In en, this message translates to:
+  /// **'Converting the audio'**
+  String get jobStageNormalizing;
+
+  /// No description provided for @jobStagePlanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Planning'**
+  String get jobStagePlanning;
+
+  /// No description provided for @jobStageProbing.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the recording'**
+  String get jobStageProbing;
+
+  /// No description provided for @jobStageQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get jobStageQueued;
+
+  /// No description provided for @jobStageRendering.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing the transcript'**
+  String get jobStageRendering;
+
+  /// No description provided for @jobStageSpeakers.
+  ///
+  /// In en, this message translates to:
+  /// **'Matching speakers'**
+  String get jobStageSpeakers;
+
+  /// No description provided for @jobStageUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcribing segment {index} of {total}'**
+  String jobStageUploading(int index, int total);
+
+  /// No description provided for @jobStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get jobStart;
+
+  /// No description provided for @jobStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get jobStop;
+
   /// No description provided for @jobsEmptyBody.
   ///
   /// In en, this message translates to:
@@ -368,6 +572,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New transcription'**
   String get jobsNew;
+
+  /// No description provided for @jobsSelectPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a transcription to see how it went.'**
+  String get jobsSelectPrompt;
 
   /// No description provided for @jobsTitle.
   ///
@@ -651,11 +861,203 @@ abstract class AppLocalizations {
   /// **'Transcribe'**
   String get navTranscribe;
 
+  /// No description provided for @newJobChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose another'**
+  String get newJobChange;
+
+  /// No description provided for @newJobChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a recording'**
+  String get newJobChoose;
+
+  /// No description provided for @newJobDiarize.
+  ///
+  /// In en, this message translates to:
+  /// **'Identify speakers'**
+  String get newJobDiarize;
+
+  /// No description provided for @newJobDiarizeUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'It is not known whether this model labels speakers. If it refuses, you will be offered a run without them.'**
+  String get newJobDiarizeUnknown;
+
+  /// No description provided for @newJobDiarizeUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This model does not label speakers.'**
+  String get newJobDiarizeUnsupported;
+
+  /// No description provided for @newJobKeepChunks.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the split audio'**
+  String get newJobKeepChunks;
+
+  /// No description provided for @newJobKeepChunksHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For working out why a segment came back wrong. Uses more space.'**
+  String get newJobKeepChunksHint;
+
+  /// No description provided for @newJobKeywords.
+  ///
+  /// In en, this message translates to:
+  /// **'Keywords'**
+  String get newJobKeywords;
+
+  /// No description provided for @newJobKeywordsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms the recording is likely to contain.'**
+  String get newJobKeywordsHint;
+
+  /// No description provided for @newJobLanguages.
+  ///
+  /// In en, this message translates to:
+  /// **'Language hints'**
+  String get newJobLanguages;
+
+  /// No description provided for @newJobLanguagesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes such as en or zh, most likely first. Leave empty to let the model decide.'**
+  String get newJobLanguagesHint;
+
+  /// No description provided for @newJobNoFile.
+  ///
+  /// In en, this message translates to:
+  /// **'No recording chosen yet'**
+  String get newJobNoFile;
+
+  /// No description provided for @newJobNoKey.
+  ///
+  /// In en, this message translates to:
+  /// **'No API key is set for this source.'**
+  String get newJobNoKey;
+
+  /// No description provided for @newJobNoModels.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a source in the library first.'**
+  String get newJobNoModels;
+
+  /// No description provided for @newJobOpenLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the library'**
+  String get newJobOpenLibrary;
+
+  /// No description provided for @newJobOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Options'**
+  String get newJobOptions;
+
+  /// No description provided for @newJobPlanPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a recording to see how it will be sent.'**
+  String get newJobPlanPending;
+
+  /// No description provided for @newJobPlanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How it will be sent'**
+  String get newJobPlanTitle;
+
+  /// No description provided for @newJobPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Context'**
+  String get newJobPrompt;
+
+  /// No description provided for @newJobPromptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Names, jargon, or a sentence about the recording. Helps the model spell things the way you would.'**
+  String get newJobPromptHint;
+
+  /// No description provided for @newJobStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start transcribing'**
+  String get newJobStart;
+
+  /// No description provided for @newJobTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New transcription'**
+  String get newJobTitle;
+
   /// No description provided for @ok.
   ///
   /// In en, this message translates to:
   /// **'OK'**
   String get ok;
+
+  /// No description provided for @planFitsWhole.
+  ///
+  /// In en, this message translates to:
+  /// **'Small enough to send in one piece.'**
+  String get planFitsWhole;
+
+  /// No description provided for @planOverlapForSpeakers.
+  ///
+  /// In en, this message translates to:
+  /// **'Segments overlap by {seconds} seconds so speakers can be matched across them.'**
+  String planOverlapForSpeakers(String seconds);
+
+  /// No description provided for @planSplitByDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Longer than this model accepts in one request.'**
+  String get planSplitByDuration;
+
+  /// No description provided for @planSplitByFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'This format has to be converted first.'**
+  String get planSplitByFormat;
+
+  /// No description provided for @planSplitBySize.
+  ///
+  /// In en, this message translates to:
+  /// **'Too large to send in one piece.'**
+  String get planSplitBySize;
+
+  /// No description provided for @planWindowByCeiling.
+  ///
+  /// In en, this message translates to:
+  /// **'Segment length capped at {seconds} seconds for safety.'**
+  String planWindowByCeiling(String seconds);
+
+  /// No description provided for @planWindowByModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Segment length set by the model\'s limit of {seconds} seconds.'**
+  String planWindowByModel(String seconds);
+
+  /// No description provided for @planWindowByProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Segment length set by the source\'s limit of {seconds} seconds.'**
+  String planWindowByProvider(String seconds);
+
+  /// No description provided for @planWindowBySize.
+  ///
+  /// In en, this message translates to:
+  /// **'Segment length chosen to stay under the size limit.'**
+  String get planWindowBySize;
+
+  /// No description provided for @planWindowByUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Segment length set by you.'**
+  String get planWindowByUser;
 
   /// No description provided for @save.
   ///

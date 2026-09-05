@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/jobs/services/job_providers.dart';
 import '../l10n/app_localizations.dart';
 import '../shared/providers/app_settings.dart';
 import 'locale_resolution.dart';
@@ -55,6 +56,22 @@ class _MyTranscribeAppState extends ConsumerState<MyTranscribeApp> {
   late final GoRouter _router = buildAppRouter(
     initialLocation: widget.initialLocation,
   );
+
+  /// Purpose: Pick up jobs the app was closed in the middle of.
+  /// Inputs: None.
+  /// Returns: None.
+  /// Side effects: Re-queues interrupted jobs, which starts uploading again.
+  /// Notes: Flutter lifecycle override. Here rather than in `main()` because
+  /// the runner lives in the provider scope, and a job that was interrupted
+  /// should carry on the moment the app is back rather than waiting for the
+  /// user to find it and press a button.
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(jobRunnerProvider).restore();
+    });
+  }
 
   /// Purpose: Build the `MaterialApp.router` with theme, locale, and routes.
   /// Inputs: `context`.

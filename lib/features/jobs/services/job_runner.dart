@@ -179,6 +179,44 @@ class JobRunner {
     _publish();
   }
 
+  /// Purpose: Run a job again with one feature turned off.
+  /// Inputs: [jobId], and which feature to drop.
+  /// Returns: None.
+  /// Side effects: Rewrites the job's options and queues it.
+  /// Notes: Offered when a source refuses something the user asked for. The
+  /// finished windows are kept in the record, but dropping the feature changes
+  /// the plan's fingerprint, so they will be discarded on the way through —
+  /// which is right, because they were produced under the settings that failed.
+  Future<void> retryWithout(String jobId, {required bool diarize}) async {
+    final job = await JobStore.load(jobId);
+    if (job == null) return;
+    await JobStore.save(
+      job.copyWith(
+        options: job.options.copyWith(diarize: diarize),
+        stage: JobStage.queued,
+        clearError: true,
+        clearCurrentChunk: true,
+      ),
+    );
+    enqueue(jobId);
+  }
+
+  /// Purpose: Delete a job and everything belonging to it.
+  /// Inputs: [jobId].
+  /// Returns: None.
+  /// Side effects: Stops the job if it is running, then removes its folder.
+  /// Notes: Cancelled first. Deleting the folder out from under a running
+  /// conversion would leave FFmpeg writing into nothing and the runner failing
+  /// on a file that vanished, which is a confusing way to report a deletion the
+  /// user asked for.
+  Future<void> remove(String jobId) async {
+    cancel(jobId);
+    while (state.value.active?.id == jobId) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    await JobStore.delete(jobId);
+  }
+
   /// Purpose: Work through the queue.
   /// Inputs: None.
   /// Returns: None.

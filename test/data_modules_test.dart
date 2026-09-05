@@ -42,10 +42,7 @@ void main() {
   group('validateSettingsJson', () {
     test('accepts an empty document', () {
       expect(() => validateSettingsJson('{}'), returnsNormally);
-      expect(
-        () => validateSettingsJson('{"records": []}'),
-        returnsNormally,
-      );
+      expect(() => validateSettingsJson('{"records": []}'), returnsNormally);
     });
 
     test('rejects content that is not JSON', () {
@@ -124,10 +121,9 @@ void main() {
         createdAt: DateTime.utc(2026, 1, 1),
         modifiedAt: DateTime.utc(2026, 1, 1),
       );
-      final touched = original.touch(
-        const {'a': 1},
-        now: DateTime.utc(2026, 6, 1),
-      );
+      final touched = original.touch(const {
+        'a': 1,
+      }, now: DateTime.utc(2026, 6, 1));
       expect(touched.createdAt, DateTime.utc(2026, 1, 1));
       expect(touched.modifiedAt, DateTime.utc(2026, 6, 1));
       expect(touched.payload, const {'a': 1});

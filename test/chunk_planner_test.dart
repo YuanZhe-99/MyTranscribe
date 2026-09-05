@@ -242,20 +242,23 @@ void main() {
       );
     });
 
-    test('the ceiling on a single request binds before the byte budget does', () {
-      // Worth pinning: 1500 seconds of normalized audio is about 11 MB, which
-      // is under both byte budgets, so the ceiling is what actually decides a
-      // window length whenever no model or gateway caps it lower. The byte
-      // budgets still decide the fast path above.
-      final plan = ChunkPlanner.plan(
-        request(bytes: 500 * 1024 * 1024, duration: 20000),
-      ).plan!;
-      expect(plan.strideSeconds + plan.overlapSeconds, maxAutoWindowSeconds);
-      expect(
-        plan.reasons.map((r) => r.code),
-        contains(PlanReasonCode.windowCappedByCeiling),
-      );
-    });
+    test(
+      'the ceiling on a single request binds before the byte budget does',
+      () {
+        // Worth pinning: 1500 seconds of normalized audio is about 11 MB, which
+        // is under both byte budgets, so the ceiling is what actually decides a
+        // window length whenever no model or gateway caps it lower. The byte
+        // budgets still decide the fast path above.
+        final plan = ChunkPlanner.plan(
+          request(bytes: 500 * 1024 * 1024, duration: 20000),
+        ).plan!;
+        expect(plan.strideSeconds + plan.overlapSeconds, maxAutoWindowSeconds);
+        expect(
+          plan.reasons.map((r) => r.code),
+          contains(PlanReasonCode.windowCappedByCeiling),
+        );
+      },
+    );
 
     test('a longer overlap is used when speakers were asked for', () {
       final plan = ChunkPlanner.plan(
@@ -275,11 +278,7 @@ void main() {
 
     test('a window the user chose is used and reported', () {
       final plan = ChunkPlanner.plan(
-        request(
-          bytes: 200 * 1024 * 1024,
-          duration: 7200,
-          userWindow: 300,
-        ),
+        request(bytes: 200 * 1024 * 1024, duration: 7200, userWindow: 300),
       ).plan!;
       expect(plan.strideSeconds, 300);
       expect(
@@ -405,11 +404,7 @@ void main() {
         fingerprint: 'x',
       );
       expect(
-        ChunkPlanner.shrink(
-          tiny,
-          request(bytes: 1, duration: 100),
-          100,
-        ),
+        ChunkPlanner.shrink(tiny, request(bytes: 1, duration: 100), 100),
         isNull,
       );
     });

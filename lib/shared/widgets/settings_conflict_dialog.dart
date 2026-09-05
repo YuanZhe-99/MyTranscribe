@@ -51,8 +51,7 @@ class SettingsConflictDialog extends StatelessWidget {
       ..sort((a, b) => a.key.compareTo(b.key));
     if (entries.isEmpty) return '—';
     return [
-      for (final e in entries.take(8))
-        '${e.key}: ${_short(e.value)}',
+      for (final e in entries.take(8)) '${e.key}: ${_short(e.value)}',
       if (entries.length > 8) '…',
     ].join('\n');
   }

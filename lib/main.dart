@@ -38,8 +38,9 @@ void main() async {
   runApp(
     DevicePreview(
       enabled: kDebugMode,
-      builder: (_) =>
-          ProviderScope(child: MyTranscribeApp(initialLocation: initialLocation)),
+      builder: (_) => ProviderScope(
+        child: MyTranscribeApp(initialLocation: initialLocation),
+      ),
     ),
   );
 }

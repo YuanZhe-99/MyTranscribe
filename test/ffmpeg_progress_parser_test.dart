@@ -28,7 +28,10 @@ void main() {
       final parser = FfmpegProgressParser();
       final reports = parser.addChunk(_block);
       expect(reports, hasLength(1));
-      expect(reports.single.processed, const Duration(seconds: 5, milliseconds: 120));
+      expect(
+        reports.single.processed,
+        const Duration(seconds: 5, milliseconds: 120),
+      );
       expect(reports.single.finished, isFalse);
       expect(reports.single.totalSizeBytes, 40960);
       expect(reports.single.speed, 48.2);
@@ -36,14 +39,15 @@ void main() {
 
     test('is not reported before the progress key arrives', () {
       final parser = FfmpegProgressParser();
-      expect(parser.addChunk('out_time_us=1000000\ntotal_size=8000\n'), isEmpty);
+      expect(
+        parser.addChunk('out_time_us=1000000\ntotal_size=8000\n'),
+        isEmpty,
+      );
     });
 
     test('marks the final block as finished', () {
       final parser = FfmpegProgressParser();
-      final reports = parser.addChunk(
-        'out_time_us=9000000\nprogress=end\n',
-      );
+      final reports = parser.addChunk('out_time_us=9000000\nprogress=end\n');
       expect(reports.single.finished, isTrue);
     });
   });

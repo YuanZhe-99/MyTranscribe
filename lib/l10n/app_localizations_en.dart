@@ -144,6 +144,119 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importData => 'Import from ZIP';
 
   @override
+  String get jobDeleteConfirm =>
+      'Delete this transcription? The converted audio and the transcript files kept by this app go with it. The original recording is not touched.';
+
+  @override
+  String get jobDeleted => 'Transcription deleted';
+
+  @override
+  String jobDiskUsage(String size) {
+    return 'Uses $size on this device';
+  }
+
+  @override
+  String get jobFieldFinished => 'Finished';
+
+  @override
+  String get jobFieldLength => 'Length';
+
+  @override
+  String get jobFieldModel => 'Model';
+
+  @override
+  String get jobFieldSize => 'Size';
+
+  @override
+  String get jobFieldSource => 'Source';
+
+  @override
+  String get jobFieldStarted => 'Started';
+
+  @override
+  String get jobPathCopied => 'Path copied';
+
+  @override
+  String get jobResume => 'Resume';
+
+  @override
+  String get jobRetry => 'Try again';
+
+  @override
+  String get jobRetryWithoutSpeakers => 'Try again without speaker names';
+
+  @override
+  String get jobSectionOutputs => 'Transcript files';
+
+  @override
+  String get jobSectionPlan => 'How it was sent';
+
+  @override
+  String get jobSectionProblem => 'What went wrong';
+
+  @override
+  String get jobSectionRecording => 'Recording';
+
+  @override
+  String jobSegmentsDone(int done, int total) {
+    return '$done of $total segments';
+  }
+
+  @override
+  String jobSentInSegments(int count, String minutes, String overlap) {
+    return '$count segments of about $minutes minutes, overlapping by $overlap seconds';
+  }
+
+  @override
+  String get jobSentWhole => 'Sent in one piece';
+
+  @override
+  String get jobStageCancelled => 'Stopped';
+
+  @override
+  String jobStageCutting(int index, int total) {
+    return 'Cutting segment $index of $total';
+  }
+
+  @override
+  String get jobStageDone => 'Finished';
+
+  @override
+  String get jobStageFailed => 'Did not finish';
+
+  @override
+  String get jobStageMerging => 'Joining the segments';
+
+  @override
+  String get jobStageNormalizing => 'Converting the audio';
+
+  @override
+  String get jobStagePlanning => 'Planning';
+
+  @override
+  String get jobStageProbing => 'Reading the recording';
+
+  @override
+  String get jobStageQueued => 'Waiting';
+
+  @override
+  String get jobStageRendering => 'Writing the transcript';
+
+  @override
+  String get jobStageSpeakers => 'Matching speakers';
+
+  @override
+  String jobStageUploading(int index, int total) {
+    return 'Transcribing segment $index of $total';
+  }
+
+  @override
+  String get jobStart => 'Start';
+
+  @override
+  String get jobStop => 'Stop';
+
+  @override
   String get jobsEmptyBody =>
       'Choose a recording to transcribe. Long files are split automatically and can be resumed if a run is interrupted.';
 
@@ -152,6 +265,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get jobsNew => 'New transcription';
+
+  @override
+  String get jobsSelectPrompt => 'Select a transcription to see how it went.';
 
   @override
   String get jobsTitle => 'Transcribe';
@@ -307,7 +423,118 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navTranscribe => 'Transcribe';
 
   @override
+  String get newJobChange => 'Choose another';
+
+  @override
+  String get newJobChoose => 'Choose a recording';
+
+  @override
+  String get newJobDiarize => 'Identify speakers';
+
+  @override
+  String get newJobDiarizeUnknown =>
+      'It is not known whether this model labels speakers. If it refuses, you will be offered a run without them.';
+
+  @override
+  String get newJobDiarizeUnsupported => 'This model does not label speakers.';
+
+  @override
+  String get newJobKeepChunks => 'Keep the split audio';
+
+  @override
+  String get newJobKeepChunksHint =>
+      'For working out why a segment came back wrong. Uses more space.';
+
+  @override
+  String get newJobKeywords => 'Keywords';
+
+  @override
+  String get newJobKeywordsHint => 'Terms the recording is likely to contain.';
+
+  @override
+  String get newJobLanguages => 'Language hints';
+
+  @override
+  String get newJobLanguagesHint =>
+      'Codes such as en or zh, most likely first. Leave empty to let the model decide.';
+
+  @override
+  String get newJobNoFile => 'No recording chosen yet';
+
+  @override
+  String get newJobNoKey => 'No API key is set for this source.';
+
+  @override
+  String get newJobNoModels => 'Add a source in the library first.';
+
+  @override
+  String get newJobOpenLibrary => 'Open the library';
+
+  @override
+  String get newJobOptions => 'Options';
+
+  @override
+  String get newJobPlanPending =>
+      'Choose a recording to see how it will be sent.';
+
+  @override
+  String get newJobPlanTitle => 'How it will be sent';
+
+  @override
+  String get newJobPrompt => 'Context';
+
+  @override
+  String get newJobPromptHint =>
+      'Names, jargon, or a sentence about the recording. Helps the model spell things the way you would.';
+
+  @override
+  String get newJobStart => 'Start transcribing';
+
+  @override
+  String get newJobTitle => 'New transcription';
+
+  @override
   String get ok => 'OK';
+
+  @override
+  String get planFitsWhole => 'Small enough to send in one piece.';
+
+  @override
+  String planOverlapForSpeakers(String seconds) {
+    return 'Segments overlap by $seconds seconds so speakers can be matched across them.';
+  }
+
+  @override
+  String get planSplitByDuration =>
+      'Longer than this model accepts in one request.';
+
+  @override
+  String get planSplitByFormat => 'This format has to be converted first.';
+
+  @override
+  String get planSplitBySize => 'Too large to send in one piece.';
+
+  @override
+  String planWindowByCeiling(String seconds) {
+    return 'Segment length capped at $seconds seconds for safety.';
+  }
+
+  @override
+  String planWindowByModel(String seconds) {
+    return 'Segment length set by the model\'s limit of $seconds seconds.';
+  }
+
+  @override
+  String planWindowByProvider(String seconds) {
+    return 'Segment length set by the source\'s limit of $seconds seconds.';
+  }
+
+  @override
+  String get planWindowBySize =>
+      'Segment length chosen to stay under the size limit.';
+
+  @override
+  String get planWindowByUser => 'Segment length set by you.';
 
   @override
   String get save => 'Save';

@@ -44,9 +44,15 @@ void main() {
 
   test('an edit on one device arrives on the other', () {
     final result = mergeSettingsData(
-      doc([('provider:a', later, {'name': 'Local edit'})]),
-      doc([('provider:a', base, {'name': 'Original'})]),
-      doc([('provider:a', base, {'name': 'Original'})]),
+      doc([
+        ('provider:a', later, {'name': 'Local edit'}),
+      ]),
+      doc([
+        ('provider:a', base, {'name': 'Original'}),
+      ]),
+      doc([
+        ('provider:a', base, {'name': 'Original'}),
+      ]),
     );
     expect(result.hasConflicts, isFalse);
     expect(result.merged.single.payload['name'], 'Local edit');
@@ -54,9 +60,15 @@ void main() {
 
   test('a remote edit wins when this device did not touch the record', () {
     final result = mergeSettingsData(
-      doc([('provider:a', base, {'name': 'Original'})]),
-      doc([('provider:a', later, {'name': 'Remote edit'})]),
-      doc([('provider:a', base, {'name': 'Original'})]),
+      doc([
+        ('provider:a', base, {'name': 'Original'}),
+      ]),
+      doc([
+        ('provider:a', later, {'name': 'Remote edit'}),
+      ]),
+      doc([
+        ('provider:a', base, {'name': 'Original'}),
+      ]),
     );
     expect(result.hasConflicts, isFalse);
     expect(result.merged.single.payload['name'], 'Remote edit');
@@ -69,10 +81,10 @@ void main() {
       doc([('provider:a', base, {})]),
     );
     expect(result.hasConflicts, isFalse);
-    expect(result.merged.map((r) => r.id), containsAll(<String>[
-      'provider:a',
-      'provider:new',
-    ]));
+    expect(
+      result.merged.map((r) => r.id),
+      containsAll(<String>['provider:a', 'provider:new']),
+    );
   });
 
   test('a deletion propagates instead of resurrecting', () {
@@ -89,7 +101,9 @@ void main() {
   test('a deletion loses to a real edit on the other device', () {
     final result = mergeSettingsData(
       doc([]),
-      doc([('provider:a', later, {'name': 'Still wanted'})]),
+      doc([
+        ('provider:a', later, {'name': 'Still wanted'}),
+      ]),
       doc([('provider:a', base, {})]),
     );
     expect(result.merged.single.payload['name'], 'Still wanted');
@@ -97,9 +111,15 @@ void main() {
 
   test('two different edits raise a conflict rather than one winning', () {
     final result = mergeSettingsData(
-      doc([('provider:a', later, {'name': 'Mine'})]),
-      doc([('provider:a', latest, {'name': 'Theirs'})]),
-      doc([('provider:a', base, {'name': 'Original'})]),
+      doc([
+        ('provider:a', later, {'name': 'Mine'}),
+      ]),
+      doc([
+        ('provider:a', latest, {'name': 'Theirs'}),
+      ]),
+      doc([
+        ('provider:a', base, {'name': 'Original'}),
+      ]),
     );
     expect(result.hasConflicts, isTrue);
     expect(result.conflicts.single.id, 'provider:a');
@@ -109,18 +129,30 @@ void main() {
 
   test('the same edit on both devices is not a conflict', () {
     final result = mergeSettingsData(
-      doc([('provider:a', later, {'name': 'Same'})]),
-      doc([('provider:a', latest, {'name': 'Same'})]),
-      doc([('provider:a', base, {'name': 'Original'})]),
+      doc([
+        ('provider:a', later, {'name': 'Same'}),
+      ]),
+      doc([
+        ('provider:a', latest, {'name': 'Same'}),
+      ]),
+      doc([
+        ('provider:a', base, {'name': 'Original'}),
+      ]),
     );
     expect(result.hasConflicts, isFalse);
   });
 
   test('a resolution is applied, and an unanswered conflict keeps local', () {
     final result = mergeSettingsData(
-      doc([('provider:a', later, {'name': 'Mine'})]),
-      doc([('provider:a', latest, {'name': 'Theirs'})]),
-      doc([('provider:a', base, {'name': 'Original'})]),
+      doc([
+        ('provider:a', later, {'name': 'Mine'}),
+      ]),
+      doc([
+        ('provider:a', latest, {'name': 'Theirs'}),
+      ]),
+      doc([
+        ('provider:a', base, {'name': 'Original'}),
+      ]),
     );
     final conflict = result.conflicts.single;
 
@@ -135,12 +167,20 @@ void main() {
 
   test('unknown fields survive a merge', () {
     // An older build must never delete a field a newer one wrote.
-    final localJson = jsonDecode(
-      doc([('provider:a', later, {'name': 'Mine'})]),
-    ) as Map<String, dynamic>;
-    final remoteJson = jsonDecode(
-      doc([('provider:a', base, {'name': 'Mine'})]),
-    ) as Map<String, dynamic>;
+    final localJson =
+        jsonDecode(
+              doc([
+                ('provider:a', later, {'name': 'Mine'}),
+              ]),
+            )
+            as Map<String, dynamic>;
+    final remoteJson =
+        jsonDecode(
+              doc([
+                ('provider:a', base, {'name': 'Mine'}),
+              ]),
+            )
+            as Map<String, dynamic>;
     (remoteJson['records'] as List).single['futureField'] = 'keep me';
 
     final result = mergeSettingsData(
@@ -153,8 +193,12 @@ void main() {
 
   test('a record with no name falls back to its id in the dialog', () {
     final result = mergeSettingsData(
-      doc([('provider:a', later, {'baseUrl': 'x'})]),
-      doc([('provider:a', latest, {'baseUrl': 'y'})]),
+      doc([
+        ('provider:a', later, {'baseUrl': 'x'}),
+      ]),
+      doc([
+        ('provider:a', latest, {'baseUrl': 'y'}),
+      ]),
       doc([('provider:a', base, {})]),
     );
     expect(result.conflicts.single.displayName, 'provider:a');

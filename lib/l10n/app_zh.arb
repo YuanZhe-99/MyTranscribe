@@ -56,9 +56,94 @@
   "delete": "删除",
   "exportData": "导出为 ZIP",
   "importData": "从 ZIP 导入",
+  "jobDeleteConfirm": "删除这条转写记录？本应用保存的转换后音频和转写文件会一并删除，原始录音不受影响。",
+  "jobDeleted": "转写记录已删除",
+  "jobDiskUsage": "在本设备占用 {size}",
+  "@jobDiskUsage": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "jobFieldFinished": "完成于",
+  "jobFieldLength": "时长",
+  "jobFieldModel": "模型",
+  "jobFieldSize": "大小",
+  "jobFieldSource": "来源",
+  "jobFieldStarted": "开始于",
+  "jobPathCopied": "路径已复制",
+  "jobResume": "继续",
+  "jobRetry": "重试",
+  "jobRetryWithoutSpeakers": "不识别说话人再试一次",
+  "jobSectionOutputs": "转写文件",
+  "jobSectionPlan": "发送方式",
+  "jobSectionProblem": "出了什么问题",
+  "jobSectionRecording": "录音",
+  "jobSegmentsDone": "已完成 {done} / {total} 段",
+  "@jobSegmentsDone": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "jobSentInSegments": "{count} 段，每段约 {minutes} 分钟，重叠 {overlap} 秒",
+  "@jobSentInSegments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "String"
+      },
+      "overlap": {
+        "type": "String"
+      }
+    }
+  },
+  "jobSentWhole": "整段发送",
+  "jobStageCancelled": "已停止",
+  "jobStageCutting": "正在切分第 {index} 段，共 {total} 段",
+  "@jobStageCutting": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "jobStageDone": "已完成",
+  "jobStageFailed": "未能完成",
+  "jobStageMerging": "正在合并分段",
+  "jobStageNormalizing": "正在转换音频",
+  "jobStagePlanning": "正在规划",
+  "jobStageProbing": "正在读取录音",
+  "jobStageQueued": "等待中",
+  "jobStageRendering": "正在写入转写稿",
+  "jobStageSpeakers": "正在匹配说话人",
+  "jobStageUploading": "正在转写第 {index} 段，共 {total} 段",
+  "@jobStageUploading": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "jobStart": "开始",
+  "jobStop": "停止",
   "jobsEmptyBody": "选择一个录音开始转写。长文件会自动分段，中断后可以继续。",
   "jobsEmptyTitle": "还没有转写记录",
   "jobsNew": "新建转写",
+  "jobsSelectPrompt": "选择一条转写记录，查看它的情况。",
   "jobsTitle": "转写",
   "libraryAddModel": "添加模型",
   "libraryAddSource": "添加来源",
@@ -114,7 +199,67 @@
   "navLibrary": "来源库",
   "navSettings": "设置",
   "navTranscribe": "转写",
+  "newJobChange": "重新选择",
+  "newJobChoose": "选择录音",
+  "newJobDiarize": "识别说话人",
+  "newJobDiarizeUnknown": "尚不清楚该模型是否标注说话人。若被拒绝，会提示你不带此选项重试。",
+  "newJobDiarizeUnsupported": "该模型不标注说话人。",
+  "newJobKeepChunks": "保留切分后的音频",
+  "newJobKeepChunksHint": "便于排查某一段为何出错，会占用更多空间。",
+  "newJobKeywords": "关键词",
+  "newJobKeywordsHint": "录音中可能出现的词语。",
+  "newJobLanguages": "语言提示",
+  "newJobLanguagesHint": "如 en 或 zh，可能性最高的放前面。留空则由模型自行判断。",
+  "newJobNoFile": "尚未选择录音",
+  "newJobNoKey": "该来源尚未设置 API Key。",
+  "newJobNoModels": "请先在库中添加来源。",
+  "newJobOpenLibrary": "打开库",
+  "newJobOptions": "选项",
+  "newJobPlanPending": "选择录音后即可看到发送方式。",
+  "newJobPlanTitle": "将如何发送",
+  "newJobPrompt": "上下文",
+  "newJobPromptHint": "人名、术语，或一句话说明录音内容。有助于模型按你的习惯书写。",
+  "newJobStart": "开始转写",
+  "newJobTitle": "新建转写",
   "ok": "确定",
+  "planFitsWhole": "文件够小，可以整段发送。",
+  "planOverlapForSpeakers": "分段之间重叠 {seconds} 秒，以便跨段匹配说话人。",
+  "@planOverlapForSpeakers": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "planSplitByDuration": "超过该模型单次请求可接受的时长。",
+  "planSplitByFormat": "这种格式需要先转换。",
+  "planSplitBySize": "文件过大，无法整段发送。",
+  "planWindowByCeiling": "为稳妥起见，分段长度上限为 {seconds} 秒。",
+  "@planWindowByCeiling": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "planWindowByModel": "分段长度受模型 {seconds} 秒的限制。",
+  "@planWindowByModel": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "planWindowByProvider": "分段长度受来源 {seconds} 秒的限制。",
+  "@planWindowByProvider": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "planWindowBySize": "分段长度按大小上限选定。",
+  "planWindowByUser": "分段长度由你指定。",
   "save": "保存",
   "settingsAbout": "关于",
   "settingsData": "数据",

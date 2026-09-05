@@ -64,12 +64,20 @@ void main() {
       fixture = p.join(work.path, 'fixture.mp3');
       final ffmpeg = await FfmpegLocator().locate('ffmpeg');
       final result = await Process.run(ffmpeg!.path, [
-        '-hide_banner', '-loglevel', 'error', '-y',
-        '-f', 'lavfi',
-        '-i', 'sine=frequency=440:sample_rate=44100:duration=30',
-        '-ac', '2',
-        '-c:a', 'libmp3lame',
-        '-b:a', '128k',
+        '-hide_banner',
+        '-loglevel',
+        'error',
+        '-y',
+        '-f',
+        'lavfi',
+        '-i',
+        'sine=frequency=440:sample_rate=44100:duration=30',
+        '-ac',
+        '2',
+        '-c:a',
+        'libmp3lame',
+        '-b:a',
+        '128k',
         fixture,
       ]);
       if (result.exitCode != 0) {
@@ -262,47 +270,51 @@ void main() {
       );
     });
 
-    test('downloads, extracts and verifies a real build', () async {
-      final into = await Directory.systemTemp.createTemp('mytranscribe_dl_');
-      addTearDown(() async {
-        try {
-          await into.delete(recursive: true);
-        } catch (_) {}
-      });
+    test(
+      'downloads, extracts and verifies a real build',
+      () async {
+        final into = await Directory.systemTemp.createTemp('mytranscribe_dl_');
+        addTearDown(() async {
+          try {
+            await into.delete(recursive: true);
+          } catch (_) {}
+        });
 
-      final stages = <FfmpegDownloadStage>[];
-      final path = await FfmpegDownloader(destination: into).download(
-        onProgress: (progress) {
-          if (stages.isEmpty || stages.last != progress.stage) {
-            stages.add(progress.stage);
-          }
-        },
-      );
+        final stages = <FfmpegDownloadStage>[];
+        final path = await FfmpegDownloader(destination: into).download(
+          onProgress: (progress) {
+            if (stages.isEmpty || stages.last != progress.stage) {
+              stages.add(progress.stage);
+            }
+          },
+        );
 
-      expect(File(path).existsSync(), isTrue);
-      expect(
-        File(p.join(into.path, 'ffprobe.exe')).existsSync(),
-        isTrue,
-        reason: 'ffprobe is extracted alongside ffmpeg',
-      );
-      expect(File(p.join(into.path, 'manifest.json')).existsSync(), isTrue);
-      expect(
-        File(p.join(into.path, 'download.zip')).existsSync(),
-        isFalse,
-        reason: 'the archive is removed once it has been unpacked',
-      );
-      expect(stages, contains(FfmpegDownloadStage.downloading));
-      expect(stages.last, FfmpegDownloadStage.done);
+        expect(File(path).existsSync(), isTrue);
+        expect(
+          File(p.join(into.path, 'ffprobe.exe')).existsSync(),
+          isTrue,
+          reason: 'ffprobe is extracted alongside ffmpeg',
+        );
+        expect(File(p.join(into.path, 'manifest.json')).existsSync(), isTrue);
+        expect(
+          File(p.join(into.path, 'download.zip')).existsSync(),
+          isFalse,
+          reason: 'the archive is removed once it has been unpacked',
+        );
+        expect(stages, contains(FfmpegDownloadStage.downloading));
+        expect(stages.last, FfmpegDownloadStage.done);
 
-      // And the locator finds what the downloader left behind.
-      final tool = await FfmpegLocator(
-        downloadDirectory: into,
-        searchPath: const [],
-      ).locate('ffmpeg');
-      expect(tool!.source, FfmpegSource.downloaded);
-    }, timeout: const Timeout(Duration(minutes: 10)),
-        skip: !_liveDownload
-            ? 'pass --dart-define=live_download=true to run this'
-            : (!Platform.isWindows ? 'Windows only' : null));
+        // And the locator finds what the downloader left behind.
+        final tool = await FfmpegLocator(
+          downloadDirectory: into,
+          searchPath: const [],
+        ).locate('ffmpeg');
+        expect(tool!.source, FfmpegSource.downloaded);
+      },
+      timeout: const Timeout(Duration(minutes: 10)),
+      skip: !_liveDownload
+          ? 'pass --dart-define=live_download=true to run this'
+          : (!Platform.isWindows ? 'Windows only' : null),
+    );
   });
 }
