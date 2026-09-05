@@ -27,9 +27,17 @@ x86_64 only, and this project's development machine is Windows on **ARM64**. A p
 Windows support would be pulled into the Windows build and fail at configure time looking for an
 ARM64 archive that does not exist. Flutter has no app-level "exclude this plugin on that platform",
 and `generated_plugins.cmake` is regenerated on every build, so editing it does not stick. The
-plugin is therefore **vendored** into `packages/` as a trimmed copy with its Windows and Linux
-platform entries removed, and consumed as a path dependency. `VENDORED.md` beside it records the
-upstream version and what was removed; bumping it means re-vendoring, not editing a version number.
+plugin is therefore **vendored** into `packages/ffmpeg_kit_flutter_new_audio/` as a trimmed copy
+with its Windows and Linux platform entries removed, and consumed as a path dependency.
+`VENDORED.md` beside it records the upstream version and exactly what was removed; bumping it means
+re-vendoring, not editing a version number. The app's `analysis_options.yaml` excludes the copy,
+because its style is upstream's and not ours to correct.
+
+Two consequences worth knowing before adding any plugin with native code. First, every plugin must
+apply the Kotlin Gradle Plugin itself while `android.builtInKotlin=false`; the build prints a
+warning naming the ones that do, and today those are the vendored FFmpeg copy, `file_picker`,
+`package_info_plus` and `wakelock_plus`. Second, the Android and Apple builds **download their
+native archives at build time**, so an offline machine cannot build those targets from clean.
 
 Binary discovery order on Windows, in full: a path the user set in Settings, then the app's own
 support directory (where the download helper puts them), then the directory the executable is in and

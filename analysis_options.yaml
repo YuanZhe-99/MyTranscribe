@@ -26,3 +26,10 @@ linter:
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
+
+analyzer:
+  exclude:
+    # A vendored copy of a published package, kept byte-identical to upstream
+    # apart from three documented removals so the difference stays verifiable.
+    # Its style is not ours to correct. See the package's VENDORED.md.
+    - packages/ffmpeg_kit_flutter_new_audio/**

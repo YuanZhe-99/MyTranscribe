@@ -44,6 +44,7 @@ its behaviour stops being fully described by the concept documentation.
 | `lib/features/media/models/media_info.dart` | [features/media-tools.md](../features/media-tools.md) |
 | `lib/features/media/services/media_toolkit.dart` | [features/media-tools.md](../features/media-tools.md) |
 | `lib/features/media/services/external_ffmpeg_media_toolkit.dart` | [features/media-tools.md](../features/media-tools.md) |
+| `lib/features/media/services/embedded_ffmpeg_media_toolkit.dart` | [features/media-tools.md](../features/media-tools.md) |
 | `lib/features/media/services/ffmpeg_locator.dart` | [features/media-tools.md](../features/media-tools.md) |
 | `lib/features/media/services/ffmpeg_downloader.dart` | [features/media-tools.md](../features/media-tools.md) |
 | `lib/features/media/services/ffmpeg_progress_parser.dart` | [features/media-tools.md](../features/media-tools.md) |

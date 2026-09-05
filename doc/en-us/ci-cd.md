@@ -35,6 +35,29 @@ flutter test test/l10n_arb_test.dart                                      # afte
 `flutter gen-l10n` must be re-run and its output committed whenever an ARB file changes; the
 generated files are tracked.
 
+## On-device tests
+
+`test/` runs on the host and covers almost everything. One question it cannot answer is whether the
+FFmpeg libraries linked into the Android, iOS and macOS builds actually load and run — the native
+archives are fetched at build time, and a wrong architecture fails at the first real call rather
+than at build. That is what `integration_test/` is for:
+
+```bash
+flutter devices
+flutter test integration_test/media_toolkit_test.dart -d <device id>
+```
+
+Run it after touching anything in `lib/features/media/` or after re-vendoring the FFmpeg package.
+See `integration_test/README.md`.
+
+The desktop equivalent lives in `test/media_toolkit_live_test.dart`, which skips itself when no
+FFmpeg is installed and keeps its large download behind a flag:
+
+```bash
+flutter test test/media_toolkit_live_test.dart
+flutter test test/media_toolkit_live_test.dart --dart-define=live_download=true
+```
+
 ## Run
 
 ```bash

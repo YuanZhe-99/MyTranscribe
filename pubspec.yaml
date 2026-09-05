@@ -58,6 +58,14 @@ dependencies:
   # A transcription job runs for minutes; the screen must not sleep through it.
   wakelock_plus: ^1.5.2
 
+  # FFmpeg, linked into the app on Android, iOS and macOS. A vendored copy of
+  # the published package with its Windows and Linux entries removed: those
+  # platforms drive external executables instead, because the published native
+  # libraries are x86_64 only and this project is developed on Windows ARM64.
+  # See packages/ffmpeg_kit_flutter_new_audio/VENDORED.md.
+  ffmpeg_kit_flutter_new_audio:
+    path: packages/ffmpeg_kit_flutter_new_audio
+
   # Utilities
   path: ^1.9.0
   path_provider: ^2.1.5
@@ -66,6 +74,11 @@ dependencies:
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  # On-device tests. The app links FFmpeg into itself on Android, iOS and
+  # macOS, and whether those libraries actually load and run is a question no
+  # test on the host machine can answer — see integration_test/README.md.
+  integration_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4

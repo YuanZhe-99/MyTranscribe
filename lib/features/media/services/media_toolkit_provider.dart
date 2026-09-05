@@ -16,6 +16,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../../shared/services/transcribe_storage.dart';
 import '../../../shared/utils/platform_capabilities.dart';
+import 'embedded_ffmpeg_media_toolkit.dart';
 import 'external_ffmpeg_media_toolkit.dart';
 import 'ffmpeg_locator.dart';
 import 'media_toolkit.dart';
@@ -63,13 +64,7 @@ final mediaToolkitProvider = FutureProvider<MediaToolkit>((ref) async {
     case MediaBackend.externalBinaries:
       return ExternalFfmpegMediaToolkit(locator: await buildFfmpegLocator());
     case MediaBackend.embedded:
-      // The linked-in backend arrives with the vendored plugin. Until then this
-      // platform reports honestly rather than pretending: a recording small
-      // enough to upload unchanged still transcribes, and one that needs
-      // splitting says why it cannot.
-      return const UnavailableMediaToolkit(
-        'Audio splitting is not available in this build yet.',
-      );
+      return const EmbeddedFfmpegMediaToolkit();
     case MediaBackend.none:
       return const UnavailableMediaToolkit('This platform has no audio tools.');
   }

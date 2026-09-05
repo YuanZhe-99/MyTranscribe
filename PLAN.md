@@ -44,7 +44,7 @@ configuration that follows you to another device.
 - [x] Tests: adaptive layout, ARB mirror, data modules, settings merge, shell navigation, smoke
 - [x] `flutter analyze` clean, `flutter test` green, Windows ARM64 debug build runs
 
-### M1 — Media toolkit
+### M1 — Media toolkit ✅
 
 - [x] `MediaToolkit` interface: probe, normalize, extract a window, cut a sample; progress and
       cancellation
@@ -52,13 +52,14 @@ configuration that follows you to another device.
 - [x] Binary discovery: user override → app support → app dir → working dir → `PATH`
 - [x] Windows download helper for a published FFmpeg build, arch-aware
 - [x] Settings rows for tool status, a manual path, and the download
-- [ ] Vendored `ffmpeg_kit_flutter_new_audio` trimmed to Android, iOS and macOS, and the embedded
-      backend — **outstanding**; those platforms currently report the toolkit unavailable, which
-      leaves them able to transcribe a recording small enough to upload unchanged and unable to
-      split a longer one
+- [x] Vendored `ffmpeg_kit_flutter_new_audio` trimmed to Android, iOS and macOS, and the embedded
+      backend; the vendoring and how to redo it are in the package's `VENDORED.md`
 - [x] Windows ARM64 probes, normalizes, splits and cuts a real recording, verified by
       `test/media_toolkit_live_test.dart` against a downloaded FFmpeg
-- [ ] **Done when** an Android debug build does the same through the linked-in libraries
+- [x] **Done**: the same six behaviours verified on a Pixel 10 through the linked-in libraries,
+      by `integration_test/media_toolkit_test.dart`. Both backends produce a normalized file
+      within 15% of the planner's 8000 bytes a second, which is the number the two have to agree
+      on. `flutter build windows` still succeeds on ARM64 with the plugin in the tree
 
 ### M2 — Sources, models and keys
 
