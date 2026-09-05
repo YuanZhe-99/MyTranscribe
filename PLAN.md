@@ -129,3 +129,12 @@ Recorded when a choice is made that later work should not quietly reverse.
 - **2026-09-05** — Recordings and transcripts are not a data module and will not become one without
   a deliberate decision: it would put hours of private audio into every backup bundle and every ZIP
   export.
+- **2026-09-05** — A job that fails or is cancelled part-way is written back from the runner's
+  latest saved state, not from the record it started with. The first version wrote the initial copy,
+  which erased the plan and every finished window, so the next run paid for them all again — exactly
+  what resuming exists to prevent. Caught by `test/job_runner_test.dart`, not by anything a human
+  would have noticed until a long job failed.
+- **2026-09-05** — `JobStore` retries its reads and writes. An atomic replace is a rename, and on
+  Windows a rename fails outright while anything else holds the file open — the jobs list reading it,
+  a virus scanner, the search indexer. Without the retry a running job could die on a collision that
+  lasted a millisecond.
