@@ -61,16 +61,23 @@ configuration that follows you to another device.
       within 15% of the planner's 8000 bytes a second, which is the number the two have to agree
       on. `flutter build windows` still succeeds on ARM64 with the plugin in the tree
 
-### M2 — Sources, models and keys
+### M2 — Sources, models and keys (mostly done)
 
-- [ ] `ProviderConfig` and `ModelConfig` over the settings record payload
-- [ ] Built-in templates for OpenAI, OpenRouter and a generic OpenAI-compatible endpoint, with
-      capability fields and deterministic ids
-- [ ] Library tab: grouped list, two-pane editor, per-field override markers, reset to template
-- [ ] Model import from the provider's own model list
-- [ ] Secrets store, and the key field
-- [ ] **Done when** two fresh devices seed identical records and the first sync merges rather than
-      duplicating
+- [x] `ProviderConfig` and `ModelConfig` over the settings record payload, with capabilities as a
+      three-state answer so "not verified" can be said out loud
+- [x] Built-in templates for OpenAI and OpenRouter with derived ids, and starter presets for a local
+      server, Groq, Mistral and a blank compatible endpoint
+- [x] Template refresh: a newer build's values reach every field the user has not overridden, and
+      leave the ones they have
+- [x] Library tab: grouped list, two-pane editor for both sources and models, override markers,
+      reset to the built-in values
+- [x] Secrets store and the key field: a stored key is never displayed, clearing writes a tombstone,
+      and `test/settings_storage_test.dart` proves no key reaches the settings file
+- [x] **Done**: two fresh devices seed byte-identical documents, so the first sync merges instead of
+      duplicating (`test/settings_repository_test.dart`)
+- [ ] Adding a source by hand, and importing models from a provider's own model list — **still to
+      do**; the built-in sources and their models are complete and editable, but the "Add a source"
+      button is visibly disabled
 
 ### M3 — Transcription jobs
 

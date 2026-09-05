@@ -182,7 +182,10 @@ class TranscribeSettings {
   /// Returns: A new immutable document.
   /// Side effects: None.
   /// Notes: None.
-  const TranscribeSettings({this.records = const [], this.extraJson = const {}});
+  const TranscribeSettings({
+    this.records = const [],
+    this.extraJson = const {},
+  });
 
   /// Purpose: Parse the settings document.
   /// Inputs: [json] the decoded file content.
@@ -198,7 +201,8 @@ class TranscribeSettings {
         if (raw is List)
           for (final item in raw)
             if (item is Map<String, dynamic>)
-              if (SettingsRecord.fromJson(item) case final r when r.id.isNotEmpty)
+              if (SettingsRecord.fromJson(item) case final r
+                  when r.id.isNotEmpty)
                 r,
       ],
       extraJson: {

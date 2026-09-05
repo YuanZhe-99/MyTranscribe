@@ -39,6 +39,16 @@ its behaviour stops being fully described by the concept documentation.
 | Source file | Described by |
 |---|---|
 | `lib/features/providers/models/transcribe_settings.dart` | [data-formats.md](../data-formats.md) |
+| `lib/features/providers/models/provider_config.dart` | [features/provider-library.md](../features/provider-library.md) |
+| `lib/features/providers/models/model_config.dart` | [features/provider-library.md](../features/provider-library.md) |
+| `lib/features/providers/models/provider_templates.dart` | [features/provider-library.md](../features/provider-library.md) |
+| `lib/features/providers/models/transcribe_defaults.dart` | [data-formats.md](../data-formats.md) |
+| `lib/features/providers/services/settings_repository.dart` | [features/provider-library.md](../features/provider-library.md) |
+| `lib/features/providers/views/provider_editor_page.dart` | [features/provider-library.md](../features/provider-library.md) |
+| `lib/features/providers/views/model_editor_page.dart` | [features/provider-library.md](../features/provider-library.md) |
+| `lib/features/providers/widgets/api_key_field.dart` | [features/secure-secrets-sync.md](../features/secure-secrets-sync.md) |
+| `lib/features/secrets/models/provider_secrets.dart` | [features/secure-secrets-sync.md](../features/secure-secrets-sync.md) |
+| `lib/features/secrets/services/secrets_store.dart` | [features/secure-secrets-sync.md](../features/secure-secrets-sync.md) |
 | `lib/features/providers/views/library_page.dart` | [features/provider-library.md](../features/provider-library.md) |
 | `lib/features/jobs/views/jobs_page.dart` | [features/transcription-jobs.md](../features/transcription-jobs.md) |
 | `lib/features/media/models/media_info.dart` | [features/media-tools.md](../features/media-tools.md) |

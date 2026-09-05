@@ -39,6 +39,22 @@ names in the registry in `lib/app/data_modules.dart`, and that registry holds ex
 }
 ```
 
+### What each payload holds
+
+| Kind | Payload |
+|---|---|
+| `provider` | `name`, `dialect` (`openai`, `openrouter`, `openaiCompatible`), `baseUrl`, `authScheme` (`bearer`, `none`, `header`) and `authHeaderName`, `extraHeaders`, `maxFileBytes`, `maxRequestSeconds`, `requestTimeoutSeconds`, `defaultModelId`, `templateId`, `overriddenFields`, `templateVersion` |
+| `model` | `providerId`, `modelName` (what goes on the wire), `displayName`, `maxFileBytes`, `maxDurationSeconds`, `diarization` / `wordTimestamps` / `segmentTimestamps` (each `supported`, `unsupported` or `unknown`), `supportsPrompt`, `supportsKeywords`, `languageParamStyle` (`languages`, `language`, `none`), `responseFormats`, `inputFormats`, `maxKnownSpeakers`, `requiresChunkingStrategy`, `templateId`, `overriddenFields`, `templateVersion` |
+| `defaults` | `providerId`, `modelId`, `languages`, `prompt`, `keywords`, `diarize` (true, false, or absent for "whatever the model does best"), `plainOverlapSeconds`, `diarizedOverlapSeconds`, `enrollmentEnabled`, `knownSpeakerNames` |
+
+`overriddenFields` is what makes a template refresh safe: a later build's values reach every field
+**not** named there, and leave the ones the user changed. `templateVersion` records which build's
+values a record was last refreshed from.
+
+A capability has **three** states, not two. "Not verified" is a real answer for an endpoint the user
+configured themselves, and the app acts on it differently from "no": it offers the feature with a
+warning rather than hiding it.
+
 The document is a **flat list of records** and every record carries an opaque `payload`. The sync
 engine needs only an id and a timestamp per record, so keeping the typed shapes one layer above
 means a record written by a newer build still merges correctly here even when this build cannot

@@ -30,10 +30,15 @@ void main() {
   /// metadata only has to exist in the template, and duplicating it into every
   /// catalog would be a second thing to keep in step. What matters is that a
   /// translation interpolates the same names.
+  /// A placeholder reference is a brace holding one word, closed by `}` or
+  /// followed by `,` — the latter being how a plural or select opens, as in
+  /// `{count, plural, ...}`. Requiring that punctuation is what keeps the
+  /// *branch text* of a plural out of the results: `=0{No models}` would
+  /// otherwise read as a placeholder named `No`.
   Set<String> placeholdersOf(Map<String, dynamic> arb, String key) {
     final message = arb[key];
     if (message is! String) return const {};
-    return RegExp(r'\{(\w+)')
+    return RegExp(r'\{(\w+)\s*[,}]')
         .allMatches(message)
         .map((m) => m.group(1)!)
         .toSet();

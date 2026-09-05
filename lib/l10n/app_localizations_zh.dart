@@ -100,6 +100,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cancel => '取消';
 
   @override
+  String get capabilitySupported => '支持';
+
+  @override
+  String get capabilityUnknown => '未验证';
+
+  @override
+  String get capabilityUnsupported => '不支持';
+
+  @override
   String get commonAdd => '添加';
 
   @override
@@ -142,6 +151,72 @@ class AppLocalizationsZh extends AppLocalizations {
   String get jobsTitle => '转写';
 
   @override
+  String get libraryAddModel => '添加模型';
+
+  @override
+  String get libraryAddSource => '添加来源';
+
+  @override
+  String get libraryApiKey => 'API 密钥';
+
+  @override
+  String get libraryApiKeyClear => '删除密钥';
+
+  @override
+  String get libraryApiKeyMissing => '尚未设置';
+
+  @override
+  String get libraryApiKeyNotNeeded => '此来源不需要密钥';
+
+  @override
+  String get libraryApiKeyNote => '保存在本机。只会发送给此来源；连接安全时才会同步到你的 WebDAV 服务器。';
+
+  @override
+  String get libraryApiKeySave => '保存密钥';
+
+  @override
+  String get libraryApiKeySet => '已在本机设置';
+
+  @override
+  String get libraryAuth => '认证方式';
+
+  @override
+  String get libraryAuthBearer => 'API 密钥';
+
+  @override
+  String get libraryAuthHeader => '自定义请求头';
+
+  @override
+  String get libraryAuthHeaderName => '请求头名称';
+
+  @override
+  String get libraryAuthNone => '无';
+
+  @override
+  String get libraryBaseUrl => '地址';
+
+  @override
+  String get libraryCapabilities => '该模型支持';
+
+  @override
+  String get libraryDeleteModel => '删除此模型';
+
+  @override
+  String get libraryDeleteSource => '删除此来源';
+
+  @override
+  String get libraryDeleteSourceConfirm => '将同时删除该来源下的模型。录音和转写稿不受影响。';
+
+  @override
+  String get libraryDialect => '协议';
+
+  @override
+  String get libraryDiarization => '区分说话人';
+
+  @override
+  String get libraryDisplayName => '显示为';
+
+  @override
   String get libraryEmptyBody =>
       '来源是一个 API 端点，例如 OpenAI 或 OpenRouter，以及它提供的模型。';
 
@@ -149,7 +224,63 @@ class AppLocalizationsZh extends AppLocalizations {
   String get libraryEmptyTitle => '还没有来源';
 
   @override
+  String get libraryKeywords => '接受关键词';
+
+  @override
+  String get libraryLimits => '限制';
+
+  @override
+  String get libraryMaxDuration => '单次请求音频上限（秒）';
+
+  @override
+  String get libraryMaxFileSize => '单次上传上限（MB）';
+
+  @override
+  String get libraryMaxRequest => '网关请求上限（秒）';
+
+  @override
+  String get libraryModelName => '模型标识';
+
+  @override
+  String libraryModelsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个模型',
+      zero: '没有模型',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get libraryName => '名称';
+
+  @override
+  String get libraryOverridden => '已被你修改';
+
+  @override
+  String get libraryPrompt => '接受上下文';
+
+  @override
+  String get libraryResetToTemplate => '恢复内置设定';
+
+  @override
+  String get librarySegmentTimestamps => '分段时间';
+
+  @override
+  String get librarySelectItem => '选择一个来源或模型';
+
+  @override
   String get libraryTitle => '来源库';
+
+  @override
+  String get libraryUnlimited => '无限制';
+
+  @override
+  String get libraryUnverified => '未验证';
+
+  @override
+  String get libraryWordTimestamps => '逐词时间';
 
   @override
   String get navLibrary => '来源库';
@@ -509,6 +640,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get cancel => '取消';
 
   @override
+  String get capabilitySupported => '支援';
+
+  @override
+  String get capabilityUnknown => '未驗證';
+
+  @override
+  String get capabilityUnsupported => '不支援';
+
+  @override
   String get commonAdd => '新增';
 
   @override
@@ -551,6 +691,72 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get jobsTitle => '轉寫';
 
   @override
+  String get libraryAddModel => '新增模型';
+
+  @override
+  String get libraryAddSource => '新增來源';
+
+  @override
+  String get libraryApiKey => 'API 金鑰';
+
+  @override
+  String get libraryApiKeyClear => '刪除金鑰';
+
+  @override
+  String get libraryApiKeyMissing => '尚未設定';
+
+  @override
+  String get libraryApiKeyNotNeeded => '此來源不需要金鑰';
+
+  @override
+  String get libraryApiKeyNote => '儲存在本機。只會傳送給此來源；連線安全時才會同步到你的 WebDAV 伺服器。';
+
+  @override
+  String get libraryApiKeySave => '儲存金鑰';
+
+  @override
+  String get libraryApiKeySet => '已在本機設定';
+
+  @override
+  String get libraryAuth => '驗證方式';
+
+  @override
+  String get libraryAuthBearer => 'API 金鑰';
+
+  @override
+  String get libraryAuthHeader => '自訂標頭';
+
+  @override
+  String get libraryAuthHeaderName => '標頭名稱';
+
+  @override
+  String get libraryAuthNone => '無';
+
+  @override
+  String get libraryBaseUrl => '位址';
+
+  @override
+  String get libraryCapabilities => '該模型支援';
+
+  @override
+  String get libraryDeleteModel => '刪除此模型';
+
+  @override
+  String get libraryDeleteSource => '刪除此來源';
+
+  @override
+  String get libraryDeleteSourceConfirm => '將同時刪除該來源下的模型。錄音和逐字稿不受影響。';
+
+  @override
+  String get libraryDialect => '協定';
+
+  @override
+  String get libraryDiarization => '區分說話人';
+
+  @override
+  String get libraryDisplayName => '顯示為';
+
+  @override
   String get libraryEmptyBody =>
       '來源是一個 API 端點，例如 OpenAI 或 OpenRouter，以及它提供的模型。';
 
@@ -558,7 +764,63 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get libraryEmptyTitle => '還沒有來源';
 
   @override
+  String get libraryKeywords => '接受關鍵字';
+
+  @override
+  String get libraryLimits => '限制';
+
+  @override
+  String get libraryMaxDuration => '單次請求音訊上限（秒）';
+
+  @override
+  String get libraryMaxFileSize => '單次上傳上限（MB）';
+
+  @override
+  String get libraryMaxRequest => '閘道請求上限（秒）';
+
+  @override
+  String get libraryModelName => '模型識別碼';
+
+  @override
+  String libraryModelsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 個模型',
+      zero: '沒有模型',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get libraryName => '名稱';
+
+  @override
+  String get libraryOverridden => '已被你修改';
+
+  @override
+  String get libraryPrompt => '接受上下文';
+
+  @override
+  String get libraryResetToTemplate => '還原內建設定';
+
+  @override
+  String get librarySegmentTimestamps => '分段時間';
+
+  @override
+  String get librarySelectItem => '選擇一個來源或模型';
+
+  @override
   String get libraryTitle => '來源庫';
+
+  @override
+  String get libraryUnlimited => '無限制';
+
+  @override
+  String get libraryUnverified => '未驗證';
+
+  @override
+  String get libraryWordTimestamps => '逐詞時間';
 
   @override
   String get navLibrary => '來源庫';

@@ -492,7 +492,10 @@ class _RestoreModuleDialogState extends State<_RestoreModuleDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final moduleLabels = {
-      settingsModuleId: (l10n.backupModuleSettings, Icons.library_books_outlined),
+      settingsModuleId: (
+        l10n.backupModuleSettings,
+        Icons.library_books_outlined,
+      ),
     };
     return AlertDialog(
       title: Text(l10n.backupRestoreModules),

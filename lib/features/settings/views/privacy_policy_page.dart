@@ -45,8 +45,7 @@ class PrivacyPolicyPage extends StatelessWidget {
   /// Unlocalized for now, like the sibling apps' policies: a translated policy
   /// that drifts from the English one is worse than one language that is
   /// certainly accurate. Translating it is a release task, not a runtime one.
-  static const _policyText =
-      '''MyTranscribe!!!!! — Privacy Policy
+  static const _policyText = '''MyTranscribe!!!!! — Privacy Policy
 
 MyTranscribe has no servers. There is no account, no analytics, no crash
 reporting and no advertising. Nothing is collected about you.

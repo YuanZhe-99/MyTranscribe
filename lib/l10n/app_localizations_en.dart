@@ -105,6 +105,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancel => 'Cancel';
 
   @override
+  String get capabilitySupported => 'Yes';
+
+  @override
+  String get capabilityUnknown => 'Not verified';
+
+  @override
+  String get capabilityUnsupported => 'No';
+
+  @override
   String get commonAdd => 'Add';
 
   @override
@@ -148,6 +157,74 @@ class AppLocalizationsEn extends AppLocalizations {
   String get jobsTitle => 'Transcribe';
 
   @override
+  String get libraryAddModel => 'Add a model';
+
+  @override
+  String get libraryAddSource => 'Add a source';
+
+  @override
+  String get libraryApiKey => 'API key';
+
+  @override
+  String get libraryApiKeyClear => 'Remove key';
+
+  @override
+  String get libraryApiKeyMissing => 'Not set';
+
+  @override
+  String get libraryApiKeyNotNeeded => 'This source needs no key';
+
+  @override
+  String get libraryApiKeyNote =>
+      'Stored on this device. Sent only to this source, and to your WebDAV server when the connection is safe.';
+
+  @override
+  String get libraryApiKeySave => 'Save key';
+
+  @override
+  String get libraryApiKeySet => 'Set on this device';
+
+  @override
+  String get libraryAuth => 'Authentication';
+
+  @override
+  String get libraryAuthBearer => 'API key';
+
+  @override
+  String get libraryAuthHeader => 'Custom header';
+
+  @override
+  String get libraryAuthHeaderName => 'Header name';
+
+  @override
+  String get libraryAuthNone => 'None';
+
+  @override
+  String get libraryBaseUrl => 'Address';
+
+  @override
+  String get libraryCapabilities => 'What this model can do';
+
+  @override
+  String get libraryDeleteModel => 'Delete this model';
+
+  @override
+  String get libraryDeleteSource => 'Delete this source';
+
+  @override
+  String get libraryDeleteSourceConfirm =>
+      'This removes the source and its models. Your recordings and transcripts are not affected.';
+
+  @override
+  String get libraryDialect => 'Protocol';
+
+  @override
+  String get libraryDiarization => 'Tell speakers apart';
+
+  @override
+  String get libraryDisplayName => 'Shown as';
+
+  @override
   String get libraryEmptyBody =>
       'A source is an API endpoint such as OpenAI or OpenRouter, together with the models it offers.';
 
@@ -155,7 +232,64 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryEmptyTitle => 'No sources yet';
 
   @override
+  String get libraryKeywords => 'Accepts keywords';
+
+  @override
+  String get libraryLimits => 'Limits';
+
+  @override
+  String get libraryMaxDuration => 'Longest recording per request (seconds)';
+
+  @override
+  String get libraryMaxFileSize => 'Largest upload (MB)';
+
+  @override
+  String get libraryMaxRequest => 'Gateway request limit (seconds)';
+
+  @override
+  String get libraryModelName => 'Model identifier';
+
+  @override
+  String libraryModelsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count models',
+      one: '1 model',
+      zero: 'No models',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get libraryName => 'Name';
+
+  @override
+  String get libraryOverridden => 'Changed by you';
+
+  @override
+  String get libraryPrompt => 'Accepts context';
+
+  @override
+  String get libraryResetToTemplate => 'Reset to the built-in values';
+
+  @override
+  String get librarySegmentTimestamps => 'Times for each part';
+
+  @override
+  String get librarySelectItem => 'Choose a source or a model';
+
+  @override
   String get libraryTitle => 'Library';
+
+  @override
+  String get libraryUnlimited => 'No limit';
+
+  @override
+  String get libraryUnverified => 'Unverified';
+
+  @override
+  String get libraryWordTimestamps => 'Times for each word';
 
   @override
   String get navLibrary => 'Library';

@@ -74,4 +74,3 @@ Key points:
 - You may NOT incorporate this software into proprietary programs.
 - There is NO WARRANTY for this software.''';
 }
-

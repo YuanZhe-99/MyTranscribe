@@ -273,6 +273,24 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get cancel;
 
+  /// No description provided for @capabilitySupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get capabilitySupported;
+
+  /// No description provided for @capabilityUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Not verified'**
+  String get capabilityUnknown;
+
+  /// No description provided for @capabilityUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get capabilityUnsupported;
+
   /// No description provided for @commonAdd.
   ///
   /// In en, this message translates to:
@@ -357,6 +375,138 @@ abstract class AppLocalizations {
   /// **'Transcribe'**
   String get jobsTitle;
 
+  /// No description provided for @libraryAddModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a model'**
+  String get libraryAddModel;
+
+  /// No description provided for @libraryAddSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a source'**
+  String get libraryAddSource;
+
+  /// No description provided for @libraryApiKey.
+  ///
+  /// In en, this message translates to:
+  /// **'API key'**
+  String get libraryApiKey;
+
+  /// No description provided for @libraryApiKeyClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove key'**
+  String get libraryApiKeyClear;
+
+  /// No description provided for @libraryApiKeyMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get libraryApiKeyMissing;
+
+  /// No description provided for @libraryApiKeyNotNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'This source needs no key'**
+  String get libraryApiKeyNotNeeded;
+
+  /// No description provided for @libraryApiKeyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Stored on this device. Sent only to this source, and to your WebDAV server when the connection is safe.'**
+  String get libraryApiKeyNote;
+
+  /// No description provided for @libraryApiKeySave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save key'**
+  String get libraryApiKeySave;
+
+  /// No description provided for @libraryApiKeySet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set on this device'**
+  String get libraryApiKeySet;
+
+  /// No description provided for @libraryAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication'**
+  String get libraryAuth;
+
+  /// No description provided for @libraryAuthBearer.
+  ///
+  /// In en, this message translates to:
+  /// **'API key'**
+  String get libraryAuthBearer;
+
+  /// No description provided for @libraryAuthHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom header'**
+  String get libraryAuthHeader;
+
+  /// No description provided for @libraryAuthHeaderName.
+  ///
+  /// In en, this message translates to:
+  /// **'Header name'**
+  String get libraryAuthHeaderName;
+
+  /// No description provided for @libraryAuthNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get libraryAuthNone;
+
+  /// No description provided for @libraryBaseUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get libraryBaseUrl;
+
+  /// No description provided for @libraryCapabilities.
+  ///
+  /// In en, this message translates to:
+  /// **'What this model can do'**
+  String get libraryCapabilities;
+
+  /// No description provided for @libraryDeleteModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this model'**
+  String get libraryDeleteModel;
+
+  /// No description provided for @libraryDeleteSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this source'**
+  String get libraryDeleteSource;
+
+  /// No description provided for @libraryDeleteSourceConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the source and its models. Your recordings and transcripts are not affected.'**
+  String get libraryDeleteSourceConfirm;
+
+  /// No description provided for @libraryDialect.
+  ///
+  /// In en, this message translates to:
+  /// **'Protocol'**
+  String get libraryDialect;
+
+  /// No description provided for @libraryDiarization.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell speakers apart'**
+  String get libraryDiarization;
+
+  /// No description provided for @libraryDisplayName.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown as'**
+  String get libraryDisplayName;
+
   /// No description provided for @libraryEmptyBody.
   ///
   /// In en, this message translates to:
@@ -369,11 +519,107 @@ abstract class AppLocalizations {
   /// **'No sources yet'**
   String get libraryEmptyTitle;
 
+  /// No description provided for @libraryKeywords.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepts keywords'**
+  String get libraryKeywords;
+
+  /// No description provided for @libraryLimits.
+  ///
+  /// In en, this message translates to:
+  /// **'Limits'**
+  String get libraryLimits;
+
+  /// No description provided for @libraryMaxDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Longest recording per request (seconds)'**
+  String get libraryMaxDuration;
+
+  /// No description provided for @libraryMaxFileSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Largest upload (MB)'**
+  String get libraryMaxFileSize;
+
+  /// No description provided for @libraryMaxRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Gateway request limit (seconds)'**
+  String get libraryMaxRequest;
+
+  /// No description provided for @libraryModelName.
+  ///
+  /// In en, this message translates to:
+  /// **'Model identifier'**
+  String get libraryModelName;
+
+  /// How many models a source offers, shown under its name in the library list.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No models} =1{1 model} other{{count} models}}'**
+  String libraryModelsCount(int count);
+
+  /// No description provided for @libraryName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get libraryName;
+
+  /// No description provided for @libraryOverridden.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed by you'**
+  String get libraryOverridden;
+
+  /// No description provided for @libraryPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepts context'**
+  String get libraryPrompt;
+
+  /// No description provided for @libraryResetToTemplate.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to the built-in values'**
+  String get libraryResetToTemplate;
+
+  /// No description provided for @librarySegmentTimestamps.
+  ///
+  /// In en, this message translates to:
+  /// **'Times for each part'**
+  String get librarySegmentTimestamps;
+
+  /// No description provided for @librarySelectItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a source or a model'**
+  String get librarySelectItem;
+
   /// No description provided for @libraryTitle.
   ///
   /// In en, this message translates to:
   /// **'Library'**
   String get libraryTitle;
+
+  /// No description provided for @libraryUnlimited.
+  ///
+  /// In en, this message translates to:
+  /// **'No limit'**
+  String get libraryUnlimited;
+
+  /// No description provided for @libraryUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'Unverified'**
+  String get libraryUnverified;
+
+  /// No description provided for @libraryWordTimestamps.
+  ///
+  /// In en, this message translates to:
+  /// **'Times for each word'**
+  String get libraryWordTimestamps;
 
   /// No description provided for @navLibrary.
   ///
