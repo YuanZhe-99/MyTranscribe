@@ -471,6 +471,84 @@ abstract class AppLocalizations {
   /// **'Open Source Licenses'**
   String get settingsLicenses;
 
+  /// No description provided for @settingsMediaTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio tools'**
+  String get settingsMediaTools;
+
+  /// No description provided for @settingsMediaToolsBuiltIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Built in'**
+  String get settingsMediaToolsBuiltIn;
+
+  /// No description provided for @settingsMediaToolsChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a file…'**
+  String get settingsMediaToolsChoose;
+
+  /// No description provided for @settingsMediaToolsClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the automatic search'**
+  String get settingsMediaToolsClear;
+
+  /// No description provided for @settingsMediaToolsDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get settingsMediaToolsDownload;
+
+  /// No description provided for @settingsMediaToolsDownloadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The download did not finish'**
+  String get settingsMediaToolsDownloadFailed;
+
+  /// No description provided for @settingsMediaToolsDownloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio tools are ready'**
+  String get settingsMediaToolsDownloaded;
+
+  /// No description provided for @settingsMediaToolsDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading…'**
+  String get settingsMediaToolsDownloading;
+
+  /// No description provided for @settingsMediaToolsExplain.
+  ///
+  /// In en, this message translates to:
+  /// **'Splitting a long recording needs FFmpeg, a free audio tool. The app can download it for you, or use a copy you already have.'**
+  String get settingsMediaToolsExplain;
+
+  /// No description provided for @settingsMediaToolsMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set up'**
+  String get settingsMediaToolsMissing;
+
+  /// No description provided for @settingsMediaToolsReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get settingsMediaToolsReady;
+
+  /// No description provided for @settingsMediaToolsSubtitleMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Needed to split long recordings'**
+  String get settingsMediaToolsSubtitleMissing;
+
+  /// No description provided for @settingsMediaToolsSubtitleReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Long recordings can be split for upload'**
+  String get settingsMediaToolsSubtitleReady;
+
   /// No description provided for @settingsPrivacyPolicy.
   ///
   /// In en, this message translates to:

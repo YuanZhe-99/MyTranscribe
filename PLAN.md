@@ -46,16 +46,19 @@ configuration that follows you to another device.
 
 ### M1 — Media toolkit
 
-- [ ] `MediaToolkit` interface: probe, normalize, extract a window, cut a sample; progress and
+- [x] `MediaToolkit` interface: probe, normalize, extract a window, cut a sample; progress and
       cancellation
-- [ ] External-binary backend for Windows: `Process`, `-progress pipe:1` parsing, `ffprobe` JSON
-- [ ] Binary discovery: user override → app support → app dir → working dir → `PATH`
-- [ ] Windows download helper for a published FFmpeg build, arch-aware
+- [x] External-binary backend for Windows: `Process`, `-progress pipe:1` parsing, `ffprobe` JSON
+- [x] Binary discovery: user override → app support → app dir → working dir → `PATH`
+- [x] Windows download helper for a published FFmpeg build, arch-aware
+- [x] Settings rows for tool status, a manual path, and the download
 - [ ] Vendored `ffmpeg_kit_flutter_new_audio` trimmed to Android, iOS and macOS, and the embedded
-      backend
-- [ ] Settings rows for tool status and a manual path
-- [ ] **Done when** a Windows ARM64 build probes and splits a real recording, and an Android debug
-      build does the same through the linked-in libraries
+      backend — **outstanding**; those platforms currently report the toolkit unavailable, which
+      leaves them able to transcribe a recording small enough to upload unchanged and unable to
+      split a longer one
+- [x] Windows ARM64 probes, normalizes, splits and cuts a real recording, verified by
+      `test/media_toolkit_live_test.dart` against a downloaded FFmpeg
+- [ ] **Done when** an Android debug build does the same through the linked-in libraries
 
 ### M2 — Sources, models and keys
 

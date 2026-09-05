@@ -207,6 +207,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLicenses => 'Open Source Licenses';
 
   @override
+  String get settingsMediaTools => 'Audio tools';
+
+  @override
+  String get settingsMediaToolsBuiltIn => 'Built in';
+
+  @override
+  String get settingsMediaToolsChoose => 'Choose a file…';
+
+  @override
+  String get settingsMediaToolsClear => 'Use the automatic search';
+
+  @override
+  String get settingsMediaToolsDownload => 'Download';
+
+  @override
+  String get settingsMediaToolsDownloadFailed => 'The download did not finish';
+
+  @override
+  String get settingsMediaToolsDownloaded => 'Audio tools are ready';
+
+  @override
+  String get settingsMediaToolsDownloading => 'Downloading…';
+
+  @override
+  String get settingsMediaToolsExplain =>
+      'Splitting a long recording needs FFmpeg, a free audio tool. The app can download it for you, or use a copy you already have.';
+
+  @override
+  String get settingsMediaToolsMissing => 'Not set up';
+
+  @override
+  String get settingsMediaToolsReady => 'Ready';
+
+  @override
+  String get settingsMediaToolsSubtitleMissing =>
+      'Needed to split long recordings';
+
+  @override
+  String get settingsMediaToolsSubtitleReady =>
+      'Long recordings can be split for upload';
+
+  @override
   String get settingsPrivacyPolicy => 'Privacy Policy';
 
   @override

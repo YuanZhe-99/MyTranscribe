@@ -20,13 +20,15 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/providers/app_settings.dart';
 import '../../../shared/services/import_export_service.dart';
 import '../../../shared/utils/adaptive_layout.dart';
+import '../../../shared/utils/platform_capabilities.dart';
+import '../../media/widgets/media_tools_tile.dart';
 import '../../../shared/views/webdav_config_page.dart';
 import 'backup_page.dart';
 import 'license_page.dart';
 import 'privacy_policy_page.dart';
 
 /// Which sub-page the detail pane is showing.
-enum _SettingsDetail { webdav, backup, privacy, license }
+enum _SettingsDetail { webdav, backup, mediaTools, privacy, license }
 
 class SettingsPage extends ConsumerStatefulWidget {
   /// Purpose: Create a settings page instance.
@@ -113,6 +115,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Widget _detailPage(_SettingsDetail detail) => switch (detail) {
     _SettingsDetail.webdav => const WebDAVConfigPage(),
     _SettingsDetail.backup => const BackupPage(),
+    _SettingsDetail.mediaTools => const MediaToolsPage(),
     _SettingsDetail.privacy => const PrivacyPolicyPage(),
     _SettingsDetail.license => const AppLicensePage(),
   };
@@ -129,9 +132,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     if (dir == null) return;
     final path = await ImportExportService.exportZIP(dir);
     if (!mounted) return;
-    messenger.showSnackBar(
-      SnackBar(content: Text(path ?? l10n.backupFailed)),
-    );
+    messenger.showSnackBar(SnackBar(content: Text(path ?? l10n.backupFailed)));
   }
 
   /// Purpose: Replace the sources and models from a ZIP file.
@@ -324,6 +325,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ),
         ]),
         _section(l10n.settingsTranscription, [
+          if (usesExternalFfmpeg)
+            MediaToolsTile(
+              selected: _twoPane && _detail == _SettingsDetail.mediaTools,
+              onTap: () => _open(_SettingsDetail.mediaTools),
+            ),
           SwitchListTile(
             secondary: const Icon(Icons.audiotrack_outlined),
             title: Text(l10n.settingsKeepChunks),

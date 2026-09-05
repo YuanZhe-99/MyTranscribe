@@ -200,6 +200,46 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsLicenses => '开源许可证';
 
   @override
+  String get settingsMediaTools => '音频工具';
+
+  @override
+  String get settingsMediaToolsBuiltIn => '已内置';
+
+  @override
+  String get settingsMediaToolsChoose => '选择文件…';
+
+  @override
+  String get settingsMediaToolsClear => '改为自动查找';
+
+  @override
+  String get settingsMediaToolsDownload => '下载';
+
+  @override
+  String get settingsMediaToolsDownloadFailed => '下载未能完成';
+
+  @override
+  String get settingsMediaToolsDownloaded => '音频工具已就绪';
+
+  @override
+  String get settingsMediaToolsDownloading => '正在下载…';
+
+  @override
+  String get settingsMediaToolsExplain =>
+      '切分长录音需要 FFmpeg 这个免费的音频工具。可以让应用替你下载，也可以指定你已有的版本。';
+
+  @override
+  String get settingsMediaToolsMissing => '尚未设置';
+
+  @override
+  String get settingsMediaToolsReady => '已就绪';
+
+  @override
+  String get settingsMediaToolsSubtitleMissing => '切分长录音需要它';
+
+  @override
+  String get settingsMediaToolsSubtitleReady => '可以切分长录音后上传';
+
+  @override
   String get settingsPrivacyPolicy => '隐私政策';
 
   @override
@@ -567,6 +607,46 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get settingsLicenses => '開源授權';
+
+  @override
+  String get settingsMediaTools => '音訊工具';
+
+  @override
+  String get settingsMediaToolsBuiltIn => '已內建';
+
+  @override
+  String get settingsMediaToolsChoose => '選擇檔案…';
+
+  @override
+  String get settingsMediaToolsClear => '改為自動尋找';
+
+  @override
+  String get settingsMediaToolsDownload => '下載';
+
+  @override
+  String get settingsMediaToolsDownloadFailed => '下載未能完成';
+
+  @override
+  String get settingsMediaToolsDownloaded => '音訊工具已就緒';
+
+  @override
+  String get settingsMediaToolsDownloading => '正在下載…';
+
+  @override
+  String get settingsMediaToolsExplain =>
+      '切分長錄音需要 FFmpeg 這個免費的音訊工具。可以讓應用程式替你下載，也可以指定你已有的版本。';
+
+  @override
+  String get settingsMediaToolsMissing => '尚未設定';
+
+  @override
+  String get settingsMediaToolsReady => '已就緒';
+
+  @override
+  String get settingsMediaToolsSubtitleMissing => '切分長錄音需要它';
+
+  @override
+  String get settingsMediaToolsSubtitleReady => '可以切分長錄音後上傳';
 
   @override
   String get settingsPrivacyPolicy => '隱私政策';

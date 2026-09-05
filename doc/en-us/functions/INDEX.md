@@ -41,6 +41,14 @@ its behaviour stops being fully described by the concept documentation.
 | `lib/features/providers/models/transcribe_settings.dart` | [data-formats.md](../data-formats.md) |
 | `lib/features/providers/views/library_page.dart` | [features/provider-library.md](../features/provider-library.md) |
 | `lib/features/jobs/views/jobs_page.dart` | [features/transcription-jobs.md](../features/transcription-jobs.md) |
+| `lib/features/media/models/media_info.dart` | [features/media-tools.md](../features/media-tools.md) |
+| `lib/features/media/services/media_toolkit.dart` | [features/media-tools.md](../features/media-tools.md) |
+| `lib/features/media/services/external_ffmpeg_media_toolkit.dart` | [features/media-tools.md](../features/media-tools.md) |
+| `lib/features/media/services/ffmpeg_locator.dart` | [features/media-tools.md](../features/media-tools.md) |
+| `lib/features/media/services/ffmpeg_downloader.dart` | [features/media-tools.md](../features/media-tools.md) |
+| `lib/features/media/services/ffmpeg_progress_parser.dart` | [features/media-tools.md](../features/media-tools.md) |
+| `lib/features/media/services/media_toolkit_provider.dart` | [platform-notes.md](../platform-notes.md) |
+| `lib/features/media/widgets/media_tools_tile.dart` | [features/media-tools.md](../features/media-tools.md) |
 | `lib/features/settings/views/settings_page.dart` | [features/sync-and-backup.md](../features/sync-and-backup.md) |
 | `lib/features/settings/views/backup_page.dart` | [backup-restore.md](../backup-restore.md) |
 | `lib/features/settings/views/license_page.dart` | — |
