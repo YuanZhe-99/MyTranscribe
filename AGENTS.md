@@ -92,10 +92,9 @@ into this repo's Section 5.2 only.
 about to add a paragraph describing how the code works, it belongs in `doc/en-us/`. Only add to this
 file when the rule is about how an agent should behave.
 
-**Current gap, tracked rather than tolerated:** `doc/zh-cn/` is a placeholder index and the mirror is
-scheduled by `PLAN.md` milestone M7. Until it is written, a change to `doc/en-us/` updates
-`doc/zh-cn/README.md`'s page list if it adds or removes a page. Once the mirror exists, the rule above
-applies in full and this paragraph is deleted.
+`test/doc_mirror_test.dart` enforces this: the same pages on both sides, the same heading structure
+in each, every cross-link resolving, and `functions/INDEX.md` covering the whole of `lib/`. A page
+added in one language and not the other fails the suite rather than drifting quietly.
 
 Add a `doc/en-us/version-history.md` entry for each release. Documentation-only commits do not bump
 versions or create tags.
@@ -219,7 +218,7 @@ When the user confirms:
 **This repo's branch is `main`** (MyDay and MyNihongo also use `main`; MyAnime and MyDevice use
 `master`). Push `HEAD` or check `git branch --show-current` first, and verify with `git ls-remote`.
 
-There is **no CI**: this repo has one remote and no hosted runner, so `flutter analyze` and
+There is **no CI**: neither remote runs a hosted job, so `flutter analyze` and
 `flutter test` run locally and are the gate. Desktop and mobile builds are produced on demand; see
 `doc/en-us/ci-cd.md`.
 
@@ -244,15 +243,27 @@ verified, omit the AI trailer unless the repository owner approves one.
 
 ## Remotes and secrets
 
-- `origin` → `<local_gitea_address>` (private Gitea)
+- `origin` → `<local_gitea_address>` (private Gitea) — the development remote
+- `github` → `git@github.com:YuanZhe-99/MyTranscribe.git` (public) — the published mirror
 
-There is no public mirror of this repository.
+Both carry the same `main` and the same tags. Push `origin` first, then `github`; a commit that has
+not been through the local gate has no business being public.
 
 Determine the repository path from the runtime workspace; do not hardcode a machine-specific absolute
 path here.
 
 **Masking rule:** keep the `origin` URL written as `<local_gitea_address>` in every committed file.
-Never write the underlying Tailscale host or port anywhere in the repo, including `.gitmodules`.
+Never write the underlying Tailscale host or port anywhere in the repo, including `.gitmodules`. The
+GitHub URL is public and is written out in full; the Gitea one never is. This matters more now than
+it did: a private address in a committed file used to be visible to one person, and is now visible
+to everyone. The same applies to the tailnet name itself — tests that need a Tailscale address use
+`nas.tailnet-example.ts.net`, not a real one.
+
+**The submodule URL stays relative.** `../MyApps-DATA.git` resolves against whichever remote the
+clone came from, so a Gitea clone reaches the Gitea copy and a GitHub clone reaches
+`github.com/YuanZhe-99/MyApps-DATA`. Both must therefore carry the tag this repository pins, and
+today both carry `v1.0.2` at the same commit. Publishing a release that pins a tag which exists only
+on Gitea would leave every public clone unable to run `flutter pub get`.
 
 **Never commit:** secrets, API keys, credentials, WebDAV configuration, signing keys
 (`key.properties`, `*.jks`), a user's recordings or transcripts, generated app data, or local-only

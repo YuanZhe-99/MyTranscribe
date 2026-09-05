@@ -106,7 +106,7 @@ void main() {
 
   group('names that only resolve privately', () {
     test('a Tailscale name', () {
-      allows('http://nas.tail694d4.ts.net/dav', EndpointReason.tailnet);
+      allows('http://nas.tailnet-example.ts.net/dav', EndpointReason.tailnet);
     });
 
     test('a ZeroTier name', () {

@@ -213,7 +213,7 @@ void main() {
 
     test('a Tailscale address over plain HTTP is allowed', () async {
       await SecretsStore.setKey('provider:openai', 'sk-secret');
-      final outcome = await exchange('http://nas.tail694d4.ts.net/dav');
+      final outcome = await exchange('http://nas.tailnet-example.ts.net/dav');
       expect(outcome.status, SecretsSyncStatus.synced);
     });
 

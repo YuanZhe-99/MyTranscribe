@@ -24,15 +24,26 @@ one picks up where it stopped.
 Part of the MyApps series, alongside MyAnime!!!!!, MyDay!!!!!, MyDevice!!!!! and MyNihongo!!!!!,
 sharing the `myapps_data` sync and backup engines.
 
+## Status
+
+Version 0.1.0. Everything described above is built and covered by the test suite, which runs with no
+API key, no network and no FFmpeg. One path has **not** been exercised against a paid service yet: a
+real recording over the upload limit, transcribed end to end. If you try it and it misbehaves, that
+is the most likely place.
+
 ## Building
 
 ```bash
-git submodule update --init      # myapps_data is a path dependency in a submodule
+git clone --recurse-submodules https://github.com/YuanZhe-99/MyTranscribe.git
+cd MyTranscribe
 flutter pub get
 flutter gen-l10n
 flutter analyze && flutter test
 flutter run -d windows           # or -d android, macos, ios
 ```
+
+Already cloned without `--recurse-submodules`? Run `git submodule update --init` — `myapps_data` is a
+path dependency inside a submodule, and `flutter pub get` fails without it.
 
 Windows and Linux need `ffmpeg` and `ffprobe`; Settings offers to download them on Windows. Android,
 iOS and macOS have the libraries built in.

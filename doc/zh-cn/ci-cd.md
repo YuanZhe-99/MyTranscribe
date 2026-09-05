@@ -1,13 +1,19 @@
 # 构建与验证
 
-**没有持续集成**。本仓库只有一个远端 —— 一台私有的 Gitea 实例 —— 也没有托管 runner，因此
-`flutter analyze` 与 `flutter test` 在本地运行，它们就是关卡。若将来加入公开镜像，本页就是描述工作流的
-地方。
+**没有持续集成**。仓库有两个远端，两个都不跑托管任务，因此 `flutter analyze` 与 `flutter test` 在本地
+运行，它们就是关卡。
+
+| 远端 | 位置 | 用途 |
+|---|---|---|
+| `origin` | 一台私有的 Gitea 实例 | 开发；每次推送先到这里 |
+| `github` | `github.com/YuanZhe-99/MyTranscribe` | 公开镜像 |
+
+两者携带同一个 `main` 与同一批标签。先推 `origin`：没有经过本地关卡的提交，没有理由先公开。
 
 ## 全新克隆
 
 ```bash
-git clone <local_gitea_address>/MyTranscribe.git
+git clone git@github.com:YuanZhe-99/MyTranscribe.git     # 或使用 Gitea 远端
 cd MyTranscribe
 git submodule update --init          # myapps_data 是子模块内的 path 依赖
 flutter pub get
@@ -16,6 +22,10 @@ flutter gen-l10n
 
 跳过子模块那一步会让 `flutter pub get` 失败：`myapps_data` 是从 `packages/myapps_data` 解析的，而在子模块
 检出之前那里是空的。
+
+子模块的 URL 是**相对**的 —— `../MyApps-DATA.git` —— 因此它按你克隆自哪个远端来解析。从 GitHub 克隆会指向
+`github.com/YuanZhe-99/MyApps-DATA`，从 Gitea 克隆会指向 Gitea 上的副本，两者都不必知道对方存在。两边都必
+须带有本仓库所固定的那个标签；今天是 `v1.0.2`，且指向同一个提交。
 
 ## 验证
 

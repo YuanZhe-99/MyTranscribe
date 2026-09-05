@@ -116,7 +116,7 @@ void main() {
 
     testWidgets('accepts a Tailscale address over plain HTTP', (tester) async {
       final l10n = await AppLocalizations.delegate.load(const Locale('zh'));
-      await pumpSection(tester, 'http://nas.tail694d4.ts.net/dav');
+      await pumpSection(tester, 'http://nas.tailnet-example.ts.net/dav');
 
       expect(find.text(l10n.secretsBannerAllowed), findsOneWidget);
       expect(

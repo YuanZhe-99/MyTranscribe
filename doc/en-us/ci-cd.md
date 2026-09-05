@@ -1,13 +1,20 @@
 # Building and verifying
 
-There is **no continuous integration**. This repository has one remote — a private Gitea instance —
-and no hosted runner, so `flutter analyze` and `flutter test` run locally and are the gate. If a
-public mirror is ever added, this page is where the workflow would be described.
+There is **no continuous integration**. The repository has two remotes and neither runs a hosted
+job, so `flutter analyze` and `flutter test` run locally and are the gate.
+
+| Remote | Where | For |
+|---|---|---|
+| `origin` | a private Gitea instance | development; every push goes here first |
+| `github` | `github.com/YuanZhe-99/MyTranscribe` | the public mirror |
+
+Both carry the same `main` and the same tags. Push `origin` first: a commit that has not been through
+the local gate has no business being public.
 
 ## Fresh clone
 
 ```bash
-git clone <local_gitea_address>/MyTranscribe.git
+git clone git@github.com:YuanZhe-99/MyTranscribe.git     # or the Gitea remote
 cd MyTranscribe
 git submodule update --init          # myapps_data is a path dependency inside a submodule
 flutter pub get
@@ -16,6 +23,11 @@ flutter gen-l10n
 
 Skipping the submodule step makes `flutter pub get` fail: `myapps_data` is resolved from
 `packages/myapps_data`, which is empty until the submodule is checked out.
+
+The submodule URL is **relative** — `../MyApps-DATA.git` — so it resolves against whichever remote
+you cloned from. A GitHub clone reaches `github.com/YuanZhe-99/MyApps-DATA`, a Gitea clone reaches
+the Gitea copy, and neither has to know the other exists. Both must carry the tag this repository
+pins; today that is `v1.0.2` at the same commit on both.
 
 ## Verify
 
