@@ -40,9 +40,9 @@ short sample of each speaker from where they were first identified and sends it 
 window. The model then returns that speaker under the same name, and no inference is needed. This is
 the reliable path, and it is available on some services and not others.
 
-**The user decides.** The speakers panel has merge, split and reassign, and every operation is one
-record change rather than a rewrite of the text. The matching can be re-run from the saved raw
-responses without uploading anything again.
+**The user decides.** The speakers panel merges two speakers, and the line editor moves a single
+line to somebody else. Every operation changes one record rather than rewriting the text, and
+because the raw responses are kept, the matching can be re-run without uploading anything again.
 
 ## What this cannot do
 

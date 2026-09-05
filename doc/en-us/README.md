@@ -47,10 +47,14 @@ The shared WebDAV sync, backup, and ZIP engines are not in this repository. They
 
 - [`features/transcription-jobs.md`](features/transcription-jobs.md) — what a job is, its stages,
   and how it resumes.
+- [`features/chunking-and-resume.md`](features/chunking-and-resume.md) — why a long recording is
+  split, and what an interrupted run costs.
 - [`features/provider-library.md`](features/provider-library.md) — sources, models and their
   capability fields.
 - [`features/transcript-viewer.md`](features/transcript-viewer.md) — reading, correcting and
   exporting a transcript.
+- [`features/exports.md`](features/exports.md) — the six formats a transcript can leave in, and
+  which ones a given transcript may use.
 - [`features/diarization-and-speakers.md`](features/diarization-and-speakers.md) — who spoke, and
   how the answer is kept consistent across windows.
 - [`features/media-tools.md`](features/media-tools.md) — how the app finds or fetches FFmpeg.
@@ -74,8 +78,12 @@ The shared WebDAV sync, backup, and ZIP engines are not in this repository. They
 
 ## Status
 
-Milestone M0 is complete: the shell, the theme, the three tabs, localization, the storage hub, the
-settings data module, the four shared-service facades, the sync and backup screens, the platform
-configuration and the first tests. The pages under `features/` and `algorithms/` describe the design
-that the remaining milestones implement, and each is marked with the milestone that delivers it.
-See `PLAN.md` at the repository root.
+Milestones M0 to M6 are complete: the shell and conventions, the media toolkit on both backends, the
+source and model library, the transcription engine with its planner and resume, the transcript
+viewer with its exports, speaker matching across windows, and the API-key exchange with its
+endpoint rule.
+
+What remains is release preparation, and one thing that cannot be checked without a paid key: a real
+recording over the upload limit, transcribed end to end against OpenAI and OpenRouter. Everything
+else is verified by the test suite, which runs with no key, no network and no FFmpeg. See
+`PLAN.md` at the repository root.

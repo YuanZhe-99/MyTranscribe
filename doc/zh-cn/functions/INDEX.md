@@ -1,36 +1,33 @@
-# MyTranscribe `lib/` Function Index
+# MyTranscribe `lib/` 函数索引
 
-The top-level index of the hand-written Function Explanation Layer documentation for `lib/`. Each
-row links to a per-source-file page mirroring the `lib/` tree, with `.dart` replaced by `.md`.
+`lib/` 手写函数说明层文档的顶层索引。每一行链接到与 `lib/` 目录结构对应的单个源文件页面，`.dart` 换成
+`.md`。
 
-Measure these counts rather than adjusting them by hand:
+请测量这些计数，而不要手工调整：
 
 ```bash
 find lib -name "*.dart" -not -path "lib/l10n/*" | xargs grep -h '/// Purpose:' | wc -l
 ```
 
-Generated localization code under `lib/l10n/` is excluded from the convention and from these counts.
+`lib/l10n/` 下生成的本地化代码不属于该约定，也不计入这些计数。
 
-At the 0.1.0 release that command reports **776** documented declarations across **81** source
-files, and every one of those files appears in the tables below.
+在 0.1.0 发布时，该命令报告 **81** 个源文件中共 **776** 处带说明的声明，其中每个文件都出现在下面的表格里。
 
-## Status
+## 状态
 
-The per-file pages are written as each area is implemented; the table below lists the files that
-exist today and the concept page that currently describes each one. A file gains its own page when
-its behaviour stops being fully described by the concept documentation. Today none has: every file
-is covered by a concept page, and a table of one-line stubs would say less than the source's own
-`/// Purpose:` blocks already do.
+单文件页面随各领域实现而撰写；下表列出今天存在的文件，以及当前描述它们的概念页面。当某个文件的行为不再能被概
+念文档完整描述时，它才会获得自己的页面。今天还没有出现这种情况：每个文件都被某个概念页面覆盖，而一张只有一行
+说明的表格，能说的比源码里已有的 `/// Purpose:` 段落还少。
 
-## Root
+## 根目录
 
-| Source file | Described by |
+| 源文件 | 由哪一页描述 |
 |---|---|
 | `lib/main.dart` | [architecture.md](../architecture.md) |
 
 ## app/
 
-| Source file | Described by |
+| 源文件 | 由哪一页描述 |
 |---|---|
 | `lib/app/app.dart` | [architecture.md](../architecture.md) |
 | `lib/app/router.dart` | [architecture.md](../architecture.md) |
@@ -41,7 +38,7 @@ is covered by a concept page, and a table of one-line stubs would say less than 
 
 ## features/
 
-| Source file | Described by |
+| 源文件 | 由哪一页描述 |
 |---|---|
 | `lib/features/providers/models/transcribe_settings.dart` | [data-formats.md](../data-formats.md) |
 | `lib/features/providers/models/provider_config.dart` | [features/provider-library.md](../features/provider-library.md) |
@@ -105,7 +102,7 @@ is covered by a concept page, and a table of one-line stubs would say less than 
 
 ## shared/
 
-| Source file | Described by |
+| 源文件 | 由哪一页描述 |
 |---|---|
 | `lib/shared/services/transcribe_storage.dart` | [data-formats.md](../data-formats.md) |
 | `lib/shared/services/webdav_service.dart` | [sync.md](../sync.md) |

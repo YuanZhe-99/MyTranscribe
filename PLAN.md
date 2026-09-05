@@ -154,11 +154,17 @@ before it applies. And the trusted-host list is device-local rather than synced:
 network path this device takes to the server, so one device's decision must not start key uploads
 on another.
 
-### M7 — Release preparation
+### M7 — Release preparation ✅
 
-- [ ] `doc/zh-cn` complete, `functions/INDEX.md` measured
-- [ ] App icon pipeline, `installer.iss`, MSIX metadata
-- [ ] Version locations aligned, `v0.1.0` tagged and pushed after the user confirms
+- [x] `doc/zh-cn` complete — all 24 pages, translated rather than converted, with two new English
+      pages written for the features that had none
+- [x] `functions/INDEX.md` measured: 776 documented declarations across 81 files, every one listed
+- [x] App icon pipeline, `installer.iss`, MSIX metadata
+- [x] Version locations aligned: `pubspec.yaml` twice and `installer.iss` three times, all 0.1.0
+- [x] `test/doc_mirror_test.dart` holds the mirror in place — the same pages, the same heading
+      structure, every cross-link resolving, and the function index covering the tree. It caught a
+      corrupted heading in the English data-formats page on its first run
+- [ ] `v0.1.0` tagged and pushed after the user confirms
 
 ## Decisions log
 

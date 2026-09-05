@@ -52,9 +52,10 @@ are the ones carried forward. Beyond that limit, the rest fall back to voting.
 
 ## What the user can do
 
-Rename, recolour, merge two speakers into one, split a speaker's segments out into a new one,
-reassign a single segment, and re-run the matching. Every operation is a change to records, never a
-rewrite of the text.
+Rename, merge two speakers into one, and move a single line to somebody else. Every operation is a
+change to records, never a rewrite of the text. Splitting a speaker in bulk is not built: moving
+lines one at a time does the same job, and a bulk operation would be guesswork about what the user
+wanted split.
 
 The boundaries the matching was least confident about are recorded, so the panel can point at them:
 "these two might be the same person" is a far better prompt than making somebody read an hour of

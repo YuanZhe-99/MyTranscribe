@@ -122,7 +122,8 @@ another device; and a window preference is a property of the device, not of the 
 
 ## `jobs/<id>/` — one transcription
 
-Planned for M3; recorded here so the shape is fixed before it is built.
+Written by the job runner. Never synced, never backed up, never exported in a ZIP: hours of private
+audio have no business in a bundle that goes to a server.
 
 | Entry | Contents |
 |---|---|
@@ -132,7 +133,7 @@ Planned for M3; recorded here so the shape is fixed before it is built.
 | `chunks/chunk_0000.mp3` | one window, deleted when the job finishes unless the user keeps them |
 | `chunks/chunk_0000.response.json` | the provider's raw answer, kept — this is what makes a resume and a re-run of speaker unification possible without uploading again |
 | `speakers/<id>.wav` | a short sample per speaker, where the API accepts known-speaker references |
-| `transcript.json` | segments, speakers and the mapping between window-local labels and global speakers |
+| `transcript.json` | segments, speakers, the mapping between window-local labels and global speakers, and the user's corrections |
 | `exports/` | rendered Markdown, text, subtitles and so on |
 
 The job record is rewritten atomically after every chunk, which is what a resume reads. A chunk is

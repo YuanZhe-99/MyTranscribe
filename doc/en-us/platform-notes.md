@@ -120,3 +120,9 @@ version, and `AGENTS.md` lists every place a version number appears.
 Building on ARM64 works today with no extra tools. A plugin that ships prebuilt x86_64 Windows
 binaries will not, which is the constraint the FFmpeg arrangement above exists to satisfy — check it
 before adding any plugin with native Windows code.
+
+The audio player is the second place that constraint decided a dependency. `audioplayers` was chosen
+over `just_audio` and `media_kit` because its Windows backend is Media Foundation compiled from
+source, so it builds on ARM64; the other two ship an x86_64-only libmpv and would fail the same way
+the FFmpeg plugin does. This was verified with a real `flutter build windows` on the ARM64 machine
+rather than taken from documentation.

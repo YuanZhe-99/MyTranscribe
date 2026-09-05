@@ -25,9 +25,10 @@ the normalized copy the job already made, so it is there without keeping the ori
 ## Speakers
 
 Where the model returned speaker labels, a panel lists them with a colour, a name and how much each
-one spoke. Names are yours to set, and a name you have used before is suggested as you type. Two
-speakers that are really one person can be merged; one speaker that is really two can be split; a
-single misattributed segment can be reassigned.
+one spoke. Names are yours to set. Two speakers that are really one person can be merged,
+and a single misattributed line is moved in the line editor. Splitting one speaker into two in bulk
+is not built: moving lines one at a time does the same job, and until somebody meets a recording
+where that is not enough, a bulk operation would be guesswork about what they wanted.
 
 Nothing here rewrites the text. Segments point at a speaker, so renaming or merging changes one
 record and every paragraph follows. Because the raw responses are kept, the speaker matching can
