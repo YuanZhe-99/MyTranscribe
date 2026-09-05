@@ -47,8 +47,11 @@ SetupIconFile=windows\runner\resources\app_icon.ico
 PrivilegesRequired=lowest
 
 [Languages]
+; English only. Inno Setup ships a fixed set of translations under Languages\,
+; and Chinese is not among them — it is a community file downloaded separately,
+; which a clean CI runner does not have. Adding one here would mean carrying the
+; .isl in the repository; the installer is four screens, so it is not worth it.
 Name: "english"; MessagesFile: "compiler:Default.isl"
-Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"

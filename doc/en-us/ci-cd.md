@@ -38,11 +38,15 @@ Three things about the jobs are worth knowing:
   exercises the external-executable media backend against a real binary. That is the one part of the
   media layer a host without FFmpeg cannot check. Its large download stays behind
   `--dart-define=live_download`.
-- **The ARM64 job uses stable**, unlike the sibling apps, which build it from Flutter master. When
-  their workflows were written stable had no ARM64 Windows engine; 3.44.2 ships
+- **The ARM64 job uses a stable release tag**, unlike the sibling apps, which build it from Flutter
+  master. When their workflows were written stable had no ARM64 Windows engine; 3.44.2 ships
   `windows-arm64-release`, and this project is developed on Windows on ARM64 against exactly that
-  version. Pinning stable also means every run produces the same `flutter_windows.dll`, so
-  Defender's cloud reputation accumulates against one hash instead of a fresh unknown one per build.
+  version. It cannot use `subosito/flutter-action` there, because Flutter's release metadata
+  publishes no arm64 SDK archive and the action stops with "Unable to determine Flutter version"; a
+  shallow git clone of the release tag bootstraps an ARM64-native SDK instead, which is how the
+  development machine is set up. Pinning the tag rather than tracking master means every run
+  produces the same `flutter_windows.dll`, so Defender's cloud reputation accumulates against one
+  hash instead of a fresh unknown one per build.
 
 MSIX is not built in CI: packaging one needs a signing certificate, and this repository carries
 none. `dart run msix:create` locally is still the way to produce it.

@@ -34,10 +34,13 @@
 - **Ubuntu runner 自带 FFmpeg**，因此 `test/media_toolkit_live_test.dart` 不再自行跳过，而是对着一个真实
   的二进制来检验外部可执行文件后端。那是没有 FFmpeg 的主机唯一检查不到的媒体层部分。它体积较大的下载仍然
   留在 `--dart-define=live_download` 之后。
-- **ARM64 任务使用 stable**，这一点与兄弟应用不同，它们是从 Flutter master 构建的。写它们的工作流时，
-  stable 还没有 ARM64 的 Windows 引擎；3.44.2 已经提供 `windows-arm64-release`，而本项目正是在
-  Windows on ARM64 上、针对这个版本开发的。固定 stable 还意味着每次运行产出同一个 `flutter_windows.dll`，
-  于是 Defender 的云端信誉是累积在一个哈希上，而不是每次构建都换一个陌生的。
+- **ARM64 任务使用 stable 的发布标签**，这一点与兄弟应用不同，它们是从 Flutter master 构建的。写它们的
+  工作流时，stable 还没有 ARM64 的 Windows 引擎；3.44.2 已经提供 `windows-arm64-release`，而本项目正是在
+  Windows on ARM64 上、针对这个版本开发的。但那里用不了 `subosito/flutter-action`：Flutter 的发布元数据
+  没有 arm64 的 SDK 归档，该 action 会以 "Unable to determine Flutter version" 失败；改用对发布标签做一次
+  浅克隆，会引导出一个原生 ARM64 的 SDK —— 开发机正是这样配置的。固定标签而不是跟随 master，意味着每次
+  运行产出同一个 `flutter_windows.dll`，于是 Defender 的云端信誉是累积在一个哈希上，而不是每次构建都换一
+  个陌生的。
 
 CI 不构建 MSIX：打包它需要签名证书，而本仓库没有。要产出它，仍然是在本地运行 `dart run msix:create`。
 

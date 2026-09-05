@@ -134,13 +134,18 @@ jobs:
   # The sibling apps build this from Flutter master, because when their
   # workflows were written stable had no ARM64 Windows engine. It does now:
   # 3.44.2 ships windows-arm64-release artifacts, and this project is developed
-  # on Windows on ARM64 and builds its own release with the pinned stable
-  # version. So this job uses stable like every other one.
+  # on Windows on ARM64 against exactly that version.
   #
-  # That also removes the reason those workflows cache master weekly. A pinned
-  # stable release produces the same flutter_windows.dll on every run by
-  # construction, so Defender's cloud reputation accumulates against one hash
-  # rather than a fresh unknown one each build.
+  # It still cannot use subosito/flutter-action here. That action resolves an
+  # SDK archive from Flutter's release metadata, which publishes no arm64 entry
+  # for stable, and fails with "Unable to determine Flutter version". A git
+  # clone of the release tag does work: it bootstraps an ARM64-native SDK on
+  # first run, which is how the development machine is set up.
+  #
+  # Pinning the tag rather than tracking master is what makes this cheap: every
+  # run produces the same flutter_windows.dll, so Defender's cloud reputation
+  # accumulates against one hash instead of a fresh unknown one each build.
+  # That is what the siblings' weekly master cache exists to work around.
   windows-arm64:
     runs-on: windows-11-arm
     env:
@@ -150,10 +155,21 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: subosito/flutter-action@v2
+      - name: Cache the Flutter SDK
+        uses: actions/cache@v4
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
+          path: ${{ runner.tool_cache }}\flutter-${{ env.FLUTTER_VERSION }}
+          key: flutter-arm64-${{ env.FLUTTER_VERSION }}
+
+      - name: Set up Flutter ${{ env.FLUTTER_VERSION }} from its release tag
+        shell: pwsh
+        run: |
+          $dir = "$env:RUNNER_TOOL_CACHE\flutter-$env:FLUTTER_VERSION"
+          if (-not (Test-Path "$dir\bin\flutter")) {
+            git clone https://github.com/flutter/flutter.git `
+              --branch $env:FLUTTER_VERSION --depth 1 "$dir"
+          }
+          Add-Content $env:GITHUB_PATH "$dir\bin"
 
       - name: Flutter doctor
         run: flutter doctor
