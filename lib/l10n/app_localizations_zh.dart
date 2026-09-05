@@ -526,6 +526,89 @@ class AppLocalizationsZh extends AppLocalizations {
   String get save => '保存';
 
   @override
+  String get secretsBannerAllowed => 'API Key 会同步到该服务器。';
+
+  @override
+  String get secretsBannerDenied => 'API Key 只保留在本设备，其余内容照常同步。';
+
+  @override
+  String secretsKeyCount(int count) {
+    return '本设备已保存 $count 个';
+  }
+
+  @override
+  String get secretsReasonCgnat => '属于 Tailscale 地址段。';
+
+  @override
+  String get secretsReasonHttps => '连接已加密。';
+
+  @override
+  String get secretsReasonLinkLocal => '属于链路本地地址。';
+
+  @override
+  String get secretsReasonLoopback => '服务器就是本设备。';
+
+  @override
+  String get secretsReasonMdns => '该名称只有本网络能解析。';
+
+  @override
+  String get secretsReasonPrivateIpv4 => '属于内网地址。';
+
+  @override
+  String get secretsReasonPrivateIpv6 => '属于内网 IPv6 地址。';
+
+  @override
+  String get secretsReasonPublicHttp => '对可能位于任何位置的主机使用明文 HTTP，密钥将以未加密方式传输。';
+
+  @override
+  String get secretsReasonScheme => '这不是 HTTP 或 HTTPS 地址。';
+
+  @override
+  String get secretsReasonSingleLabel => '该名称只有本地解析器能解析。';
+
+  @override
+  String get secretsReasonTailnet => '属于 Tailscale 域名。';
+
+  @override
+  String get secretsReasonTrusted => '你已在本设备信任该主机。';
+
+  @override
+  String get secretsReasonUnparseable => '无法解析该地址。';
+
+  @override
+  String get secretsReasonZerotier => '属于 ZeroTier 域名。';
+
+  @override
+  String get secretsSectionTitle => 'API Key';
+
+  @override
+  String secretsSkippedKeys(String reason) {
+    return '未同步 API Key：$reason';
+  }
+
+  @override
+  String get secretsSyncFailed => 'API Key 同步失败。';
+
+  @override
+  String get secretsSyncedKeys => 'API Key 已同步';
+
+  @override
+  String get secretsTrustedHostAdd => '添加主机';
+
+  @override
+  String get secretsTrustedHostHint => 'nas.example.com 或 *.example.com';
+
+  @override
+  String get secretsTrustedHostInvalid => '这不是一个主机名。';
+
+  @override
+  String get secretsTrustedHosts => '受信任主机';
+
+  @override
+  String get secretsTrustedHostsHelp =>
+      '允许密钥送达的明文 HTTP 地址，用于只有你的网络才能访问的服务器。每条一个主机，子域可写 *.example.com。仅保存在本设备。';
+
+  @override
   String get settingsAbout => '关于';
 
   @override
@@ -1400,6 +1483,89 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get save => '儲存';
+
+  @override
+  String get secretsBannerAllowed => 'API Key 會同步到該伺服器。';
+
+  @override
+  String get secretsBannerDenied => 'API Key 只保留在本裝置，其餘內容照常同步。';
+
+  @override
+  String secretsKeyCount(int count) {
+    return '本裝置已儲存 $count 個';
+  }
+
+  @override
+  String get secretsReasonCgnat => '屬於 Tailscale 位址範圍。';
+
+  @override
+  String get secretsReasonHttps => '連線已加密。';
+
+  @override
+  String get secretsReasonLinkLocal => '屬於連結本地位址。';
+
+  @override
+  String get secretsReasonLoopback => '伺服器就是本裝置。';
+
+  @override
+  String get secretsReasonMdns => '該名稱只有本網路能解析。';
+
+  @override
+  String get secretsReasonPrivateIpv4 => '屬於內網位址。';
+
+  @override
+  String get secretsReasonPrivateIpv6 => '屬於內網 IPv6 位址。';
+
+  @override
+  String get secretsReasonPublicHttp => '對可能位於任何地方的主機使用明文 HTTP，金鑰將以未加密方式傳送。';
+
+  @override
+  String get secretsReasonScheme => '這不是 HTTP 或 HTTPS 位址。';
+
+  @override
+  String get secretsReasonSingleLabel => '該名稱只有本機解析器能回答。';
+
+  @override
+  String get secretsReasonTailnet => '屬於 Tailscale 網域名稱。';
+
+  @override
+  String get secretsReasonTrusted => '你已在本裝置信任該主機。';
+
+  @override
+  String get secretsReasonUnparseable => '無法解析該位址。';
+
+  @override
+  String get secretsReasonZerotier => '屬於 ZeroTier 網域名稱。';
+
+  @override
+  String get secretsSectionTitle => 'API Key';
+
+  @override
+  String secretsSkippedKeys(String reason) {
+    return '未同步 API Key：$reason';
+  }
+
+  @override
+  String get secretsSyncFailed => 'API Key 同步失敗。';
+
+  @override
+  String get secretsSyncedKeys => 'API Key 已同步';
+
+  @override
+  String get secretsTrustedHostAdd => '新增主機';
+
+  @override
+  String get secretsTrustedHostHint => 'nas.example.com 或 *.example.com';
+
+  @override
+  String get secretsTrustedHostInvalid => '這不是一個主機名稱。';
+
+  @override
+  String get secretsTrustedHosts => '受信任主機';
+
+  @override
+  String get secretsTrustedHostsHelp =>
+      '允許金鑰送達的明文 HTTP 位址，適用於只有你的網路才能存取的伺服器。每筆一個主機，子網域可寫 *.example.com。僅儲存在本裝置。';
 
   @override
   String get settingsAbout => '關於';

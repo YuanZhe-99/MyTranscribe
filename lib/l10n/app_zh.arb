@@ -262,6 +262,46 @@
   "planWindowBySize": "分段长度按大小上限选定。",
   "planWindowByUser": "分段长度由你指定。",
   "save": "保存",
+  "secretsBannerAllowed": "API Key 会同步到该服务器。",
+  "secretsBannerDenied": "API Key 只保留在本设备，其余内容照常同步。",
+  "secretsKeyCount": "本设备已保存 {count} 个",
+  "@secretsKeyCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "secretsReasonCgnat": "属于 Tailscale 地址段。",
+  "secretsReasonHttps": "连接已加密。",
+  "secretsReasonLinkLocal": "属于链路本地地址。",
+  "secretsReasonLoopback": "服务器就是本设备。",
+  "secretsReasonMdns": "该名称只有本网络能解析。",
+  "secretsReasonPrivateIpv4": "属于内网地址。",
+  "secretsReasonPrivateIpv6": "属于内网 IPv6 地址。",
+  "secretsReasonPublicHttp": "对可能位于任何位置的主机使用明文 HTTP，密钥将以未加密方式传输。",
+  "secretsReasonScheme": "这不是 HTTP 或 HTTPS 地址。",
+  "secretsReasonSingleLabel": "该名称只有本地解析器能解析。",
+  "secretsReasonTailnet": "属于 Tailscale 域名。",
+  "secretsReasonTrusted": "你已在本设备信任该主机。",
+  "secretsReasonUnparseable": "无法解析该地址。",
+  "secretsReasonZerotier": "属于 ZeroTier 域名。",
+  "secretsSectionTitle": "API Key",
+  "secretsSkippedKeys": "未同步 API Key：{reason}",
+  "@secretsSkippedKeys": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "secretsSyncFailed": "API Key 同步失败。",
+  "secretsSyncedKeys": "API Key 已同步",
+  "secretsTrustedHostAdd": "添加主机",
+  "secretsTrustedHostHint": "nas.example.com 或 *.example.com",
+  "secretsTrustedHostInvalid": "这不是一个主机名。",
+  "secretsTrustedHosts": "受信任主机",
+  "secretsTrustedHostsHelp": "允许密钥送达的明文 HTTP 地址，用于只有你的网络才能访问的服务器。每条一个主机，子域可写 *.example.com。仅保存在本设备。",
   "settingsAbout": "关于",
   "settingsData": "数据",
   "settingsExportSubtitle": "把来源和模型保存为文件",

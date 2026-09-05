@@ -262,6 +262,46 @@
   "planWindowBySize": "分段長度依大小上限選定。",
   "planWindowByUser": "分段長度由你指定。",
   "save": "儲存",
+  "secretsBannerAllowed": "API Key 會同步到該伺服器。",
+  "secretsBannerDenied": "API Key 只保留在本裝置，其餘內容照常同步。",
+  "secretsKeyCount": "本裝置已儲存 {count} 個",
+  "@secretsKeyCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "secretsReasonCgnat": "屬於 Tailscale 位址範圍。",
+  "secretsReasonHttps": "連線已加密。",
+  "secretsReasonLinkLocal": "屬於連結本地位址。",
+  "secretsReasonLoopback": "伺服器就是本裝置。",
+  "secretsReasonMdns": "該名稱只有本網路能解析。",
+  "secretsReasonPrivateIpv4": "屬於內網位址。",
+  "secretsReasonPrivateIpv6": "屬於內網 IPv6 位址。",
+  "secretsReasonPublicHttp": "對可能位於任何地方的主機使用明文 HTTP，金鑰將以未加密方式傳送。",
+  "secretsReasonScheme": "這不是 HTTP 或 HTTPS 位址。",
+  "secretsReasonSingleLabel": "該名稱只有本機解析器能回答。",
+  "secretsReasonTailnet": "屬於 Tailscale 網域名稱。",
+  "secretsReasonTrusted": "你已在本裝置信任該主機。",
+  "secretsReasonUnparseable": "無法解析該位址。",
+  "secretsReasonZerotier": "屬於 ZeroTier 網域名稱。",
+  "secretsSectionTitle": "API Key",
+  "secretsSkippedKeys": "未同步 API Key：{reason}",
+  "@secretsSkippedKeys": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "secretsSyncFailed": "API Key 同步失敗。",
+  "secretsSyncedKeys": "API Key 已同步",
+  "secretsTrustedHostAdd": "新增主機",
+  "secretsTrustedHostHint": "nas.example.com 或 *.example.com",
+  "secretsTrustedHostInvalid": "這不是一個主機名稱。",
+  "secretsTrustedHosts": "受信任主機",
+  "secretsTrustedHostsHelp": "允許金鑰送達的明文 HTTP 位址，適用於只有你的網路才能存取的伺服器。每筆一個主機，子網域可寫 *.example.com。僅儲存在本裝置。",
   "settingsAbout": "關於",
   "settingsData": "資料",
   "settingsExportSubtitle": "把來源和模型儲存為檔案",

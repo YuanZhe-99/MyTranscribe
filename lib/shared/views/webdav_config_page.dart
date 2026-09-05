@@ -19,6 +19,9 @@ import '../../app/data_modules.dart';
 
 import '../../features/providers/models/transcribe_settings.dart';
 import '../../l10n/app_localizations.dart';
+import '../../features/secrets/services/secrets_store.dart';
+import '../../features/secrets/services/secrets_sync_service.dart';
+import '../../features/secrets/views/secrets_endpoint_section.dart';
 import '../services/auto_sync_service.dart';
 import '../services/webdav_service.dart';
 import '../widgets/settings_conflict_dialog.dart';
@@ -50,6 +53,9 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
   bool _loading = true;
   bool _testing = false;
   bool _syncing = false;
+
+  /// How many sources have a key on this device.
+  int _keyCount = 0;
   bool _isConfigured = false;
   bool _autoSync = false;
 
@@ -90,6 +96,8 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
       _isConfigured = config.isConfigured;
       _autoSync = config.autoSync;
     }
+    // How many keys this device holds, for the line under the verdict.
+    _keyCount = (await SecretsStore.load()).keys.length;
     if (mounted) setState(() => _loading = false);
   }
 
@@ -258,9 +266,21 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
       return;
     }
 
+    // The keys travel separately and may not have travelled at all, so the
+    // message says which happened rather than leaving the user to assume.
+    final message = switch (result.secrets?.status) {
+      SecretsSyncStatus.synced =>
+        '${l10n.settingsWebDAVSyncSuccess} · ${l10n.secretsSyncedKeys}',
+      SecretsSyncStatus.skippedInsecure => l10n.secretsSkippedKeys(
+        endpointReasonText(l10n, result.secrets!.reason!),
+      ),
+      SecretsSyncStatus.failed =>
+        '${l10n.settingsWebDAVSyncSuccess} · ${l10n.secretsSyncFailed}',
+      _ => l10n.settingsWebDAVSyncSuccess,
+    };
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text(l10n.settingsWebDAVSyncSuccess)));
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   /// Purpose: Confirm and run a force upload (local overwrites remote).
@@ -538,6 +558,14 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
                     hintText: 'https://example.com/remote.php/dav/files/user',
                   ),
                   keyboardType: TextInputType.url,
+                  // Rebuilds the verdict below as the address is typed, which
+                  // is when the user can still do something about it.
+                  onChanged: (_) => setState(() {}),
+                ),
+                const SizedBox(height: 16),
+                SecretsEndpointSection(
+                  serverUrl: _urlController.text,
+                  keyCount: _keyCount,
                 ),
                 const SizedBox(height: 12),
                 TextField(

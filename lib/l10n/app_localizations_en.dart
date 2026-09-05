@@ -543,6 +543,92 @@ class AppLocalizationsEn extends AppLocalizations {
   String get save => 'Save';
 
   @override
+  String get secretsBannerAllowed => 'API keys will sync to this server.';
+
+  @override
+  String get secretsBannerDenied =>
+      'API keys stay on this device. Everything else still syncs.';
+
+  @override
+  String secretsKeyCount(int count) {
+    return '$count stored on this device';
+  }
+
+  @override
+  String get secretsReasonCgnat => 'A Tailscale address.';
+
+  @override
+  String get secretsReasonHttps => 'The connection is encrypted.';
+
+  @override
+  String get secretsReasonLinkLocal => 'A link-local address.';
+
+  @override
+  String get secretsReasonLoopback => 'The server is this device.';
+
+  @override
+  String get secretsReasonMdns => 'A name only this network can resolve.';
+
+  @override
+  String get secretsReasonPrivateIpv4 => 'A private network address.';
+
+  @override
+  String get secretsReasonPrivateIpv6 => 'A private IPv6 address.';
+
+  @override
+  String get secretsReasonPublicHttp =>
+      'Plain HTTP to a host that could be anywhere, so a key would travel unencrypted.';
+
+  @override
+  String get secretsReasonScheme => 'That is not an HTTP or HTTPS address.';
+
+  @override
+  String get secretsReasonSingleLabel =>
+      'A name only a local resolver can answer.';
+
+  @override
+  String get secretsReasonTailnet => 'A Tailscale name.';
+
+  @override
+  String get secretsReasonTrusted => 'You trusted this host on this device.';
+
+  @override
+  String get secretsReasonUnparseable => 'That address could not be read.';
+
+  @override
+  String get secretsReasonZerotier => 'A ZeroTier name.';
+
+  @override
+  String get secretsSectionTitle => 'API keys';
+
+  @override
+  String secretsSkippedKeys(String reason) {
+    return 'API keys were not synced: $reason';
+  }
+
+  @override
+  String get secretsSyncFailed => 'The API keys could not be synced.';
+
+  @override
+  String get secretsSyncedKeys => 'API keys synced';
+
+  @override
+  String get secretsTrustedHostAdd => 'Add a host';
+
+  @override
+  String get secretsTrustedHostHint => 'nas.example.com or *.example.com';
+
+  @override
+  String get secretsTrustedHostInvalid => 'That is not a host name.';
+
+  @override
+  String get secretsTrustedHosts => 'Trusted hosts';
+
+  @override
+  String get secretsTrustedHostsHelp =>
+      'Plain HTTP addresses you allow keys to reach, for a server only your network can see. One host per entry; use *.example.com for subdomains. Kept on this device only.';
+
+  @override
   String get settingsAbout => 'About';
 
   @override

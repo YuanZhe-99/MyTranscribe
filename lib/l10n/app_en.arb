@@ -262,6 +262,46 @@
   "planWindowBySize": "Segment length chosen to stay under the size limit.",
   "planWindowByUser": "Segment length set by you.",
   "save": "Save",
+  "secretsBannerAllowed": "API keys will sync to this server.",
+  "secretsBannerDenied": "API keys stay on this device. Everything else still syncs.",
+  "secretsKeyCount": "{count} stored on this device",
+  "@secretsKeyCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "secretsReasonCgnat": "A Tailscale address.",
+  "secretsReasonHttps": "The connection is encrypted.",
+  "secretsReasonLinkLocal": "A link-local address.",
+  "secretsReasonLoopback": "The server is this device.",
+  "secretsReasonMdns": "A name only this network can resolve.",
+  "secretsReasonPrivateIpv4": "A private network address.",
+  "secretsReasonPrivateIpv6": "A private IPv6 address.",
+  "secretsReasonPublicHttp": "Plain HTTP to a host that could be anywhere, so a key would travel unencrypted.",
+  "secretsReasonScheme": "That is not an HTTP or HTTPS address.",
+  "secretsReasonSingleLabel": "A name only a local resolver can answer.",
+  "secretsReasonTailnet": "A Tailscale name.",
+  "secretsReasonTrusted": "You trusted this host on this device.",
+  "secretsReasonUnparseable": "That address could not be read.",
+  "secretsReasonZerotier": "A ZeroTier name.",
+  "secretsSectionTitle": "API keys",
+  "secretsSkippedKeys": "API keys were not synced: {reason}",
+  "@secretsSkippedKeys": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "secretsSyncFailed": "The API keys could not be synced.",
+  "secretsSyncedKeys": "API keys synced",
+  "secretsTrustedHostAdd": "Add a host",
+  "secretsTrustedHostHint": "nas.example.com or *.example.com",
+  "secretsTrustedHostInvalid": "That is not a host name.",
+  "secretsTrustedHosts": "Trusted hosts",
+  "secretsTrustedHostsHelp": "Plain HTTP addresses you allow keys to reach, for a server only your network can see. One host per entry; use *.example.com for subdomains. Kept on this device only.",
   "settingsAbout": "About",
   "settingsData": "Data",
   "settingsExportSubtitle": "Save your sources and models to a file",

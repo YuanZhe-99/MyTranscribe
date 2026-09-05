@@ -14,7 +14,9 @@ import 'package:myapps_data/myapps_data.dart' show SyncProgress;
 
 import '../../app/data_modules.dart';
 import '../../features/providers/models/transcribe_settings.dart';
+import '../../features/secrets/services/secrets_sync_service.dart';
 import 'sync_merge.dart';
+import 'transcribe_storage.dart';
 
 // The config and transport value types are the package's. They are
 // re-exported under their original names so call sites import one file.
@@ -35,6 +37,10 @@ class SyncResult {
   /// Non-fatal warnings collected during sync.
   final List<String> warnings;
 
+  /// What became of the API keys, which travel separately and only to an
+  /// address they may safely travel to.
+  final SecretsSyncOutcome? secrets;
+
   /// Purpose: Create a sync result instance.
   /// Inputs: `success`, `error`, `pending`, `warnings`.
   /// Returns: A new `SyncResult` instance.
@@ -45,6 +51,7 @@ class SyncResult {
     this.error,
     this.pending,
     this.warnings = const [],
+    this.secrets,
   });
 
   /// Purpose: Report whether the result carries unresolved conflicts.
@@ -53,6 +60,20 @@ class SyncResult {
   /// Side effects: None.
   /// Notes: None.
   bool get hasConflicts => pending != null;
+
+  /// Purpose: Attach the keys outcome to a finished sync.
+  /// Inputs: [outcome].
+  /// Returns: A new [SyncResult].
+  /// Side effects: None.
+  /// Notes: The keys are exchanged after the engine returns, so the result has
+  /// to be built twice; nothing else about it changes.
+  SyncResult withSecrets(SecretsSyncOutcome outcome) => SyncResult(
+    success: success,
+    error: error,
+    pending: pending,
+    warnings: warnings,
+    secrets: outcome,
+  );
 }
 
 /// Holds pending merge results that contain per-record conflicts.
@@ -144,7 +165,10 @@ class WebDAVService {
     shared.WebDAVConfig config, {
     bool autoResolve = false,
   }) async {
-    return _toSyncResult(await _engine.sync(config, autoResolve: autoResolve));
+    final result = _toSyncResult(
+      await _engine.sync(config, autoResolve: autoResolve),
+    );
+    return result.withSecrets(await _exchangeSecrets(config));
   }
 
   /// Purpose: Finalize sync by applying the user's conflict resolutions.
@@ -173,7 +197,8 @@ class WebDAVService {
   /// Notes: Remote changes since the last sync are lost. Runs under the remote
   /// `.lock` and the in-flight guard, like a normal sync.
   static Future<SyncResult> forceUpload(shared.WebDAVConfig config) async {
-    return _toSyncResult(await _engine.forceUpload(config));
+    final result = _toSyncResult(await _engine.forceUpload(config));
+    return result.withSecrets(await _exchangeSecrets(config));
   }
 
   /// Purpose: Overwrite local data with remote data, without merging.
@@ -182,8 +207,25 @@ class WebDAVService {
   /// Side effects: Replaces local data files and base snapshots.
   /// Notes: Local changes since the last sync are lost.
   static Future<SyncResult> forceDownload(shared.WebDAVConfig config) async {
-    return _toSyncResult(await _engine.forceDownload(config));
+    final result = _toSyncResult(await _engine.forceDownload(config));
+    return result.withSecrets(await _exchangeSecrets(config));
   }
+
+  /// Purpose: Exchange the API keys after a sync, when the address allows it.
+  /// Inputs: The `config` just synced with.
+  /// Returns: What became of the keys.
+  /// Side effects: One GET and possibly one PUT; may rewrite the keys file.
+  /// Notes: After the engine returns rather than inside it: the engine lock
+  /// guards three-way merges against a base snapshot, and the keys file is a
+  /// flat per-source map with a conditional PUT, so it needs neither. Every
+  /// entry point calls this, including auto-sync, so a key set on one device
+  /// reaches the other without anybody pressing anything.
+  static Future<SecretsSyncOutcome> _exchangeSecrets(
+    shared.WebDAVConfig config,
+  ) async => SecretsSyncService.exchange(
+    config,
+    trustedHosts: await TranscribeStorage.getSecretsTrustedHosts(),
+  );
 
   /// Purpose: Convert an engine result into the app-typed result.
   /// Inputs: `result` from the shared engine.

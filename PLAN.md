@@ -137,13 +137,22 @@ Splitting a speaker in two is not built. Reassigning a line does the same job on
 and until somebody meets a recording where that is not enough, the bulk operation is guesswork
 about what they would want.
 
-### M6 — Sync and secrets
+### M6 — Sync and secrets ✅
 
-- [ ] Secure-endpoint policy and its test vectors
-- [ ] Secrets exchange over WebDAV with conditional PUT
-- [ ] WebDAV page: the verdict banner, the key row, the trusted-host editor
-- [ ] **Done when** keys reach a second device over HTTPS and over a Tailscale address, and stay
-      local over plain HTTP to a public host
+- [x] Secure-endpoint policy and its test vectors — 28 of them, on both sides of the rule
+- [x] Secrets exchange over WebDAV with conditional PUT and a re-merge on 412
+- [x] WebDAV page: the verdict banner as the address is typed, the key count, the trusted-host
+      editor, and a sync message that says what became of the keys
+- [x] **Done**: `test/secrets_sync_test.dart` shows keys reaching the server over HTTPS, over a
+      LAN address, over a Tailscale name and over a trusted host, and staying put over plain HTTP
+      to a public one — where **no request is made at all**, because reading a key over plain HTTP
+      exposes it just as surely as writing one
+
+Two findings worth keeping. A bracketed public IPv6 address fell through to the bare-hostname rule
+and was accepted as local, because it contains no dot; addresses are now excluded from that rule
+before it applies. And the trusted-host list is device-local rather than synced: trust is about the
+network path this device takes to the server, so one device's decision must not start key uploads
+on another.
 
 ### M7 — Release preparation
 

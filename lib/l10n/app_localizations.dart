@@ -1071,6 +1071,162 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get save;
 
+  /// No description provided for @secretsBannerAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'API keys will sync to this server.'**
+  String get secretsBannerAllowed;
+
+  /// No description provided for @secretsBannerDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'API keys stay on this device. Everything else still syncs.'**
+  String get secretsBannerDenied;
+
+  /// No description provided for @secretsKeyCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} stored on this device'**
+  String secretsKeyCount(int count);
+
+  /// No description provided for @secretsReasonCgnat.
+  ///
+  /// In en, this message translates to:
+  /// **'A Tailscale address.'**
+  String get secretsReasonCgnat;
+
+  /// No description provided for @secretsReasonHttps.
+  ///
+  /// In en, this message translates to:
+  /// **'The connection is encrypted.'**
+  String get secretsReasonHttps;
+
+  /// No description provided for @secretsReasonLinkLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'A link-local address.'**
+  String get secretsReasonLinkLocal;
+
+  /// No description provided for @secretsReasonLoopback.
+  ///
+  /// In en, this message translates to:
+  /// **'The server is this device.'**
+  String get secretsReasonLoopback;
+
+  /// No description provided for @secretsReasonMdns.
+  ///
+  /// In en, this message translates to:
+  /// **'A name only this network can resolve.'**
+  String get secretsReasonMdns;
+
+  /// No description provided for @secretsReasonPrivateIpv4.
+  ///
+  /// In en, this message translates to:
+  /// **'A private network address.'**
+  String get secretsReasonPrivateIpv4;
+
+  /// No description provided for @secretsReasonPrivateIpv6.
+  ///
+  /// In en, this message translates to:
+  /// **'A private IPv6 address.'**
+  String get secretsReasonPrivateIpv6;
+
+  /// No description provided for @secretsReasonPublicHttp.
+  ///
+  /// In en, this message translates to:
+  /// **'Plain HTTP to a host that could be anywhere, so a key would travel unencrypted.'**
+  String get secretsReasonPublicHttp;
+
+  /// No description provided for @secretsReasonScheme.
+  ///
+  /// In en, this message translates to:
+  /// **'That is not an HTTP or HTTPS address.'**
+  String get secretsReasonScheme;
+
+  /// No description provided for @secretsReasonSingleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'A name only a local resolver can answer.'**
+  String get secretsReasonSingleLabel;
+
+  /// No description provided for @secretsReasonTailnet.
+  ///
+  /// In en, this message translates to:
+  /// **'A Tailscale name.'**
+  String get secretsReasonTailnet;
+
+  /// No description provided for @secretsReasonTrusted.
+  ///
+  /// In en, this message translates to:
+  /// **'You trusted this host on this device.'**
+  String get secretsReasonTrusted;
+
+  /// No description provided for @secretsReasonUnparseable.
+  ///
+  /// In en, this message translates to:
+  /// **'That address could not be read.'**
+  String get secretsReasonUnparseable;
+
+  /// No description provided for @secretsReasonZerotier.
+  ///
+  /// In en, this message translates to:
+  /// **'A ZeroTier name.'**
+  String get secretsReasonZerotier;
+
+  /// No description provided for @secretsSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'API keys'**
+  String get secretsSectionTitle;
+
+  /// No description provided for @secretsSkippedKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'API keys were not synced: {reason}'**
+  String secretsSkippedKeys(String reason);
+
+  /// No description provided for @secretsSyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The API keys could not be synced.'**
+  String get secretsSyncFailed;
+
+  /// No description provided for @secretsSyncedKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'API keys synced'**
+  String get secretsSyncedKeys;
+
+  /// No description provided for @secretsTrustedHostAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a host'**
+  String get secretsTrustedHostAdd;
+
+  /// No description provided for @secretsTrustedHostHint.
+  ///
+  /// In en, this message translates to:
+  /// **'nas.example.com or *.example.com'**
+  String get secretsTrustedHostHint;
+
+  /// No description provided for @secretsTrustedHostInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'That is not a host name.'**
+  String get secretsTrustedHostInvalid;
+
+  /// No description provided for @secretsTrustedHosts.
+  ///
+  /// In en, this message translates to:
+  /// **'Trusted hosts'**
+  String get secretsTrustedHosts;
+
+  /// No description provided for @secretsTrustedHostsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Plain HTTP addresses you allow keys to reach, for a server only your network can see. One host per entry; use *.example.com for subdomains. Kept on this device only.'**
+  String get secretsTrustedHostsHelp;
+
   /// No description provided for @settingsAbout.
   ///
   /// In en, this message translates to:
