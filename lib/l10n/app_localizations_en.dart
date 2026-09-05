@@ -879,7 +879,30 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get viewerSpeakerMerge => 'Merge into another speaker';
+
+  @override
+  String get viewerSpeakerMergeNobody => 'There is nobody else to merge into.';
+
+  @override
+  String viewerSpeakerMergeTitle(String name) {
+    return 'Merge $name into';
+  }
+
+  @override
+  String viewerSpeakerMerged(String from, String into) {
+    return '$from is now part of $into';
+  }
+
+  @override
   String get viewerSpeakerName => 'Name';
+
+  @override
+  String get viewerSpeakerRename => 'Rename';
+
+  @override
+  String get viewerSpeakerUncertain =>
+      'Some of this speaker\'s lines were an uncertain match across a segment boundary.';
 
   @override
   String get viewerSpeakers => 'Speakers';

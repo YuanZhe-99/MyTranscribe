@@ -22,6 +22,7 @@ import 'package:my_transcribe/features/media/services/media_toolkit.dart';
 import 'package:my_transcribe/features/providers/models/provider_templates.dart';
 import 'package:my_transcribe/features/providers/services/settings_repository.dart';
 import 'package:my_transcribe/features/providers/services/transcription_client.dart';
+import 'package:my_transcribe/features/transcript/services/transcript_store.dart';
 import 'package:my_transcribe/shared/services/transcribe_storage.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -186,6 +187,16 @@ void main() {
   /// than the queue, because the record is what a resume would read.
   Future<TranscriptionJob> runToCompletion(JobRunner run, String jobId) async {
     run.enqueue(jobId);
+
+    // A job being resumed still says "failed" on disk for the moment before the
+    // runner picks it up, and reading that would be reading the previous run's
+    // result. Wait for it to leave that state first.
+    for (var i = 0; i < 200; i++) {
+      final job = await JobStore.load(jobId);
+      if (job != null && !job.stage.isFinished) break;
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+    }
+
     for (var i = 0; i < 600; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 10));
       final job = await JobStore.load(jobId);
@@ -268,6 +279,66 @@ void main() {
         (await createJob(run, options: const JobOptions(keepChunks: true))).id,
       );
       expect((await JobStore.chunkFile(job.id, 0)).existsSync(), isTrue);
+    });
+  });
+
+  group('speakers across windows', () {
+    test('the same voice keeps one name from end to end', () async {
+      // Each window labels its speakers with no idea what the last one called
+      // them, and here the source swaps the labels round between windows. Two
+      // people must still come out as two people.
+      // Two windows: 0 to 1425, and 1405 to 2000. The twenty seconds they share
+      // carry both voices, which is the only evidence there is.
+      final toolkit = _FakeToolkit(duration: 2000);
+      final server = FakeTranscriptionServer([
+        FakeReply.diarized([
+          (0, 600, 'A', 'the interviewer opens the conversation'),
+          (1405, 1415, 'A', 'first voice in the shared seconds'),
+          (1415, 1425, 'B', 'second voice in the shared seconds'),
+        ]),
+        // Window-local times, and the source has swapped its labels round.
+        FakeReply.diarized([
+          (0, 10, 'X', 'first voice in the shared seconds'),
+          (10, 20, 'Y', 'second voice in the shared seconds'),
+          (100, 500, 'X', 'more from the first voice'),
+        ]),
+      ]);
+      final run = runner(toolkit, server);
+      final job = await runToCompletion(
+        run,
+        (await createJob(
+          run,
+          options: const JobOptions(diarize: true, overlapSeconds: 20),
+        )).id,
+      );
+
+      expect(job.stage, JobStage.done);
+      final transcript = await TranscriptStore.load(job.id);
+      expect(transcript, isNotNull);
+      expect(
+        transcript!.speakers,
+        hasLength(2),
+        reason: 'two people talked, however the windows labelled them',
+      );
+    });
+
+    test('writes a transcript beside the job for the viewer to read', () async {
+      final run = runner(
+        _FakeToolkit(duration: 90),
+        FakeTranscriptionServer([FakeReply.text('a short clip')]),
+      );
+      final job = await runToCompletion(
+        run,
+        (await createJob(run, model: _wholeFileModel)).id,
+      );
+
+      final transcript = await TranscriptStore.load(job.id);
+      expect(transcript!.segments, isNotEmpty);
+      expect(
+        transcript.hasTimestamps,
+        isFalse,
+        reason: 'this model returned none, so the times are estimates',
+      );
     });
   });
 

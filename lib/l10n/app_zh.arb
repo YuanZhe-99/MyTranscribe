@@ -432,6 +432,29 @@
       }
     }
   },
+  "viewerSpeakerMerge": "合并到其他说话人",
+  "viewerSpeakerMergeNobody": "没有其他说话人可供合并。",
+  "viewerSpeakerMergeTitle": "把 {name} 合并到",
+  "@viewerSpeakerMergeTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "viewerSpeakerMerged": "{from} 已并入 {into}",
+  "@viewerSpeakerMerged": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "into": {
+        "type": "String"
+      }
+    }
+  },
   "viewerSpeakerName": "名称",
+  "viewerSpeakerRename": "重命名",
+  "viewerSpeakerUncertain": "该说话人有部分语句在分段边界上的匹配并不确定。",
   "viewerSpeakers": "说话人"
 }

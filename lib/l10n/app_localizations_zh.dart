@@ -852,7 +852,29 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get viewerSpeakerMerge => '合并到其他说话人';
+
+  @override
+  String get viewerSpeakerMergeNobody => '没有其他说话人可供合并。';
+
+  @override
+  String viewerSpeakerMergeTitle(String name) {
+    return '把 $name 合并到';
+  }
+
+  @override
+  String viewerSpeakerMerged(String from, String into) {
+    return '$from 已并入 $into';
+  }
+
+  @override
   String get viewerSpeakerName => '名称';
+
+  @override
+  String get viewerSpeakerRename => '重命名';
+
+  @override
+  String get viewerSpeakerUncertain => '该说话人有部分语句在分段边界上的匹配并不确定。';
 
   @override
   String get viewerSpeakers => '说话人';
@@ -1706,7 +1728,29 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
+  String get viewerSpeakerMerge => '合併到其他說話人';
+
+  @override
+  String get viewerSpeakerMergeNobody => '沒有其他說話人可供合併。';
+
+  @override
+  String viewerSpeakerMergeTitle(String name) {
+    return '把 $name 合併到';
+  }
+
+  @override
+  String viewerSpeakerMerged(String from, String into) {
+    return '$from 已併入 $into';
+  }
+
+  @override
   String get viewerSpeakerName => '名稱';
+
+  @override
+  String get viewerSpeakerRename => '重新命名';
+
+  @override
+  String get viewerSpeakerUncertain => '該說話人有部分語句在分段邊界上的比對並不確定。';
 
   @override
   String get viewerSpeakers => '說話人';

@@ -116,13 +116,26 @@ never complete, so a page that awaited one in `initState` could not be pumped at
 Speaker merging, splitting and cross-window matching are M5; the panel names only what it can
 honestly do today.
 
-### M5 — Speakers
+### M5 — Speakers ✅
 
-- [ ] Diarized response paths, OpenRouter JSON mode with provider options
-- [ ] Cross-window speaker unification by overlap voting
-- [ ] Speaker enrollment chaining where the API supports known speakers
-- [ ] Speakers panel: rename, colour, merge, split, reassign, re-run unification
-- [ ] **Done when** a two-speaker recording spanning three windows comes back with two speakers
+- [x] Diarized response paths, OpenRouter JSON mode with provider options
+- [x] Cross-window speaker matching by overlap weight, refusing a doubtful join
+      rather than guessing at it
+- [x] Speaker enrollment chaining: a clip of each voice heard so far goes with the next window,
+      and an id the source echoes back is taken as a voice match
+- [x] Speakers panel: rename, colour, merge; reassigning one line is in the line editor
+- [x] **Done**: `test/speaker_unifier_test.dart` holds the matching to fifteen cases including a
+      three-window interview, swapped labels, Chinese audio and every way the evidence can be too
+      weak; `test/job_runner_test.dart` proves the same end to end through the runner
+
+The bias is deliberate and recorded here: a wrong merge is a transcript that lies about who said
+what and nothing later reveals it, while a missed merge shows as an extra speaker the user joins in
+one tap. So the thresholds refuse anything under 1.5 seconds of shared talking, or any match that
+does not carry more than half of a label's overlap.
+
+Splitting a speaker in two is not built. Reassigning a line does the same job one line at a time,
+and until somebody meets a recording where that is not enough, the bulk operation is guesswork
+about what they would want.
 
 ### M6 — Sync and secrets
 

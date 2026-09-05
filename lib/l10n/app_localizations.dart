@@ -1677,11 +1677,47 @@ abstract class AppLocalizations {
   /// **'{count} lines'**
   String viewerSpeakerLines(int count);
 
+  /// No description provided for @viewerSpeakerMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge into another speaker'**
+  String get viewerSpeakerMerge;
+
+  /// No description provided for @viewerSpeakerMergeNobody.
+  ///
+  /// In en, this message translates to:
+  /// **'There is nobody else to merge into.'**
+  String get viewerSpeakerMergeNobody;
+
+  /// No description provided for @viewerSpeakerMergeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge {name} into'**
+  String viewerSpeakerMergeTitle(String name);
+
+  /// No description provided for @viewerSpeakerMerged.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} is now part of {into}'**
+  String viewerSpeakerMerged(String from, String into);
+
   /// No description provided for @viewerSpeakerName.
   ///
   /// In en, this message translates to:
   /// **'Name'**
   String get viewerSpeakerName;
+
+  /// No description provided for @viewerSpeakerRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get viewerSpeakerRename;
+
+  /// No description provided for @viewerSpeakerUncertain.
+  ///
+  /// In en, this message translates to:
+  /// **'Some of this speaker\'s lines were an uncertain match across a segment boundary.'**
+  String get viewerSpeakerUncertain;
 
   /// No description provided for @viewerSpeakers.
   ///

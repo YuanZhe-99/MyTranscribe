@@ -706,6 +706,21 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
             ],
           ),
         ),
+        onMerge: (from, into) async {
+          final names = (
+            _nameOf(transcript, from, l10n),
+            _nameOf(transcript, into, l10n),
+          );
+          await _save(transcript.mergeSpeakers(from, into));
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                l10n.viewerSpeakerMerged(names.$1 ?? from, names.$2 ?? into),
+              ),
+            ),
+          );
+        },
       );
 
   /// Purpose: Show a panel as a sheet on a narrow window.

@@ -86,9 +86,10 @@ class TranscriptStore {
     String jobId,
     List<MergedSegment> segments, {
     required bool timestamped,
+    Map<String, String> speakerMap = const {},
   }) {
     final speakers = <String, Speaker>{};
-    final map = <String, String>{};
+    final map = Map<String, String>.of(speakerMap);
     final lines = <TranscriptSegment>[];
 
     for (var index = 0; index < segments.length; index++) {
@@ -97,15 +98,18 @@ class TranscriptStore {
 
       if (segment.localSpeaker case final label?) {
         final key = '${segment.chunkIndex}:$label';
+        // The cross-window matching has usually already decided this. A label
+        // it did not place — a window whose overlap was inconclusive — becomes
+        // a new speaker here rather than being dropped.
         speakerId = map[key];
         if (speakerId == null) {
-          speakerId = 'spk_${speakers.length + 1}';
-          speakers[speakerId] = Speaker(
-            id: speakerId,
-            colorIndex: speakers.length,
-          );
+          speakerId = 'spk_${map.length + 1}';
           map[key] = speakerId;
         }
+        speakers.putIfAbsent(
+          speakerId,
+          () => Speaker(id: speakerId!, colorIndex: speakers.length),
+        );
       }
 
       lines.add(

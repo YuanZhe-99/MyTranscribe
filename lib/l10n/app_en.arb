@@ -432,6 +432,29 @@
       }
     }
   },
+  "viewerSpeakerMerge": "Merge into another speaker",
+  "viewerSpeakerMergeNobody": "There is nobody else to merge into.",
+  "viewerSpeakerMergeTitle": "Merge {name} into",
+  "@viewerSpeakerMergeTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "viewerSpeakerMerged": "{from} is now part of {into}",
+  "@viewerSpeakerMerged": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "into": {
+        "type": "String"
+      }
+    }
+  },
   "viewerSpeakerName": "Name",
+  "viewerSpeakerRename": "Rename",
+  "viewerSpeakerUncertain": "Some of this speaker's lines were an uncertain match across a segment boundary.",
   "viewerSpeakers": "Speakers"
 }

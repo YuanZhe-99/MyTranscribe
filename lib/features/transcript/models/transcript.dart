@@ -299,6 +299,48 @@ class Transcript {
     return null;
   }
 
+  /// Purpose: Fold one speaker into another.
+  /// Inputs: The speaker to merge away [from], and the one to merge [into].
+  /// Returns: A new [Transcript].
+  /// Side effects: None.
+  /// Notes: Every line, and every window label that led to the merged speaker,
+  /// is repointed; the merged id is remembered on the survivor so the change
+  /// can be explained later. The matching refuses a doubtful join rather than
+  /// guessing, so one person coming back as two is its expected failure, and
+  /// this is the repair. Nothing is deleted but the speaker record itself: the
+  /// text is untouched, because it was always right.
+  Transcript mergeSpeakers(String from, String into) {
+    if (from == into) return this;
+    if (speaker(from) == null || speaker(into) == null) return this;
+
+    return copyWith(
+      speakers: [
+        for (final existing in speakers)
+          if (existing.id == into)
+            existing.copyWith(
+              mergedIds: [
+                ...existing.mergedIds,
+                from,
+                ...speaker(from)!.mergedIds,
+              ],
+            )
+          else if (existing.id != from)
+            existing,
+      ],
+      speakerMap: {
+        for (final entry in speakerMap.entries)
+          entry.key: entry.value == from ? into : entry.value,
+      },
+      segments: [
+        for (final segment in segments)
+          if (segment.speakerId == from)
+            segment.copyWith(speakerId: into)
+          else
+            segment,
+      ],
+    );
+  }
+
   /// Purpose: Parse a transcript.
   /// Inputs: [json].
   /// Returns: A [Transcript].

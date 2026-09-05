@@ -22,8 +22,11 @@ class SpeakersPanel extends StatelessWidget {
   /// Called with the speaker's id and their new name.
   final void Function(String speakerId, String name) onRename;
 
+  /// Called to fold one speaker into another, `from` into `into`.
+  final void Function(String from, String into) onMerge;
+
   /// Purpose: Create the speakers panel.
-  /// Inputs: [transcript], [onRename].
+  /// Inputs: [transcript], [onRename], [onMerge].
   /// Returns: A new instance.
   /// Side effects: None.
   /// Notes: None.
@@ -31,6 +34,7 @@ class SpeakersPanel extends StatelessWidget {
     super.key,
     required this.transcript,
     required this.onRename,
+    required this.onMerge,
   });
 
   /// Purpose: Build the panel.
@@ -74,10 +78,25 @@ class SpeakersPanel extends StatelessWidget {
             ),
             title: Text(speaker.displayName(l10n.viewerSpeakerFallback)),
             subtitle: Text(l10n.viewerSpeakerLines(counts[speaker.id] ?? 0)),
-            trailing: IconButton(
-              tooltip: l10n.viewerSpeakerName,
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: () => _rename(context, l10n, speaker),
+            trailing: PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              onSelected: (action) => action == 'rename'
+                  ? _rename(context, l10n, speaker)
+                  : _merge(context, l10n, speaker),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'rename',
+                  child: Text(l10n.viewerSpeakerRename),
+                ),
+                PopupMenuItem(
+                  value: 'merge',
+                  // The matching refuses a doubtful join rather than guessing,
+                  // so one person coming back as two is the expected way for it
+                  // to be wrong. This is the fix, and it takes one tap.
+                  enabled: transcript.speakers.length > 1,
+                  child: Text(l10n.viewerSpeakerMerge),
+                ),
+              ],
             ),
           ),
       ],
@@ -122,5 +141,43 @@ class SpeakersPanel extends StatelessWidget {
     );
     controller.dispose();
     if (name != null) onRename(speaker.id, name);
+  }
+
+  /// Purpose: Ask which speaker to fold this one into.
+  /// Inputs: `context`, [l10n] and the [speaker] being merged away.
+  /// Returns: None.
+  /// Side effects: Opens a dialog and calls [onMerge].
+  /// Notes: Internal helper used within this file only. The speaker being
+  /// merged away is the one the menu was opened on, so the list offered is
+  /// everybody else — merging somebody into themselves is not a thing.
+  Future<void> _merge(
+    BuildContext context,
+    AppLocalizations l10n,
+    Speaker speaker,
+  ) async {
+    final others = [
+      for (final other in transcript.speakers)
+        if (other.id != speaker.id) other,
+    ];
+    if (others.isEmpty) return;
+
+    final into = await showDialog<String>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(
+          l10n.viewerSpeakerMergeTitle(
+            speaker.displayName(l10n.viewerSpeakerFallback),
+          ),
+        ),
+        children: [
+          for (final other in others)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(ctx).pop(other.id),
+              child: Text(other.displayName(l10n.viewerSpeakerFallback)),
+            ),
+        ],
+      ),
+    );
+    if (into != null) onMerge(speaker.id, into);
   }
 }

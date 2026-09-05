@@ -26,6 +26,7 @@ import '../../providers/services/provider_dialect.dart';
 import '../../providers/services/settings_repository.dart';
 import '../../providers/services/transcription_client.dart';
 import '../../secrets/services/secrets_store.dart';
+import '../../transcript/services/speaker_unifier.dart';
 import '../../transcript/services/transcript_store.dart';
 import '../models/chunk_plan.dart';
 import '../models/transcription_job.dart';
@@ -143,7 +144,29 @@ class JobRunner {
     if (_queue.contains(jobId)) return;
     _queue.add(jobId);
     _publish();
+    // A job resumed from a failure still says "did not finish" on disk until
+    // the runner reaches it, which with other jobs ahead of it can be minutes.
+    // Marking it waiting immediately is what the user just asked for.
+    unawaited(_markQueued(jobId));
     unawaited(_pump());
+  }
+
+  /// Purpose: Record that a job is waiting its turn.
+  /// Inputs: [jobId].
+  /// Returns: None.
+  /// Side effects: Rewrites the job's stage when it had stopped.
+  /// Notes: Internal helper used within this file only. The finished windows
+  /// and the plan are left alone; only the stage and the old error go.
+  Future<void> _markQueued(String jobId) async {
+    final job = await JobStore.load(jobId);
+    if (job == null || !job.stage.isFinished) return;
+    await JobStore.save(
+      job.copyWith(
+        stage: JobStage.queued,
+        clearError: true,
+        clearCurrentChunk: true,
+      ),
+    );
   }
 
   /// Purpose: Re-queue jobs that were interrupted.
@@ -417,6 +440,16 @@ class JobRunner {
     }
 
     // ── Windows ──
+    // Carrying voice samples forward is only possible when the model accepts
+    // them, the recording is actually split, and there is a converted copy to
+    // cut samples out of.
+    final enrolling =
+        job.options.enrollment &&
+        job.options.diarize &&
+        (model.maxKnownSpeakers ?? 0) > 0 &&
+        !plan.uploadsOriginal &&
+        toolkitReady;
+
     final client = _clientFactory();
     _activeClient = client;
     try {
@@ -465,6 +498,12 @@ class JobRunner {
         );
         _checkCancelled(job);
 
+        // Voices the earlier windows established, so this one can recognise
+        // them rather than being matched to them afterwards.
+        final known = enrolling
+            ? await _enrol(job, audioSource, toolkit, model.maxKnownSpeakers)
+            : const <KnownSpeaker>[];
+
         final TranscriptionResult result;
         try {
           result = await client.transcribe(
@@ -475,6 +514,7 @@ class JobRunner {
               prompt: job.options.prompt,
               keywords: job.options.keywords,
               diarize: job.options.diarize,
+              knownSpeakers: known,
             ),
             provider: provider,
             model: model,
@@ -523,6 +563,9 @@ class JobRunner {
                 ),
             ],
             hasRealTimestamps: result.hasRealTimestamps,
+            // What this window was told about; the matching takes an echoed id
+            // as a voice match, and a resume needs to know it was sent.
+            knownSpeakerIds: [for (final speaker in known) speaker.id],
           ),
         ]..sort((a, b) => a.index.compareTo(b.index));
         job = await _save(job.copyWith(chunks: chunks));
@@ -537,6 +580,17 @@ class JobRunner {
     );
     final segments = _merge(job, plan);
 
+    // ── Speakers ──
+    // Each window labelled its speakers with no idea what the last one called
+    // them, so the labels are joined up before anything is written.
+    var speakerMap = const <String, String>{};
+    if (job.chunks.any(
+      (chunk) => chunk.segments.any((segment) => segment.speaker != null),
+    )) {
+      job = await _save(job.copyWith(stage: JobStage.namingSpeakers));
+      speakerMap = _unifySpeakers(job);
+    }
+
     // ── Render ──
     job = await _save(job.copyWith(stage: JobStage.rendering));
     // The transcript is written before the two text files, because it is the
@@ -549,6 +603,7 @@ class JobRunner {
         timestamped:
             job.chunks.isNotEmpty &&
             job.chunks.every((chunk) => chunk.hasRealTimestamps),
+        speakerMap: speakerMap,
       ),
     );
     final outputs = await _writeOutputs(job, segments);
@@ -612,6 +667,118 @@ class JobRunner {
       starts,
       plan.overlapSeconds,
     );
+  }
+
+  /// Purpose: Cut a short clip of each speaker heard so far, to send with the
+  /// next window.
+  /// Inputs: The [job], the converted [audio], the [toolkit], and how many
+  /// samples the model will [limit] itself to.
+  /// Returns: The speakers to name, longest-talking first.
+  /// Side effects: Writes a WAV per speaker into the job's speakers folder.
+  /// Notes: Internal helper used within this file only. This is what turns the
+  /// matching from guesswork into recognition: the source is told "this voice
+  /// is spk_1" and echoes the id back, so a speaker who is silent through a
+  /// whole overlap still keeps their identity. The clip comes from their
+  /// longest line, which is the most likely to be clean speech rather than a
+  /// two-word interjection. A sample already cut is reused, so a resume does
+  /// not re-cut them all.
+  Future<List<KnownSpeaker>> _enrol(
+    TranscriptionJob job,
+    File audio,
+    MediaToolkit toolkit,
+    int? limit,
+  ) async {
+    if (job.chunks.isEmpty) return const [];
+
+    final map = _unifySpeakers(job);
+    if (map.isEmpty) return const [];
+
+    // The longest clean line for each speaker, and how long they talk overall.
+    final best = <String, ({double start, double length})>{};
+    final talking = <String, double>{};
+    for (final chunk in job.chunks) {
+      for (final segment in chunk.segments) {
+        final label = segment.speaker;
+        if (label == null) continue;
+        final speakerId = map['${chunk.index}:$label'];
+        if (speakerId == null) continue;
+
+        final start = chunk.startSeconds + segment.startSeconds;
+        final length = segment.endSeconds - segment.startSeconds;
+        if (length <= 0) continue;
+
+        talking[speakerId] = (talking[speakerId] ?? 0) + length;
+        if (length > (best[speakerId]?.length ?? 0)) {
+          best[speakerId] = (start: start, length: length);
+        }
+      }
+    }
+
+    final ranked = talking.keys.toList()
+      ..sort((a, b) => talking[b]!.compareTo(talking[a]!));
+
+    final speakers = <KnownSpeaker>[];
+    for (final speakerId in ranked.take(limit ?? ranked.length)) {
+      final line = best[speakerId];
+      if (line == null || line.length < _minSampleSeconds) continue;
+
+      final file = await JobStore.speakerSample(job.id, speakerId);
+      if (!file.existsSync()) {
+        try {
+          await toolkit.cutSample(
+            audio.path,
+            // A little way in, so the clip does not open on the moment the
+            // previous speaker stopped.
+            line.start + 0.5,
+            line.length.clamp(_minSampleSeconds, _maxSampleSeconds),
+            file.path,
+          );
+        } on MediaException {
+          // A sample that will not cut is not worth failing a job over; the
+          // overlap matching still has to work without one.
+          continue;
+        }
+      }
+      if (file.existsSync()) {
+        speakers.add(KnownSpeaker(id: speakerId, sample: file));
+      }
+    }
+    return speakers;
+  }
+
+  /// Purpose: Join each window's speaker labels into speakers that mean the
+  /// same thing across the whole recording.
+  /// Inputs: [job].
+  /// Returns: A map from `"<window>:<label>"` to a speaker id.
+  /// Side effects: None.
+  /// Notes: Internal helper used within this file only. Run on the raw window
+  /// results rather than on the merged segments, because the overlap is the
+  /// evidence and the merge is what removes it. Any known-speaker ids a source
+  /// echoed back are passed through, since a voice the source recognised from a
+  /// sample beats any amount of overlap arithmetic.
+  Map<String, String> _unifySpeakers(TranscriptionJob job) {
+    final ordered = List<ChunkResult>.of(job.chunks)
+      ..sort((a, b) => a.index.compareTo(b.index));
+
+    final windows = [
+      for (final chunk in ordered)
+        [
+          for (final segment in chunk.segments)
+            if (segment.speaker case final label?)
+              LabelledSegment(
+                windowIndex: chunk.index,
+                label: label,
+                startSeconds: chunk.startSeconds + segment.startSeconds,
+                endSeconds: chunk.startSeconds + segment.endSeconds,
+                text: segment.text,
+              ),
+        ],
+    ];
+
+    return unifySpeakers(
+      windows,
+      knownIds: {for (final chunk in ordered) ...chunk.knownSpeakerIds},
+    ).map;
   }
 
   /// Purpose: Write the Markdown and text transcripts.
@@ -725,6 +892,18 @@ class JobRunner {
     rejectedFeature: error.rejectedFeature?.name,
   );
 }
+
+/// The shortest voice sample worth sending, in seconds.
+///
+/// Below this the sources that accept reference clips reject them, and a clip
+/// that short would not identify anybody anyway.
+const _minSampleSeconds = 2.0;
+
+/// The longest voice sample worth sending, in seconds.
+///
+/// The published limit is ten; more audio does not improve the match and every
+/// window's request carries all of them.
+const _maxSampleSeconds = 8.0;
 
 /// Thrown inside a run when the user cancelled.
 class _JobCancelled implements Exception {
