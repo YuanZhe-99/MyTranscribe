@@ -23,7 +23,7 @@ configuration that follows you to another device.
 | FFmpeg | Linked in on Android, iOS and macOS; external executables on Windows | The maintained plugin publishes x86_64 Windows binaries only, and this project's development machine is Windows on ARM64. |
 | Sync scope | Configuration only | Recordings and transcripts are large and private; only config backup was asked for. |
 | API keys | Local file outside the module registry; synced only to a secure endpoint | Sync, backup and ZIP only touch registry files, so exclusion is structural. |
-| Remotes | Gitea only, no CI | One remote, no hosted runner; `flutter analyze` and `flutter test` are the gate. |
+| Remotes | Gitea for development, GitHub public | Gitea has no runner and is pushed first; GitHub runs the builds and carries the Releases. `flutter analyze` and `flutter test` locally remain the gate. |
 
 ## Milestones
 

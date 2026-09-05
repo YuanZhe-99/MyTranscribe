@@ -1,14 +1,45 @@
 # 构建与验证
 
-**没有持续集成**。仓库有两个远端，两个都不跑托管任务，因此 `flutter analyze` 与 `flutter test` 在本地
-运行，它们就是关卡。
+## 远端
 
 | 远端 | 位置 | 用途 |
 |---|---|---|
 | `origin` | 一台私有的 Gitea 实例 | 开发；每次推送先到这里 |
-| `github` | `github.com/YuanZhe-99/MyTranscribe` | 公开镜像 |
+| `github` | `github.com/YuanZhe-99/MyTranscribe` | 公开镜像，也是唯一跑 CI 的一个 |
 
 两者携带同一个 `main` 与同一批标签。先推 `origin`：没有经过本地关卡的提交，没有理由先公开。
+
+## 持续集成
+
+`.github/workflows/build.yml` 在 GitHub 上运行：每次推送到 `main`、每个 pull request，以及在 Actions 页
+手动触发时。Gitea 没有 runner，因此推到那里的提交不会被任何东西检查。
+
+| 任务 | Runner | 产出 |
+|---|---|---|
+| `android` | `ubuntu-latest` | analyze、完整测试套件、一个 APK 和一个 AAB |
+| `windows-x64` | `windows-latest` | 一个 Inno Setup 安装程序 |
+| `windows-arm64` | `windows-11-arm` | 一个 Inno Setup 安装程序 |
+| `ios` | `macos-latest` | 一个未签名的侧载 IPA |
+| `macos` | `macos-latest` | 一个 DMG |
+| `release` | `ubuntu-latest` | 仅在 `v*` 标签上：把以上全部做成一个 GitHub Release |
+
+**验证关卡仍然在本地。** CI 是关于本机没有的四个平台的第二意见，不是提交前不跑 `flutter analyze` 与
+`flutter test` 的理由。本地通过而那边失败，几乎总是一个值得细读的平台特有问题。
+
+关于这些任务，有三件事值得知道：
+
+- **Android 发布签名是可选的。** 只有当仓库配置了密钥库机密（`KEYSTORE_BASE64`、`STORE_PASSWORD`、
+  `KEY_ALIAS`、`KEY_PASSWORD`）时，该任务才会写出 `android/key.properties`。没有它们时，Gradle 配置会像本
+  地构建一样回落到 debug 密钥，因此 APK 能安装，但不是可以发到商店的东西。
+- **Ubuntu runner 自带 FFmpeg**，因此 `test/media_toolkit_live_test.dart` 不再自行跳过，而是对着一个真实
+  的二进制来检验外部可执行文件后端。那是没有 FFmpeg 的主机唯一检查不到的媒体层部分。它体积较大的下载仍然
+  留在 `--dart-define=live_download` 之后。
+- **ARM64 任务使用 stable**，这一点与兄弟应用不同，它们是从 Flutter master 构建的。写它们的工作流时，
+  stable 还没有 ARM64 的 Windows 引擎；3.44.2 已经提供 `windows-arm64-release`，而本项目正是在
+  Windows on ARM64 上、针对这个版本开发的。固定 stable 还意味着每次运行产出同一个 `flutter_windows.dll`，
+  于是 Defender 的云端信誉是累积在一个哈希上，而不是每次构建都换一个陌生的。
+
+CI 不构建 MSIX：打包它需要签名证书，而本仓库没有。要产出它，仍然是在本地运行 `dart run msix:create`。
 
 ## 全新克隆
 

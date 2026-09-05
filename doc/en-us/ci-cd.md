@@ -1,15 +1,51 @@
 # Building and verifying
 
-There is **no continuous integration**. The repository has two remotes and neither runs a hosted
-job, so `flutter analyze` and `flutter test` run locally and are the gate.
+## Remotes
 
 | Remote | Where | For |
 |---|---|---|
 | `origin` | a private Gitea instance | development; every push goes here first |
-| `github` | `github.com/YuanZhe-99/MyTranscribe` | the public mirror |
+| `github` | `github.com/YuanZhe-99/MyTranscribe` | the public mirror, and the only one that runs CI |
 
 Both carry the same `main` and the same tags. Push `origin` first: a commit that has not been through
 the local gate has no business being public.
+
+## Continuous integration
+
+`.github/workflows/build.yml` runs on GitHub on every push to `main`, every pull request, and on
+demand from the Actions tab. Gitea has no runner, so a push there is checked by nothing.
+
+| Job | Runner | Produces |
+|---|---|---|
+| `android` | `ubuntu-latest` | analyze, the full test suite, an APK and an AAB |
+| `windows-x64` | `windows-latest` | an Inno Setup installer |
+| `windows-arm64` | `windows-11-arm` | an Inno Setup installer |
+| `ios` | `macos-latest` | an unsigned sideload IPA |
+| `macos` | `macos-latest` | a DMG |
+| `release` | `ubuntu-latest` | on a `v*` tag only: a GitHub Release with all of the above |
+
+**The verification gate is still local.** CI is a second opinion on four platforms this machine does
+not have; it is not a reason to stop running `flutter analyze` and `flutter test` before committing.
+A red build there after a green run here is nearly always a platform-specific problem worth reading.
+
+Three things about the jobs are worth knowing:
+
+- **Android release signing is optional.** The job writes `android/key.properties` only when the
+  repository has the keystore secrets (`KEYSTORE_BASE64`, `STORE_PASSWORD`, `KEY_ALIAS`,
+  `KEY_PASSWORD`). Without them the Gradle config falls back to the debug key exactly as a local
+  build does, so the APK installs but is not something to publish to a store.
+- **The Ubuntu runner has FFmpeg**, so `test/media_toolkit_live_test.dart` stops skipping itself and
+  exercises the external-executable media backend against a real binary. That is the one part of the
+  media layer a host without FFmpeg cannot check. Its large download stays behind
+  `--dart-define=live_download`.
+- **The ARM64 job uses stable**, unlike the sibling apps, which build it from Flutter master. When
+  their workflows were written stable had no ARM64 Windows engine; 3.44.2 ships
+  `windows-arm64-release`, and this project is developed on Windows on ARM64 against exactly that
+  version. Pinning stable also means every run produces the same `flutter_windows.dll`, so
+  Defender's cloud reputation accumulates against one hash instead of a fresh unknown one per build.
+
+MSIX is not built in CI: packaging one needs a signing certificate, and this repository carries
+none. `dart run msix:create` locally is still the way to produce it.
 
 ## Fresh clone
 

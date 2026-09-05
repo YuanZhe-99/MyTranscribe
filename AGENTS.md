@@ -218,9 +218,14 @@ When the user confirms:
 **This repo's branch is `main`** (MyDay and MyNihongo also use `main`; MyAnime and MyDevice use
 `master`). Push `HEAD` or check `git branch --show-current` first, and verify with `git ls-remote`.
 
-There is **no CI**: neither remote runs a hosted job, so `flutter analyze` and
-`flutter test` run locally and are the gate. Desktop and mobile builds are produced on demand; see
-`doc/en-us/ci-cd.md`.
+**CI runs on GitHub only.** `.github/workflows/build.yml` analyzes, tests and builds all five
+targets on every push to `main`, every pull request, and on demand; a `v*` tag additionally creates
+a Release from the artifacts. Gitea has no runner, so a push there is checked by nothing.
+
+That does not move the gate. **Run `flutter analyze` and `flutter test` locally before every
+commit** — CI is a second opinion on five platforms you do not have, not a substitute for the one
+you do. A red build on GitHub after a green run locally almost always means a platform-specific
+problem worth reading rather than a flake worth re-running. See `doc/en-us/ci-cd.md`.
 
 ## App icon
 

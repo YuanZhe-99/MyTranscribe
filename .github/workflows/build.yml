@@ -1,0 +1,261 @@
+name: Build All Platforms
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# A release pushes the commit and then the tag, which is two pushes and was
+# two full runs of the same job on the same commit. Keying the group on the
+# commit rather than the ref makes the tag run supersede the branch run, and
+# the tag run is the one worth keeping — it does everything the branch run does
+# and then creates the Release. On an ordinary push, where no tag follows,
+# nothing is cancelled and this changes nothing.
+concurrency:
+  group: build-${{ github.sha }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.44.2'
+
+jobs:
+  # ── Android APK (full) + AAB (store), and the verification gate ──
+  #
+  # analyze and test run here rather than in a job of their own: this is the
+  # cheapest runner, it is already resolving dependencies, and a failure should
+  # stop the release before four more machines start building it.
+  android:
+    runs-on: ubuntu-latest
+    env:
+      HAS_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # myapps_data is a path dependency living in a submodule; without it
+          # `flutter pub get` fails. The relative URL resolves to the public
+          # GitHub copy here, so the default GITHUB_TOKEN suffices.
+          submodules: recursive
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - run: flutter pub get
+
+      - run: flutter gen-l10n
+
+      - run: flutter analyze
+
+      # Ubuntu runners ship FFmpeg, so test/media_toolkit_live_test.dart stops
+      # skipping itself and exercises the external-executable media backend for
+      # real. That is the one part of the media layer a host without FFmpeg
+      # cannot check. Its large download stays behind --dart-define=live_download.
+      - run: flutter test
+
+      - name: Setup Android signing
+        if: ${{ env.HAS_KEYSTORE == 'true' }}
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
+          printf 'storeFile=upload-keystore.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
+            "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > android/key.properties
+
+      # Without the keystore secrets the Gradle config falls back to the debug
+      # key, exactly as a local build does. The artifact still installs; it is
+      # not something to publish to a store.
+      - name: Build APK (full)
+        run: flutter build apk --release --dart-define=FLAVOR=full
+
+      - name: Build AAB (store)
+        run: flutter build appbundle --release --dart-define=FLAVOR=store
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: android-apk-full
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: android-aab-store
+          path: build/app/outputs/bundle/release/app-release.aab
+
+  # ── Windows x64 installer (full) ──
+  windows-x64:
+    runs-on: windows-latest
+    env:
+      # audioplayers and share_plus reach WinRT headers that still include the
+      # deprecated <experimental/coroutine>, which newer MSVC toolchains promote
+      # to an error.
+      CL: /D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - run: flutter pub get
+
+      - name: Build Windows x64 (full)
+        run: flutter build windows --release --dart-define=FLAVOR=full
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Build installer (x64)
+        run: iscc installer.iss
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows-installer-x64-full
+          path: build/installer/*.exe
+
+  # ── Windows ARM64 installer (full) ──
+  #
+  # The sibling apps build this from Flutter master, because when their
+  # workflows were written stable had no ARM64 Windows engine. It does now:
+  # 3.44.2 ships windows-arm64-release artifacts, and this project is developed
+  # on Windows on ARM64 and builds its own release with the pinned stable
+  # version. So this job uses stable like every other one.
+  #
+  # That also removes the reason those workflows cache master weekly. A pinned
+  # stable release produces the same flutter_windows.dll on every run by
+  # construction, so Defender's cloud reputation accumulates against one hash
+  # rather than a fresh unknown one each build.
+  windows-arm64:
+    runs-on: windows-11-arm
+    env:
+      CL: /D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - name: Flutter doctor
+        run: flutter doctor
+
+      - run: flutter pub get
+
+      - name: Build Windows ARM64 (full)
+        run: flutter build windows --release --dart-define=FLAVOR=full
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Build installer (ARM64)
+        run: iscc /DARM64 installer.iss
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows-installer-arm64-full
+          path: build/installer/*.exe
+
+  # ── iOS IPA (full, sideload) ──
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - run: flutter pub get
+
+      # Unsigned: this repository carries no signing identity, and a workflow
+      # that needed one could not run on a fork or a fresh clone.
+      - name: Build iOS (full, no codesign)
+        run: flutter build ios --release --no-codesign --dart-define=FLAVOR=full
+
+      - name: Package sideload IPA
+        run: |
+          mkdir -p build/ios/ipa/Payload
+          cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+          cd build/ios/ipa && zip -r MyTranscribe_sideload.ipa Payload
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ios-ipa-full-sideload
+          path: build/ios/ipa/MyTranscribe_sideload.ipa
+
+  # ── macOS DMG (full) ──
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - run: flutter pub get
+
+      - name: Build macOS (full)
+        run: flutter build macos --release --dart-define=FLAVOR=full
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Create DMG
+        run: |
+          APP_PATH=$(find build/macos/Build/Products/Release -name "*.app" -maxdepth 1 | head -1)
+          create-dmg \
+            --volname "MyTranscribe!!!!!" \
+            --app-drop-link 400 150 \
+            "build/macos/MyTranscribe.dmg" \
+            "$APP_PATH" || true
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: macos-dmg-full
+          path: build/macos/MyTranscribe.dmg
+
+  # ── Create GitHub Release on tag push ──
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [android, windows-x64, windows-arm64, ios, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+
+      - name: Flatten artifacts
+        run: |
+          mkdir -p release
+          find artifacts -type f \( -name "*.apk" -o -name "*.aab" -o -name "*.exe" -o -name "*.ipa" -o -name "*.dmg" \) -exec cp {} release/ \;
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: release/*
+          generate_release_notes: true

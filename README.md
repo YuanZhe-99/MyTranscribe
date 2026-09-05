@@ -1,5 +1,7 @@
 # MyTranscribe!!!!!
 
+[![Build All Platforms](https://github.com/YuanZhe-99/MyTranscribe/actions/workflows/build.yml/badge.svg)](https://github.com/YuanZhe-99/MyTranscribe/actions/workflows/build.yml)
+
 Turn a recording into text, on your phone, tablet or desktop.
 
 MyTranscribe sends audio to a transcription service **you** configure — OpenAI, OpenRouter, or any
@@ -44,6 +46,10 @@ flutter run -d windows           # or -d android, macos, ios
 
 Already cloned without `--recurse-submodules`? Run `git submodule update --init` — `myapps_data` is a
 path dependency inside a submodule, and `flutter pub get` fails without it.
+
+GitHub Actions builds all five targets on every push, and attaches an APK, an AAB, both Windows
+installers, an unsigned IPA and a DMG to the Release for each `v*` tag. See
+[`doc/en-us/ci-cd.md`](doc/en-us/ci-cd.md).
 
 Windows and Linux need `ffmpeg` and `ffprobe`; Settings offers to download them on Windows. Android,
 iOS and macOS have the libraries built in.
