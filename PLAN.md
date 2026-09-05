@@ -91,8 +91,9 @@ configuration that follows you to another device.
       settings change that discards the cache, cancellation, and each failure a user can meet. It
       found two real defects on the way: a failed job was written back from its initial record, and
       an atomic write could lose a job to a momentary Windows file lock
-- [ ] Still to verify with a key: a real recording over the upload limit, end to end, against
-      OpenAI and OpenRouter. Nothing else in M3 depends on it
+Still to verify with a key: a real recording over the upload limit, end to end, against OpenAI and
+OpenRouter. Nothing else in M3 depends on it, and it is carried to the end of this file rather than
+left as an unticked box in a finished milestone.
 
 Whether speaker labels are offered comes from the model's three-state capability, read directly by
 the new-job page. The rest of what this plan first called a diarization policy — JSON mode,
@@ -164,7 +165,19 @@ on another.
 - [x] `test/doc_mirror_test.dart` holds the mirror in place — the same pages, the same heading
       structure, every cross-link resolving, and the function index covering the tree. It caught a
       corrupted heading in the English data-formats page on its first run
-- [ ] `v0.1.0` tagged and pushed after the user confirms
+- [x] Published to GitHub, with `.github/workflows/build.yml` building all five targets on every
+      push and turning a `v*` tag into a Release
+- [x] `v0.1.0` tagged and pushed to both remotes
+
+## What is not done, and why
+
+One thing in this plan is deliberately open rather than forgotten: **no recording over the upload
+limit has been transcribed end to end against a paid key.** Every part of that path is tested — the
+planner, the windowing, the merge, the resume, the dialects against a fake server — but the tests
+supply the server. Until somebody runs a real two-hour lecture through OpenAI or OpenRouter, the
+claim is "each piece works" and not "the whole thing works".
+
+That is the first thing to do with a key, and the most likely place for a surprise.
 
 ## Decisions log
 
