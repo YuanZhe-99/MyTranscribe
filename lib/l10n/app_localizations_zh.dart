@@ -168,6 +168,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get jobFieldStarted => '开始于';
 
   @override
+  String get jobOpenTranscript => '打开转写稿';
+
+  @override
   String get jobPathCopied => '路径已复制';
 
   @override
@@ -767,6 +770,92 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get syncUnknownItem => '当前内容库中没有这一项。';
+
+  @override
+  String get viewerApproximate => '该模型没有返回时间，这里显示的是按分段起点估算的时间。';
+
+  @override
+  String get viewerAudioMissing => '本设备上已没有转换后的音频，无法播放。';
+
+  @override
+  String get viewerAutoScroll => '跟随播放';
+
+  @override
+  String get viewerCopied => '转写稿已复制';
+
+  @override
+  String get viewerCopyAll => '复制整份转写稿';
+
+  @override
+  String get viewerEditNobody => '不指定';
+
+  @override
+  String get viewerEditSegment => '编辑这一句';
+
+  @override
+  String get viewerEditSpeaker => '说话人';
+
+  @override
+  String get viewerEditText => '内容';
+
+  @override
+  String get viewerEmpty => '这次转写没有产生文本。';
+
+  @override
+  String get viewerExport => '导出';
+
+  @override
+  String get viewerExportNeedsTimes => '需要真实时间';
+
+  @override
+  String viewerExportSaved(String name) {
+    return '已保存为 $name';
+  }
+
+  @override
+  String get viewerFontSize => '字号';
+
+  @override
+  String get viewerGroupSpeakers => '按说话人合并';
+
+  @override
+  String get viewerModeSegments => '分句';
+
+  @override
+  String get viewerModeTranscript => '全文';
+
+  @override
+  String get viewerNoResults => '没有匹配项';
+
+  @override
+  String get viewerOptions => '显示';
+
+  @override
+  String viewerSearchCount(int index, int total) {
+    return '第 $index / $total 条';
+  }
+
+  @override
+  String get viewerSearchHint => '在这份转写稿中搜索';
+
+  @override
+  String get viewerShowTimestamps => '显示时间';
+
+  @override
+  String viewerSpeakerFallback(int number) {
+    return '说话人 $number';
+  }
+
+  @override
+  String viewerSpeakerLines(int count) {
+    return '$count 句';
+  }
+
+  @override
+  String get viewerSpeakerName => '名称';
+
+  @override
+  String get viewerSpeakers => '说话人';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -931,6 +1020,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get jobFieldStarted => '開始於';
+
+  @override
+  String get jobOpenTranscript => '開啟轉寫稿';
 
   @override
   String get jobPathCopied => '路徑已複製';
@@ -1532,4 +1624,90 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get syncUnknownItem => '目前內容庫中沒有這一項。';
+
+  @override
+  String get viewerApproximate => '該模型沒有回傳時間，這裡顯示的是依分段起點推估的時間。';
+
+  @override
+  String get viewerAudioMissing => '本裝置上已沒有轉換後的音訊，無法播放。';
+
+  @override
+  String get viewerAutoScroll => '跟隨播放';
+
+  @override
+  String get viewerCopied => '轉寫稿已複製';
+
+  @override
+  String get viewerCopyAll => '複製整份轉寫稿';
+
+  @override
+  String get viewerEditNobody => '不指定';
+
+  @override
+  String get viewerEditSegment => '編輯這一句';
+
+  @override
+  String get viewerEditSpeaker => '說話人';
+
+  @override
+  String get viewerEditText => '內容';
+
+  @override
+  String get viewerEmpty => '這次轉寫沒有產生文字。';
+
+  @override
+  String get viewerExport => '匯出';
+
+  @override
+  String get viewerExportNeedsTimes => '需要真實時間';
+
+  @override
+  String viewerExportSaved(String name) {
+    return '已儲存為 $name';
+  }
+
+  @override
+  String get viewerFontSize => '字級';
+
+  @override
+  String get viewerGroupSpeakers => '依說話人合併';
+
+  @override
+  String get viewerModeSegments => '分句';
+
+  @override
+  String get viewerModeTranscript => '全文';
+
+  @override
+  String get viewerNoResults => '沒有相符的項目';
+
+  @override
+  String get viewerOptions => '顯示';
+
+  @override
+  String viewerSearchCount(int index, int total) {
+    return '第 $index / $total 筆';
+  }
+
+  @override
+  String get viewerSearchHint => '在這份轉寫稿中搜尋';
+
+  @override
+  String get viewerShowTimestamps => '顯示時間';
+
+  @override
+  String viewerSpeakerFallback(int number) {
+    return '說話人 $number';
+  }
+
+  @override
+  String viewerSpeakerLines(int count) {
+    return '$count 句';
+  }
+
+  @override
+  String get viewerSpeakerName => '名稱';
+
+  @override
+  String get viewerSpeakers => '說話人';
 }

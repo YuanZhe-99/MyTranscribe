@@ -405,6 +405,12 @@ abstract class AppLocalizations {
   /// **'Started'**
   String get jobFieldStarted;
 
+  /// No description provided for @jobOpenTranscript.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the transcript'**
+  String get jobOpenTranscript;
+
   /// No description provided for @jobPathCopied.
   ///
   /// In en, this message translates to:
@@ -1526,6 +1532,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This item is not in the current content catalog.'**
   String get syncUnknownItem;
+
+  /// No description provided for @viewerApproximate.
+  ///
+  /// In en, this message translates to:
+  /// **'This model returned no times, so the ones shown are estimated from where each segment started.'**
+  String get viewerApproximate;
+
+  /// No description provided for @viewerAudioMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The converted audio is no longer on this device, so there is nothing to play.'**
+  String get viewerAudioMissing;
+
+  /// No description provided for @viewerAutoScroll.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow playback'**
+  String get viewerAutoScroll;
+
+  /// No description provided for @viewerCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcript copied'**
+  String get viewerCopied;
+
+  /// No description provided for @viewerCopyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the whole transcript'**
+  String get viewerCopyAll;
+
+  /// No description provided for @viewerEditNobody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody in particular'**
+  String get viewerEditNobody;
+
+  /// No description provided for @viewerEditSegment.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit this line'**
+  String get viewerEditSegment;
+
+  /// No description provided for @viewerEditSpeaker.
+  ///
+  /// In en, this message translates to:
+  /// **'Who said it'**
+  String get viewerEditSpeaker;
+
+  /// No description provided for @viewerEditText.
+  ///
+  /// In en, this message translates to:
+  /// **'What was said'**
+  String get viewerEditText;
+
+  /// No description provided for @viewerEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'This transcription produced no text.'**
+  String get viewerEmpty;
+
+  /// No description provided for @viewerExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get viewerExport;
+
+  /// No description provided for @viewerExportNeedsTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs real times'**
+  String get viewerExportNeedsTimes;
+
+  /// No description provided for @viewerExportSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved as {name}'**
+  String viewerExportSaved(String name);
+
+  /// No description provided for @viewerFontSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Text size'**
+  String get viewerFontSize;
+
+  /// No description provided for @viewerGroupSpeakers.
+  ///
+  /// In en, this message translates to:
+  /// **'Group by speaker'**
+  String get viewerGroupSpeakers;
+
+  /// No description provided for @viewerModeSegments.
+  ///
+  /// In en, this message translates to:
+  /// **'Segments'**
+  String get viewerModeSegments;
+
+  /// No description provided for @viewerModeTranscript.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcript'**
+  String get viewerModeTranscript;
+
+  /// No description provided for @viewerNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No matches'**
+  String get viewerNoResults;
+
+  /// No description provided for @viewerOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get viewerOptions;
+
+  /// No description provided for @viewerSearchCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{index} of {total}'**
+  String viewerSearchCount(int index, int total);
+
+  /// No description provided for @viewerSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search this transcript'**
+  String get viewerSearchHint;
+
+  /// No description provided for @viewerShowTimestamps.
+  ///
+  /// In en, this message translates to:
+  /// **'Show times'**
+  String get viewerShowTimestamps;
+
+  /// No description provided for @viewerSpeakerFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Speaker {number}'**
+  String viewerSpeakerFallback(int number);
+
+  /// No description provided for @viewerSpeakerLines.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} lines'**
+  String viewerSpeakerLines(int count);
+
+  /// No description provided for @viewerSpeakerName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get viewerSpeakerName;
+
+  /// No description provided for @viewerSpeakers.
+  ///
+  /// In en, this message translates to:
+  /// **'Speakers'**
+  String get viewerSpeakers;
 }
 
 class _AppLocalizationsDelegate

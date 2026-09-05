@@ -98,13 +98,23 @@ Whether speaker labels are offered comes from the model's three-state capability
 the new-job page. The rest of what this plan first called a diarization policy — JSON mode,
 enrollment, dropping the prompt for the diarizing model — belongs with M5 and is written there.
 
-### M4 — Transcript viewer
+### M4 — Transcript viewer ✅
 
-- [ ] Transcript model and store, search, exports (TXT, Markdown, SRT, VTT, JSON, CSV)
-- [ ] Viewer: transcript and segment modes, grouping, timestamps, text size, editing
-- [ ] Audio player bar, seek from a segment, current-segment highlight
-- [ ] **Done when** the viewer reads well on a phone, a Fold 8 in both orientations and a desktop
-      window
+- [x] Transcript model and store, search, exports (TXT, Markdown, SRT, VTT, JSON, CSV)
+- [x] Viewer: transcript and segment modes, grouping, timestamps, text size, editing, speaker
+      naming
+- [x] Audio player bar, seek from a line, current-line highlight, following playback
+- [x] **Done**: `test/viewer_layout_ui_test.dart` pumps the viewer at all six geometries, and
+      `test/export_formatters_test.dart` checks every format against what reads it
+
+Two things this milestone settled. Subtitle exports are offered only for a transcript whose model
+returned real times: a subtitle file a minute out looks like it works, which is worse than not
+having one, so SRT and VTT are shown disabled with the reason. And the viewer takes its data from
+providers rather than reading files itself — a widget test runs in a zone where `dart:io` futures
+never complete, so a page that awaited one in `initState` could not be pumped at all.
+
+Speaker merging, splitting and cross-window matching are M5; the panel names only what it can
+honestly do today.
 
 ### M5 — Speakers
 
@@ -148,3 +158,10 @@ Recorded when a choice is made that later work should not quietly reverse.
   Windows a rename fails outright while anything else holds the file open — the jobs list reading it,
   a virus scanner, the search indexer. Without the retry a running job could die on a collision that
   lasted a millisecond.
+- **2026-09-05** — The transcript viewer reads its transcript, its job and its view settings from
+  Riverpod providers rather than from disk in `initState`. Flutter widget tests run in a zone where
+  `dart:io` futures never complete, so a page that awaits one can never be pumped — it hangs rather
+  than failing, which is worse. Any page that needs a file should follow this shape.
+- **2026-09-05** — `audioplayers` over `just_audio` and `media_kit`: its Windows backend is Media
+  Foundation compiled from source, so it builds on ARM64, while the others ship an x86_64-only
+  libmpv. Verified with a real `flutter build windows` on this machine.

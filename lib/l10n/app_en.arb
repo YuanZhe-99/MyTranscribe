@@ -72,6 +72,7 @@
   "jobFieldSize": "Size",
   "jobFieldSource": "Source",
   "jobFieldStarted": "Started",
+  "jobOpenTranscript": "Open the transcript",
   "jobPathCopied": "Path copied",
   "jobResume": "Resume",
   "jobRetry": "Try again",
@@ -375,5 +376,62 @@
     }
   },
   "syncRemoteVersion": "Remote version",
-  "syncUnknownItem": "This item is not in the current content catalog."
+  "syncUnknownItem": "This item is not in the current content catalog.",
+  "viewerApproximate": "This model returned no times, so the ones shown are estimated from where each segment started.",
+  "viewerAudioMissing": "The converted audio is no longer on this device, so there is nothing to play.",
+  "viewerAutoScroll": "Follow playback",
+  "viewerCopied": "Transcript copied",
+  "viewerCopyAll": "Copy the whole transcript",
+  "viewerEditNobody": "Nobody in particular",
+  "viewerEditSegment": "Edit this line",
+  "viewerEditSpeaker": "Who said it",
+  "viewerEditText": "What was said",
+  "viewerEmpty": "This transcription produced no text.",
+  "viewerExport": "Export",
+  "viewerExportNeedsTimes": "Needs real times",
+  "viewerExportSaved": "Saved as {name}",
+  "@viewerExportSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "viewerFontSize": "Text size",
+  "viewerGroupSpeakers": "Group by speaker",
+  "viewerModeSegments": "Segments",
+  "viewerModeTranscript": "Transcript",
+  "viewerNoResults": "No matches",
+  "viewerOptions": "View",
+  "viewerSearchCount": "{index} of {total}",
+  "@viewerSearchCount": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "viewerSearchHint": "Search this transcript",
+  "viewerShowTimestamps": "Show times",
+  "viewerSpeakerFallback": "Speaker {number}",
+  "@viewerSpeakerFallback": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "viewerSpeakerLines": "{count} lines",
+  "@viewerSpeakerLines": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "viewerSpeakerName": "Name",
+  "viewerSpeakers": "Speakers"
 }

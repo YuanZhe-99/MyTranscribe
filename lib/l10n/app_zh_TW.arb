@@ -72,6 +72,7 @@
   "jobFieldSize": "大小",
   "jobFieldSource": "來源",
   "jobFieldStarted": "開始於",
+  "jobOpenTranscript": "開啟轉寫稿",
   "jobPathCopied": "路徑已複製",
   "jobResume": "繼續",
   "jobRetry": "重試",
@@ -375,5 +376,62 @@
     }
   },
   "syncRemoteVersion": "遠端版本",
-  "syncUnknownItem": "目前內容庫中沒有這一項。"
+  "syncUnknownItem": "目前內容庫中沒有這一項。",
+  "viewerApproximate": "該模型沒有回傳時間，這裡顯示的是依分段起點推估的時間。",
+  "viewerAudioMissing": "本裝置上已沒有轉換後的音訊，無法播放。",
+  "viewerAutoScroll": "跟隨播放",
+  "viewerCopied": "轉寫稿已複製",
+  "viewerCopyAll": "複製整份轉寫稿",
+  "viewerEditNobody": "不指定",
+  "viewerEditSegment": "編輯這一句",
+  "viewerEditSpeaker": "說話人",
+  "viewerEditText": "內容",
+  "viewerEmpty": "這次轉寫沒有產生文字。",
+  "viewerExport": "匯出",
+  "viewerExportNeedsTimes": "需要真實時間",
+  "viewerExportSaved": "已儲存為 {name}",
+  "@viewerExportSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "viewerFontSize": "字級",
+  "viewerGroupSpeakers": "依說話人合併",
+  "viewerModeSegments": "分句",
+  "viewerModeTranscript": "全文",
+  "viewerNoResults": "沒有相符的項目",
+  "viewerOptions": "顯示",
+  "viewerSearchCount": "第 {index} / {total} 筆",
+  "@viewerSearchCount": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "viewerSearchHint": "在這份轉寫稿中搜尋",
+  "viewerShowTimestamps": "顯示時間",
+  "viewerSpeakerFallback": "說話人 {number}",
+  "@viewerSpeakerFallback": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "viewerSpeakerLines": "{count} 句",
+  "@viewerSpeakerLines": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "viewerSpeakerName": "名稱",
+  "viewerSpeakers": "說話人"
 }

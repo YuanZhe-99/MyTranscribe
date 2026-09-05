@@ -1,7 +1,9 @@
 import 'package:go_router/go_router.dart';
 
 import '../features/jobs/views/jobs_page.dart';
+import '../features/jobs/views/new_job_page.dart';
 import '../features/providers/views/library_page.dart';
+import '../features/transcript/views/transcript_viewer_page.dart';
 import '../features/settings/views/settings_page.dart';
 import '../shared/widgets/shell_scaffold.dart';
 
@@ -35,6 +37,15 @@ GoRouter buildAppRouter({String initialLocation = '/jobs'}) => GoRouter(
           builder: (context, state) => const SettingsPage(),
         ),
       ],
+    ),
+    // Outside the shell: both take the whole window, and neither has a
+    // navigation rail to subtract, which is what the viewer's layout rules
+    // assume.
+    GoRoute(path: '/new-job', builder: (context, state) => const NewJobPage()),
+    GoRoute(
+      path: '/transcript/:id',
+      builder: (context, state) =>
+          TranscriptViewerPage(jobId: state.pathParameters['id'] ?? ''),
     ),
   ],
 );

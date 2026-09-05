@@ -174,6 +174,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get jobFieldStarted => 'Started';
 
   @override
+  String get jobOpenTranscript => 'Open the transcript';
+
+  @override
   String get jobPathCopied => 'Path copied';
 
   @override
@@ -792,4 +795,92 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get syncUnknownItem =>
       'This item is not in the current content catalog.';
+
+  @override
+  String get viewerApproximate =>
+      'This model returned no times, so the ones shown are estimated from where each segment started.';
+
+  @override
+  String get viewerAudioMissing =>
+      'The converted audio is no longer on this device, so there is nothing to play.';
+
+  @override
+  String get viewerAutoScroll => 'Follow playback';
+
+  @override
+  String get viewerCopied => 'Transcript copied';
+
+  @override
+  String get viewerCopyAll => 'Copy the whole transcript';
+
+  @override
+  String get viewerEditNobody => 'Nobody in particular';
+
+  @override
+  String get viewerEditSegment => 'Edit this line';
+
+  @override
+  String get viewerEditSpeaker => 'Who said it';
+
+  @override
+  String get viewerEditText => 'What was said';
+
+  @override
+  String get viewerEmpty => 'This transcription produced no text.';
+
+  @override
+  String get viewerExport => 'Export';
+
+  @override
+  String get viewerExportNeedsTimes => 'Needs real times';
+
+  @override
+  String viewerExportSaved(String name) {
+    return 'Saved as $name';
+  }
+
+  @override
+  String get viewerFontSize => 'Text size';
+
+  @override
+  String get viewerGroupSpeakers => 'Group by speaker';
+
+  @override
+  String get viewerModeSegments => 'Segments';
+
+  @override
+  String get viewerModeTranscript => 'Transcript';
+
+  @override
+  String get viewerNoResults => 'No matches';
+
+  @override
+  String get viewerOptions => 'View';
+
+  @override
+  String viewerSearchCount(int index, int total) {
+    return '$index of $total';
+  }
+
+  @override
+  String get viewerSearchHint => 'Search this transcript';
+
+  @override
+  String get viewerShowTimestamps => 'Show times';
+
+  @override
+  String viewerSpeakerFallback(int number) {
+    return 'Speaker $number';
+  }
+
+  @override
+  String viewerSpeakerLines(int count) {
+    return '$count lines';
+  }
+
+  @override
+  String get viewerSpeakerName => 'Name';
+
+  @override
+  String get viewerSpeakers => 'Speakers';
 }

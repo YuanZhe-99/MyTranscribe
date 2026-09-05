@@ -26,6 +26,7 @@ import '../../providers/services/provider_dialect.dart';
 import '../../providers/services/settings_repository.dart';
 import '../../providers/services/transcription_client.dart';
 import '../../secrets/services/secrets_store.dart';
+import '../../transcript/services/transcript_store.dart';
 import '../models/chunk_plan.dart';
 import '../models/transcription_job.dart';
 import 'chunk_planner.dart';
@@ -538,6 +539,18 @@ class JobRunner {
 
     // ── Render ──
     job = await _save(job.copyWith(stage: JobStage.rendering));
+    // The transcript is written before the two text files, because it is the
+    // one the viewer reads and the one the user's later corrections live in;
+    // the text files are a rendering of it.
+    await TranscriptStore.save(
+      TranscriptStore.fromMerged(
+        job.id,
+        segments,
+        timestamped:
+            job.chunks.isNotEmpty &&
+            job.chunks.every((chunk) => chunk.hasRealTimestamps),
+      ),
+    );
     final outputs = await _writeOutputs(job, segments);
 
     if (!job.options.keepChunks && !plan.uploadsOriginal) {

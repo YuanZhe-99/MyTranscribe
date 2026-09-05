@@ -507,4 +507,38 @@ class TranscribeStorage {
   /// Notes: None.
   static Future<void> setKeepChunkFiles(bool keep) =>
       _setBool('keepChunkFiles', keep ? true : null);
+
+  /// Purpose: Read which view the transcript opens in.
+  /// Inputs: None.
+  /// Returns: `Future<String>` — `transcript` or `segments`.
+  /// Side effects: Reads `storage_config.json`.
+  /// Notes: Reading is what most people open a transcript to do, so the
+  /// flowing view is the default; the per-line view is for correcting.
+  static Future<String> getViewerMode() async =>
+      await _getString('viewerMode') ?? 'transcript';
+
+  /// Purpose: Remember which view the transcript was left in.
+  /// Inputs: `mode`.
+  /// Returns: None.
+  /// Side effects: Rewrites `storage_config.json`.
+  /// Notes: None.
+  static Future<void> setViewerMode(String mode) =>
+      _setString('viewerMode', mode == 'transcript' ? null : mode);
+
+  /// Purpose: Read whether the transcript scrolls itself as the audio plays.
+  /// Inputs: None.
+  /// Returns: `Future<bool>` — true unless the user turned it off.
+  /// Side effects: Reads `storage_config.json`.
+  /// Notes: On by default: somebody playing the audio beside the transcript is
+  /// following along, and scrolling by hand at the same time is a nuisance.
+  static Future<bool> getViewerAutoScroll() async =>
+      await _getBool('viewerAutoScroll') ?? true;
+
+  /// Purpose: Turn following-the-audio on or off.
+  /// Inputs: `follow`.
+  /// Returns: None.
+  /// Side effects: Rewrites `storage_config.json`.
+  /// Notes: None.
+  static Future<void> setViewerAutoScroll(bool follow) =>
+      _setBool('viewerAutoScroll', follow ? null : false);
 }

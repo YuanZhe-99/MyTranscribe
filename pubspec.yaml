@@ -66,6 +66,15 @@ dependencies:
   ffmpeg_kit_flutter_new_audio:
     path: packages/ffmpeg_kit_flutter_new_audio
 
+  # Playing the converted audio beside the transcript. Chosen over just_audio
+  # and media_kit because its Windows backend is Media Foundation compiled from
+  # source, so it builds on ARM64; the others ship an x86_64-only libmpv.
+  audioplayers: ^6.5.0
+
+  # Sending a transcript out of the app on Android and iOS, where there is no
+  # save-as dialog.
+  share_plus: ^12.0.0
+
   # Utilities
   path: ^1.9.0
   path_provider: ^2.1.5

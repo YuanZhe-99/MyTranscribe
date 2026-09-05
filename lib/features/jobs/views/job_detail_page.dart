@@ -18,6 +18,7 @@ import '../../../shared/utils/byte_format.dart';
 import '../models/transcription_job.dart';
 import '../services/job_providers.dart';
 import '../services/job_runner.dart';
+import '../../transcript/views/transcript_viewer_page.dart';
 import 'job_text.dart';
 
 class JobDetailPage extends ConsumerWidget {
@@ -327,8 +328,17 @@ class _Actions extends ConsumerWidget {
         ),
       );
     } else if (job.stage == JobStage.done) {
-      // Nothing to do to a finished job here; the transcript viewer is where
-      // it goes next.
+      buttons.add(
+        FilledButton.icon(
+          onPressed: () => Navigator.of(context, rootNavigator: true).push(
+            MaterialPageRoute(
+              builder: (_) => TranscriptViewerPage(jobId: job.id),
+            ),
+          ),
+          icon: const Icon(Icons.notes),
+          label: Text(l10n.jobOpenTranscript),
+        ),
+      );
     } else {
       final resuming = job.chunks.isNotEmpty;
       buttons.add(
