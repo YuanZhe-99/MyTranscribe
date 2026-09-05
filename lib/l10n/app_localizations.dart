@@ -1,0 +1,837 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
+
+import 'app_localizations_en.dart';
+import 'app_localizations_zh.dart';
+
+// ignore_for_file: type=lint
+
+/// Callers can lookup localized strings with an instance of AppLocalizations
+/// returned by `AppLocalizations.of(context)`.
+///
+/// Applications need to include `AppLocalizations.delegate()` in their app's
+/// `localizationDelegates` list, and the locales they support in the app's
+/// `supportedLocales` list. For example:
+///
+/// ```dart
+/// import 'l10n/app_localizations.dart';
+///
+/// return MaterialApp(
+///   localizationsDelegates: AppLocalizations.localizationsDelegates,
+///   supportedLocales: AppLocalizations.supportedLocales,
+///   home: MyApplicationHome(),
+/// );
+/// ```
+///
+/// ## Update pubspec.yaml
+///
+/// Please make sure to update your pubspec.yaml to include the following
+/// packages:
+///
+/// ```yaml
+/// dependencies:
+///   # Internationalization support.
+///   flutter_localizations:
+///     sdk: flutter
+///   intl: any # Use the pinned version from flutter_localizations
+///
+///   # Rest of dependencies
+/// ```
+///
+/// ## iOS Applications
+///
+/// iOS applications define key application metadata, including supported
+/// locales, in an Info.plist file that is built into the application bundle.
+/// To configure the locales supported by your app, you’ll need to edit this
+/// file.
+///
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// Then, in the Project Navigator, open the Info.plist file under the Runner
+/// project’s Runner folder.
+///
+/// Next, select the Information Property List item, select Add Item from the
+/// Editor menu, then select Localizations from the pop-up menu.
+///
+/// Select and expand the newly-created Localizations item then, for each
+/// locale your application supports, add a new item and select the locale
+/// you wish to add from the pop-up menu in the Value field. This list should
+/// be consistent with the languages listed in the AppLocalizations.supportedLocales
+/// property.
+abstract class AppLocalizations {
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+
+  final String localeName;
+
+  static AppLocalizations? of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations);
+  }
+
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
+
+  /// A list of this localizations delegate along with the default localizations
+  /// delegates.
+  ///
+  /// Returns a list of localizations delegates containing this delegate along with
+  /// GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate,
+  /// and GlobalWidgetsLocalizations.delegate.
+  ///
+  /// Additional delegates can be added by appending to this list in
+  /// MaterialApp. This list does not have to be used at all if a custom list
+  /// of delegates is preferred or required.
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
+
+  /// A list of this localizations delegate's supported locales.
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('zh'),
+    Locale('zh', 'TW'),
+  ];
+
+  /// No description provided for @appTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'MyTranscribe!!!!!'**
+  String get appTitle;
+
+  /// No description provided for @backupAutoBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic backup'**
+  String get backupAutoBackup;
+
+  /// No description provided for @backupAutoBackupDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up once a day when the app starts'**
+  String get backupAutoBackupDesc;
+
+  /// No description provided for @backupCorrupt.
+  ///
+  /// In en, this message translates to:
+  /// **'Damaged'**
+  String get backupCorrupt;
+
+  /// No description provided for @backupCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create backup'**
+  String get backupCreate;
+
+  /// No description provided for @backupCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup created'**
+  String get backupCreated;
+
+  /// No description provided for @backupDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this backup?'**
+  String get backupDeleteConfirm;
+
+  /// No description provided for @backupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create the backup'**
+  String get backupFailed;
+
+  /// No description provided for @backupForceUploadDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote copy overwritten'**
+  String get backupForceUploadDone;
+
+  /// No description provided for @backupForceUploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload failed'**
+  String get backupForceUploadFailed;
+
+  /// No description provided for @backupForceUploadPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Overwrite the remote copy with the restored data?'**
+  String get backupForceUploadPrompt;
+
+  /// No description provided for @backupForceUploadSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get backupForceUploadSkip;
+
+  /// No description provided for @backupHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History ({count})'**
+  String backupHistory(int count);
+
+  /// No description provided for @backupKeepDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days'**
+  String backupKeepDays(int days);
+
+  /// No description provided for @backupKeepForever.
+  ///
+  /// In en, this message translates to:
+  /// **'Forever'**
+  String get backupKeepForever;
+
+  /// No description provided for @backupLocalOnlyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Backups stay on this device. They are never uploaded anywhere.'**
+  String get backupLocalOnlyNote;
+
+  /// No description provided for @backupModuleSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Sources and models'**
+  String get backupModuleSettings;
+
+  /// No description provided for @backupNoBackups.
+  ///
+  /// In en, this message translates to:
+  /// **'No backups yet'**
+  String get backupNoBackups;
+
+  /// No description provided for @backupRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get backupRestore;
+
+  /// No description provided for @backupRestoreConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'This replaces the selected data with the backup. Continue?'**
+  String get backupRestoreConfirm;
+
+  /// No description provided for @backupRestoreFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not restore the backup'**
+  String get backupRestoreFailed;
+
+  /// No description provided for @backupRestoreModules.
+  ///
+  /// In en, this message translates to:
+  /// **'What to restore'**
+  String get backupRestoreModules;
+
+  /// No description provided for @backupRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup restored'**
+  String get backupRestored;
+
+  /// No description provided for @backupRestoredSyncDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-sync has been turned off so the restored data is not merged into your server by accident.'**
+  String get backupRestoredSyncDisabled;
+
+  /// No description provided for @backupRetention.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep backups for'**
+  String get backupRetention;
+
+  /// No description provided for @backupSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get backupSelectAll;
+
+  /// No description provided for @backupSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A copy of your sources and models, kept on this device'**
+  String get backupSubtitle;
+
+  /// No description provided for @backupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get backupTitle;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @commonAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get commonAdd;
+
+  /// No description provided for @commonClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get commonClose;
+
+  /// No description provided for @commonCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get commonCopy;
+
+  /// No description provided for @commonEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get commonEdit;
+
+  /// No description provided for @commonRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get commonRemove;
+
+  /// No description provided for @commonRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get commonRetry;
+
+  /// No description provided for @commonShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get commonShare;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @exportData.
+  ///
+  /// In en, this message translates to:
+  /// **'Export to ZIP'**
+  String get exportData;
+
+  /// No description provided for @importData.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from ZIP'**
+  String get importData;
+
+  /// No description provided for @jobsEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a recording to transcribe. Long files are split automatically and can be resumed if a run is interrupted.'**
+  String get jobsEmptyBody;
+
+  /// No description provided for @jobsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No transcriptions yet'**
+  String get jobsEmptyTitle;
+
+  /// No description provided for @jobsNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New transcription'**
+  String get jobsNew;
+
+  /// No description provided for @jobsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcribe'**
+  String get jobsTitle;
+
+  /// No description provided for @libraryEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A source is an API endpoint such as OpenAI or OpenRouter, together with the models it offers.'**
+  String get libraryEmptyBody;
+
+  /// No description provided for @libraryEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No sources yet'**
+  String get libraryEmptyTitle;
+
+  /// No description provided for @libraryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Library'**
+  String get libraryTitle;
+
+  /// No description provided for @navLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Library'**
+  String get navLibrary;
+
+  /// No description provided for @navSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get navSettings;
+
+  /// No description provided for @navTranscribe.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcribe'**
+  String get navTranscribe;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @settingsAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get settingsAbout;
+
+  /// No description provided for @settingsData.
+  ///
+  /// In en, this message translates to:
+  /// **'Data'**
+  String get settingsData;
+
+  /// No description provided for @settingsExportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save your sources and models to a file'**
+  String get settingsExportSubtitle;
+
+  /// No description provided for @settingsGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get settingsGeneral;
+
+  /// No description provided for @settingsImportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Load sources and models from a file'**
+  String get settingsImportSubtitle;
+
+  /// No description provided for @settingsKeepChunks.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep audio pieces'**
+  String get settingsKeepChunks;
+
+  /// No description provided for @settingsKeepChunksSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leaves the split-up audio on disk after a transcription. Uses as much space as the recording'**
+  String get settingsKeepChunksSubtitle;
+
+  /// No description provided for @settingsLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get settingsLanguage;
+
+  /// No description provided for @settingsLanguageSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get settingsLanguageSystem;
+
+  /// No description provided for @settingsLicense.
+  ///
+  /// In en, this message translates to:
+  /// **'License (GPLv3)'**
+  String get settingsLicense;
+
+  /// No description provided for @settingsLicenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Source Licenses'**
+  String get settingsLicenses;
+
+  /// No description provided for @settingsPrivacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get settingsPrivacyPolicy;
+
+  /// No description provided for @settingsSelectItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Select an item from the list'**
+  String get settingsSelectItem;
+
+  /// No description provided for @settingsStorageLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage Location'**
+  String get settingsStorageLocation;
+
+  /// No description provided for @settingsStorageLocationSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where recordings and transcripts are kept'**
+  String get settingsStorageLocationSubtitle;
+
+  /// No description provided for @settingsSyncSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your sources and models on your own server'**
+  String get settingsSyncSubtitle;
+
+  /// No description provided for @settingsTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get settingsTheme;
+
+  /// No description provided for @settingsThemeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get settingsThemeDark;
+
+  /// No description provided for @settingsThemeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get settingsThemeLight;
+
+  /// No description provided for @settingsThemeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get settingsThemeSystem;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsTranscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcription'**
+  String get settingsTranscription;
+
+  /// No description provided for @settingsVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get settingsVersion;
+
+  /// No description provided for @settingsWebDAVAutoSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-sync'**
+  String get settingsWebDAVAutoSync;
+
+  /// No description provided for @settingsWebDAVAutoSyncConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-sync found conflicts'**
+  String get settingsWebDAVAutoSyncConflict;
+
+  /// No description provided for @settingsWebDAVAutoSyncDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically sync after a review and when the app resumes'**
+  String get settingsWebDAVAutoSyncDesc;
+
+  /// No description provided for @settingsWebDAVAutoSyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-sync failed'**
+  String get settingsWebDAVAutoSyncFailed;
+
+  /// No description provided for @settingsWebDAVConfigRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Configuration removed'**
+  String get settingsWebDAVConfigRemoved;
+
+  /// No description provided for @settingsWebDAVConfigSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Configuration saved'**
+  String get settingsWebDAVConfigSaved;
+
+  /// No description provided for @settingsWebDAVConnectionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection failed'**
+  String get settingsWebDAVConnectionFailed;
+
+  /// No description provided for @settingsWebDAVConnectionSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection successful'**
+  String get settingsWebDAVConnectionSuccess;
+
+  /// No description provided for @settingsWebDAVDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get settingsWebDAVDisconnect;
+
+  /// No description provided for @settingsWebDAVForceDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Force Download'**
+  String get settingsWebDAVForceDownload;
+
+  /// No description provided for @settingsWebDAVForceDownloadConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This will replace your local progress with the remote copy. Local changes since the last sync will be lost.'**
+  String get settingsWebDAVForceDownloadConfirmBody;
+
+  /// No description provided for @settingsWebDAVForceDownloadConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Force download?'**
+  String get settingsWebDAVForceDownloadConfirmTitle;
+
+  /// No description provided for @settingsWebDAVForceUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Force Upload'**
+  String get settingsWebDAVForceUpload;
+
+  /// No description provided for @settingsWebDAVForceUploadConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This will overwrite the remote progress with your local copy. Remote changes since the last sync will be lost.'**
+  String get settingsWebDAVForceUploadConfirmBody;
+
+  /// No description provided for @settingsWebDAVForceUploadConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Force upload?'**
+  String get settingsWebDAVForceUploadConfirmTitle;
+
+  /// No description provided for @settingsWebDAVLastSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Last successful sync'**
+  String get settingsWebDAVLastSuccess;
+
+  /// No description provided for @settingsWebDAVNextcloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud Preset'**
+  String get settingsWebDAVNextcloud;
+
+  /// No description provided for @settingsWebDAVNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected'**
+  String get settingsWebDAVNotConfigured;
+
+  /// No description provided for @settingsWebDAVPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get settingsWebDAVPassword;
+
+  /// No description provided for @settingsWebDAVRemotePath.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote Path'**
+  String get settingsWebDAVRemotePath;
+
+  /// No description provided for @settingsWebDAVServerURL.
+  ///
+  /// In en, this message translates to:
+  /// **'Server URL'**
+  String get settingsWebDAVServerURL;
+
+  /// No description provided for @settingsWebDAVSync.
+  ///
+  /// In en, this message translates to:
+  /// **'WebDAV Sync'**
+  String get settingsWebDAVSync;
+
+  /// No description provided for @settingsWebDAVSyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed'**
+  String get settingsWebDAVSyncFailed;
+
+  /// No description provided for @settingsWebDAVSyncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Now'**
+  String get settingsWebDAVSyncNow;
+
+  /// No description provided for @settingsWebDAVSyncSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync completed'**
+  String get settingsWebDAVSyncSuccess;
+
+  /// No description provided for @settingsWebDAVSyncWarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync completed with {count} warning(s)'**
+  String settingsWebDAVSyncWarnings(int count);
+
+  /// No description provided for @settingsWebDAVSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing…'**
+  String get settingsWebDAVSyncing;
+
+  /// No description provided for @settingsWebDAVTestConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Test Connection'**
+  String get settingsWebDAVTestConnection;
+
+  /// No description provided for @settingsWebDAVUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get settingsWebDAVUsername;
+
+  /// No description provided for @syncConflictDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'This was changed on both devices since the last sync. Keep one version.'**
+  String get syncConflictDesc;
+
+  /// No description provided for @syncConflictTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync conflict: {name}'**
+  String syncConflictTitle(Object name);
+
+  /// No description provided for @syncKeepLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Local'**
+  String get syncKeepLocal;
+
+  /// No description provided for @syncKeepRemote.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Remote'**
+  String get syncKeepRemote;
+
+  /// No description provided for @syncLocalVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Local version'**
+  String get syncLocalVersion;
+
+  /// No description provided for @syncModifiedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified: {time}'**
+  String syncModifiedAt(Object time);
+
+  /// No description provided for @syncPhaseConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get syncPhaseConnecting;
+
+  /// No description provided for @syncPhaseDownloadingData.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading {file} ({current}/{total})'**
+  String syncPhaseDownloadingData(Object file, int current, int total);
+
+  /// No description provided for @syncPhaseMerging.
+  ///
+  /// In en, this message translates to:
+  /// **'Merging {file}…'**
+  String syncPhaseMerging(Object file);
+
+  /// No description provided for @syncPhaseUploadingData.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading {file}…'**
+  String syncPhaseUploadingData(Object file);
+
+  /// No description provided for @syncRemoteVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote version'**
+  String get syncRemoteVersion;
+
+  /// No description provided for @syncUnknownItem.
+  ///
+  /// In en, this message translates to:
+  /// **'This item is not in the current content catalog.'**
+  String get syncUnknownItem;
+}
+
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
+  const _AppLocalizationsDelegate();
+
+  @override
+  Future<AppLocalizations> load(Locale locale) {
+    return SynchronousFuture<AppLocalizations>(lookupAppLocalizations(locale));
+  }
+
+  @override
+  bool isSupported(Locale locale) =>
+      <String>['en', 'zh'].contains(locale.languageCode);
+
+  @override
+  bool shouldReload(_AppLocalizationsDelegate old) => false;
+}
+
+AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when language+country codes are specified.
+  switch (locale.languageCode) {
+    case 'zh':
+      {
+        switch (locale.countryCode) {
+          case 'TW':
+            return AppLocalizationsZhTw();
+        }
+        break;
+      }
+  }
+
+  // Lookup logic when only language code is specified.
+  switch (locale.languageCode) {
+    case 'en':
+      return AppLocalizationsEn();
+    case 'zh':
+      return AppLocalizationsZh();
+  }
+
+  throw FlutterError(
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
+}

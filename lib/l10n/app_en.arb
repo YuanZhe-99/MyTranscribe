@@ -1,0 +1,170 @@
+{
+  "@@locale": "en",
+  "appTitle": "MyTranscribe!!!!!",
+  "backupAutoBackup": "Automatic backup",
+  "backupAutoBackupDesc": "Back up once a day when the app starts",
+  "backupCorrupt": "Damaged",
+  "backupCreate": "Create backup",
+  "backupCreated": "Backup created",
+  "backupDeleteConfirm": "Delete this backup?",
+  "backupFailed": "Could not create the backup",
+  "backupForceUploadDone": "Remote copy overwritten",
+  "backupForceUploadFailed": "Upload failed",
+  "backupForceUploadPrompt": "Overwrite the remote copy with the restored data?",
+  "backupForceUploadSkip": "Not now",
+  "backupHistory": "History ({count})",
+  "@backupHistory": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupKeepDays": "{days} days",
+  "@backupKeepDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "backupKeepForever": "Forever",
+  "backupLocalOnlyNote": "Backups stay on this device. They are never uploaded anywhere.",
+  "backupModuleSettings": "Sources and models",
+  "backupNoBackups": "No backups yet",
+  "backupRestore": "Restore",
+  "backupRestoreConfirm": "This replaces the selected data with the backup. Continue?",
+  "backupRestoreFailed": "Could not restore the backup",
+  "backupRestoreModules": "What to restore",
+  "backupRestored": "Backup restored",
+  "backupRestoredSyncDisabled": "Auto-sync has been turned off so the restored data is not merged into your server by accident.",
+  "backupRetention": "Keep backups for",
+  "backupSelectAll": "Select all",
+  "backupSubtitle": "A copy of your sources and models, kept on this device",
+  "backupTitle": "Backup",
+  "cancel": "Cancel",
+  "commonAdd": "Add",
+  "commonClose": "Close",
+  "commonCopy": "Copy",
+  "commonEdit": "Edit",
+  "commonRemove": "Remove",
+  "commonRetry": "Retry",
+  "commonShare": "Share",
+  "delete": "Delete",
+  "exportData": "Export to ZIP",
+  "importData": "Import from ZIP",
+  "jobsEmptyBody": "Choose a recording to transcribe. Long files are split automatically and can be resumed if a run is interrupted.",
+  "jobsEmptyTitle": "No transcriptions yet",
+  "jobsNew": "New transcription",
+  "jobsTitle": "Transcribe",
+  "libraryEmptyBody": "A source is an API endpoint such as OpenAI or OpenRouter, together with the models it offers.",
+  "libraryEmptyTitle": "No sources yet",
+  "libraryTitle": "Library",
+  "navLibrary": "Library",
+  "navSettings": "Settings",
+  "navTranscribe": "Transcribe",
+  "ok": "OK",
+  "save": "Save",
+  "settingsAbout": "About",
+  "settingsData": "Data",
+  "settingsExportSubtitle": "Save your sources and models to a file",
+  "settingsGeneral": "General",
+  "settingsImportSubtitle": "Load sources and models from a file",
+  "settingsKeepChunks": "Keep audio pieces",
+  "settingsKeepChunksSubtitle": "Leaves the split-up audio on disk after a transcription. Uses as much space as the recording",
+  "settingsLanguage": "Language",
+  "settingsLanguageSystem": "System",
+  "settingsLicense": "License (GPLv3)",
+  "settingsLicenses": "Open Source Licenses",
+  "settingsPrivacyPolicy": "Privacy Policy",
+  "settingsSelectItem": "Select an item from the list",
+  "settingsStorageLocation": "Storage Location",
+  "settingsStorageLocationSubtitle": "Where recordings and transcripts are kept",
+  "settingsSyncSubtitle": "Keep your sources and models on your own server",
+  "settingsTheme": "Theme",
+  "settingsThemeDark": "Dark",
+  "settingsThemeLight": "Light",
+  "settingsThemeSystem": "System",
+  "settingsTitle": "Settings",
+  "settingsTranscription": "Transcription",
+  "settingsVersion": "Version",
+  "settingsWebDAVAutoSync": "Auto-sync",
+  "settingsWebDAVAutoSyncConflict": "Auto-sync found conflicts",
+  "settingsWebDAVAutoSyncDesc": "Automatically sync after a review and when the app resumes",
+  "settingsWebDAVAutoSyncFailed": "Auto-sync failed",
+  "settingsWebDAVConfigRemoved": "Configuration removed",
+  "settingsWebDAVConfigSaved": "Configuration saved",
+  "settingsWebDAVConnectionFailed": "Connection failed",
+  "settingsWebDAVConnectionSuccess": "Connection successful",
+  "settingsWebDAVDisconnect": "Disconnect",
+  "settingsWebDAVForceDownload": "Force Download",
+  "settingsWebDAVForceDownloadConfirmBody": "This will replace your local progress with the remote copy. Local changes since the last sync will be lost.",
+  "settingsWebDAVForceDownloadConfirmTitle": "Force download?",
+  "settingsWebDAVForceUpload": "Force Upload",
+  "settingsWebDAVForceUploadConfirmBody": "This will overwrite the remote progress with your local copy. Remote changes since the last sync will be lost.",
+  "settingsWebDAVForceUploadConfirmTitle": "Force upload?",
+  "settingsWebDAVLastSuccess": "Last successful sync",
+  "settingsWebDAVNextcloud": "Nextcloud Preset",
+  "settingsWebDAVNotConfigured": "Not connected",
+  "settingsWebDAVPassword": "Password",
+  "settingsWebDAVRemotePath": "Remote Path",
+  "settingsWebDAVServerURL": "Server URL",
+  "settingsWebDAVSync": "WebDAV Sync",
+  "settingsWebDAVSyncFailed": "Sync failed",
+  "settingsWebDAVSyncNow": "Sync Now",
+  "settingsWebDAVSyncSuccess": "Sync completed",
+  "settingsWebDAVSyncWarnings": "Sync completed with {count} warning(s)",
+  "@settingsWebDAVSyncWarnings": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsWebDAVSyncing": "Syncing…",
+  "settingsWebDAVTestConnection": "Test Connection",
+  "settingsWebDAVUsername": "Username",
+  "syncConflictDesc": "This was changed on both devices since the last sync. Keep one version.",
+  "syncConflictTitle": "Sync conflict: {name}",
+  "@syncConflictTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "syncKeepLocal": "Keep Local",
+  "syncKeepRemote": "Keep Remote",
+  "syncLocalVersion": "Local version",
+  "syncModifiedAt": "Modified: {time}",
+  "@syncModifiedAt": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "syncPhaseConnecting": "Connecting…",
+  "syncPhaseDownloadingData": "Downloading {file} ({current}/{total})",
+  "@syncPhaseDownloadingData": {
+    "placeholders": {
+      "file": {},
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPhaseMerging": "Merging {file}…",
+  "@syncPhaseMerging": {
+    "placeholders": {
+      "file": {}
+    }
+  },
+  "syncPhaseUploadingData": "Uploading {file}…",
+  "@syncPhaseUploadingData": {
+    "placeholders": {
+      "file": {}
+    }
+  },
+  "syncRemoteVersion": "Remote version",
+  "syncUnknownItem": "This item is not in the current content catalog."
+}

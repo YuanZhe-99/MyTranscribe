@@ -1,0 +1,121 @@
+# MyTranscribe!!!!! — plan
+
+The phased roadmap. `AGENTS.md` says how to work here; `doc/en-us/` says what the code does. This
+file says what is built, what is next, and why the order is what it is.
+
+## What this app is
+
+Three Python scripts did the job before this app existed: pick a recording, split it into
+overlapping windows with FFmpeg when it is too big to upload whole, send each window to a
+transcription API, resume from a progress file when a run is interrupted, remove the words the
+overlap duplicated, and write a Markdown and a plain-text transcript. This app is that, with a
+window, on four platforms, plus the parts a script could not reasonably have: a library of sources
+and models with their limits, a transcript you can read and correct, speakers you can name, and
+configuration that follows you to another device.
+
+## Decisions already made
+
+| Decision | Choice | Why |
+|---|---|---|
+| Shell tabs | Transcribe, Library, Settings | Three things: the recordings, the services, everything else. Starting a job and reading a transcript are full-window routes, not tabs. |
+| Theme | `FlexScheme.tealM3` | Distinct from MyAnime deep purple, MyDay indigo, MyDevice blue, MyNihongo sakura. |
+| Media pipeline | Normalize the whole recording once to mono 16 kHz 64 kbps MP3, then cut windows with `-c:a copy` | One decode instead of one per window; chunk sizes become predictable at 8000 bytes a second; the normalized file doubles as the transcript's listening copy. |
+| FFmpeg | Linked in on Android, iOS and macOS; external executables on Windows | The maintained plugin publishes x86_64 Windows binaries only, and this project's development machine is Windows on ARM64. |
+| Sync scope | Configuration only | Recordings and transcripts are large and private; only config backup was asked for. |
+| API keys | Local file outside the module registry; synced only to a secure endpoint | Sync, backup and ZIP only touch registry files, so exclusion is structural. |
+| Remotes | Gitea only, no CI | One remote, no hosted runner; `flutter analyze` and `flutter test` are the gate. |
+
+## Milestones
+
+### M0 — Scaffold and conventions ✅
+
+- [x] `flutter create` for Android, iOS, Windows, macOS; identifiers `com.yuanzhe.my_transcribe` /
+      `com.yuanzhe.myTranscribe` / `com.yuanzhe.mytranscribe`
+- [x] Git repository, `main`, local identity, `origin` on Gitea, `myapps_data` submodule pinned to
+      `v1.0.2` with the masked relative URL
+- [x] Root convention files: `AGENTS.md`, `analysis_options.yaml`, `l10n.yaml`, `.gitattributes`,
+      `.gitignore`, `LICENSE`, `tool/generate_ios_icons.dart`
+- [x] Theme, router, app shell with three tabs, locale resolution, ARB catalogs in en / zh / zh_TW
+- [x] Layout policy module: the series core verbatim plus this app's own pane rules
+- [x] Storage hub, settings document model, data module, the four shared-service facades
+- [x] WebDAV config, backup, licence and privacy pages
+- [x] Platform deltas: Gradle (AGP 9.1.1, Kotlin 2.2.20, Java 17, `builtInKotlin=false`), manifest
+      permissions and `configChanges`, iOS Files keys and ATS, macOS entitlements, Windows names
+- [x] Tests: adaptive layout, ARB mirror, data modules, settings merge, shell navigation, smoke
+- [x] `flutter analyze` clean, `flutter test` green, Windows ARM64 debug build runs
+
+### M1 — Media toolkit
+
+- [ ] `MediaToolkit` interface: probe, normalize, extract a window, cut a sample; progress and
+      cancellation
+- [ ] External-binary backend for Windows: `Process`, `-progress pipe:1` parsing, `ffprobe` JSON
+- [ ] Binary discovery: user override → app support → app dir → working dir → `PATH`
+- [ ] Windows download helper for a published FFmpeg build, arch-aware
+- [ ] Vendored `ffmpeg_kit_flutter_new_audio` trimmed to Android, iOS and macOS, and the embedded
+      backend
+- [ ] Settings rows for tool status and a manual path
+- [ ] **Done when** a Windows ARM64 build probes and splits a real recording, and an Android debug
+      build does the same through the linked-in libraries
+
+### M2 — Sources, models and keys
+
+- [ ] `ProviderConfig` and `ModelConfig` over the settings record payload
+- [ ] Built-in templates for OpenAI, OpenRouter and a generic OpenAI-compatible endpoint, with
+      capability fields and deterministic ids
+- [ ] Library tab: grouped list, two-pane editor, per-field override markers, reset to template
+- [ ] Model import from the provider's own model list
+- [ ] Secrets store, and the key field
+- [ ] **Done when** two fresh devices seed identical records and the first sync merges rather than
+      duplicating
+
+### M3 — Transcription jobs
+
+- [ ] Dialect layer: OpenAI multipart, OpenRouter multipart and JSON, generic compatible
+- [ ] Chunk planner and the diarization availability decision
+- [ ] Job runner: the stage machine, per-chunk persistence, resume, cancel, retry policy, wakelock
+- [ ] Overlap merge, both the token rule and the timestamp cut point
+- [ ] Transcribe tab, new-job page, job detail, Markdown and text output
+- [ ] **Done when** a recording over the upload limit transcribes in windows, survives being killed
+      mid-run, and the output matches the scripts' format
+
+### M4 — Transcript viewer
+
+- [ ] Transcript model and store, search, exports (TXT, Markdown, SRT, VTT, JSON, CSV)
+- [ ] Viewer: transcript and segment modes, grouping, timestamps, text size, editing
+- [ ] Audio player bar, seek from a segment, current-segment highlight
+- [ ] **Done when** the viewer reads well on a phone, a Fold 8 in both orientations and a desktop
+      window
+
+### M5 — Speakers
+
+- [ ] Diarized response paths, OpenRouter JSON mode with provider options
+- [ ] Cross-window speaker unification by overlap voting
+- [ ] Speaker enrollment chaining where the API supports known speakers
+- [ ] Speakers panel: rename, colour, merge, split, reassign, re-run unification
+- [ ] **Done when** a two-speaker recording spanning three windows comes back with two speakers
+
+### M6 — Sync and secrets
+
+- [ ] Secure-endpoint policy and its test vectors
+- [ ] Secrets exchange over WebDAV with conditional PUT
+- [ ] WebDAV page: the verdict banner, the key row, the trusted-host editor
+- [ ] **Done when** keys reach a second device over HTTPS and over a Tailscale address, and stay
+      local over plain HTTP to a public host
+
+### M7 — Release preparation
+
+- [ ] `doc/zh-cn` complete, `functions/INDEX.md` measured
+- [ ] App icon pipeline, `installer.iss`, MSIX metadata
+- [ ] Version locations aligned, `v0.1.0` tagged and pushed after the user confirms
+
+## Decisions log
+
+Recorded when a choice is made that later work should not quietly reverse.
+
+- **2026-09-05** — The settings merge compares a record's `id`, `kind` and `payload`, not its
+  timestamps, when deciding whether two edits are really the same. Two devices that renamed a source
+  to the same thing a minute apart would otherwise be asked to choose between identical
+  configurations.
+- **2026-09-05** — Recordings and transcripts are not a data module and will not become one without
+  a deliberate decision: it would put hours of private audio into every backup bundle and every ZIP
+  export.

@@ -1,0 +1,170 @@
+{
+  "@@locale": "zh_TW",
+  "appTitle": "MyTranscribe!!!!!",
+  "backupAutoBackup": "自動備份",
+  "backupAutoBackupDesc": "每天首次啟動應用程式時備份一次",
+  "backupCorrupt": "已損壞",
+  "backupCreate": "建立備份",
+  "backupCreated": "備份已建立",
+  "backupDeleteConfirm": "刪除這個備份？",
+  "backupFailed": "無法建立備份",
+  "backupForceUploadDone": "遠端副本已覆蓋",
+  "backupForceUploadFailed": "上傳失敗",
+  "backupForceUploadPrompt": "是否用還原後的資料覆蓋遠端副本？",
+  "backupForceUploadSkip": "暫不",
+  "backupHistory": "歷史記錄（{count}）",
+  "@backupHistory": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupKeepDays": "{days} 天",
+  "@backupKeepDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "backupKeepForever": "永久保留",
+  "backupLocalOnlyNote": "備份僅儲存在本機，不會上傳到任何地方。",
+  "backupModuleSettings": "來源和模型",
+  "backupNoBackups": "暫無備份",
+  "backupRestore": "還原",
+  "backupRestoreConfirm": "這將用備份覆蓋所選資料，是否繼續？",
+  "backupRestoreFailed": "無法還原備份",
+  "backupRestoreModules": "還原內容",
+  "backupRestored": "備份已還原",
+  "backupRestoredSyncDisabled": "自動同步已關閉，以免還原的資料被誤合併到伺服器。",
+  "backupRetention": "保留期限",
+  "backupSelectAll": "全選",
+  "backupSubtitle": "來源和模型的副本，儲存在本機",
+  "backupTitle": "備份",
+  "cancel": "取消",
+  "commonAdd": "新增",
+  "commonClose": "關閉",
+  "commonCopy": "複製",
+  "commonEdit": "編輯",
+  "commonRemove": "移除",
+  "commonRetry": "重試",
+  "commonShare": "分享",
+  "delete": "刪除",
+  "exportData": "匯出為 ZIP",
+  "importData": "從 ZIP 匯入",
+  "jobsEmptyBody": "選擇一個錄音開始轉寫。長檔案會自動分段，中斷後可以繼續。",
+  "jobsEmptyTitle": "還沒有轉寫紀錄",
+  "jobsNew": "新增轉寫",
+  "jobsTitle": "轉寫",
+  "libraryEmptyBody": "來源是一個 API 端點，例如 OpenAI 或 OpenRouter，以及它提供的模型。",
+  "libraryEmptyTitle": "還沒有來源",
+  "libraryTitle": "來源庫",
+  "navLibrary": "來源庫",
+  "navSettings": "設定",
+  "navTranscribe": "轉寫",
+  "ok": "確定",
+  "save": "儲存",
+  "settingsAbout": "關於",
+  "settingsData": "資料",
+  "settingsExportSubtitle": "把來源和模型儲存為檔案",
+  "settingsGeneral": "通用",
+  "settingsImportSubtitle": "從檔案載入來源和模型",
+  "settingsKeepChunks": "保留音訊分段",
+  "settingsKeepChunksSubtitle": "轉寫結束後保留切分出的音訊，佔用空間與原錄音相當",
+  "settingsLanguage": "語言",
+  "settingsLanguageSystem": "跟隨系統",
+  "settingsLicense": "授權條款 (GPLv3)",
+  "settingsLicenses": "開源授權",
+  "settingsPrivacyPolicy": "隱私政策",
+  "settingsSelectItem": "從左側清單中選擇一項",
+  "settingsStorageLocation": "儲存位置",
+  "settingsStorageLocationSubtitle": "錄音和逐字稿的存放位置",
+  "settingsSyncSubtitle": "把來源和模型同步到你自己的伺服器",
+  "settingsTheme": "主題",
+  "settingsThemeDark": "深色",
+  "settingsThemeLight": "淺色",
+  "settingsThemeSystem": "跟隨系統",
+  "settingsTitle": "設定",
+  "settingsTranscription": "轉寫",
+  "settingsVersion": "版本",
+  "settingsWebDAVAutoSync": "自動同步",
+  "settingsWebDAVAutoSyncConflict": "自動同步發現衝突",
+  "settingsWebDAVAutoSyncDesc": "複習後和應用程式恢復時自動同步",
+  "settingsWebDAVAutoSyncFailed": "自動同步失敗",
+  "settingsWebDAVConfigRemoved": "設定已移除",
+  "settingsWebDAVConfigSaved": "設定已儲存",
+  "settingsWebDAVConnectionFailed": "連線失敗",
+  "settingsWebDAVConnectionSuccess": "連線成功",
+  "settingsWebDAVDisconnect": "中斷連線",
+  "settingsWebDAVForceDownload": "強制下載",
+  "settingsWebDAVForceDownloadConfirmBody": "將用遠端學習進度替換本地內容。上次同步後本地的變更將遺失。",
+  "settingsWebDAVForceDownloadConfirmTitle": "確認強制下載？",
+  "settingsWebDAVForceUpload": "強制上傳",
+  "settingsWebDAVForceUploadConfirmBody": "將用本地學習進度覆蓋遠端內容。上次同步後遠端的變更將遺失。",
+  "settingsWebDAVForceUploadConfirmTitle": "確認強制上傳？",
+  "settingsWebDAVLastSuccess": "上次成功同步",
+  "settingsWebDAVNextcloud": "Nextcloud 預設",
+  "settingsWebDAVNotConfigured": "尚未連線",
+  "settingsWebDAVPassword": "密碼",
+  "settingsWebDAVRemotePath": "遠端路徑",
+  "settingsWebDAVServerURL": "伺服器位址",
+  "settingsWebDAVSync": "WebDAV 同步",
+  "settingsWebDAVSyncFailed": "同步失敗",
+  "settingsWebDAVSyncNow": "立即同步",
+  "settingsWebDAVSyncSuccess": "同步完成",
+  "settingsWebDAVSyncWarnings": "同步完成，但有 {count} 條警告",
+  "@settingsWebDAVSyncWarnings": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsWebDAVSyncing": "同步中…",
+  "settingsWebDAVTestConnection": "測試連線",
+  "settingsWebDAVUsername": "使用者名稱",
+  "syncConflictDesc": "上次同步之後，兩台裝置都改過它。請保留其中一個版本。",
+  "syncConflictTitle": "同步衝突：{name}",
+  "@syncConflictTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "syncKeepLocal": "保留本地",
+  "syncKeepRemote": "保留遠端",
+  "syncLocalVersion": "本地版本",
+  "syncModifiedAt": "修改時間：{time}",
+  "@syncModifiedAt": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "syncPhaseConnecting": "正在連線…",
+  "syncPhaseDownloadingData": "正在下載 {file}（{current}/{total}）",
+  "@syncPhaseDownloadingData": {
+    "placeholders": {
+      "file": {},
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPhaseMerging": "正在合併 {file}…",
+  "@syncPhaseMerging": {
+    "placeholders": {
+      "file": {}
+    }
+  },
+  "syncPhaseUploadingData": "正在上傳 {file}…",
+  "@syncPhaseUploadingData": {
+    "placeholders": {
+      "file": {}
+    }
+  },
+  "syncRemoteVersion": "遠端版本",
+  "syncUnknownItem": "目前內容庫中沒有這一項。"
+}

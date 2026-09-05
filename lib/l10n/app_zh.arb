@@ -1,0 +1,170 @@
+{
+  "@@locale": "zh",
+  "appTitle": "MyTranscribe!!!!!",
+  "backupAutoBackup": "自动备份",
+  "backupAutoBackupDesc": "每天首次启动应用时备份一次",
+  "backupCorrupt": "已损坏",
+  "backupCreate": "创建备份",
+  "backupCreated": "备份已创建",
+  "backupDeleteConfirm": "删除这个备份？",
+  "backupFailed": "无法创建备份",
+  "backupForceUploadDone": "远程副本已覆盖",
+  "backupForceUploadFailed": "上传失败",
+  "backupForceUploadPrompt": "是否用还原后的数据覆盖远程副本？",
+  "backupForceUploadSkip": "暂不",
+  "backupHistory": "历史记录（{count}）",
+  "@backupHistory": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupKeepDays": "{days} 天",
+  "@backupKeepDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "backupKeepForever": "永久保留",
+  "backupLocalOnlyNote": "备份仅保存在本机，不会上传到任何地方。",
+  "backupModuleSettings": "来源和模型",
+  "backupNoBackups": "暂无备份",
+  "backupRestore": "还原",
+  "backupRestoreConfirm": "这将用备份覆盖所选数据，是否继续？",
+  "backupRestoreFailed": "无法还原备份",
+  "backupRestoreModules": "还原内容",
+  "backupRestored": "备份已还原",
+  "backupRestoredSyncDisabled": "自动同步已关闭，以免还原的数据被误合并到服务器。",
+  "backupRetention": "保留期限",
+  "backupSelectAll": "全选",
+  "backupSubtitle": "来源和模型的副本，保存在本机",
+  "backupTitle": "备份",
+  "cancel": "取消",
+  "commonAdd": "添加",
+  "commonClose": "关闭",
+  "commonCopy": "复制",
+  "commonEdit": "编辑",
+  "commonRemove": "移除",
+  "commonRetry": "重试",
+  "commonShare": "分享",
+  "delete": "删除",
+  "exportData": "导出为 ZIP",
+  "importData": "从 ZIP 导入",
+  "jobsEmptyBody": "选择一个录音开始转写。长文件会自动分段，中断后可以继续。",
+  "jobsEmptyTitle": "还没有转写记录",
+  "jobsNew": "新建转写",
+  "jobsTitle": "转写",
+  "libraryEmptyBody": "来源是一个 API 端点，例如 OpenAI 或 OpenRouter，以及它提供的模型。",
+  "libraryEmptyTitle": "还没有来源",
+  "libraryTitle": "来源库",
+  "navLibrary": "来源库",
+  "navSettings": "设置",
+  "navTranscribe": "转写",
+  "ok": "确定",
+  "save": "保存",
+  "settingsAbout": "关于",
+  "settingsData": "数据",
+  "settingsExportSubtitle": "把来源和模型保存为文件",
+  "settingsGeneral": "通用",
+  "settingsImportSubtitle": "从文件载入来源和模型",
+  "settingsKeepChunks": "保留音频分段",
+  "settingsKeepChunksSubtitle": "转写结束后保留切分出的音频，占用空间与原录音相当",
+  "settingsLanguage": "语言",
+  "settingsLanguageSystem": "跟随系统",
+  "settingsLicense": "许可证 (GPLv3)",
+  "settingsLicenses": "开源许可证",
+  "settingsPrivacyPolicy": "隐私政策",
+  "settingsSelectItem": "从左侧列表中选择一项",
+  "settingsStorageLocation": "存储位置",
+  "settingsStorageLocationSubtitle": "录音和转写稿的存放位置",
+  "settingsSyncSubtitle": "把来源和模型同步到你自己的服务器",
+  "settingsTheme": "主题",
+  "settingsThemeDark": "深色",
+  "settingsThemeLight": "浅色",
+  "settingsThemeSystem": "跟随系统",
+  "settingsTitle": "设置",
+  "settingsTranscription": "转写",
+  "settingsVersion": "版本",
+  "settingsWebDAVAutoSync": "自动同步",
+  "settingsWebDAVAutoSyncConflict": "自动同步发现冲突",
+  "settingsWebDAVAutoSyncDesc": "复习后和应用恢复时自动同步",
+  "settingsWebDAVAutoSyncFailed": "自动同步失败",
+  "settingsWebDAVConfigRemoved": "配置已移除",
+  "settingsWebDAVConfigSaved": "配置已保存",
+  "settingsWebDAVConnectionFailed": "连接失败",
+  "settingsWebDAVConnectionSuccess": "连接成功",
+  "settingsWebDAVDisconnect": "断开连接",
+  "settingsWebDAVForceDownload": "强制下载",
+  "settingsWebDAVForceDownloadConfirmBody": "将用远程学习进度替换本地内容。上次同步后本地的更改将丢失。",
+  "settingsWebDAVForceDownloadConfirmTitle": "确认强制下载？",
+  "settingsWebDAVForceUpload": "强制上传",
+  "settingsWebDAVForceUploadConfirmBody": "将用本地学习进度覆盖远程内容。上次同步后远程的更改将丢失。",
+  "settingsWebDAVForceUploadConfirmTitle": "确认强制上传？",
+  "settingsWebDAVLastSuccess": "上次成功同步",
+  "settingsWebDAVNextcloud": "Nextcloud 预设",
+  "settingsWebDAVNotConfigured": "尚未连接",
+  "settingsWebDAVPassword": "密码",
+  "settingsWebDAVRemotePath": "远程路径",
+  "settingsWebDAVServerURL": "服务器地址",
+  "settingsWebDAVSync": "WebDAV 同步",
+  "settingsWebDAVSyncFailed": "同步失败",
+  "settingsWebDAVSyncNow": "立即同步",
+  "settingsWebDAVSyncSuccess": "同步完成",
+  "settingsWebDAVSyncWarnings": "同步完成，但有 {count} 条警告",
+  "@settingsWebDAVSyncWarnings": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsWebDAVSyncing": "同步中…",
+  "settingsWebDAVTestConnection": "测试连接",
+  "settingsWebDAVUsername": "用户名",
+  "syncConflictDesc": "上次同步之后，两台设备都改过它。请保留其中一个版本。",
+  "syncConflictTitle": "同步冲突：{name}",
+  "@syncConflictTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "syncKeepLocal": "保留本地",
+  "syncKeepRemote": "保留远程",
+  "syncLocalVersion": "本地版本",
+  "syncModifiedAt": "修改时间：{time}",
+  "@syncModifiedAt": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "syncPhaseConnecting": "正在连接…",
+  "syncPhaseDownloadingData": "正在下载 {file}（{current}/{total}）",
+  "@syncPhaseDownloadingData": {
+    "placeholders": {
+      "file": {},
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPhaseMerging": "正在合并 {file}…",
+  "@syncPhaseMerging": {
+    "placeholders": {
+      "file": {}
+    }
+  },
+  "syncPhaseUploadingData": "正在上传 {file}…",
+  "@syncPhaseUploadingData": {
+    "placeholders": {
+      "file": {}
+    }
+  },
+  "syncRemoteVersion": "远程版本",
+  "syncUnknownItem": "当前内容库中没有这一项。"
+}

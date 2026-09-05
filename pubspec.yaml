@@ -1,0 +1,94 @@
+name: my_transcribe
+description: "MyTranscribe!!!!! — Your speech-to-text companion"
+publish_to: 'none'
+
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Shared WebDAV sync & data-management engines, embedded as a git submodule.
+  # The submodule commit is the lockfile — pub does not lock path deps.
+  # After a fresh clone: git submodule update --init
+  myapps_data:
+    path: packages/myapps_data
+
+  # State management
+  flutter_riverpod: ^1.0.4
+
+  # Navigation
+  go_router: ^14.8.1
+
+  # Theming
+  flex_color_scheme: ^8.2.0
+
+  # Icons
+  cupertino_icons: ^1.0.8
+
+  # i18n
+  intl: ^0.20.2
+
+  # File and directory pickers for choosing recordings, saving transcripts,
+  # ZIP export/import and backup restore.
+  # Pinned exactly: see doc/en-us/platform-notes.md — 10.3.7 is the only
+  # release that both applies the Kotlin Gradle Plugin itself (required while
+  # android.builtInKotlin=false) and compiles against flutter.compileSdkVersion.
+  file_picker: 10.3.7
+
+  # Transcription requests and WebDAV transport. The shared package uses the
+  # same client, so one HTTP stack serves both.
+  http: ^1.6.0
+
+  # ZIP data transfer, and unpacking the FFmpeg build the desktop helper
+  # downloads. See doc/en-us/features/media-tools.md.
+  archive: ^4.0.0
+
+  # Source fingerprints for resume, and enrollment sample identity.
+  crypto: ^3.0.6
+
+  # Identifiers for jobs, providers and models.
+  uuid: ^4.5.1
+
+  # A transcription job runs for minutes; the screen must not sleep through it.
+  wakelock_plus: ^1.5.2
+
+  # Utilities
+  path: ^1.9.0
+  path_provider: ^2.1.5
+  package_info_plus: ^9.0.0
+  device_preview: ^1.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+  # Windows Store packaging, for parity with the sibling apps' version
+  # locations; no packaged build is produced automatically.
+  msix: ^3.16.8
+  image: ^4.8.0
+  path_provider_platform_interface: ^2.1.3
+
+flutter:
+  generate: true
+  uses-material-design: true
+
+  assets:
+    - assets/icon/
+
+# Windows MSIX packaging. `msix_version` is one of the version locations listed
+# in AGENTS.md and moves with `version:` above.
+msix_config:
+  display_name: MyTranscribe!!!!!
+  publisher_display_name: yuanzhe
+  identity_name: com.yuanzhe.mytranscribe
+  msix_version: 0.1.0.0
+  logo_path: assets/icon/app_icon.png
+  capabilities: internetClient
+  install_certificate: false

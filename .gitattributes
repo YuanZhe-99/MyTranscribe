@@ -1,0 +1,13 @@
+# Golden transcripts are compared byte for byte. Without this, a checkout with
+# core.autocrlf=true rewrites their line endings and every golden test fails.
+test/golden/goldens/**/*.txt text eol=lf
+
+# Source and configuration keep LF in the working tree too, so the sibling
+# repositories and CI see identical bytes.
+*.dart text eol=lf
+*.md text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.arb text eol=lf
+*.csv text eol=lf
