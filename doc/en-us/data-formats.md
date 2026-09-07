@@ -127,10 +127,10 @@ audio have no business in a bundle that goes to a server.
 
 | Entry | Contents |
 |---|---|
-| `job.json` | the job record: source, options, plan, per-chunk results, stage, error |
-| `audio.mp3` | the normalized recording, mono 16 kHz 64 kbps — also the viewer's listening copy |
+| `job.json` | the job record: source, the name the user gave it, options, plan, per-chunk results, stage, error |
+| `audio.mp3` | the normalized recording, mono 16 kHz 64 kbps — also the viewer's listening copy, and removable from the detail page once the transcript has been read |
 | `source.<ext>` | on mobile only, a copy of the picked file |
-| `chunks/chunk_0000.mp3` | one window, deleted when the job finishes unless the user keeps them |
+| `chunks/chunk_0000.mp3` | one window, deleted when the job finishes unless the user keeps them; one a locked file left behind is swept at the next start |
 | `chunks/chunk_0000.response.json` | the provider's raw answer, kept — this is what makes a resume and a re-run of speaker unification possible without uploading again |
 | `speakers/<id>.wav` | a short sample per speaker, where the API accepts known-speaker references |
 | `transcript.json` | segments, speakers, the mapping between window-local labels and global speakers, and the user's corrections |

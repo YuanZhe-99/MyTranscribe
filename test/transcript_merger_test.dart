@@ -2,15 +2,37 @@
 /// Inputs: None.
 /// Returns: None.
 /// Side effects: None.
-/// Notes: Two rules, tested separately: the exact cut-point rule for models
-/// that return times, and the token rule the original Python scripts used for
-/// models that return only text. The Chinese cases are the ones the scripts got
-/// wrong — they split on spaces, so a language that does not use them had its
-/// whole overlap duplicated.
+/// Notes: Three rules, tested separately: the exact cut-point rule for models
+/// that return times, the token rule the original Python scripts used for
+/// models that return only text, and the seam rule for models that answer in
+/// paragraphs longer than the overlap. The Chinese cases are the ones the
+/// scripts got wrong — they split on spaces, so a language that does not use
+/// them had its whole overlap duplicated. The paragraph cases are the ones the
+/// first real recording got wrong.
 library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_transcribe/features/jobs/services/transcript_merger.dart';
+
+/// Purpose: Build a run of distinguishable words.
+/// Inputs: [from] and [to], inclusive.
+/// Returns: `w<from> … w<to>`.
+/// Side effects: None.
+/// Notes: Internal helper used within this file only. Numbered words make it
+/// obvious in a failure message which part of a passage survived.
+String words(int from, int to) =>
+    [for (var i = from; i <= to; i++) 'w$i'].join(' ');
+
+/// Purpose: Build a run of distinct Han characters.
+/// Inputs: [from] and [count] — an offset into the ideograph block, and how
+/// many characters.
+/// Returns: The characters, with no spaces between them.
+/// Side effects: None.
+/// Notes: Internal helper used within this file only. Generated rather than
+/// written out so each character is certainly distinct, which is what makes a
+/// match meaningful.
+String han(int from, int count) =>
+    String.fromCharCodes([for (var i = 0; i < count; i++) 0x4e00 + from + i]);
 
 void main() {
   group('removeRepeatedPrefix', () {
@@ -120,6 +142,129 @@ void main() {
         ),
         'overlap handling is the point',
       );
+    });
+  });
+
+  group('removeSharedRun', () {
+    test('sizes the search from how long the overlap is', () {
+      expect(seamSearchTokens(19.5), 156);
+      expect(seamSearchTokens(0), maxOverlapTokens);
+      // Five seconds of speech is about forty tokens, which is where the old
+      // fixed window already sat.
+      expect(seamSearchTokens(5), maxOverlapTokens);
+      expect(seamSearchTokens(1000), maxSeamTokens);
+    });
+
+    test('the anchored rule alone misses a long overlap', () {
+      // This is the defect the first real recording found. The repetition is
+      // fifty words long, so a comparison capped at forty never lines the two
+      // sides up: the tail of the first passage and the head of the second are
+      // the same fifty words seen through two windows offset by ten.
+      final previous = words(1, 80);
+      final current = '${words(31, 80)} ${words(81, 95)}';
+
+      expect(removeRepeatedPrefix(previous, current), current);
+      expect(
+        removeRepeatedPrefix(previous, current, maxTokens: 157),
+        words(81, 95),
+      );
+    });
+
+    test('finds the shared words when one of them was heard differently', () {
+      // A single word transcribed differently in the middle of the overlap
+      // breaks the anchored rule outright. The longest run either side of it
+      // is still thirty-five words, which is evidence enough.
+      final previous = words(1, 80);
+      final current =
+          '${words(31, 44)} elsewhere ${words(46, 80)} '
+          '${words(81, 95)}';
+
+      expect(removeSharedRun(previous, current, maxTokens: 157), words(81, 95));
+    });
+
+    test('needs a longer run than the anchored rule does', () {
+      // "and then we" is three words, which is enough at a boundary and not
+      // enough in the middle of a passage, where it is just a common phrase.
+      const previous = 'alpha beta gamma and then we delta epsilon';
+      const current = 'zeta and then we eta theta';
+
+      expect(removeSharedRun(previous, current, maxTokens: 157), current);
+    });
+
+    test('follows the chain across words heard differently', () {
+      // Taken from the real recording, seam 1 to 2. The same fifteen seconds
+      // came back as "in general space" from one window and ", uh, general
+      // space," from the other, which breaks every rule that needs one
+      // unbroken run.
+      const previous =
+          'So here, what we do is, what we do here is we are subtracting the '
+          'projection of a vi- Of V3 onto a plane in general space spanned by';
+      const current =
+          'Of V3 onto a plane, uh, general space, spanned by the two previous, '
+          'uh, vectors, basis vectors, U1 and U2.';
+
+      expect(
+        removeSharedRun(previous, current, maxTokens: 127),
+        'the two previous, uh, vectors, basis vectors, U1 and U2.',
+      );
+    });
+
+    test('steps over a symbol the two windows wrote differently', () {
+      // The real recording's seam 3 to 4: "x squared" against "s square", and
+      // "phi 0" against "y0", with matching speech either side of each.
+      const previous =
+          'and we use the orthogonality 0, which leads to then V0 equals minus '
+          'x squared inner product with f, sorry, phi 0 divided by';
+      const current =
+          'V0 equals minus s square inner product with f, sorry, y0 divided by '
+          'y0, y0 inner product. So I will keep this form as is.';
+
+      expect(
+        removeSharedRun(previous, current, maxTokens: 134),
+        'y0, y0 inner product. So I will keep this form as is.',
+      );
+    });
+
+    test('will not chain onto a phrase the recording repeats throughout', () {
+      // "inner product" is most of a mathematics lecture's vocabulary. A link
+      // has to come after the last one in the earlier passage as well as in the
+      // later one, so an earlier mention cannot pull the cut forwards.
+      const previous = 'the inner product of a and b, then we take the norm';
+      const current =
+          'so now consider a different question entirely, about the inner '
+          'product again';
+
+      expect(removeSharedRun(previous, current, maxTokens: 127), current);
+    });
+
+    test('leaves a passage alone when the two share nothing', () {
+      expect(
+        removeSharedRun('one two three four', 'five six seven eight'),
+        'five six seven eight',
+      );
+    });
+
+    test('handles an empty side', () {
+      expect(removeSharedRun('', 'something'), 'something');
+      expect(removeSharedRun('something', ''), '');
+    });
+
+    test('works in a script with no spaces', () {
+      // Thirty shared characters with one heard differently in the middle: the
+      // run after it is fourteen characters, above the higher CJK threshold.
+      final previous = han(0, 60);
+      final current =
+          '${han(30, 15)}${han(900, 1)}${han(45, 15)}${han(600, 10)}';
+
+      expect(removeSharedRun(previous, current, maxTokens: 157), han(600, 10));
+    });
+
+    test('a short run of characters is not enough, either', () {
+      // Five characters, below minSharedRunCjkCharacters.
+      final previous = '${han(0, 20)}${han(700, 5)}${han(30, 6)}';
+      final current = '${han(800, 4)}${han(700, 5)}${han(850, 6)}';
+
+      expect(removeSharedRun(previous, current, maxTokens: 157), current);
     });
   });
 
@@ -240,6 +385,55 @@ void main() {
         20,
       );
       expect(merged, hasLength(1));
+    });
+
+    test('trims the shared stretch when the segments are paragraphs', () {
+      // The shape the first real recording produced: nine-and-a-half-minute
+      // windows, a twenty-second overlap for speakers, and a model that answers
+      // in paragraphs — so one segment either side of the cut covers the shared
+      // speech in full, and the midpoint rule keeps both.
+      final merged = mergeTimedSegments(
+        [
+          [seg(515.56, 570.0, words(1, 80), 0)],
+          [seg(550.48, 574.92, '${words(31, 80)} ${words(81, 95)}', 1)],
+        ],
+        [0, 550],
+        20,
+      );
+
+      expect(merged, hasLength(2));
+      expect(merged[0].text, words(1, 80));
+      expect(merged[1].text, words(81, 95));
+    });
+
+    test('moves a trimmed segment to where its words actually begin', () {
+      // What is left of the later segment was spoken after the earlier window
+      // stopped, so a subtitle built from it must not claim the seconds the
+      // trim removed.
+      final merged = mergeTimedSegments(
+        [
+          [seg(515.56, 570.0, words(1, 80), 0)],
+          [seg(550.48, 574.92, '${words(31, 80)} ${words(81, 95)}', 1)],
+        ],
+        [0, 550],
+        20,
+      );
+
+      expect(merged[1].startSeconds, 570.0);
+      expect(merged[1].endSeconds, 574.92);
+    });
+
+    test('leaves the times alone when nothing was trimmed', () {
+      final merged = mergeTimedSegments(
+        [
+          [seg(90, 105, 'the first window said this', 0)],
+          [seg(101, 122, 'the second window said something else', 1)],
+        ],
+        [0, 100],
+        20,
+      );
+
+      expect(merged[1].startSeconds, 101);
     });
 
     test('carries the window-local speaker label through', () {

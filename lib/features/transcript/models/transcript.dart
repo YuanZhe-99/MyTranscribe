@@ -51,10 +51,14 @@ class Speaker {
   ///
   /// The fallback carries the number rather than a bare word, so two unnamed
   /// speakers are still told apart in a transcript.
-  String displayName(String Function(int number) fallback) =>
+  ///
+  /// Pass [number] to say which one they are; without it the number is read out
+  /// of the id, which is only right when no id has ever been dropped. Prefer
+  /// [Transcript.displayNameOf], which counts positions.
+  String displayName(String Function(int number) fallback, {int? number}) =>
       name?.trim().isNotEmpty == true
       ? name!.trim()
-      : fallback(int.tryParse(id.replaceAll(RegExp(r'\D'), '')) ?? 0);
+      : fallback(number ?? int.tryParse(id.replaceAll(RegExp(r'\D'), '')) ?? 0);
 
   /// Purpose: Parse a speaker.
   /// Inputs: [json].
@@ -295,6 +299,31 @@ class Transcript {
     if (id == null) return null;
     for (final speaker in speakers) {
       if (speaker.id == id) return speaker;
+    }
+    return null;
+  }
+
+  /// Purpose: Say what to call one speaker.
+  /// Inputs: The [speakerId], and how to name an unnamed one from a number.
+  /// Returns: The name, or null when nobody has that id.
+  /// Side effects: None.
+  /// Notes: The number is the speaker's **position** in this transcript, not
+  /// the number inside their id. Ids can have gaps: the matching allocates one
+  /// for every window label it places, and a label whose only line fell inside
+  /// an overlap that was later trimmed leaves an id nothing points at. Reading
+  /// the number out of the id then produces a list that runs 1, 2, 3, 5, 6,
+  /// which reads as though a speaker went missing. Merging two speakers leaves
+  /// the same gap. Ids themselves stay exactly as they are — they name the
+  /// sample files in `speakers/`, and a source that accepts reference clips
+  /// echoes them back.
+  String? displayNameOf(
+    String? speakerId,
+    String Function(int number) fallback,
+  ) {
+    if (speakerId == null) return null;
+    for (var index = 0; index < speakers.length; index++) {
+      if (speakers[index].id != speakerId) continue;
+      return speakers[index].displayName(fallback, number: index + 1);
     }
     return null;
   }

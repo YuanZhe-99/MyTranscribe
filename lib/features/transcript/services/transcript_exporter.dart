@@ -29,23 +29,45 @@ class TranscriptExporter {
   /// Notes: Matches the stores' shape.
   TranscriptExporter._();
 
+  /// Purpose: Work out what to call an exported file.
+  /// Inputs: The transcription's own [title], if it has one, and the
+  /// [sourceName] of the recording.
+  /// Returns: A file-name stem.
+  /// Side effects: None.
+  /// Notes: The user's name wins here, and only here. The two files a job
+  /// writes beside its recording keep the recording's name, because a folder of
+  /// those is read by file name; a file the user is deliberately saving
+  /// somewhere should carry the name they chose.
+  ///
+  /// The characters Windows forbids in a file name become underscores. A title
+  /// is free text and "Week 2: intro" is a perfectly reasonable thing to type,
+  /// but it would make the save dialog fail with nothing useful to say.
+  static String exportFileStem(String? title, String sourceName) {
+    final trimmed = title?.trim() ?? '';
+    if (trimmed.isEmpty) return p.basenameWithoutExtension(sourceName);
+    return trimmed.replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1f]'), '_');
+  }
+
   /// Purpose: Render a transcript and hand it to the user.
   /// Inputs: The [transcript], the [format], the [sourceName] and [modelName]
-  /// for the Markdown header, and how to [nameOf] each speaker.
+  /// for the Markdown header, the transcription's own [title] where it has one,
+  /// and how to [nameOf] each speaker.
   /// Returns: The file name, or null when the user cancelled.
   /// Side effects: Writes into the job's exports folder, then opens a save
   /// dialog on desktop or a share sheet on mobile.
   /// Notes: The speaker naming comes from the caller so the file says exactly
   /// what the screen says — including a name the user typed a moment ago and
-  /// has not saved anywhere else yet.
+  /// has not saved anywhere else yet. The header keeps saying which recording
+  /// this came from even when the file is named after the transcription.
   static Future<String?> export({
     required Transcript transcript,
     required ExportFormat format,
     required String sourceName,
     required String modelName,
     required String? Function(String?) nameOf,
+    String? title,
   }) async {
-    final stem = p.basenameWithoutExtension(sourceName);
+    final stem = exportFileStem(title, sourceName);
     final fileName = '$stem.transcript.${format.extension}';
     final content = render(
       transcript: transcript,

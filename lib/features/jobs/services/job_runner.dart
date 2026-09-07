@@ -2,7 +2,8 @@
 /// interrupted.
 /// Inputs: Jobs from the store, the media toolkit, the library and the
 /// transcription client.
-/// Returns: Progress, through a listenable queue state.
+/// Returns: Progress, through a listenable queue state, and a revision counter
+/// that says when a record on disk has changed.
 /// Side effects: Runs FFmpeg, makes network requests, writes files, holds the
 /// screen awake.
 /// Notes: The stage machine and its resume rule are the heart of this app.
@@ -26,6 +27,7 @@ import '../../providers/services/provider_dialect.dart';
 import '../../providers/services/settings_repository.dart';
 import '../../providers/services/transcription_client.dart';
 import '../../secrets/services/secrets_store.dart';
+import '../../transcript/models/transcript.dart';
 import '../../transcript/services/speaker_unifier.dart';
 import '../../transcript/services/transcript_store.dart';
 import '../models/chunk_plan.dart';
@@ -43,12 +45,21 @@ class JobQueueState {
   /// The ids waiting their turn, in order.
   final List<String> queued;
 
+  /// The last job to stop for good, whatever became of it.
+  ///
+  /// A page watching a job it is showing loses [active] the instant that job
+  /// finishes, and what it falls back to is a record read from disk before the
+  /// run began. Keeping the finished job here is what lets the page say
+  /// "finished" at once instead of showing the stage it started at until
+  /// something else happens to re-read the file.
+  final TranscriptionJob? finished;
+
   /// Purpose: Create a queue state.
-  /// Inputs: [active], [queued].
+  /// Inputs: [active], [queued], [finished].
   /// Returns: A new immutable value.
   /// Side effects: None.
   /// Notes: None.
-  const JobQueueState({this.active, this.queued = const []});
+  const JobQueueState({this.active, this.queued = const [], this.finished});
 }
 
 /// Runs jobs.
@@ -84,7 +95,22 @@ class JobRunner {
     const JobQueueState(),
   );
 
+  /// Bumped whenever a job record on disk has changed.
+  ///
+  /// [state] says what is happening *now*; this says that what is *written* is
+  /// no longer what a page last read. The providers that read job records watch
+  /// it, so a job that finishes, is created, renamed or deleted reaches every
+  /// page without anybody having to remember to refresh a list.
+  final ValueNotifier<int> revision = ValueNotifier(0);
+
   final _queue = <String>[];
+
+  /// Names given to jobs while the runner might still write over them.
+  ///
+  /// Re-applied on every write, so a rename during a run survives the next
+  /// window's save. Entries are harmless once the job has stopped: they say the
+  /// same thing the record already does.
+  final _titles = <String, String?>{};
 
   /// The most recent state of the running job.
   ///
@@ -96,6 +122,15 @@ class JobRunner {
   TranscriptionJob? _latest;
 
   bool _busy = false;
+
+  /// The job the runner has taken off the queue, from the moment it takes it.
+  ///
+  /// [state] cannot answer this: a job leaves the queue synchronously and only
+  /// reaches `active` after its record has been read, so for a moment it is in
+  /// neither place. Anything that must not touch a job the runner is about to
+  /// start asks here.
+  String? _running;
+
   MediaCancelToken? _mediaCancel;
   TranscriptionClient? _activeClient;
   String? _cancelRequested;
@@ -129,8 +164,9 @@ class JobRunner {
       modelName: modelName,
       options: options,
     );
-    await JobStore.save(job);
-    return job;
+    final created = await _write(job);
+    _bump();
+    return created;
   }
 
   /// Purpose: Put a job in the queue.
@@ -160,29 +196,57 @@ class JobRunner {
   Future<void> _markQueued(String jobId) async {
     final job = await JobStore.load(jobId);
     if (job == null || !job.stage.isFinished) return;
-    await JobStore.save(
+    await _write(
       job.copyWith(
         stage: JobStage.queued,
         clearError: true,
         clearCurrentChunk: true,
       ),
     );
+    _bump();
   }
 
-  /// Purpose: Re-queue jobs that were interrupted.
+  /// Purpose: Re-queue jobs that were interrupted, and clear up after the ones
+  /// that finished.
   /// Inputs: None.
   /// Returns: None.
-  /// Side effects: Rewrites the stage of any job left mid-run, and queues it.
+  /// Side effects: Rewrites the stage of any job left mid-run, queues it, and
+  /// deletes split audio a finished job could not delete for itself.
   /// Notes: Called at startup. A job whose record says "uploading" was closed
   /// mid-flight; leaving it in that stage would show a progress bar that never
   /// moves, so it becomes queued and resumes from its finished windows.
   Future<void> restore() async {
-    for (final job in await JobStore.loadAll()) {
+    final jobs = await JobStore.loadAll();
+    for (final job in jobs) {
       if (!job.stage.isRunning) continue;
-      await JobStore.save(
+      await _write(
         job.copyWith(stage: JobStage.queued, clearCurrentChunk: true),
       );
       enqueue(job.id);
+    }
+    await _sweepChunkAudio(jobs);
+    _bump();
+  }
+
+  /// Purpose: Delete split audio a finished job left behind.
+  /// Inputs: The [jobs] on disk.
+  /// Returns: None.
+  /// Side effects: Deletes chunk audio files.
+  /// Notes: Internal helper used within this file only. A job deletes its own
+  /// windows when it finishes, but a file another process is holding at that
+  /// instant survives, and nothing used to come back for it — so a window as
+  /// large as a tenth of the recording sat in the job folder for good. Whatever
+  /// was holding it has certainly let go by the next start.
+  ///
+  /// Only jobs that finished, were not asked to keep their windows, and were
+  /// actually split. Anything else either has no windows or has them on
+  /// purpose.
+  Future<void> _sweepChunkAudio(List<TranscriptionJob> jobs) async {
+    for (final job in jobs) {
+      if (job.stage != JobStage.done) continue;
+      if (job.options.keepChunks) continue;
+      if (job.plan?.uploadsOriginal != false) continue;
+      await JobStore.deleteChunkAudio(job.id);
     }
   }
 
@@ -214,7 +278,7 @@ class JobRunner {
   Future<void> retryWithout(String jobId, {required bool diarize}) async {
     final job = await JobStore.load(jobId);
     if (job == null) return;
-    await JobStore.save(
+    await _write(
       job.copyWith(
         options: job.options.copyWith(diarize: diarize),
         stage: JobStage.queued,
@@ -222,6 +286,7 @@ class JobRunner {
         clearCurrentChunk: true,
       ),
     );
+    _bump();
     enqueue(jobId);
   }
 
@@ -235,10 +300,64 @@ class JobRunner {
   /// user asked for.
   Future<void> remove(String jobId) async {
     cancel(jobId);
-    while (state.value.active?.id == jobId) {
+    // `_running` rather than the published state, because a job that has just
+    // been taken off the queue is in neither place for a moment, and deleting
+    // its folder in that moment is exactly the race this loop exists to avoid.
+    while (_running == jobId) {
       await Future<void>.delayed(const Duration(milliseconds: 20));
     }
     await JobStore.delete(jobId);
+    _titles.remove(jobId);
+    _bump();
+  }
+
+  /// Purpose: Give a transcription a name of its own.
+  /// Inputs: [jobId] and the [title]; blank or null puts the recording's file
+  /// name back.
+  /// Returns: None.
+  /// Side effects: Rewrites the job record.
+  /// Notes: Works while the job is running. The runner carries its own copy of
+  /// a job through the stages and writes that copy after every window, so a
+  /// rename written straight to disk would be overwritten within seconds. The
+  /// name is remembered here and re-applied to every write until the run ends,
+  /// which is what makes renaming something the user can do at any time rather
+  /// than only when nothing is happening.
+  Future<void> rename(String jobId, String? title) async {
+    final trimmed = title?.trim();
+    final next = (trimmed == null || trimmed.isEmpty) ? null : trimmed;
+    _titles[jobId] = next;
+
+    final job = await JobStore.load(jobId);
+    if (job == null) return;
+    final renamed = await _write(
+      job.copyWith(title: next, clearTitle: next == null),
+    );
+
+    // The page showing a job that has just finished reads it from here, so this
+    // copy has to learn the new name too.
+    if (state.value.finished?.id == jobId) {
+      state.value = JobQueueState(
+        active: state.value.active,
+        queued: List.of(_queue),
+        finished: renamed,
+      );
+    }
+    _bump();
+  }
+
+  /// Purpose: Remove a job's converted audio, keeping everything else.
+  /// Inputs: [jobId].
+  /// Returns: Whether anything was removed.
+  /// Side effects: Deletes the converted copy and any window audio.
+  /// Notes: Refused while the job is running or waiting — the converted copy is
+  /// what the windows are cut from, and taking it away mid-run would make the
+  /// job fail on a file that vanished. The transcript, the record and the raw
+  /// replies stay, so the only thing lost is playback.
+  Future<bool> discardAudio(String jobId) async {
+    if (_running == jobId || _queue.contains(jobId)) return false;
+    await JobStore.deleteConvertedAudio(jobId);
+    _bump();
+    return true;
   }
 
   /// Purpose: Work through the queue.
@@ -253,13 +372,21 @@ class JobRunner {
     try {
       while (_queue.isNotEmpty) {
         final id = _queue.removeAt(0);
-        final job = await JobStore.load(id);
-        if (job == null) continue;
-        await _run(job);
+        _running = id;
+        try {
+          final job = await JobStore.load(id);
+          if (job == null) continue;
+          await _run(job);
+        } finally {
+          _running = null;
+        }
       }
     } finally {
       _busy = false;
-      state.value = JobQueueState(queued: List.of(_queue));
+      state.value = JobQueueState(
+        queued: List.of(_queue),
+        finished: state.value.finished,
+      );
     }
   }
 
@@ -298,11 +425,19 @@ class JobRunner {
       );
     } finally {
       await SyncWakeLock.release();
+      // Whatever it became — done, failed or cancelled — this is the record
+      // that was just written, and it is what a page showing this job needs
+      // before it can re-read the file for itself.
+      final last = _latest;
       _mediaCancel = null;
       _activeClient = null;
       _cancelRequested = null;
       _latest = null;
-      _publish();
+      state.value = JobQueueState(
+        queued: List.of(_queue),
+        finished: last ?? state.value.finished,
+      );
+      _bump();
     }
   }
 
@@ -593,20 +728,21 @@ class JobRunner {
 
     // ── Render ──
     job = await _save(job.copyWith(stage: JobStage.rendering));
-    // The transcript is written before the two text files, because it is the
-    // one the viewer reads and the one the user's later corrections live in;
-    // the text files are a rendering of it.
-    await TranscriptStore.save(
-      TranscriptStore.fromMerged(
-        job.id,
-        segments,
-        timestamped:
-            job.chunks.isNotEmpty &&
-            job.chunks.every((chunk) => chunk.hasRealTimestamps),
-        speakerMap: speakerMap,
-      ),
+    // The transcript is built and written before the two text files, because it
+    // is the one the viewer reads and the one the user's later corrections live
+    // in; the text files are a rendering of it. Rendering them from the same
+    // value is also what gives them the unified speaker names rather than each
+    // window's own labels.
+    final transcript = TranscriptStore.fromMerged(
+      job.id,
+      segments,
+      timestamped:
+          job.chunks.isNotEmpty &&
+          job.chunks.every((chunk) => chunk.hasRealTimestamps),
+      speakerMap: speakerMap,
     );
-    final outputs = await _writeOutputs(job, segments);
+    await TranscriptStore.save(transcript);
+    final outputs = await _writeOutputs(job, transcript);
 
     if (!job.options.keepChunks && !plan.uploadsOriginal) {
       await JobStore.deleteChunkAudio(job.id);
@@ -782,20 +918,23 @@ class JobRunner {
   }
 
   /// Purpose: Write the Markdown and text transcripts.
-  /// Inputs: [job], [segments].
+  /// Inputs: [job], the [transcript] it produced.
   /// Returns: The paths written.
   /// Side effects: Writes files.
   /// Notes: Internal helper used within this file only. Beside the recording
   /// when that folder can be written, which is where the scripts put them and
   /// where somebody looking for the transcript will look first; otherwise in
   /// the job's own exports folder.
+  ///
+  /// Named after the **recording**, not after the job's own title: these files
+  /// live beside the recording and a folder full of them is read by file name.
   Future<List<String>> _writeOutputs(
     TranscriptionJob job,
-    List<MergedSegment> segments,
+    Transcript transcript,
   ) async {
     final stem = p.basenameWithoutExtension(job.sourceName);
-    final markdown = renderMarkdown(job, segments);
-    final text = renderPlainText(segments);
+    final markdown = renderJobMarkdown(job, transcript);
+    final text = renderJobPlainText(transcript);
 
     Directory target;
     try {
@@ -815,6 +954,23 @@ class JobRunner {
     return [markdownPath, textPath];
   }
 
+  /// Purpose: Write a job, applying anything renamed since it was read.
+  /// Inputs: [job].
+  /// Returns: What was actually written.
+  /// Side effects: Writes the record.
+  /// Notes: Internal helper used within this file only. Every write goes
+  /// through here so a rename made while a job is running cannot be undone by
+  /// the runner's own older copy — which it would be, on the very next window.
+  Future<TranscriptionJob> _write(TranscriptionJob job) async {
+    var next = job;
+    if (_titles.containsKey(job.id)) {
+      final title = _titles[job.id];
+      next = job.copyWith(title: title, clearTitle: title == null);
+    }
+    await JobStore.save(next);
+    return next;
+  }
+
   /// Purpose: Save a job and publish it.
   /// Inputs: [job].
   /// Returns: The saved job.
@@ -823,10 +979,14 @@ class JobRunner {
   /// through here, which is what makes the record on disk always match what the
   /// UI is showing.
   Future<TranscriptionJob> _save(TranscriptionJob job) async {
-    _latest = job;
-    await JobStore.save(job);
-    state.value = JobQueueState(active: job, queued: List.of(_queue));
-    return job;
+    final written = await _write(job);
+    _latest = written;
+    state.value = JobQueueState(
+      active: written,
+      queued: List.of(_queue),
+      finished: state.value.finished,
+    );
+    return written;
   }
 
   /// Purpose: Publish the queue without changing a job.
@@ -838,8 +998,18 @@ class JobRunner {
     state.value = JobQueueState(
       active: state.value.active,
       queued: List.of(_queue),
+      finished: state.value.finished,
     );
   }
+
+  /// Purpose: Say that a job record on disk has changed.
+  /// Inputs: None.
+  /// Returns: None.
+  /// Side effects: Notifies everything watching [revision].
+  /// Notes: Internal helper used within this file only. Called from every path
+  /// that writes or deletes a record, so the providers that read them can
+  /// re-read without any page having to remember to ask.
+  void _bump() => revision.value++;
 
   /// Purpose: Stop the job when the user has asked to.
   /// Inputs: [job].

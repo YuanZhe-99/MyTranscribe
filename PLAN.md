@@ -169,15 +169,55 @@ on another.
       push and turning a `v*` tag into a Release
 - [x] `v0.1.0` tagged and pushed to both remotes
 
+### M8 — What the first real run found ✅
+
+On 2026-09-06 an 81-minute lecture went through OpenRouter end to end, with speakers: nine windows,
+all of them timed and labelled, eighty seconds of wall clock. Every piece worked. What the whole
+thing did was another matter, and this milestone is the list.
+
+- [x] **The page never noticed the job had finished.** The runner published an empty queue as it
+      stopped, and the page fell back to the record it had read while the job was still waiting —
+      so the pane said "Waiting" with a Start button until the app was restarted, beside a list
+      that said Finished. Pressing that button would have rebuilt the transcript and thrown away
+      every correction. The runner now keeps the job it has just finished and counts every record
+      it writes; the providers watch that count and re-read
+- [x] **A finished job offers Run again, never Start**, and asks first, saying what is lost
+- [x] **Nineteen seconds duplicated at all eight seams.** The cut point assumes a segment is short
+      next to the overlap; this model answers in paragraphs, so both sides of the cut carried the
+      whole shared stretch. The seam search is now sized from the overlap rather than fixed at
+      forty tokens, and the repetition is followed as a chain of runs that steps over the words two
+      transcriptions of the same seconds disagree about. Seven of the eight seams come out clean
+- [x] **Five people printed as one.** The files beside the recording rendered each window's own
+      speaker labels, so every window's `S1` looked like the same person. They are rendered from
+      the unified transcript now, through the viewer's own formatters
+- [x] **Speakers numbered 1, 2, 3, 5, 6.** The number came out of the id, and ids have gaps. It is
+      the speaker's position in the transcript now; ids are untouched, because they name the sample
+      files and a source echoes them back
+- [x] **The 39 MB listening copy was invisible and unremovable.** The detail page says what a
+      transcription is holding and offers to give the converted audio back, keeping the transcript;
+      playback falls back to the original recording, which also fixes a recording sent whole having
+      nothing to play at all
+- [x] **A window a locked file left behind stayed for good.** Deletes are retried, and a sweep at
+      startup clears up after any that still failed
+- [x] Renaming a transcription, which the user asked for while reading the first transcript
+- [x] **Done**: `test/transcript_merger_test.dart` holds the seam rule to the shape the real
+      recording produced, `test/jobs_two_pane_ui_test.dart` pumps the detail pane through the
+      finish that used to be missed, and `test/job_runner_test.dart` covers the sweep, the
+      listening copy and a rename that lands mid-run
+
+Enrollment did not run, and that is correct: `microsoft/mai-transcribe-2` has no known-speaker
+limit in its template and OpenRouter's JSON body has no field for a reference clip. The matching
+worked on overlap alone.
+
 ## What is not done, and why
 
-One thing in this plan is deliberately open rather than forgotten: **no recording over the upload
-limit has been transcribed end to end against a paid key.** Every part of that path is tested — the
-planner, the windowing, the merge, the resume, the dialects against a fake server — but the tests
-supply the server. Until somebody runs a real two-hour lecture through OpenAI or OpenRouter, the
-claim is "each piece works" and not "the whole thing works".
+The open item of the 0.1.0 plan is closed: an 81-minute lecture has now gone through OpenRouter end
+to end. It was the most likely place for a surprise and it produced four, all of them in what the
+app did with the result rather than in the transcribing itself. They are M8.
 
-That is the first thing to do with a key, and the most likely place for a surprise.
+What is still open: nothing has been run against OpenAI, only OpenRouter, and no recording has been
+transcribed on a phone with a real key. Splitting a speaker in bulk is still not built, for the
+reason M5 gives.
 
 ## Decisions log
 
@@ -206,3 +246,36 @@ Recorded when a choice is made that later work should not quietly reverse.
 - **2026-09-05** — `audioplayers` over `just_audio` and `media_kit`: its Windows backend is Media
   Foundation compiled from source, so it builds on ARM64, while the others ship an x86_64-only
   libmpv. Verified with a real `flutter build windows` on this machine.
+- **2026-09-06** — A finished job's page reads the most recently written of three copies — the
+  runner's live one, the one it wrote as the job stopped, and the record on disk — chosen by
+  `modifiedAt`. The runner also counts every record it writes, and the providers watch that count.
+  Before this the only thing that ever re-read a record was a page happening to refresh its list
+  after a button was pressed, so a job that finished while its own page was open went on saying
+  "Waiting" until the app was restarted.
+- **2026-09-06** — Running a finished job again asks first and never appears as "Start". Rebuilding
+  the transcript is what the stage machine does, and it overwrites the viewer's corrections; the
+  out-of-date page used to offer exactly that as an innocent-looking Start button.
+- **2026-09-06** — The seam search is sized from the overlap, not fixed. Twenty seconds of speech is
+  about a hundred and sixty tokens and the comparison was capped at forty, so a long overlap could
+  never line up. The shared speech is then followed as a chain of runs, each link starting where the
+  last ended in **both** passages: two transcriptions of the same seconds disagree in scattered
+  small ways, and requiring one unbroken run finds nothing, while allowing a match anywhere would
+  latch onto a phrase the recording repeats throughout. The chain must cover six words, or eight
+  characters in a script without spaces, before anything is cut — it starts at the later passage's
+  first word but may match the earlier one anywhere, which is weaker evidence than the three-word
+  rule has.
+- **2026-09-06** — An unnamed speaker is numbered by their position in the transcript, never by the
+  number inside their id. Ids are allocated per placed window label and can have gaps; they are also
+  a contract, because they name the sample files and a source that accepts reference clips echoes
+  them back, so they are never renumbered.
+- **2026-09-06** — The files written beside a recording say `Speaker 1` in English whatever the
+  interface language is. The runner has no `BuildContext`, and inventing a way to give it one so
+  that two files could be localized is not worth the coupling; everything the user exports from the
+  viewer is localized.
+- **2026-09-06** — The converted listening copy is kept by default and removable by hand. It is a
+  third of the size of the recording and the app gave no way to see it, let alone drop it short of
+  deleting the whole transcription. Deleting it automatically would take away the viewer's audio
+  from somebody who had not finished reading.
+- **2026-09-06** — Renaming a transcription changes a label and nothing on disk. The files beside
+  the recording keep the recording's name, because a folder of them is read by file name; an export
+  takes the new name, because that is a file the user is deliberately saving somewhere.

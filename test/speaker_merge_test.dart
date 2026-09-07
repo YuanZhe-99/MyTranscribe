@@ -112,4 +112,44 @@ void main() {
       expect(merged.speakers, hasLength(3));
     });
   });
+
+  group('naming a speaker', () {
+    /// Purpose: Name an unnamed speaker the way the viewer does.
+    /// Inputs: The [number].
+    /// Returns: The fallback label.
+    /// Side effects: None.
+    /// Notes: Internal helper used within this file only; stands in for the
+    /// localized `viewerSpeakerFallback`.
+    String fallback(int number) => 'Speaker $number';
+
+    test('uses the name when there is one', () {
+      expect(build().displayNameOf('spk_1', fallback), 'Alice');
+    });
+
+    test('numbers an unnamed speaker by position, not by their id', () {
+      // A matching that placed four labels and then lost one to a trimmed
+      // overlap leaves an id nothing points at. Reading the number out of the
+      // id would show 1, 2, 3, 5 and look as though somebody went missing.
+      const gapped = Transcript(
+        jobId: 'job',
+        speakers: [
+          Speaker(id: 'spk_1'),
+          Speaker(id: 'spk_2', colorIndex: 1),
+          Speaker(id: 'spk_5', colorIndex: 2),
+        ],
+      );
+
+      expect(gapped.displayNameOf('spk_5', fallback), 'Speaker 3');
+    });
+
+    test('renumbers after a merge', () {
+      final merged = build().mergeSpeakers('spk_2', 'spk_1');
+      expect(merged.displayNameOf('spk_3', fallback), 'Speaker 2');
+    });
+
+    test('says nothing for an id that is not there', () {
+      expect(build().displayNameOf('spk_9', fallback), isNull);
+      expect(build().displayNameOf(null, fallback), isNull);
+    });
+  });
 }

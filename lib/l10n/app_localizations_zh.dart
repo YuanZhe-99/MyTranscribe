@@ -139,6 +139,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importData => '从 ZIP 导入';
 
   @override
+  String get jobAudioRemoved => '已删除转换后的音频';
+
+  @override
   String get jobDeleteConfirm => '删除这条转写记录？本应用保存的转换后音频和转写文件会一并删除，原始录音不受影响。';
 
   @override
@@ -174,6 +177,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get jobPathCopied => '路径已复制';
 
   @override
+  String get jobRemoveAudio => '删除转换后的音频';
+
+  @override
+  String get jobRemoveAudioConfirm =>
+      '从本设备删除这段录音转换后的副本？转写稿会保留。只要还能找到原始录音，播放会回退到它。';
+
+  @override
+  String get jobRename => '重命名';
+
+  @override
+  String get jobRenameHint => '留空则使用录音的文件名';
+
+  @override
+  String get jobRenameTitle => '为这次转写命名';
+
+  @override
   String get jobResume => '继续';
 
   @override
@@ -181,6 +200,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get jobRetryWithoutSpeakers => '不识别说话人再试一次';
+
+  @override
+  String get jobRunAgain => '重新转写';
+
+  @override
+  String get jobRunAgainConfirm =>
+      '重新转写这段录音？转写稿会从头重新生成，你在查看器里做过的修改——说话人名称、改过的文字——都会丢失。';
 
   @override
   String get jobSectionOutputs => '转写文件';
@@ -858,7 +884,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get viewerApproximate => '该模型没有返回时间，这里显示的是按分段起点估算的时间。';
 
   @override
-  String get viewerAudioMissing => '本设备上已没有转换后的音频，无法播放。';
+  String get viewerAudioMissing => '本设备上既没有转换后的音频，也没有原始录音，无法播放。';
 
   @override
   String get viewerAutoScroll => '跟随播放';
@@ -1098,6 +1124,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get importData => '從 ZIP 匯入';
 
   @override
+  String get jobAudioRemoved => '已刪除轉換後的音訊';
+
+  @override
   String get jobDeleteConfirm => '刪除這筆轉寫記錄？本應用保存的轉換後音訊與轉寫檔案會一併刪除，原始錄音不受影響。';
 
   @override
@@ -1133,6 +1162,22 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get jobPathCopied => '路徑已複製';
 
   @override
+  String get jobRemoveAudio => '刪除轉換後的音訊';
+
+  @override
+  String get jobRemoveAudioConfirm =>
+      '從本裝置刪除這段錄音轉換後的副本？逐字稿會保留。只要還找得到原始錄音，播放會改用它。';
+
+  @override
+  String get jobRename => '重新命名';
+
+  @override
+  String get jobRenameHint => '留空則使用錄音的檔案名稱';
+
+  @override
+  String get jobRenameTitle => '為這次轉寫命名';
+
+  @override
   String get jobResume => '繼續';
 
   @override
@@ -1140,6 +1185,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get jobRetryWithoutSpeakers => '不辨識說話人再試一次';
+
+  @override
+  String get jobRunAgain => '重新轉寫';
+
+  @override
+  String get jobRunAgainConfirm =>
+      '重新轉寫這段錄音？逐字稿會從頭重新產生，你在檢視器中做過的修改——說話人名稱、改過的文字——都會遺失。';
 
   @override
   String get jobSectionOutputs => '轉寫檔案';
@@ -1817,7 +1869,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get viewerApproximate => '該模型沒有回傳時間，這裡顯示的是依分段起點推估的時間。';
 
   @override
-  String get viewerAudioMissing => '本裝置上已沒有轉換後的音訊，無法播放。';
+  String get viewerAudioMissing => '本裝置上既沒有轉換後的音訊，也沒有原始錄音，無法播放。';
 
   @override
   String get viewerAutoScroll => '跟隨播放';

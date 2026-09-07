@@ -144,6 +144,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importData => 'Import from ZIP';
 
   @override
+  String get jobAudioRemoved => 'Converted audio removed';
+
+  @override
   String get jobDeleteConfirm =>
       'Delete this transcription? The converted audio and the transcript files kept by this app go with it. The original recording is not touched.';
 
@@ -180,6 +183,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get jobPathCopied => 'Path copied';
 
   @override
+  String get jobRemoveAudio => 'Remove converted audio';
+
+  @override
+  String get jobRemoveAudioConfirm =>
+      'Remove this recording\'s converted copy from this device? The transcript stays. Playback falls back to the original recording while it can still be found.';
+
+  @override
+  String get jobRename => 'Rename';
+
+  @override
+  String get jobRenameHint => 'Leave empty to use the recording\'s file name';
+
+  @override
+  String get jobRenameTitle => 'Name this transcription';
+
+  @override
   String get jobResume => 'Resume';
 
   @override
@@ -187,6 +206,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get jobRetryWithoutSpeakers => 'Try again without speaker names';
+
+  @override
+  String get jobRunAgain => 'Run again';
+
+  @override
+  String get jobRunAgainConfirm =>
+      'Transcribe this recording again? The transcript is built from scratch, so corrections made in the viewer — speaker names, edited lines — are lost.';
 
   @override
   String get jobSectionOutputs => 'Transcript files';
@@ -888,7 +914,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewerAudioMissing =>
-      'The converted audio is no longer on this device, so there is nothing to play.';
+      'Neither the converted audio nor the original recording is on this device, so there is nothing to play.';
 
   @override
   String get viewerAutoScroll => 'Follow playback';

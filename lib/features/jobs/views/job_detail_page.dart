@@ -21,7 +21,7 @@ import '../services/job_runner.dart';
 import '../../transcript/views/transcript_viewer_page.dart';
 import 'job_text.dart';
 
-class JobDetailPage extends ConsumerWidget {
+class JobDetailPage extends ConsumerStatefulWidget {
   /// Which job to show.
   final String jobId;
 
@@ -43,48 +43,173 @@ class JobDetailPage extends ConsumerWidget {
     this.onDeleted,
   });
 
-  /// Purpose: Build the page.
-  /// Inputs: `context`, `ref`.
-  /// Returns: The widget tree for the current state.
-  /// Side effects: Watches the record and the runner.
-  /// Notes: The live state wins while this job is the one running, because the
-  /// record on disk is only as fresh as the last stage change.
+  /// Purpose: Create the mutable state object for this widget.
+  /// Inputs: None.
+  /// Returns: A new state object.
+  /// Side effects: None.
+  /// Notes: Flutter lifecycle override.
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final stored = ref.watch(jobProvider(jobId));
+  ConsumerState<JobDetailPage> createState() => _JobDetailPageState();
+}
+
+class _JobDetailPageState extends ConsumerState<JobDetailPage> {
+  /// The last record this page managed to show.
+  ///
+  /// A `FutureProvider` that is re-reading reports `AsyncLoading` and, in
+  /// Riverpod 1.x, carries no previous value. Without this the page would blink
+  /// back to a spinner every time a job record changed.
+  TranscriptionJob? _lastSeen;
+
+  /// Purpose: Choose which copy of the job to believe.
+  /// Inputs: The runner's [queue] and the [stored] record, when there is one.
+  /// Returns: The most recently written copy, or null when there is none yet.
+  /// Side effects: None.
+  /// Notes: Internal helper used within this file only. Three copies can exist
+  /// at once and none of them is reliably the newest: the runner's own copy of
+  /// a job it is working on, the copy it wrote as that job stopped, and the
+  /// record read from disk. Comparing `modifiedAt` picks the truth without any
+  /// of them having to know about the others — which matters most at the moment
+  /// a job finishes, when the runner drops it and the disk copy has not been
+  /// re-read yet.
+  TranscriptionJob? _freshest(JobQueueState queue, TranscriptionJob? stored) {
+    TranscriptionJob? best;
+    for (final candidate in <TranscriptionJob?>[
+      queue.active?.id == widget.jobId ? queue.active : null,
+      queue.finished?.id == widget.jobId ? queue.finished : null,
+      stored,
+      _lastSeen,
+    ]) {
+      if (candidate == null) continue;
+      if (best == null || candidate.modifiedAt.isAfter(best.modifiedAt)) {
+        best = candidate;
+      }
+    }
+    return best;
+  }
+
+  /// Purpose: Build the page.
+  /// Inputs: `context`.
+  /// Returns: The widget tree for the current state.
+  /// Side effects: Watches the record and the runner, and remembers what it
+  /// showed.
+  /// Notes: Keep this method cheap because Flutter may call it often.
+  @override
+  Widget build(BuildContext context) {
+    final stored = ref.watch(jobProvider(widget.jobId));
     final runner = ref.watch(jobRunnerProvider);
 
     return ValueListenableBuilder<JobQueueState>(
       valueListenable: runner.state,
       builder: (context, queue, _) {
-        final live = queue.active?.id == jobId ? queue.active : null;
-        final job = live ?? stored.value;
+        final job = _freshest(queue, stored.value);
         if (job == null) {
           // Either it is still being read, or it was deleted from another
           // pane; a spinner covers both without claiming which.
           const waiting = Center(child: CircularProgressIndicator());
-          return embedded ? waiting : Scaffold(appBar: AppBar(), body: waiting);
+          return widget.embedded
+              ? waiting
+              : Scaffold(appBar: AppBar(), body: waiting);
         }
+        // A cache, not state: nothing needs rebuilding because of it.
+        _lastSeen = job;
 
         final body = _Body(
           job: job,
-          queued: queue.queued.contains(jobId),
-          onDeleted: onDeleted,
-          embedded: embedded,
+          queued: queue.queued.contains(widget.jobId),
+          onDeleted: widget.onDeleted,
+          embedded: widget.embedded,
         );
-        if (embedded) return body;
+        if (widget.embedded) return body;
         return Scaffold(
           appBar: AppBar(
             title: Text(
-              job.sourceName,
+              job.displayName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            actions: [_DeleteButton(job: job, onDeleted: onDeleted)],
+            actions: [
+              _RenameButton(job: job),
+              _DeleteButton(job: job, onDeleted: widget.onDeleted),
+            ],
           ),
           body: body,
         );
       },
+    );
+  }
+}
+
+/// Purpose: Ask what to call one transcription.
+/// Inputs: `context`, the [runner] and the [job].
+/// Returns: None.
+/// Side effects: Opens a dialog and, on a save, renames the job.
+/// Notes: Public so the jobs list can offer the same dialog from a long press —
+/// renaming is something you want where you notice the name, and that is the
+/// row as often as the detail page. An empty name clears it, which is how a
+/// wrong one is undone; the hint shows the recording's file name so it is clear
+/// what clearing it goes back to.
+Future<void> showJobRenameDialog(
+  BuildContext context,
+  JobRunner runner,
+  TranscriptionJob job,
+) async {
+  final l10n = AppLocalizations.of(context)!;
+  final controller = TextEditingController(text: job.title ?? '');
+  final title = await showDialog<String>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l10n.jobRenameTitle),
+      content: TextField(
+        controller: controller,
+        autofocus: true,
+        decoration: InputDecoration(
+          hintText: job.sourceName,
+          helperText: l10n.jobRenameHint,
+          helperMaxLines: 2,
+        ),
+        onSubmitted: (value) => Navigator.of(ctx).pop(value),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(ctx).pop(controller.text),
+          child: Text(l10n.save),
+        ),
+      ],
+    ),
+  );
+  controller.dispose();
+  if (title != null) await runner.rename(job.id, title);
+}
+
+/// The button that renames a transcription.
+class _RenameButton extends ConsumerWidget {
+  /// The job.
+  final TranscriptionJob job;
+
+  /// Purpose: Create the rename button.
+  /// Inputs: [job].
+  /// Returns: A new instance.
+  /// Side effects: None.
+  /// Notes: None.
+  const _RenameButton({required this.job});
+
+  /// Purpose: Build the button.
+  /// Inputs: `context`, `ref`.
+  /// Returns: The widget tree for the current state.
+  /// Side effects: None here; the callback renames.
+  /// Notes: None.
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    return IconButton(
+      tooltip: l10n.jobRename,
+      icon: const Icon(Icons.edit_outlined),
+      onPressed: () =>
+          showJobRenameDialog(context, ref.read(jobRunnerProvider), job),
     );
   }
 }
@@ -142,12 +267,13 @@ class _Body extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    job.sourceName,
+                    job.displayName,
                     style: theme.textTheme.titleLarge,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                _RenameButton(job: job),
                 _DeleteButton(job: job, onDeleted: onDeleted),
               ],
             ),
@@ -198,6 +324,7 @@ class _Body extends ConsumerWidget {
         const SizedBox(height: 24),
         _SectionTitle(l10n.jobSectionRecording),
         _Field(l10n.jobFieldSize, formatBytes(job.sourceBytes)),
+        _StorageRow(job: job),
         if (job.media case final media?)
           _Field(l10n.jobFieldLength, media.formattedDuration),
         _Field(l10n.jobFieldModel, job.modelName),
@@ -313,6 +440,10 @@ class _Actions extends ConsumerWidget {
   /// would repeat the request the source has already turned down. Wrapped
   /// rather than laid out in a row, so a narrow pane stacks them instead of
   /// overflowing.
+  ///
+  /// A finished job offers to run again, and never offers plain "Start": a
+  /// Start button on a job that is already done is what an out-of-date page
+  /// used to show, and pressing it silently threw away the transcript.
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
@@ -328,25 +459,30 @@ class _Actions extends ConsumerWidget {
         ),
       );
     } else if (job.stage == JobStage.done) {
-      buttons.add(
-        FilledButton.icon(
-          onPressed: () => Navigator.of(context, rootNavigator: true).push(
-            MaterialPageRoute(
-              builder: (_) => TranscriptViewerPage(jobId: job.id),
+      buttons
+        ..add(
+          FilledButton.icon(
+            onPressed: () => Navigator.of(context, rootNavigator: true).push(
+              MaterialPageRoute(
+                builder: (_) => TranscriptViewerPage(jobId: job.id),
+              ),
             ),
+            icon: const Icon(Icons.notes),
+            label: Text(l10n.jobOpenTranscript),
           ),
-          icon: const Icon(Icons.notes),
-          label: Text(l10n.jobOpenTranscript),
-        ),
-      );
+        )
+        ..add(
+          OutlinedButton.icon(
+            onPressed: () => _confirmRunAgain(context, l10n, runner),
+            icon: const Icon(Icons.replay),
+            label: Text(l10n.jobRunAgain),
+          ),
+        );
     } else {
       final resuming = job.chunks.isNotEmpty;
       buttons.add(
         FilledButton.icon(
-          onPressed: () {
-            runner.enqueue(job.id);
-            ref.refresh(jobsListProvider);
-          },
+          onPressed: () => runner.enqueue(job.id),
           icon: Icon(resuming ? Icons.play_arrow : Icons.play_arrow_outlined),
           label: Text(
             resuming
@@ -361,10 +497,7 @@ class _Actions extends ConsumerWidget {
       if (job.error?.rejectedFeature == 'diarization' && job.options.diarize) {
         buttons.add(
           OutlinedButton.icon(
-            onPressed: () async {
-              await runner.retryWithout(job.id, diarize: false);
-              ref.refresh(jobsListProvider);
-            },
+            onPressed: () => runner.retryWithout(job.id, diarize: false),
             icon: const Icon(Icons.person_off_outlined),
             label: Text(l10n.jobRetryWithoutSpeakers),
           ),
@@ -374,6 +507,133 @@ class _Actions extends ConsumerWidget {
 
     if (buttons.isEmpty) return const SizedBox.shrink();
     return Wrap(spacing: 8, runSpacing: 8, children: buttons);
+  }
+
+  /// Purpose: Ask before transcribing a finished recording again.
+  /// Inputs: `context`, [l10n] and the [runner].
+  /// Returns: None.
+  /// Side effects: Opens a dialog and, on a yes, queues the job.
+  /// Notes: Internal helper used within this file only. Running again rebuilds
+  /// the transcript from the windows, which overwrites every correction made in
+  /// the viewer — speaker names, edited lines, reassignments. That is a real
+  /// loss and nothing later reveals it, so it is said out loud first.
+  Future<void> _confirmRunAgain(
+    BuildContext context,
+    AppLocalizations l10n,
+    JobRunner runner,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.jobRunAgain),
+        content: Text(l10n.jobRunAgainConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.jobRunAgain),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) runner.enqueue(job.id);
+  }
+}
+
+/// What the job is holding on this device, and the offer to give some back.
+class _StorageRow extends ConsumerWidget {
+  /// The job.
+  final TranscriptionJob job;
+
+  /// Purpose: Create the storage row.
+  /// Inputs: [job].
+  /// Returns: A new instance.
+  /// Side effects: None.
+  /// Notes: None.
+  const _StorageRow({required this.job});
+
+  /// Purpose: Build the row.
+  /// Inputs: `context`, `ref`.
+  /// Returns: The widget tree for the current state.
+  /// Side effects: Reads the job folder's size.
+  /// Notes: Nothing at all while the size is being measured, rather than a
+  /// spinner: it arrives in a few milliseconds and a flicker in the middle of a
+  /// list of fields is worse than a line that appears.
+  ///
+  /// The converted copy is a third of the size of the recording and the app
+  /// gave no way to see it, let alone remove it short of deleting the whole
+  /// transcription. It stays by default — it is what the viewer plays — but a
+  /// transcript that has been read does not need it any more.
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final info = ref.watch(jobStorageProvider(job.id)).value;
+    if (info == null || info.bytes == 0) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Text(
+            l10n.jobDiskUsage(formatBytes(info.bytes)),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        if (info.hasConvertedAudio && !job.stage.isRunning)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: TextButton.icon(
+              onPressed: () => _confirm(context, l10n, ref),
+              icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+              label: Text(l10n.jobRemoveAudio),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// Purpose: Ask before removing the converted copy.
+  /// Inputs: `context`, [l10n] and `ref`.
+  /// Returns: None.
+  /// Side effects: Opens a dialog and, on a yes, deletes the audio.
+  /// Notes: Internal helper used within this file only. The confirmation says
+  /// what stays, because the thing being removed sounds like the transcript's
+  /// own audio and is not.
+  Future<void> _confirm(
+    BuildContext context,
+    AppLocalizations l10n,
+    WidgetRef ref,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.jobRemoveAudio),
+        content: Text(l10n.jobRemoveAudioConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.commonRemove),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final removed = await ref.read(jobRunnerProvider).discardAudio(job.id);
+    if (!context.mounted || !removed) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.jobAudioRemoved)));
   }
 }
 
@@ -425,7 +685,6 @@ class _DeleteButton extends ConsumerWidget {
         if (confirmed != true || !context.mounted) return;
 
         await ref.read(jobRunnerProvider).remove(job.id);
-        ref.refresh(jobsListProvider);
         if (!context.mounted) return;
         ScaffoldMessenger.of(
           context,

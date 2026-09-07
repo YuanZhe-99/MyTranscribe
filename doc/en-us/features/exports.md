@@ -20,6 +20,13 @@ The Markdown form of a transcript with no speakers is deliberately identical to 
 Python scripts wrote. Somebody with a folder of transcripts from those scripts and a folder from
 this app should not be able to tell which is which.
 
+The two files a finished job writes beside its recording use the same renderer, so they say the
+same thing in the same shape as an export. Two things differ, both on purpose: those files carry
+the job's own header bullets, and an unnamed speaker is `Speaker 1` in English there, because the
+job runner has no interface language to ask. They are also a picture of the transcript as the job
+finished it — a correction made later in the viewer is exported from the viewer, and nothing
+rewrites the file next to the recording behind the user's back.
+
 ## Subtitles need real times
 
 A model that returns no timestamps still produces a perfectly readable transcript: the times shown

@@ -22,6 +22,10 @@ A player bar runs along the bottom: play and pause, skip, a scrubber, and a spee
 any segment seeks to it, and the segment under the playhead is highlighted as it plays. The audio is
 the normalized copy the job already made, so it is there without keeping the original.
 
+A recording small enough to have been sent whole never had a converted copy, and one whose copy the
+user has given back no longer has one; in both cases the original recording is played instead while
+it can still be found. The bar says there is nothing to play only when neither is on the device.
+
 ## Speakers
 
 Where the model returned speaker labels, a panel lists them with a colour, a name and how much each
@@ -36,7 +40,8 @@ also be re-run from scratch without uploading anything again.
 
 ## Getting it out
 
-Copy, save, or share, in whichever format fits:
+An exported file is named after the transcription — the name the user gave it, or the recording when
+they have not given one. Copy, save, or share, in whichever format fits:
 
 | Format | For |
 |---|---|

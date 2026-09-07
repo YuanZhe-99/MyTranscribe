@@ -46,6 +46,14 @@ class _JobsPageState extends ConsumerState<JobsPage> {
   /// Whether this build is rendering two panes.
   bool _twoPane = false;
 
+  /// The last list this page managed to show.
+  ///
+  /// The list is re-read whenever a job record changes, and a re-reading
+  /// `FutureProvider` reports `AsyncLoading` with no previous value in Riverpod
+  /// 1.x. Without this the whole list would blink to a spinner every time a job
+  /// finished.
+  List<TranscriptionJob>? _records;
+
   /// Purpose: Open a job, in the pane or as a pushed route.
   /// Inputs: [jobId].
   /// Returns: None.
@@ -62,7 +70,6 @@ class _JobsPageState extends ConsumerState<JobsPage> {
       context,
       rootNavigator: true,
     ).push(MaterialPageRoute(builder: (_) => JobDetailPage(jobId: jobId)));
-    if (mounted) ref.refresh(jobsListProvider);
   }
 
   /// Purpose: Start a new transcription.
@@ -78,7 +85,6 @@ class _JobsPageState extends ConsumerState<JobsPage> {
       rootNavigator: true,
     ).push<String>(MaterialPageRoute(builder: (_) => const NewJobPage()));
     if (!mounted) return;
-    ref.refresh(jobsListProvider);
     if (id != null) await _open(id);
   }
 
@@ -149,7 +155,8 @@ class _JobsPageState extends ConsumerState<JobsPage> {
   /// Notes: Internal helper used within this file only. The record on disk is
   /// the source of truth for every job except the running one, whose live state
   /// is substituted in — otherwise the row would sit at the stage it was last
-  /// saved at.
+  /// saved at. The list itself is re-read whenever the runner says a record
+  /// changed, so a job that finishes updates its own row.
   Widget _buildList(AppLocalizations l10n) {
     final jobs = ref.watch(jobsListProvider);
     final runner = ref.watch(jobRunnerProvider);
@@ -157,10 +164,12 @@ class _JobsPageState extends ConsumerState<JobsPage> {
     return ValueListenableBuilder<JobQueueState>(
       valueListenable: runner.state,
       builder: (context, queue, _) {
-        final records = jobs.value;
+        final records = jobs.value ?? _records;
         if (records == null) {
           return const Center(child: CircularProgressIndicator());
         }
+        // A cache, not state: nothing needs rebuilding because of it.
+        _records = records;
         if (records.isEmpty) {
           return EmptyState(
             icon: Icons.graphic_eq_outlined,
@@ -191,7 +200,7 @@ class _JobsPageState extends ConsumerState<JobsPage> {
 }
 
 /// One row in the list of transcriptions.
-class _JobTile extends StatelessWidget {
+class _JobTile extends ConsumerWidget {
   /// The job this row stands for.
   final TranscriptionJob job;
 
@@ -213,13 +222,14 @@ class _JobTile extends StatelessWidget {
   });
 
   /// Purpose: Build the row.
-  /// Inputs: `context`.
+  /// Inputs: `context`, `ref`.
   /// Returns: The widget tree for the current state.
-  /// Side effects: None.
+  /// Side effects: None here; a long press opens the rename dialog.
   /// Notes: A running job shows a progress bar under its name; a finished one
-  /// shows nothing extra, so a list of finished work stays quiet.
+  /// shows nothing extra, so a list of finished work stays quiet. Renaming is
+  /// on a long press because the list is where a name is usually noticed.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final running = job.stage.isRunning;
@@ -228,6 +238,8 @@ class _JobTile extends StatelessWidget {
     return ListTile(
       selected: selected,
       onTap: onTap,
+      onLongPress: () =>
+          showJobRenameDialog(context, ref.read(jobRunnerProvider), job),
       leading: running
           ? SizedBox(
               width: 24,
@@ -238,7 +250,11 @@ class _JobTile extends StatelessWidget {
               jobStageIcon(job.stage),
               color: job.stage == JobStage.failed ? scheme.error : null,
             ),
-      title: Text(job.sourceName, maxLines: 1, overflow: TextOverflow.ellipsis),
+      title: Text(
+        job.displayName,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

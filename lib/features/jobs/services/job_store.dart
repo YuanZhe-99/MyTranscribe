@@ -184,24 +184,35 @@ class JobStore {
 
   /// Purpose: Remove the split audio, keeping everything else.
   /// Inputs: [jobId].
-  /// Returns: A future completing after the deletion.
+  /// Returns: How many window files could not be deleted.
   /// Side effects: Deletes the chunk audio files.
   /// Notes: Run when a job finishes unless the user asked to keep them. The
   /// raw replies beside them are **not** deleted: they are small, and they are
   /// what lets the speaker matching be re-run without uploading again.
-  static Future<void> deleteChunkAudio(String jobId) async {
+  ///
+  /// Each delete is retried, for the reason [save] is: on Windows a delete
+  /// fails outright while anything else holds the file open, and the last
+  /// window is the file most likely to be held — a scanner or the search
+  /// indexer reaches a freshly written file within seconds, and this runs
+  /// seconds after the last one was written.
+  ///
+  /// A file that survives even the retries is still not worth failing a
+  /// finished job over, so the count is returned rather than thrown, and
+  /// [JobRunner.restore] sweeps whatever was left behind at the next start.
+  static Future<int> deleteChunkAudio(String jobId) async {
     final dir = await _subdir(jobId, chunksDirName);
-    if (!await dir.exists()) return;
+    if (!await dir.exists()) return 0;
+
+    var left = 0;
     await for (final entry in dir.list()) {
-      if (entry is File && entry.path.endsWith('.mp3')) {
-        try {
-          await entry.delete();
-        } catch (_) {
-          // A file another process is holding is not worth failing a finished
-          // job over; it will be removed with the job.
-        }
+      if (entry is! File || !entry.path.endsWith('.mp3')) continue;
+      try {
+        await _retrying(entry.delete, attempts: 10);
+      } catch (_) {
+        left++;
       }
     }
+    return left;
   }
 
   /// Purpose: Work out how much disk a job is using.
@@ -224,15 +235,75 @@ class JobStore {
     return total;
   }
 
+  /// Purpose: Say how much room a job takes and whether its audio is still
+  /// there.
+  /// Inputs: [jobId].
+  /// Returns: The size in bytes, and whether the converted copy exists.
+  /// Side effects: Walks the job folder.
+  /// Notes: One walk for both answers, because the page asks both at once. The
+  /// converted copy is almost all of the size — a third of the original
+  /// recording — so the figure and the offer to remove it belong together.
+  static Future<({int bytes, bool hasConvertedAudio})> storageInfo(
+    String jobId,
+  ) async {
+    final audio = await normalizedAudio(jobId);
+    return (
+      bytes: await sizeOnDisk(jobId),
+      hasConvertedAudio: await audio.exists(),
+    );
+  }
+
+  /// Purpose: Remove the converted audio, keeping the transcript.
+  /// Inputs: [jobId].
+  /// Returns: A future completing after the deletion.
+  /// Side effects: Deletes `audio.mp3` and any window audio beside it.
+  /// Notes: The converted copy outlives the windows on purpose — it is what the
+  /// viewer plays — but it is a third of the size of the recording, and a
+  /// transcript that has been read and corrected does not need it any more.
+  /// Nothing else goes: the record, the transcript, the raw replies and the
+  /// speaker samples all stay, so the transcript is still readable, still
+  /// correctable, and the speaker matching can still be re-run.
+  static Future<void> deleteConvertedAudio(String jobId) async {
+    await deleteChunkAudio(jobId);
+    final audio = await normalizedAudio(jobId);
+    if (!await audio.exists()) return;
+    try {
+      await _retrying(audio.delete, attempts: 10);
+    } catch (_) {
+      // Held by the player, most likely. It will still be there next time, and
+      // the offer to remove it with it.
+    }
+  }
+
+  /// Purpose: Find something for the viewer to play.
+  /// Inputs: [jobId] and the [sourcePath] the job was created from.
+  /// Returns: The file to play, or null when neither is on this device.
+  /// Side effects: None beyond reading the file system.
+  /// Notes: The converted copy first: it is small, it is certainly readable,
+  /// and on a phone it is often the only copy the app can still reach after the
+  /// file picker's cache is emptied. The original is the fallback, which covers
+  /// both a recording small enough to have been sent whole — those never had a
+  /// converted copy at all, and the viewer used to say there was nothing to
+  /// play with the recording sitting right there — and one whose copy the user
+  /// has since removed.
+  static Future<File?> playbackAudio(String jobId, String sourcePath) async {
+    final converted = await normalizedAudio(jobId);
+    if (await converted.exists()) return converted;
+    if (sourcePath.isEmpty) return null;
+    final source = File(sourcePath);
+    return await source.exists() ? source : null;
+  }
+
   /// Purpose: Retry a file operation that a momentary lock defeated.
   /// Inputs: [action], and how many [attempts] to make.
   /// Returns: What [action] returns.
   /// Side effects: Whatever [action] does, possibly more than once.
-  /// Notes: Internal helper used within this file only. The delay grows so the
-  /// last attempt is roughly a quarter of a second after the first, which is
-  /// far longer than a scanner or a concurrent reader holds a small file, and
-  /// short enough that nobody notices. The final failure is thrown, not
-  /// swallowed: a record that truly cannot be written is worth reporting.
+  /// Notes: Internal helper used within this file only. The delay grows with
+  /// each attempt, so six attempts span about a tenth of a second and ten span
+  /// about a third — far longer than a scanner or a concurrent reader holds a
+  /// small file, and short enough that nobody notices. The final failure is
+  /// thrown, not swallowed: a record that truly cannot be written is worth
+  /// reporting, and a caller that can carry on says so by catching it.
   static Future<T> _retrying<T>(
     Future<T> Function() action, {
     int attempts = 6,

@@ -159,18 +159,22 @@ String renderTxt(Transcript transcript, String? Function(String?) nameOf) {
 }
 
 /// Purpose: Render a transcript as Markdown.
-/// Inputs: The [transcript], a [title], the [subtitleLines] for the header, and
-/// how to [nameOf] each speaker.
+/// Inputs: The [transcript], a [title], the [subtitleLines] for the header, how
+/// to [nameOf] each speaker, and how to render a [timestamp].
 /// Returns: The document.
 /// Side effects: None.
 /// Notes: The plain form matches what the original scripts produced, on
 /// purpose: a folder of transcripts from those scripts and a folder from this
-/// app should be indistinguishable.
+/// app should be indistinguishable. That is also why [timestamp] is a
+/// parameter: the scripts padded the hour and [readableTimestamp] does not, so
+/// the files written beside a recording pass their own formatter and an export
+/// takes the reader's one.
 String renderMarkdown(
   Transcript transcript,
   String? Function(String?) nameOf, {
   String title = 'Transcript',
   List<String> subtitleLines = const [],
+  String Function(double seconds) timestamp = readableTimestamp,
 }) {
   final lines = <String>['# $title', '', ...subtitleLines, ''];
 
@@ -179,7 +183,7 @@ String renderMarkdown(
       lines
         ..add(
           '**${run.speaker ?? 'Speaker'}** '
-          '[${readableTimestamp(run.startSeconds)}]: ${run.text}',
+          '[${timestamp(run.startSeconds)}]: ${run.text}',
         )
         ..add('');
     }
@@ -191,7 +195,7 @@ String renderMarkdown(
     lines
       ..add(
         '## Segment ${index + 1} '
-        '(about ${readableTimestamp(segment.startSeconds)})',
+        '(about ${timestamp(segment.startSeconds)})',
       )
       ..add('')
       ..add(segment.text)
@@ -199,6 +203,16 @@ String renderMarkdown(
   }
   return '${lines.join('\n').trimRight()}\n';
 }
+
+/// Purpose: Name an unnamed speaker where there is no interface language to ask.
+/// Inputs: The [number].
+/// Returns: `Speaker <number>`.
+/// Side effects: None.
+/// Notes: For the job runner, which writes the transcript files beside a
+/// recording with no `BuildContext` and therefore no localizations. Everything
+/// the user exports from the viewer uses the localized fallback instead, and
+/// the two only differ for a speaker nobody has named.
+String defaultSpeakerName(int number) => 'Speaker $number';
 
 /// Purpose: Render a transcript as SubRip subtitles.
 /// Inputs: The [transcript] and how to [nameOf] each speaker.

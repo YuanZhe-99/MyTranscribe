@@ -89,12 +89,17 @@ Future<SegmentEdit?> showSegmentEditSheet(
                       value: null,
                       child: Text(l10n.viewerEditNobody),
                     ),
-                    for (final speaker in speakers)
+                    // Indexed, so the fallback can number a speaker by their
+                    // position rather than by their id, which can have gaps.
+                    for (var index = 0; index < speakers.length; index++)
                       DropdownMenuItem(
-                        value: speaker.id,
+                        value: speakers[index].id,
                         child: Text(
-                          nameOf(speaker.id) ??
-                              speaker.displayName(l10n.viewerSpeakerFallback),
+                          nameOf(speakers[index].id) ??
+                              speakers[index].displayName(
+                                l10n.viewerSpeakerFallback,
+                                number: index + 1,
+                              ),
                         ),
                       ),
                   ],

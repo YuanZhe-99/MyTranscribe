@@ -10,6 +10,7 @@
 /// a model with a per-request time cap, so no test has to write a 25 MB file.
 library;
 
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -282,6 +283,136 @@ void main() {
     });
   });
 
+  group('clearing up the split audio', () {
+    test('sweeps a window a finished job could not delete', () async {
+      // A file another process was holding when the job finished used to sit
+      // in the job folder for good — as large as a tenth of the recording.
+      final run = runner(
+        _FakeToolkit(duration: 5400),
+        FakeTranscriptionServer([FakeReply.text('window')]),
+      );
+      final job = await runToCompletion(run, (await createJob(run)).id);
+
+      final stray = await JobStore.chunkFile(job.id, 7);
+      stray.writeAsBytesSync(Uint8List(2048));
+      expect(stray.existsSync(), isTrue);
+
+      await run.restore();
+      expect(stray.existsSync(), isFalse);
+    });
+
+    test('leaves the windows of a job that asked to keep them', () async {
+      final run = runner(
+        _FakeToolkit(duration: 5400),
+        FakeTranscriptionServer([FakeReply.text('window')]),
+      );
+      final job = await runToCompletion(
+        run,
+        (await createJob(run, options: const JobOptions(keepChunks: true))).id,
+      );
+
+      await run.restore();
+      expect((await JobStore.chunkFile(job.id, 0)).existsSync(), isTrue);
+    });
+
+    test('retries a window something is holding open', () async {
+      // Only Windows refuses the delete outright; elsewhere this passes on the
+      // first attempt, which is fine — the point is that the retry does not
+      // make matters worse.
+      final run = runner(
+        _FakeToolkit(duration: 5400),
+        FakeTranscriptionServer([FakeReply.text('window')]),
+      );
+      final job = await runToCompletion(run, (await createJob(run)).id);
+
+      final held = await JobStore.chunkFile(job.id, 3);
+      held.writeAsBytesSync(Uint8List(2048));
+      final handle = held.openSync();
+      unawaited(
+        Future<void>.delayed(
+          const Duration(milliseconds: 60),
+          handle.closeSync,
+        ),
+      );
+
+      expect(await JobStore.deleteChunkAudio(job.id), 0);
+      expect(held.existsSync(), isFalse);
+    });
+  });
+
+  group('the converted listening copy', () {
+    test('is what the viewer plays when it is there', () async {
+      final run = runner(
+        _FakeToolkit(duration: 5400),
+        FakeTranscriptionServer([FakeReply.text('window')]),
+      );
+      final job = await runToCompletion(run, (await createJob(run)).id);
+
+      final audio = await JobStore.playbackAudio(job.id, job.sourcePath);
+      expect(audio!.path, (await JobStore.normalizedAudio(job.id)).path);
+    });
+
+    test('falls back to the recording for a job sent whole', () async {
+      // These never had a converted copy, and the viewer used to say there was
+      // nothing to play with the recording sitting right there.
+      final run = runner(
+        _FakeToolkit(duration: 90),
+        FakeTranscriptionServer([FakeReply.text('a short clip')]),
+      );
+      final job = await runToCompletion(
+        run,
+        (await createJob(run, model: _wholeFileModel)).id,
+      );
+
+      expect((await JobStore.normalizedAudio(job.id)).existsSync(), isFalse);
+      final audio = await JobStore.playbackAudio(job.id, job.sourcePath);
+      expect(audio!.path, job.sourcePath);
+    });
+
+    test('says there is nothing when neither is on the device', () async {
+      expect(await JobStore.playbackAudio('nobody', '/gone.mp3'), isNull);
+    });
+
+    test('can be given back without losing the transcript', () async {
+      // Thirty-nine megabytes for an eighty-minute lecture, with no way to see
+      // it and no way to remove it short of deleting the transcription.
+      final run = runner(
+        _FakeToolkit(duration: 5400),
+        FakeTranscriptionServer([FakeReply.text('window')]),
+      );
+      final job = await runToCompletion(run, (await createJob(run)).id);
+
+      final before = await JobStore.storageInfo(job.id);
+      expect(before.hasConvertedAudio, isTrue);
+      expect(before.bytes, greaterThan(0));
+
+      expect(await run.discardAudio(job.id), isTrue);
+
+      final after = await JobStore.storageInfo(job.id);
+      expect(after.hasConvertedAudio, isFalse);
+      expect(after.bytes, lessThan(before.bytes));
+      expect(await TranscriptStore.load(job.id), isNotNull);
+      expect(
+        (await JobStore.chunkResponseFile(job.id, 0)).existsSync(),
+        isTrue,
+        reason: 'the raw replies are what let the matching be re-run',
+      );
+      expect(await JobStore.load(job.id), isNotNull);
+    });
+
+    test('is refused while the job is still queued', () async {
+      final run = runner(
+        _FakeToolkit(duration: 5400),
+        FakeTranscriptionServer([FakeReply.text('window')]),
+      );
+      final job = await createJob(run);
+      run.enqueue(job.id);
+
+      expect(await run.discardAudio(job.id), isFalse);
+      run.cancel(job.id);
+    });
+  });
+
   group('speakers across windows', () {
     test('the same voice keeps one name from end to end', () async {
       // Each window labels its speakers with no idea what the last one called
@@ -320,6 +451,47 @@ void main() {
         hasLength(2),
         reason: 'two people talked, however the windows labelled them',
       );
+    });
+
+    test('names them the same way in the files beside the recording', () async {
+      // The window-local labels are meaningless outside their own window: every
+      // window calls somebody "A" or "X", and printing those made five
+      // different people look like one. The files carry the unified names.
+      final toolkit = _FakeToolkit(duration: 2000);
+      final server = FakeTranscriptionServer([
+        FakeReply.diarized([
+          (0, 600, 'A', 'the interviewer opens the conversation'),
+          (1405, 1415, 'A', 'first voice in the shared seconds'),
+          (1415, 1425, 'B', 'second voice in the shared seconds'),
+        ]),
+        FakeReply.diarized([
+          (0, 10, 'X', 'first voice in the shared seconds'),
+          (10, 20, 'Y', 'second voice in the shared seconds'),
+          (100, 500, 'X', 'more from the first voice'),
+        ]),
+      ]);
+      final run = runner(toolkit, server);
+      final job = await runToCompletion(
+        run,
+        (await createJob(
+          run,
+          options: const JobOptions(diarize: true, overlapSeconds: 20),
+        )).id,
+      );
+
+      final markdown = File(
+        job.outputs.firstWhere((path) => path.endsWith('.md')),
+      ).readAsStringSync();
+      final text = File(
+        job.outputs.firstWhere((path) => path.endsWith('.txt')),
+      ).readAsStringSync();
+
+      expect(markdown, contains('**Speaker 1**'));
+      expect(markdown, contains('**Speaker 2**'));
+      expect(markdown, isNot(contains('**A**')));
+      expect(markdown, isNot(contains('**X**')));
+      expect(text, contains('Speaker 1:'));
+      expect(text, isNot(contains('A:')));
     });
 
     test('writes a transcript beside the job for the viewer to read', () async {
@@ -588,6 +760,101 @@ void main() {
         expect(reloaded.finishedAt, isNotNull);
       },
     );
+
+    test(
+      'says so when a record has changed, and keeps the finished job',
+      () async {
+        // The two things a page needs to notice a job that finished. The counter
+        // is what makes the providers re-read; the finished job is what lets the
+        // page say so before that read comes back. Without either, the pane went
+        // on showing "waiting" until the app was restarted.
+        final run = runner(
+          _FakeToolkit(duration: 5400),
+          FakeTranscriptionServer([FakeReply.text('window')]),
+        );
+
+        var bumps = 0;
+        run.revision.addListener(() => bumps++);
+
+        final job = await runToCompletion(run, (await createJob(run)).id);
+
+        expect(
+          bumps,
+          greaterThanOrEqualTo(2),
+          reason: 'created, then finished',
+        );
+        expect(run.state.value.active, isNull);
+        expect(run.state.value.finished?.id, job.id);
+        expect(run.state.value.finished?.stage, JobStage.done);
+      },
+    );
+
+    test('keeps a name the user gave it', () async {
+      final run = runner(
+        _FakeToolkit(duration: 90),
+        FakeTranscriptionServer([FakeReply.text('one')]),
+      );
+      final job = await createJob(run, model: _wholeFileModel);
+
+      expect(job.displayName, 'lecture.mp3');
+
+      await run.rename(job.id, '讲座一');
+      final named = await JobStore.load(job.id);
+      expect(named!.title, '讲座一');
+      expect(named.displayName, '讲座一');
+
+      // Blank puts the recording's own name back, which is how a wrong name is
+      // undone.
+      await run.rename(job.id, '   ');
+      final cleared = await JobStore.load(job.id);
+      expect(cleared!.title, isNull);
+      expect(cleared.displayName, 'lecture.mp3');
+    });
+
+    test('a name survives a run that is already going', () async {
+      // The runner carries its own copy through the stages and writes it after
+      // every window, so a rename written straight to disk would be gone within
+      // seconds.
+      final run = runner(
+        _FakeToolkit(duration: 5400),
+        FakeTranscriptionServer([FakeReply.text('window')]),
+      );
+      final job = await createJob(run);
+      run.enqueue(job.id);
+
+      // As soon as the first window has landed, so the runner certainly writes
+      // again afterwards.
+      for (var i = 0; i < 400; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+        final current = await JobStore.load(job.id);
+        if ((current?.chunks.length ?? 0) >= 1) break;
+      }
+      await run.rename(job.id, '讲座一');
+
+      for (var i = 0; i < 600; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        final current = await JobStore.load(job.id);
+        if (current != null && current.stage.isFinished) {
+          expect(current.stage, JobStage.done);
+          expect(current.title, '讲座一');
+          return;
+        }
+      }
+      fail('the job did not finish');
+    });
+
+    test('a name survives a round trip through JSON', () async {
+      final run = runner(
+        _FakeToolkit(duration: 90),
+        FakeTranscriptionServer([FakeReply.text('one')]),
+      );
+      final job = await createJob(run, model: _wholeFileModel);
+      await run.rename(job.id, 'Week 2');
+
+      final loaded = await JobStore.load(job.id);
+      expect(loaded!.toJson()['title'], 'Week 2');
+      expect(TranscriptionJob.fromJson(loaded.toJson()).displayName, 'Week 2');
+    });
 
     test('lists every job, newest first', () async {
       final run = runner(

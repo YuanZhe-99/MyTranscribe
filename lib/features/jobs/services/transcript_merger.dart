@@ -3,9 +3,11 @@
 /// Returns: One ordered list of segments.
 /// Side effects: None — pure, so both rules are testable without a network.
 /// Notes: Consecutive windows share a stretch of audio, so the same words come
-/// back twice. Two rules remove the duplication: an exact one when the model
-/// returned times, and a text one when it did not. See
-/// `doc/en-us/algorithms/overlap-merge.md`.
+/// back twice. A cut point removes most of it when the model returned times, a
+/// text rule does the whole job when it did not, and a third rule catches what
+/// the cut point cannot: a model that answers in paragraphs returns segments
+/// longer than the overlap, so both sides of the cut carry the shared speech.
+/// See `doc/en-us/algorithms/overlap-merge.md`.
 library;
 
 /// One piece of transcript, with where it came from.
@@ -53,12 +55,16 @@ class MergedSegment {
   double get midpointSeconds => (startSeconds + endSeconds) / 2;
 
   /// Purpose: Return a copy with different text.
-  /// Inputs: [text].
+  /// Inputs: [text]; [startSeconds] when the surviving words began later than
+  /// the segment did.
   /// Returns: A new [MergedSegment].
   /// Side effects: None.
-  /// Notes: None.
-  MergedSegment withText(String text) => MergedSegment(
-    startSeconds: startSeconds,
+  /// Notes: A trim at a seam removes the words the previous window already
+  /// carried, so what is left starts where that window stopped. Moving the
+  /// start with the text is what keeps a subtitle from showing the remainder
+  /// over the seconds it no longer covers.
+  MergedSegment withText(String text, {double? startSeconds}) => MergedSegment(
+    startSeconds: startSeconds ?? this.startSeconds,
     endSeconds: endSeconds,
     text: text,
     chunkIndex: chunkIndex,
@@ -89,6 +95,71 @@ const maxOverlapTokens = 40;
 /// expected case rather than a coincidence.
 const minOverlapCjkCharacters = 4;
 
+/// How many tokens a second of speech is assumed to produce.
+///
+/// Fast English is about three words a second and Chinese about five characters
+/// a second, so four is the middle of the range this app actually meets. It is
+/// only used to size a search window, never to place anything in time.
+const seamTokensPerSecond = 4;
+
+/// How much larger than the estimate the search window is made.
+///
+/// A window that is too small misses the overlap and leaves the duplication in
+/// the transcript; one that is too large costs a little arithmetic. The error
+/// is deliberately made in the cheap direction.
+const seamSearchFactor = 2;
+
+/// The largest search window, in tokens.
+///
+/// The comparison is quadratic in this number, and beyond a few hundred tokens
+/// a match is no longer plausibly an overlap.
+const maxSeamTokens = 400;
+
+/// How many shared tokens must be found before a seam is trimmed.
+///
+/// [minOverlapTokens] is safe because it compares the very end of one passage
+/// with the very start of the next, where duplication is the expected case. The
+/// seam rule matches from the start of the later passage but anywhere in the
+/// earlier one, which is less positional evidence, so it has to find more words
+/// before it is believed.
+const minSharedRunTokens = 6;
+
+/// The same threshold for a script without spaces.
+///
+/// Eight characters is a clause rather than a phrase, which is what six English
+/// words are.
+const minSharedRunCjkCharacters = 8;
+
+/// The shortest run that may join a chain of shared speech.
+///
+/// Two tokens on its own means nothing; two tokens in a chain that already has
+/// several links, each following the last in both passages, is one more piece
+/// of the same evidence.
+const minChainRunTokens = 2;
+
+/// How many tokens may be heard differently between two runs of shared speech.
+///
+/// Two windows transcribing the same seconds disagree in scattered small ways:
+/// a word misheard, a "uh" one side dropped, a number written two ways. Three
+/// is enough to step over such a difference and too few to step over a
+/// sentence.
+const maxSeamGapTokens = 3;
+
+/// Purpose: Work out how far to look for the words two windows share.
+/// Inputs: [overlapSeconds] — how much speech the two segments have in common.
+/// Returns: A number of tokens.
+/// Side effects: None.
+/// Notes: Derived from the seam rather than fixed, because the overlap is a
+/// setting: twenty seconds for a diarized recording carries five times the
+/// words five seconds does. Never smaller than [maxOverlapTokens], so a seam
+/// with no measurable time overlap still gets the old search.
+int seamSearchTokens(double overlapSeconds) {
+  if (overlapSeconds <= 0) return maxOverlapTokens;
+  final estimate = (overlapSeconds * seamTokensPerSecond * seamSearchFactor)
+      .ceil();
+  return estimate.clamp(maxOverlapTokens, maxSeamTokens);
+}
+
 /// Purpose: Join windows that carry real times.
 /// Inputs: The per-window [segments], keyed by window index, the window start
 /// times, and the [overlapSeconds].
@@ -96,8 +167,13 @@ const minOverlapCjkCharacters = 4;
 /// Side effects: None.
 /// Notes: The cut point sits in the middle of the shared stretch: the earlier
 /// window keeps what ends before it, the later one keeps what starts after.
-/// The boundary pair is then checked for repeated words, in case both windows
-/// transcribed the same phrase slightly differently.
+/// The boundary pair is then checked for words both windows carried.
+///
+/// A segment can be longer than the overlap — a model that answers in
+/// paragraphs returns three of them for a ten-minute window — and then the
+/// midpoint rule keeps a segment from each side that between them cover the
+/// shared stretch twice. That is what [removeSharedRun] is for, and it is why
+/// the seam pair is treated differently from an ordinary consecutive pair.
 List<MergedSegment> mergeTimedSegments(
   List<List<MergedSegment>> segments,
   List<double> windowStarts,
@@ -120,17 +196,34 @@ List<MergedSegment> mergeTimedSegments(
     }
   }
 
-  // Two windows can transcribe the same phrase either side of the cut. Trim the
-  // repetition at each seam rather than across the whole transcript, so a
-  // genuinely repeated sentence elsewhere is left alone.
+  // Two windows can transcribe the same speech either side of the cut. Trim at
+  // each seam rather than across the whole transcript, so a genuinely repeated
+  // sentence elsewhere is left alone.
   for (var index = 1; index < merged.length; index++) {
-    final trimmed = removeRepeatedPrefix(
-      merged[index - 1].text,
-      merged[index].text,
+    final previous = merged[index - 1];
+    final current = merged[index];
+    final seam = previous.chunkIndex != current.chunkIndex;
+    final shared = previous.endSeconds - current.startSeconds;
+
+    final trimmed = seam
+        ? removeSharedRun(
+            previous.text,
+            current.text,
+            maxTokens: seamSearchTokens(shared),
+          )
+        : removeRepeatedPrefix(previous.text, current.text);
+    if (trimmed == current.text) continue;
+
+    merged[index] = current.withText(
+      trimmed,
+      // What survived began where the previous window stopped — but only when
+      // the two really did overlap in time, and never past the segment's own
+      // end, which would invert it.
+      startSeconds:
+          seam && shared > 0 && previous.endSeconds < current.endSeconds
+          ? previous.endSeconds
+          : null,
     );
-    if (trimmed != merged[index].text) {
-      merged[index] = merged[index].withText(trimmed);
-    }
   }
   return [
     for (final segment in merged)
@@ -170,7 +263,8 @@ List<MergedSegment> mergeTextOnly(
 }
 
 /// Purpose: Drop the start of one passage where it repeats the end of another.
-/// Inputs: [previous] what has been kept, [current] what came next.
+/// Inputs: [previous] what has been kept, [current] what came next, and
+/// [maxTokens] — how many tokens either side to compare.
 /// Returns: [current] with its repeated opening removed.
 /// Side effects: None.
 /// Notes: Compares longest first and stops at the first match, so the largest
@@ -182,7 +276,11 @@ List<MergedSegment> mergeTextOnly(
 /// because those scripts do not use spaces: without it the whole overlap of a
 /// Chinese recording would be duplicated, which is exactly what happened to the
 /// scripts this replaces.
-String removeRepeatedPrefix(String previous, String current) {
+String removeRepeatedPrefix(
+  String previous,
+  String current, {
+  int maxTokens = maxOverlapTokens,
+}) {
   if (previous.isEmpty || current.isEmpty) return current;
 
   final previousTokens = _tokenize(previous);
@@ -190,7 +288,7 @@ String removeRepeatedPrefix(String previous, String current) {
   if (previousTokens.isEmpty || currentTokens.isEmpty) return current;
 
   final maximum = [
-    maxOverlapTokens,
+    maxTokens,
     previousTokens.length,
     currentTokens.length,
   ].reduce((a, b) => a < b ? a : b);
@@ -204,6 +302,127 @@ String removeRepeatedPrefix(String previous, String current) {
     return _joinFrom(current, currentTokens, count);
   }
   return current;
+}
+
+/// Purpose: Drop everything one passage carries of speech another already
+/// covered, even when the repetition does not start at the boundary.
+/// Inputs: [previous] what has been kept, [current] what came next, and
+/// [maxTokens] — how many tokens either side to compare.
+/// Returns: [current] with the shared speech and everything before it removed.
+/// Side effects: None.
+/// Notes: The seam rule for models that answer in paragraphs. Where
+/// [removeRepeatedPrefix] needs the repetition to run from the very end of one
+/// passage to the very start of the next, a paragraph-sized segment carries the
+/// shared stretch in its *middle*: the later window opens with seconds the
+/// earlier one had already finished with, and closes with speech the earlier
+/// one never heard. So the longest run of words the two have in common is found
+/// wherever it sits, and [current] is cut through the end of it.
+///
+/// [previous] is trusted and never altered. Cutting the later passage rather
+/// than the earlier one keeps the transcript in the order it was spoken and
+/// leaves the earlier window's punctuation, which is the one that had the full
+/// sentence.
+///
+/// Two windows transcribing the same seconds disagree in scattered small ways —
+/// a word misheard, a hesitation one side dropped, a symbol written two ways —
+/// so the shared speech comes back as a chain of matching runs with a stranger
+/// or two between them. The chain is followed link by link, each link starting
+/// where the last one ended in **both** passages, and [current] is cut at the
+/// end of the last link. Requiring the chain to move forwards on both sides is
+/// what stops it latching onto a phrase the lecture happens to repeat
+/// throughout, which for a mathematics lecture is most of its vocabulary.
+///
+/// Falls back to leaving [current] alone. A seam where the two windows heard
+/// genuinely different words leaves a little duplication that a reader can see
+/// and delete, which is much better than a silently missing sentence.
+String removeSharedRun(
+  String previous,
+  String current, {
+  int maxTokens = maxOverlapTokens,
+}) {
+  // The anchored rule first: when it fires it is the safest of the three,
+  // because the match runs from one passage's end to the other's start.
+  final anchored = removeRepeatedPrefix(
+    previous,
+    current,
+    maxTokens: maxTokens,
+  );
+  if (anchored != current) return anchored;
+
+  if (previous.isEmpty || current.isEmpty) return current;
+  final previousTokens = _tokenize(previous);
+  final currentTokens = _tokenize(current);
+  if (previousTokens.isEmpty || currentTokens.isEmpty) return current;
+
+  final tail = previousTokens.length > maxTokens
+      ? previousTokens.sublist(previousTokens.length - maxTokens)
+      : previousTokens;
+  final head = currentTokens.length > maxTokens
+      ? currentTokens.sublist(0, maxTokens)
+      : currentTokens;
+
+  final skip = _sharedRunChain(tail, head);
+  if (skip == 0) return current;
+  return _joinFrom(current, currentTokens, skip);
+}
+
+/// Purpose: Follow the chain of runs two passages share at a seam.
+/// Inputs: [tail] the end of the earlier passage, [head] the start of the later
+/// one.
+/// Returns: How many tokens of [head] the two have in common, counted to the
+/// end of the last link, or 0 when the evidence is too thin.
+/// Side effects: None.
+/// Notes: Internal helper used within this file only.
+///
+/// Greedy and ordered. Each link is the longest run that starts within
+/// [maxSeamGapTokens] of where the last one ended in [head] and at or after
+/// where it ended in [tail]; the search stops at the first gap it cannot step
+/// over. The chain has to start at the head of [head], which is the positional
+/// evidence that this is an overlap at all, and the total has to reach
+/// [minSharedRunTokens] before anything is cut.
+int _sharedRunChain(List<_Token> tail, List<_Token> head) {
+  if (tail.isEmpty || head.isEmpty) return 0;
+
+  var headAt = 0;
+  var tailAt = 0;
+  var covered = 0;
+  var end = 0;
+  final matched = <_Token>[];
+
+  while (headAt < head.length) {
+    var bestLength = 0;
+    var bestHead = 0;
+    var bestTail = 0;
+
+    final limit = headAt + maxSeamGapTokens;
+    for (var h = headAt; h <= limit && h < head.length; h++) {
+      for (var t = tailAt; t < tail.length; t++) {
+        var length = 0;
+        while (h + length < head.length &&
+            t + length < tail.length &&
+            head[h + length].normalized == tail[t + length].normalized) {
+          length++;
+        }
+        if (length > bestLength) {
+          bestLength = length;
+          bestHead = h;
+          bestTail = t;
+        }
+      }
+    }
+
+    if (bestLength < minChainRunTokens) break;
+    matched.addAll(head.sublist(bestHead, bestHead + bestLength));
+    covered += bestLength;
+    headAt = bestHead + bestLength;
+    tailAt = bestTail + bestLength;
+    end = headAt;
+  }
+
+  final enough = _isCjkOnly(matched)
+      ? covered >= minSharedRunCjkCharacters
+      : covered >= minSharedRunTokens;
+  return enough ? end : 0;
 }
 
 /// One token, with where it sat in the original text.

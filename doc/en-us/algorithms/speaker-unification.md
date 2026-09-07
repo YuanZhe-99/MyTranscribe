@@ -17,6 +17,13 @@ paragraph follows. Merging two changes the segments' pointers and nothing else. 
 provider's raw answers are kept, the whole matching can be re-run from scratch after a manual
 correction without uploading a single byte again.
 
+A speaker's id is allocated once and never changes, because it names their sample file and is what
+a service that accepts reference clips echoes back. Ids can therefore have gaps: the matching
+allocates one for every window label it places, and a label whose only line fell inside an overlap
+the merge later trimmed leaves an id nothing points at. A merge leaves the same gap. So the number
+shown for an unnamed speaker is their **position** in the transcript, not the number inside their
+id — a list that ran 1, 2, 3, 5 would read as though somebody had gone missing.
+
 ## Evidence from the overlap
 
 Consecutive windows share a stretch of audio, and when speakers were requested that stretch is

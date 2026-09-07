@@ -59,6 +59,7 @@ sibling repository's Section 5.1 in the same change.
 | transcribe / transcription | 转写 | 轉寫 | The act and its result. Not 听写, which implies dictation. |
 | transcript | 转写稿 | 逐字稿 | 逐字稿 is the natural Taiwan word. |
 | recording | 录音 | 錄音 | |
+| title (of a transcription) | 名称 | 名稱 | What the user calls one transcription; a label, not a file name. |
 | source (a provider) | 来源 | 來源 | The user's own word for an endpoint plus its models. |
 | model | 模型 | 模型 | |
 | model library | 模型库 | 模型庫 | |

@@ -8,8 +8,10 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_transcribe/features/jobs/services/output_writer.dart';
 import 'package:my_transcribe/features/transcript/models/transcript.dart';
 import 'package:my_transcribe/features/transcript/services/export_formatters.dart';
+import 'package:my_transcribe/features/transcript/services/transcript_exporter.dart';
 
 /// Purpose: Build a transcript for a test.
 /// Inputs: The [segments] as (start, end, speakerId, text), and the [speakers].
@@ -145,6 +147,53 @@ void main() {
       );
       expect(text, contains('**Alice** [00:00]: hello'));
       expect(text, isNot(contains('## Segment')));
+    });
+
+    test('takes the caller\'s timestamp format', () {
+      // The files written beside a recording pad the hour, as the original
+      // scripts did; the viewer's exports do not. Most of this app's recordings
+      // are over an hour, so the two would visibly disagree.
+      final transcript = build([(3725, 3730, null, 'late')]);
+
+      expect(
+        renderMarkdown(transcript, name),
+        contains('## Segment 1 (about 1:02:05)'),
+      );
+      expect(
+        renderMarkdown(transcript, name, timestamp: formatTimestamp),
+        contains('## Segment 1 (about 01:02:05)'),
+      );
+    });
+
+    test('names an unnamed speaker without an interface language', () {
+      expect(defaultSpeakerName(2), 'Speaker 2');
+    });
+  });
+
+  group('the exported file name', () {
+    test('uses the name the user gave the transcription', () {
+      expect(
+        TranscriptExporter.exportFileStem('第二周 讲座', 'Week 2.mp3'),
+        '第二周 讲座',
+      );
+    });
+
+    test('falls back to the recording when there is no name', () {
+      expect(TranscriptExporter.exportFileStem(null, 'Week 2.mp3'), 'Week 2');
+      expect(TranscriptExporter.exportFileStem('  ', 'Week 2.mp3'), 'Week 2');
+    });
+
+    test('replaces what a file name may not contain', () {
+      // "Week 2: intro" is a reasonable thing to type and would make the save
+      // dialog fail with nothing useful to say.
+      expect(
+        TranscriptExporter.exportFileStem('Week 2: intro', 'a.mp3'),
+        'Week 2_ intro',
+      );
+      expect(
+        TranscriptExporter.exportFileStem(r'a/b\c*d?', 'a.mp3'),
+        'a_b_c_d_',
+      );
     });
   });
 

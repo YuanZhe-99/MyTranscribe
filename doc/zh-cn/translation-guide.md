@@ -55,6 +55,7 @@
 | transcribe / transcription | 转写 | 轉寫 | 动作及其结果。不用"听写"，那带有口述记录的意味。 |
 | transcript | 转写稿 | 逐字稿 | "逐字稿"是台湾的自然说法。 |
 | recording | 录音 | 錄音 | |
+| title (of a transcription) | 名称 | 名稱 | 用户为一次转写起的称呼；只是标签，不是文件名。 |
 | source (a provider) | 来源 | 來源 | 用户自己对"一个端点加上它的模型"的叫法。 |
 | model | 模型 | 模型 | |
 | model library | 模型库 | 模型庫 | |

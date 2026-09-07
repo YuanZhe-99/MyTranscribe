@@ -3,7 +3,62 @@
 Newest first. Each entry says what changed and, where it matters, why — the reasoning is the part
 that is hard to recover later.
 
-## 0.1.0 — unreleased
+## 0.2.0 — 2026-09-06
+
+What the first real recording found. An eighty-one-minute lecture went through OpenRouter end to
+end, with speakers, in eighty seconds. Every piece of the transcribing worked. Everything this
+release fixes is what the app then did with the result.
+
+**The page that never noticed**
+
+- A job that finished while its own page was open went on saying "Waiting", with a Start button,
+  until the app was restarted — beside a list that said Finished. The runner published an empty
+  queue as it stopped and the page fell back to the record it had read while the job was waiting,
+  because nothing ever re-read a job record except a page happening to refresh its list after a
+  button was pressed. The runner now keeps the job it has just finished and counts every record it
+  writes; the pages watch that count and take the most recently written copy of the three that can
+  exist at once.
+- That Start button was not harmless: pressing it rebuilds the transcript from the windows and
+  throws away every correction made in the viewer. A finished job now offers **Run again** instead,
+  and says what running again costs before doing it.
+
+**The transcript itself**
+
+- Nineteen seconds of speech were duplicated at all eight seams. The cut point that removes an
+  overlap assumes a segment is short next to it; a model that answers in paragraphs returns
+  segments several minutes long, so the segment on each side of the cut covered the whole shared
+  stretch. How far the comparison looks is now derived from the overlap instead of fixed at forty
+  tokens, and the repetition is followed as a chain of matching runs that steps over the scattered
+  words two transcriptions of the same seconds disagree about. Seven of the eight seams come out
+  clean; the eighth wrote "two vectors" against "2 vectors" and shares almost nothing exactly, so
+  nothing is removed there, which is the rule the merge has always had.
+- Five different people printed as one. The two files written beside the recording rendered each
+  window's own speaker labels, so every window's `S1` read as the same person. They are rendered
+  from the unified transcript now, through the same formatters the viewer's exports use.
+- Speakers were numbered 1, 2, 3, 5, 6. The number came out of the id, and an id is allocated for
+  every window label the matching places — including one whose only line then fell inside an
+  overlap that was trimmed. The number shown is the speaker's position now. Ids are untouched:
+  they name the sample files, and a source that accepts reference clips echoes them back.
+
+**Room on the device**
+
+- The detail page says how much a transcription is holding, and offers to give the converted copy
+  of the recording back once the transcript exists — thirty-nine megabytes for that lecture, with
+  no way to see it before and no way to remove it short of deleting the whole transcription. The
+  transcript, the raw replies and the speaker samples all stay.
+- Playback falls back to the original recording when there is no converted copy. A recording small
+  enough to have been sent whole never had one, and the player bar used to say there was nothing to
+  play with the file sitting right there.
+- A window audio file another program was holding when a job finished stayed for good. Deletes are
+  retried, and anything still left is swept away at the next start.
+
+**Naming**
+
+- A transcription can be given a name of its own, from the detail page or by holding its row. It is
+  a label: the files beside the recording keep the recording's name, an export takes the new one.
+  Renaming works while a job is running.
+
+## 0.1.0 — 2026-09-05
 
 The first release: a recording goes in, a transcript comes out, and the app knows how to divide a
 recording too large to send whole, pick up where an interrupted run stopped, keep a speaker's

@@ -351,6 +351,12 @@ abstract class AppLocalizations {
   /// **'Import from ZIP'**
   String get importData;
 
+  /// No description provided for @jobAudioRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Converted audio removed'**
+  String get jobAudioRemoved;
+
   /// No description provided for @jobDeleteConfirm.
   ///
   /// In en, this message translates to:
@@ -417,6 +423,36 @@ abstract class AppLocalizations {
   /// **'Path copied'**
   String get jobPathCopied;
 
+  /// No description provided for @jobRemoveAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove converted audio'**
+  String get jobRemoveAudio;
+
+  /// No description provided for @jobRemoveAudioConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this recording\'s converted copy from this device? The transcript stays. Playback falls back to the original recording while it can still be found.'**
+  String get jobRemoveAudioConfirm;
+
+  /// No description provided for @jobRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get jobRename;
+
+  /// No description provided for @jobRenameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave empty to use the recording\'s file name'**
+  String get jobRenameHint;
+
+  /// No description provided for @jobRenameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Name this transcription'**
+  String get jobRenameTitle;
+
   /// No description provided for @jobResume.
   ///
   /// In en, this message translates to:
@@ -434,6 +470,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Try again without speaker names'**
   String get jobRetryWithoutSpeakers;
+
+  /// No description provided for @jobRunAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Run again'**
+  String get jobRunAgain;
+
+  /// No description provided for @jobRunAgainConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcribe this recording again? The transcript is built from scratch, so corrections made in the viewer — speaker names, edited lines — are lost.'**
+  String get jobRunAgainConfirm;
 
   /// No description provided for @jobSectionOutputs.
   ///
@@ -1698,7 +1746,7 @@ abstract class AppLocalizations {
   /// No description provided for @viewerAudioMissing.
   ///
   /// In en, this message translates to:
-  /// **'The converted audio is no longer on this device, so there is nothing to play.'**
+  /// **'Neither the converted audio nor the original recording is on this device, so there is nothing to play.'**
   String get viewerAudioMissing;
 
   /// No description provided for @viewerAutoScroll.

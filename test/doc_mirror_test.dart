@@ -85,7 +85,8 @@ void main() {
             expect(
               File(target).existsSync(),
               isTrue,
-              reason: '$language/$page links to ${link.group(1)}, which is not '
+              reason:
+                  '$language/$page links to ${link.group(1)}, which is not '
                   'there',
             );
           }

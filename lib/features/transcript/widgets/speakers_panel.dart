@@ -37,6 +37,19 @@ class SpeakersPanel extends StatelessWidget {
     required this.onMerge,
   });
 
+  /// Purpose: Say what to call one speaker.
+  /// Inputs: The [speaker] and the [l10n].
+  /// Returns: Their name, or the numbered fallback.
+  /// Side effects: None.
+  /// Notes: Internal helper used within this file only. Goes through the
+  /// transcript so an unnamed speaker is numbered by position rather than by
+  /// their id, which can have gaps — see [Transcript.displayNameOf]. The id is
+  /// the last resort and cannot be reached from this panel, whose speakers all
+  /// come from the transcript.
+  String _nameOf(Speaker speaker, AppLocalizations l10n) =>
+      transcript.displayNameOf(speaker.id, l10n.viewerSpeakerFallback) ??
+      speaker.id;
+
   /// Purpose: Build the panel.
   /// Inputs: `context`.
   /// Returns: The widget tree for the current state.
@@ -69,14 +82,11 @@ class SpeakersPanel extends StatelessWidget {
                 theme.brightness,
               ),
               child: Text(
-                speaker
-                    .displayName(l10n.viewerSpeakerFallback)
-                    .characters
-                    .first,
+                _nameOf(speaker, l10n).characters.first,
                 style: const TextStyle(color: Colors.white),
               ),
             ),
-            title: Text(speaker.displayName(l10n.viewerSpeakerFallback)),
+            title: Text(_nameOf(speaker, l10n)),
             subtitle: Text(l10n.viewerSpeakerLines(counts[speaker.id] ?? 0)),
             trailing: PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert),
@@ -122,9 +132,7 @@ class SpeakersPanel extends StatelessWidget {
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: InputDecoration(
-            hintText: speaker.displayName(l10n.viewerSpeakerFallback),
-          ),
+          decoration: InputDecoration(hintText: _nameOf(speaker, l10n)),
           onSubmitted: (value) => Navigator.of(ctx).pop(value),
         ),
         actions: [
@@ -164,16 +172,12 @@ class SpeakersPanel extends StatelessWidget {
     final into = await showDialog<String>(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: Text(
-          l10n.viewerSpeakerMergeTitle(
-            speaker.displayName(l10n.viewerSpeakerFallback),
-          ),
-        ),
+        title: Text(l10n.viewerSpeakerMergeTitle(_nameOf(speaker, l10n))),
         children: [
           for (final other in others)
             SimpleDialogOption(
               onPressed: () => Navigator.of(ctx).pop(other.id),
-              child: Text(other.displayName(l10n.viewerSpeakerFallback)),
+              child: Text(_nameOf(other, l10n)),
             ),
         ],
       ),

@@ -25,11 +25,28 @@ final jobRunnerProvider = Provider<JobRunner>((ref) {
   );
 });
 
+/// How many times a job record has changed since the app started.
+///
+/// The bridge between the runner, which knows when it has written something,
+/// and the providers below, which read what it wrote. Watching this is what
+/// makes a job that finishes reach every page on its own: before it existed,
+/// the only way a record was re-read was a page happening to refresh the list
+/// after a button was pressed, so a job that finished while its own page was
+/// open went on showing the stage it started at until the app was restarted.
+final jobRevisionProvider = Provider<int>((ref) {
+  final runner = ref.watch(jobRunnerProvider);
+  void forward() => ref.state = runner.revision.value;
+  runner.revision.addListener(forward);
+  ref.onDispose(() => runner.revision.removeListener(forward));
+  return runner.revision.value;
+});
+
 /// Every job on disk, newest first.
 ///
-/// Refreshed — `ref.refresh` in this Riverpod version — whenever a job is
-/// created, finishes or is deleted.
+/// Re-read whenever [jobRevisionProvider] moves, which is every time a job is
+/// created, finishes, is renamed or is deleted.
 final jobsListProvider = FutureProvider<List<TranscriptionJob>>((ref) async {
+  ref.watch(jobRevisionProvider);
   return JobStore.loadAll();
 });
 
@@ -41,5 +58,19 @@ final jobProvider = FutureProvider.family<TranscriptionJob?, String>((
   ref,
   jobId,
 ) async {
+  ref.watch(jobRevisionProvider);
   return JobStore.load(jobId);
 });
+
+/// How much room one job takes, and whether its converted audio is still there.
+///
+/// Read for the detail page. Watches the revision so removing the converted
+/// copy updates the figure without the page asking again.
+final jobStorageProvider =
+    FutureProvider.family<({int bytes, bool hasConvertedAudio}), String>((
+      ref,
+      jobId,
+    ) async {
+      ref.watch(jobRevisionProvider);
+      return JobStore.storageInfo(jobId);
+    });

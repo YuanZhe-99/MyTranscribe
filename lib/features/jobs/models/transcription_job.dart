@@ -413,8 +413,15 @@ class TranscriptionJob {
   /// Where the recording is.
   final String sourcePath;
 
-  /// What to call it.
+  /// The recording's own file name.
   final String sourceName;
+
+  /// What the user chose to call this transcription, when they have.
+  ///
+  /// Only a label. The files written beside the recording keep the recording's
+  /// name, because a folder of them is read by file name and renaming a
+  /// transcription in the app is not a reason to rename anything on disk.
+  final String? title;
 
   /// How large it is, in bytes.
   final int sourceBytes;
@@ -471,6 +478,7 @@ class TranscriptionJob {
     required this.providerId,
     required this.modelId,
     required this.modelName,
+    this.title,
     this.options = const JobOptions(),
     this.finishedAt,
     this.media,
@@ -482,6 +490,14 @@ class TranscriptionJob {
     this.outputs = const [],
     this.extraJson = const {},
   });
+
+  /// What to call this transcription on screen.
+  ///
+  /// The user's own name where they gave one, and the recording's file name
+  /// otherwise. A name of nothing but spaces counts as no name, so clearing the
+  /// field puts the file name back rather than leaving a blank row.
+  String get displayName =>
+      (title?.trim().isNotEmpty ?? false) ? title!.trim() : sourceName;
 
   /// How many windows have finished.
   int get completedChunks => chunks.length;
@@ -515,6 +531,7 @@ class TranscriptionJob {
       finishedAt: DateTime.tryParse('${json['finishedAt']}')?.toUtc(),
       sourcePath: json['sourcePath'] as String? ?? '',
       sourceName: json['sourceName'] as String? ?? '',
+      title: json['title'] as String?,
       sourceBytes: (json['sourceBytes'] as num?)?.toInt() ?? 0,
       providerId: json['providerId'] as String? ?? '',
       modelId: json['modelId'] as String? ?? '',
@@ -558,6 +575,7 @@ class TranscriptionJob {
     if (finishedAt != null) 'finishedAt': finishedAt!.toUtc().toIso8601String(),
     'sourcePath': sourcePath,
     'sourceName': sourceName,
+    if (title != null) 'title': title,
     'sourceBytes': sourceBytes,
     'providerId': providerId,
     'modelId': modelId,
@@ -578,8 +596,11 @@ class TranscriptionJob {
   /// Returns: A new [TranscriptionJob].
   /// Side effects: None.
   /// Notes: [modifiedAt] moves on every copy unless it is given, so a saved job
-  /// always records when it last changed.
+  /// always records when it last changed. [clearTitle] puts the recording's own
+  /// name back.
   TranscriptionJob copyWith({
+    String? title,
+    bool clearTitle = false,
     DateTime? modifiedAt,
     DateTime? finishedAt,
     MediaInfo? media,
@@ -599,6 +620,7 @@ class TranscriptionJob {
     finishedAt: finishedAt ?? this.finishedAt,
     sourcePath: sourcePath,
     sourceName: sourceName,
+    title: clearTitle ? null : (title ?? this.title),
     sourceBytes: sourceBytes,
     providerId: providerId,
     modelId: modelId,
@@ -625,6 +647,7 @@ const _knownKeys = {
   'finishedAt',
   'sourcePath',
   'sourceName',
+  'title',
   'sourceBytes',
   'providerId',
   'modelId',

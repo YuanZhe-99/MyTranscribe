@@ -78,6 +78,13 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
   /// Whether the audio has been handed to the player yet.
   bool _audioRequested = false;
 
+  /// The last job record this page managed to read.
+  ///
+  /// The record is re-read whenever the runner writes one — a rename, most
+  /// often — and a re-reading `FutureProvider` reports `AsyncLoading` with no
+  /// previous value in Riverpod 1.x. Without this the title would blink empty.
+  TranscriptionJob? _job;
+
   /// Attached to whichever line is being played, so it can be scrolled to.
   final _playingKey = GlobalKey();
 
@@ -105,17 +112,20 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
     super.dispose();
   }
 
-  /// Purpose: Hand the converted audio to the player, once.
-  /// Inputs: None.
+  /// Purpose: Hand something playable to the player, once.
+  /// Inputs: The [job], for the recording it was made from.
   /// Returns: None.
-  /// Side effects: Opens an audio device when the file is there.
-  /// Notes: Internal helper used within this file only. A missing audio file is
-  /// not an error: a transcript whose recording has been deleted is still worth
-  /// reading, and the bar says there is nothing to play. Nothing on this page
-  /// waits for it, which is why it is fire-and-forget.
-  Future<void> _loadAudio() async {
-    final audio = await JobStore.normalizedAudio(widget.jobId);
-    if (audio.existsSync()) await _player.load(audio.path);
+  /// Side effects: Opens an audio device when there is a file to open.
+  /// Notes: Internal helper used within this file only. The converted copy
+  /// first, the original recording after it — a recording small enough to have
+  /// been sent whole never had a converted copy, and the bar used to say there
+  /// was nothing to play with the file sitting right there. A missing audio
+  /// file is still not an error: a transcript whose recording has been deleted
+  /// is worth reading, and the bar says so. Nothing on this page waits for it,
+  /// which is why it is fire-and-forget.
+  Future<void> _loadAudio(TranscriptionJob job) async {
+    final audio = await JobStore.playbackAudio(widget.jobId, job.sourcePath);
+    if (audio != null) await _player.load(audio.path);
   }
 
   /// Purpose: Name one speaker.
@@ -123,16 +133,14 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
   /// Returns: The name, or null when nobody is identified.
   /// Side effects: None.
   /// Notes: Internal helper used within this file only. Passed into the export
-  /// formatters, so a file says exactly what the screen says.
+  /// formatters, so a file says exactly what the screen says. An unnamed
+  /// speaker is numbered by their position in the transcript rather than by
+  /// their id, which can have gaps — see [Transcript.displayNameOf].
   String? _nameOf(
     Transcript transcript,
     String? speakerId,
     AppLocalizations l10n,
-  ) {
-    final speaker = transcript.speaker(speakerId);
-    if (speaker == null) return null;
-    return speaker.displayName(l10n.viewerSpeakerFallback);
-  }
+  ) => transcript.displayNameOf(speakerId, l10n.viewerSpeakerFallback);
 
   /// Purpose: Bring the line being played into view.
   /// Inputs: Which [line] is playing, identified however the current view
@@ -184,7 +192,9 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
     final sidebar = useViewerSidebar(screen.width, screen.height, contentWidth);
 
     final stored = ref.watch(transcriptProvider(widget.jobId));
-    final job = ref.watch(jobProvider(widget.jobId)).value;
+    final job = ref.watch(jobProvider(widget.jobId)).value ?? _job;
+    // A cache, not state: nothing needs rebuilding because of it.
+    _job = job ?? _job;
     final preferences = ref.watch(viewerPreferencesProvider).value;
 
     if (preferences != null && !_seeded) {
@@ -196,9 +206,11 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
       _fontSize = preferences.fontSize;
     }
 
-    if (!_audioRequested) {
+    // Waits for the record, because the recording's own path is the fallback
+    // when there is no converted copy.
+    if (!_audioRequested && job != null) {
       _audioRequested = true;
-      _loadAudio();
+      _loadAudio(job);
     }
 
     // Riverpod 1.x has no hasValue; an AsyncData carrying null means the job
@@ -213,7 +225,7 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
     final transcript = _edited ?? stored.value;
     if (transcript == null || transcript.segments.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: Text(job?.sourceName ?? '')),
+        appBar: AppBar(title: Text(job?.displayName ?? '')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -241,7 +253,7 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
                 }),
               )
             : Text(
-                job?.sourceName ?? '',
+                job?.displayName ?? '',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -445,7 +457,9 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
           builder: (context) {
             final run = runs[runIndex];
             final speakerIndex = transcript.speakers.indexWhere(
-              (s) => s.displayName(l10n.viewerSpeakerFallback) == run.speaker,
+              (s) =>
+                  transcript.displayNameOf(s.id, l10n.viewerSpeakerFallback) ==
+                  run.speaker,
             );
 
             return Padding(
@@ -535,7 +549,7 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
                         if (speaker != null) ...[
                           const SizedBox(width: 8),
                           Text(
-                            speaker.displayName(l10n.viewerSpeakerFallback),
+                            _nameOf(transcript, segment.speakerId, l10n) ?? '',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: speakerColor(
@@ -819,6 +833,7 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
       format: format,
       sourceName: job?.sourceName ?? 'transcript',
       modelName: job?.modelName ?? '',
+      title: job?.title,
       nameOf: (id) => _nameOf(transcript, id, l10n),
     );
     if (!mounted || name == null) return;

@@ -11,7 +11,7 @@ find lib -name "*.dart" -not -path "lib/l10n/*" | xargs grep -h '/// Purpose:' |
 
 Generated localization code under `lib/l10n/` is excluded from the convention and from these counts.
 
-At the 0.1.0 release that command reports **776** documented declarations across **81** source
+At the 0.2.0 release that command reports **798** documented declarations across **81** source
 files, and every one of those files appears in the tables below.
 
 ## Status
