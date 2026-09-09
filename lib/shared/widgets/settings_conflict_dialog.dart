@@ -1,31 +1,35 @@
-/// Purpose: Let the user pick a winner when sync finds one source, model or
-/// defaults record edited on two devices.
-/// Inputs: The conflicting record pair from the merge.
-/// Returns: The chosen `SettingsRecord`, or null when the user backs out.
+/// Purpose: Let the user pick a winner when sync finds the same thing edited on
+/// two devices.
+/// Inputs: One conflict, described by the merge that found it.
+/// Returns: The chosen record, or null when the user backs out.
 /// Side effects: Shows a modal dialog.
 /// Notes: The dialog is not barrier-dismissible and has no cancel action:
 /// resolution is all-or-nothing, and the caller treats a null (system back) as
 /// "abort the whole sync", never as "keep local".
+///
+/// It renders a [SyncConflictView] rather than a record type, which is what let
+/// transcriptions start syncing without a second dialog being written: each
+/// module says how to describe its own records, and the chosen one comes back
+/// opaque for the caller to hand to the right module.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../features/providers/models/transcribe_settings.dart';
 import '../../l10n/app_localizations.dart';
 import '../services/sync_merge.dart';
 
-/// Shows both versions of one conflicting settings record side by side.
-class SettingsConflictDialog extends StatelessWidget {
-  /// The conflicting pair, as the merge reported it.
-  final RecordConflict<SettingsRecord> conflict;
+/// Shows both versions of one conflicting record side by side.
+class SyncConflictDialog extends StatelessWidget {
+  /// The conflict, as the merge described it.
+  final SyncConflictView conflict;
 
-  /// Purpose: Create a settings conflict dialog instance.
+  /// Purpose: Create a conflict dialog instance.
   /// Inputs: `conflict`.
-  /// Returns: A new `SettingsConflictDialog` instance.
+  /// Returns: A new instance.
   /// Side effects: None.
   /// Notes: None.
-  const SettingsConflictDialog({super.key, required this.conflict});
+  const SyncConflictDialog({super.key, required this.conflict});
 
   /// Purpose: Format a UTC timestamp in the device's zone.
   /// Inputs: `time`.
@@ -36,43 +40,13 @@ class SettingsConflictDialog extends StatelessWidget {
   static String _formatTime(DateTime time) =>
       DateFormat.yMd().add_Hms().format(time.toLocal());
 
-  /// Purpose: Summarize what a record's payload actually says.
-  /// Inputs: `record`.
-  /// Returns: `String` — a few lines of `field: value`.
-  /// Side effects: None.
-  /// Notes: Internal helper used within this file only. The payload is an
-  /// opaque map here on purpose (see `transcribe_settings.dart`), so this
-  /// prints it rather than interpreting it — which also means a record written
-  /// by a newer build still shows the user something they can choose between.
-  /// Long values are cut so one differing field stays visible; the API key is
-  /// never in this map, so nothing secret can be printed.
-  static String _summarize(SettingsRecord record) {
-    final entries = record.payload.entries.toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
-    if (entries.isEmpty) return '—';
-    return [
-      for (final e in entries.take(8)) '${e.key}: ${_short(e.value)}',
-      if (entries.length > 8) '…',
-    ].join('\n');
-  }
-
-  /// Purpose: Render one value on one line.
-  /// Inputs: `value`.
-  /// Returns: `String`.
-  /// Side effects: None.
-  /// Notes: Internal helper used within this file only.
-  static String _short(Object? value) {
-    final text = '$value'.replaceAll('\n', ' ');
-    return text.length <= 48 ? text : '${text.substring(0, 47)}…';
-  }
-
   /// Purpose: Render one version's facts as a labelled block.
-  /// Inputs: `context`, `heading`, `record`.
+  /// Inputs: `context`, `heading`, `side`.
   /// Returns: `Widget`.
   /// Side effects: None.
   /// Notes: Internal helper used within this file only. Both blocks show the
   /// same fields in the same order, so the difference is easy to spot.
-  Widget _version(BuildContext context, String heading, SettingsRecord record) {
+  Widget _version(BuildContext context, String heading, SyncConflictSide side) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     return Column(
@@ -81,11 +55,14 @@ class SettingsConflictDialog extends StatelessWidget {
         Text(heading, style: theme.textTheme.titleSmall),
         const SizedBox(height: 4),
         Text(
-          '${l10n.syncModifiedAt}: ${_formatTime(record.modifiedAt)}',
+          '${l10n.syncModifiedAt}: ${_formatTime(side.modifiedAt)}',
           style: theme.textTheme.bodySmall,
         ),
         const SizedBox(height: 4),
-        Text(_summarize(record), style: theme.textTheme.bodySmall),
+        Text(
+          side.lines.isEmpty ? '—' : side.lines.join('\n'),
+          style: theme.textTheme.bodySmall,
+        ),
       ],
     );
   }
@@ -108,19 +85,19 @@ class SettingsConflictDialog extends StatelessWidget {
           children: [
             Text(l10n.syncConflictDesc),
             const SizedBox(height: 16),
-            _version(context, l10n.syncLocalVersion, conflict.localRecord),
+            _version(context, l10n.syncLocalVersion, conflict.local),
             const Divider(height: 24),
-            _version(context, l10n.syncRemoteVersion, conflict.remoteRecord),
+            _version(context, l10n.syncRemoteVersion, conflict.remote),
           ],
         ),
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(conflict.remoteRecord),
+          onPressed: () => Navigator.of(context).pop(conflict.remote.record),
           child: Text(l10n.syncKeepRemote),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(context).pop(conflict.localRecord),
+          onPressed: () => Navigator.of(context).pop(conflict.local.record),
           child: Text(l10n.syncKeepLocal),
         ),
       ],
@@ -128,19 +105,22 @@ class SettingsConflictDialog extends StatelessWidget {
   }
 }
 
-/// Purpose: Ask the user which version of one settings record to keep.
+/// Purpose: Ask the user which version of one record to keep.
 /// Inputs: `context`, `conflict`.
-/// Returns: `Future<SettingsRecord?>` — null when the user backs out.
+/// Returns: `Future<Object?>` — the chosen record, or null when the user backs
+/// out.
 /// Side effects: Shows a modal dialog.
 /// Notes: Not barrier-dismissible: backing out aborts the whole sync, so it
-/// must be a deliberate act rather than a stray tap outside the dialog.
-Future<SettingsRecord?> showSettingsConflictDialog(
+/// must be a deliberate act rather than a stray tap outside the dialog. The
+/// record comes back opaque; the caller knows from `conflict.moduleId` which
+/// module to hand it to.
+Future<Object?> showSyncConflictDialog(
   BuildContext context,
-  RecordConflict<SettingsRecord> conflict,
+  SyncConflictView conflict,
 ) {
-  return showDialog<SettingsRecord>(
+  return showDialog<Object>(
     context: context,
     barrierDismissible: false,
-    builder: (ctx) => SettingsConflictDialog(conflict: conflict),
+    builder: (ctx) => SyncConflictDialog(conflict: conflict),
   );
 }

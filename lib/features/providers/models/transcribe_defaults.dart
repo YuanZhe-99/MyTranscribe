@@ -199,6 +199,23 @@ class TranscribeDefaults {
       ].take(_maxRememberedSpeakerNames).toList(),
     );
   }
+
+  /// Purpose: Forget a speaker name the user no longer wants offered.
+  /// Inputs: [name].
+  /// Returns: A copy without it.
+  /// Side effects: None.
+  /// Notes: Case-insensitive, to match how [rememberSpeakerName] deduplicates:
+  /// a list that offered both "Alice" and "alice" would be a bug either way.
+  TranscribeDefaults forgetSpeakerName(String name) {
+    final lower = name.trim().toLowerCase();
+    if (lower.isEmpty) return this;
+    return copyWith(
+      knownSpeakerNames: [
+        for (final existing in knownSpeakerNames)
+          if (existing.toLowerCase() != lower) existing,
+      ],
+    );
+  }
 }
 
 /// How many speaker names to keep as suggestions.

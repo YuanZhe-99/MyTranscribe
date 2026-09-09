@@ -1,42 +1,48 @@
 # WebDAV sync
 
 Sync is off until the user configures it, and it talks only to the server they entered. It carries
-**configuration** — sources, models and defaults — and, when the endpoint is secure, their API keys.
-Recordings and transcripts never sync.
+**configuration** — sources, models and defaults — the **transcripts** of finished transcriptions,
+and, when the endpoint is secure, their API keys. Recordings never sync. The converted listening
+copy travels only on a device that has asked for it.
 
 The engine itself lives in the shared `myapps_data` package and is documented at
 `packages/myapps_data/doc/en-us/`. This page describes how it is configured here.
 
 ## What is registered
 
-One data module:
+Two data modules, in this order:
 
-| Field | Value |
-|---|---|
-| File | `transcribe_settings.json` |
-| Module id | `settings` |
-| Remote path | `/MyTranscribe` |
+| File | Module id | Carries |
+|---|---|---|
+| `transcribe_settings.json` | `settings` | Sources, models and defaults |
+| `transcribe_transcripts.json` | `transcripts` | Every finished transcription's record and text |
 
-`lib/app/data_modules.dart` is the only place those names appear. A second module would be appended
-to the registry, never inserted before this one — the engine treats registry order as significant.
+The remote directory is `/MyTranscribe`. `lib/app/data_modules.dart` is the only place those names
+appear. A further module would be appended to the registry, never inserted before these — the engine
+treats registry order as significant.
+
+Job folders are still not modules. The engines only ever touch the file names above, which is what
+keeps hours of audio out of a backup bundle.
 
 ## How a sync goes
 
-1. Acquire the remote `.lock`, so two devices cannot upload at once.
-2. Download the remote settings file.
-3. If it is absent, upload the local one as new. If the two raw strings are identical, save the base
-   snapshot and stop — this is the fast path, and it is why the file's formatting must match what
-   the storage hub writes.
+1. Rebuild `transcribe_transcripts.json` from `jobs/`.
+2. Acquire the remote `.lock`, so two devices cannot upload at once.
+3. For each module: download the remote file. If it is absent, upload the local one as new. If the
+   two raw strings are identical, save the base snapshot and stop — this is the fast path, and it is
+   why the file's formatting must match what the app writes.
 4. Otherwise merge three ways: local, remote, and the base snapshot from the last agreed sync.
 5. Write the merged file locally, upload it, save the new base snapshot, release the lock.
+6. Write whatever the transcripts merge produced back into `jobs/`.
+7. Exchange the API keys, and then the audio, outside the lock.
 
 The base snapshot in `.sync_base/` is what makes a deletion propagate instead of resurrecting: a
 record present in the base and absent locally was deleted here, rather than being new there.
 
 ## The merge
 
-`lib/shared/services/sync_merge.dart` wraps the shared `mergeRecords` engine. Records are keyed by
-id and compared by `modifiedAt`.
+`lib/shared/services/sync_merge.dart` wraps the shared `mergeRecords` engine. Both modules use it.
+Records are keyed by id and compared by `modifiedAt`.
 
 - Only one side changed → that side wins.
 - Neither changed → local, unchanged.
@@ -46,32 +52,101 @@ id and compared by `modifiedAt`.
   absence.
 - Both sides changed → a **conflict**, unless the content is the same.
 
-"The same content" compares a record's `id`, `kind` and `payload` — **not** its timestamps. Two
-devices that both renamed a source to the same thing, a minute apart, have not disagreed about
-anything, and asking the user to choose between two identical configurations would be noise.
+"The same content" compares what a record *says*, **not** when it was said: a settings record's
+`id`, `kind` and `payload`; a transcription's id, its record without `modifiedAt`, and its
+transcript. Two devices that both renamed a speaker to the same thing, a minute apart, have not
+disagreed about anything, and asking the user to choose between two identical transcripts would be
+noise.
 
 Conflicts are **never** auto-resolved. `autoResolve` is false at every call site. The user is shown
 one dialog per conflicting record, with both versions and their times, and dismissing any of them
 aborts the whole resolution: nothing is uploaded, the conflict stays pending, and no record is
-quietly kept. A conflict the user does answer is finalized under a freshly acquired lock.
+quietly kept. A conflict the user does answer is finalized under a freshly acquired lock. The dialog
+renders a `SyncConflictView`, so each module says how to describe its own records: a settings record
+lists its payload fields, a transcription lists its speakers and its line count.
 
 Whichever version wins still absorbs the other's unknown fields, so losing a conflict never deletes
 a field a newer build wrote.
+
+## Transcripts
+
+`transcribe_transcripts.json` is a **projection** of `jobs/`, not a second copy of the truth. It is
+rebuilt from the job folders immediately before the engine runs and applied back into them
+afterwards, by `TranscriptSyncService`. Each record carries the raw contents of one `job.json` and
+one `transcript.json`, unparsed.
+
+Raw, because the nested types inside a job record have no `extraJson` of their own. Parsing a record
+written by a newer build and writing it back would drop whatever that build added, and the two
+devices would take turns stripping each other's fields and re-uploading for ever.
+
+Three rules protect the folders, and each exists because of a way this otherwise loses data:
+
+- **Only finished transcriptions are projected fresh.** A job that is not done but was in the
+  previous projection — a re-run in progress — is carried forward from it unchanged. Otherwise its
+  disappearance would read as a deletion, and the other device would delete the whole folder, audio
+  included, while its owner watched the recording transcribe again.
+- **Deletions come only from the three-way merge.** Applying removes exactly the ids that were in
+  the pre-sync projection and are absent afterwards. A force download, a backup restore and a ZIP
+  import are additive: none of them has a base snapshot to tell "the server never had this" apart
+  from "somebody deleted this". A transcription only one device has simply uploads again next time.
+- **A gap is never projected.** A `job.json` that exists but cannot be read stops the whole
+  operation before anything is sent, leaving the previous file in place. Writing the projection
+  without it would tell the other device that the user had deleted it.
+
+Applying also skips any job the runner is holding, never recreates one deleted while the sync was in
+flight, and refuses a record whose id could name a path outside `jobs/`.
+
+A transcription that arrived this way has no recording on this device, so its detail page does not
+offer to run it again.
+
+The whole document is downloaded on every sync — the engine has no ETag short-circuit yet. A year of
+recordings is on the order of ten megabytes, which is acceptable; a conditional GET belongs in the
+shared package.
+
+## Audio
+
+The converted `jobs/<id>/audio.mp3` — the mono 16 kHz copy the app made to cut windows from, and the
+viewer plays — travels through an app-level side channel, in `audio/` beside the data files. The
+original recording never leaves the device: it can be gigabytes, and the user chose where to keep
+it.
+
+It is **off by default, per device**, under "Also sync audio" on the sync page. A laptop with room
+to spare and a phone that is nearly full want different answers, and the transcripts sync either
+way. With the switch off, no request about audio is made at all.
+
+The exchange is additive in both directions: a file is uploaded when this device has it and the
+server does not, and downloaded when the reverse is true. Blobs are immutable, so nothing is merged
+and no lock is needed. A listing that failed is not read as an empty server — that would re-upload
+every file on one flaky request. Audio removed with "Remove converted audio" leaves an
+`audio.discarded` marker in the job folder and is never fetched back; a re-run that produces a
+converted copy again clears it. Remote audio is deleted only for transcriptions the merge just
+deleted.
+
+Two limits worth knowing: a recording small enough to have been sent whole never had a converted
+copy, so other devices get no audio for it; and the upload holds the file in memory with a 120
+second timeout, so an eighty-minute recording — roughly 38 MB — needs about 320 KB/s of uplink or it
+becomes a warning and is retried next sync.
+
+A device can keep every transcript without keeping any sound: Settings › Data › Remove converted
+audio frees the lot at once, and the markers stop the next sync from bringing it back.
 
 ## Force upload and force download
 
 Both skip the merge. Force upload replaces the remote with the local file and loses remote changes
 since the last sync; force download does the reverse. Both run under the same lock and the same
 in-flight guard as a normal sync, and both are behind a confirmation dialog that says which side
-loses.
+loses. Force download is additive for transcriptions, as described above: what comes down is
+written, but nothing local is deleted.
 
 ## Auto-sync
 
 `AutoSyncService` wraps the shared scheduler. Its triggers are fixed: once at launch, once on
 resume, every 15 minutes, and 30 seconds after the last local save (a trailing-edge debounce, so a
-burst of edits costs one sync). Overlapping triggers are dropped by an in-flight guard. Conflicts
-found in the background are **not** resolved there — the status turns to "conflicts pending" and
-waits for the user to open the sync page.
+burst of edits costs one sync). A finished transcription, a rename, a deletion and a correction in
+the viewer all count as a save; a running job's per-window writes do not, or one recording would
+cost dozens of syncs. Overlapping triggers are dropped by an in-flight guard. Conflicts found in the
+background are **not** resolved there — the status turns to "conflicts pending" and waits for the
+user to open the sync page.
 
 ## API keys
 

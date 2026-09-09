@@ -16,13 +16,14 @@ import 'package:myapps_data/myapps_data.dart'
     show SyncPhase, SyncProgress, SyncWakeLock, WebDAVConfig;
 
 import '../../app/data_modules.dart';
-
+import '../../features/jobs/models/transcripts_document.dart';
 import '../../features/providers/models/transcribe_settings.dart';
 import '../../l10n/app_localizations.dart';
 import '../../features/secrets/services/secrets_store.dart';
 import '../../features/secrets/services/secrets_sync_service.dart';
 import '../../features/secrets/views/secrets_endpoint_section.dart';
 import '../services/auto_sync_service.dart';
+import '../services/transcribe_storage.dart';
 import '../services/webdav_service.dart';
 import '../widgets/settings_conflict_dialog.dart';
 
@@ -58,6 +59,12 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
   int _keyCount = 0;
   bool _isConfigured = false;
   bool _autoSync = false;
+
+  /// Whether this device also copies the converted audio.
+  ///
+  /// Device-local rather than part of the shared config: a laptop with room to
+  /// spare and a phone that is nearly full want different answers.
+  bool _syncAudio = false;
 
   /// Purpose: Subscribe to sync status and start the configuration read.
   /// Inputs: None.
@@ -96,6 +103,7 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
       _isConfigured = config.isConfigured;
       _autoSync = config.autoSync;
     }
+    _syncAudio = await TranscribeStorage.getSyncIncludesAudio();
     // How many keys this device holds, for the line under the verdict.
     _keyCount = (await SecretsStore.load()).keys.length;
     if (mounted) setState(() => _loading = false);
@@ -278,9 +286,14 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
         '${l10n.settingsWebDAVSyncSuccess} · ${l10n.secretsSyncFailed}',
       _ => l10n.settingsWebDAVSyncSuccess,
     };
+    // The audio is opt-in, so it is only mentioned when it actually moved.
+    final audio = result.audio;
+    final withAudio = audio != null && audio.movedAnything
+        ? '$message · ${l10n.syncAudioSummary(audio.uploaded, audio.downloaded)}'
+        : message;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ).showSnackBar(SnackBar(content: Text(withAudio)));
   }
 
   /// Purpose: Confirm and run a force upload (local overwrites remote).
@@ -415,11 +428,12 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
   /// pending in the visible status, and no record is silently kept.
   Future<void> _resolveConflicts(SyncResult result) async {
     final pending = result.pending!;
-    final resolutions = <String, SettingsRecord>{};
+    final settings = <String, SettingsRecord>{};
+    final transcripts = <String, TranscriptSyncRecord>{};
 
-    for (final conflict in pending.allConflicts) {
+    for (final conflict in pending.conflictViews) {
       if (!mounted) return;
-      final chosen = await showSettingsConflictDialog(context, conflict);
+      final chosen = await showSyncConflictDialog(context, conflict);
       if (chosen == null) {
         // User backed out — abort without uploading; conflict stays pending.
         AutoSyncService.instance.recordSyncResult(result);
@@ -434,7 +448,12 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
         }
         return;
       }
-      resolutions[conflict.id] = chosen;
+      switch (chosen) {
+        case SettingsRecord():
+          settings[conflict.id] = chosen;
+        case TranscriptSyncRecord():
+          transcripts[conflict.id] = chosen;
+      }
     }
 
     await SyncWakeLock.acquire();
@@ -443,7 +462,8 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
       ok = await WebDAVService.finalizePendingSync(
         _currentConfig,
         pending,
-        resolutions,
+        settings,
+        transcriptResolutions: transcripts,
       );
     } finally {
       await SyncWakeLock.release();
@@ -701,6 +721,16 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
                     onChanged: (v) {
                       setState(() => _autoSync = v);
                       _saveConfig();
+                    },
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.settingsWebDAVSyncAudio),
+                    subtitle: Text(l10n.settingsWebDAVSyncAudioDesc),
+                    value: _syncAudio,
+                    onChanged: (v) {
+                      setState(() => _syncAudio = v);
+                      TranscribeStorage.setSyncIncludesAudio(v);
                     },
                   ),
                   const SizedBox(height: 12),

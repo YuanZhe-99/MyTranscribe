@@ -31,6 +31,7 @@
   "backupKeepForever": "永久保留",
   "backupLocalOnlyNote": "备份仅保存在本机，不会上传到任何地方。",
   "backupModuleSettings": "来源和模型",
+  "backupModuleTranscripts": "转写记录",
   "backupNoBackups": "暂无备份",
   "backupRestore": "还原",
   "backupRestoreConfirm": "这将用备份覆盖所选数据，是否继续？",
@@ -48,7 +49,6 @@
   "capabilityUnsupported": "不支持",
   "commonAdd": "添加",
   "commonClose": "关闭",
-  "commonCopy": "复制",
   "commonEdit": "编辑",
   "commonRemove": "移除",
   "commonRetry": "重试",
@@ -57,7 +57,7 @@
   "exportData": "导出为 ZIP",
   "importData": "从 ZIP 导入",
   "jobAudioRemoved": "已删除转换后的音频",
-  "jobDeleteConfirm": "删除这条转写记录？本应用保存的转换后音频和转写文件会一并删除，原始录音不受影响。",
+  "jobDeleteConfirm": "删除这条转写记录？转换后的音频和转写稿会一并删除，下次同步时也会从你的其他设备上删除。原始录音不受影响。",
   "jobDeleted": "转写记录已删除",
   "jobDiskUsage": "在本设备占用 {size}",
   "@jobDiskUsage": {
@@ -74,9 +74,8 @@
   "jobFieldSource": "来源",
   "jobFieldStarted": "开始于",
   "jobOpenTranscript": "打开转写稿",
-  "jobPathCopied": "路径已复制",
   "jobRemoveAudio": "删除转换后的音频",
-  "jobRemoveAudioConfirm": "从本设备删除这段录音转换后的副本？转写稿会保留。只要还能找到原始录音，播放会回退到它。",
+  "jobRemoveAudioConfirm": "从本设备删除这段录音转换后的副本？转写稿会保留，也照常同步。只要还能找到原始录音，播放会回退到它。同步不会再把这个副本下载回来。",
   "jobRename": "重命名",
   "jobRenameHint": "留空则使用录音的文件名",
   "jobRenameTitle": "为这次转写命名",
@@ -85,7 +84,6 @@
   "jobRetryWithoutSpeakers": "不识别说话人再试一次",
   "jobRunAgain": "重新转写",
   "jobRunAgainConfirm": "重新转写这段录音？转写稿会从头重新生成，你在查看器里做过的修改——说话人名称、改过的文字——都会丢失。",
-  "jobSectionOutputs": "转写文件",
   "jobSectionPlan": "发送方式",
   "jobSectionProblem": "出了什么问题",
   "jobSectionRecording": "录音",
@@ -311,6 +309,31 @@
   "secretsTrustedHosts": "受信任主机",
   "secretsTrustedHostsHelp": "允许密钥送达的明文 HTTP 地址，用于只有你的网络才能访问的服务器。每条一个主机，子域可写 *.example.com。仅保存在本设备。",
   "settingsAbout": "关于",
+  "settingsRemoveAllAudio": "移除转换后的音频",
+  "settingsRemoveAllAudioConfirm": "移除本设备上所有已完成转写的转换后音频？转写稿会保留，也照常同步。同步不会再把这些音频下载回来。",
+  "settingsRemoveAllAudioDone": "已移除 {count} 条转写的转换后音频",
+  "@settingsRemoveAllAudioDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsRemoveAllAudioNothing": "没有可移除的内容",
+  "settingsRemoveAllAudioSubtitle": "转写稿全部保留，可释放本设备 {size}",
+  "@settingsRemoveAllAudioSubtitle": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsSpeakerNames": "说话人名称",
+  "settingsSpeakerNamesAdd": "添加名称",
+  "settingsSpeakerNamesEmpty": "还没有名称。在转写中给说话人起名后，这里就会出现。",
+  "settingsSpeakerNamesSubtitle": "你录音里出现过的人，命名说话人时会作为候选",
+  "settingsAutoSaveTranscriptFiles": "在录音旁保存转写文件",
+  "settingsAutoSaveTranscriptFilesSubtitle": "每次转写完成后，在录音文件旁写入一个 Markdown 文件和一个文本文件",
   "settingsData": "数据",
   "settingsExportSubtitle": "把来源和模型保存为文件",
   "settingsGeneral": "通用",
@@ -338,7 +361,7 @@
   "settingsSelectItem": "从左侧列表中选择一项",
   "settingsStorageLocation": "存储位置",
   "settingsStorageLocationSubtitle": "录音和转写稿的存放位置",
-  "settingsSyncSubtitle": "把来源和模型同步到你自己的服务器",
+  "settingsSyncSubtitle": "把来源、模型和转写稿同步到你自己的服务器",
   "settingsTheme": "主题",
   "settingsThemeDark": "深色",
   "settingsThemeLight": "浅色",
@@ -368,6 +391,8 @@
   "settingsWebDAVRemotePath": "远程路径",
   "settingsWebDAVServerURL": "服务器地址",
   "settingsWebDAVSync": "WebDAV 同步",
+  "settingsWebDAVSyncAudio": "同时同步音频",
+  "settingsWebDAVSyncAudioDesc": "把每条转写转换后的音频上传到你的服务器，并取回其他设备上传的音频",
   "settingsWebDAVSyncFailed": "同步失败",
   "settingsWebDAVSyncNow": "立即同步",
   "settingsWebDAVSyncSuccess": "同步完成",
@@ -382,6 +407,17 @@
   "settingsWebDAVSyncing": "同步中…",
   "settingsWebDAVTestConnection": "测试连接",
   "settingsWebDAVUsername": "用户名",
+  "syncAudioSummary": "已上传 {uploaded} 个音频，下载 {downloaded} 个",
+  "@syncAudioSummary": {
+    "placeholders": {
+      "uploaded": {
+        "type": "int"
+      },
+      "downloaded": {
+        "type": "int"
+      }
+    }
+  },
   "syncConflictDesc": "上次同步之后，两台设备都改过它。请保留其中一个版本。",
   "syncConflictTitle": "同步冲突：{name}",
   "@syncConflictTitle": {
@@ -430,7 +466,6 @@
   "viewerAutoScroll": "跟随播放",
   "viewerCopied": "转写稿已复制",
   "viewerCopyAll": "复制整份转写稿",
-  "viewerEditNobody": "不指定",
   "viewerEditSegment": "编辑这一句",
   "viewerEditSpeaker": "说话人",
   "viewerEditText": "内容",
@@ -464,6 +499,7 @@
   },
   "viewerSearchHint": "在这份转写稿中搜索",
   "viewerShowTimestamps": "显示时间",
+  "viewerSpeakerForget": "不再提示这个名称",
   "viewerSpeakerFallback": "说话人 {number}",
   "@viewerSpeakerFallback": {
     "placeholders": {
@@ -477,6 +513,14 @@
     "placeholders": {
       "count": {
         "type": "int"
+      }
+    }
+  },
+  "viewerSpeakerMarkedUnknown": "{name} 的发言已归为未知",
+  "@viewerSpeakerMarkedUnknown": {
+    "placeholders": {
+      "name": {
+        "type": "String"
       }
     }
   },
@@ -503,6 +547,9 @@
   },
   "viewerSpeakerName": "名称",
   "viewerSpeakerRename": "重命名",
+  "viewerSpeakerSuggestions": "用过的名称",
+  "viewerSpeakerUnassign": "归为未知",
   "viewerSpeakerUncertain": "该说话人有部分语句在分段边界上的匹配并不确定。",
+  "viewerSpeakerUnknown": "未知",
   "viewerSpeakers": "说话人"
 }

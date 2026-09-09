@@ -255,8 +255,9 @@ void main() {
   Future<void> pumpDetail(
     WidgetTester tester,
     TranscriptionJob stored,
-    JobRunner run,
-  ) async {
+    JobRunner run, {
+    bool hasSource = true,
+  }) async {
     tester.view.physicalSize = const Size(412, 915);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -266,6 +267,13 @@ void main() {
         overrides: [
           jobProvider(stored.id).overrideWithValue(AsyncValue.data(stored)),
           jobRunnerProvider.overrideWithValue(run),
+          jobStorageProvider(stored.id).overrideWithValue(
+            AsyncValue.data((
+              bytes: 1024,
+              hasConvertedAudio: true,
+              hasSource: hasSource,
+            )),
+          ),
         ],
         child: MaterialApp(
           locale: const Locale('zh'),
@@ -330,6 +338,30 @@ void main() {
       expect(find.text(l10n.jobRunAgain), findsOneWidget);
       expect(find.text(l10n.jobStart), findsNothing);
       expect(find.text(l10n.jobResume), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('does not offer to run again without the recording', (
+      tester,
+    ) async {
+      // A transcription that arrived from another device never had the
+      // recording here, and neither does one whose file the user has moved.
+      // The button could only produce a failure.
+      final l10n = await AppLocalizations.delegate.load(const Locale('zh'));
+
+      await pumpDetail(
+        tester,
+        buildJob('a', '讲座.mp3', JobStage.done, done: 3, total: 3),
+        idleRunner(),
+        hasSource: false,
+      );
+
+      expect(find.text(l10n.jobRunAgain), findsNothing);
+      expect(
+        find.text(l10n.jobOpenTranscript),
+        findsOneWidget,
+        reason: 'the transcript is still the reason the page exists',
+      );
       expect(tester.takeException(), isNull);
     });
 

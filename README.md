@@ -15,9 +15,10 @@ one picks up where it stopped.
   instead of asking you.
 - **Speakers.** Where the model can tell people apart, the transcript says who spoke — and you can
   name them, merge them and correct them.
-- **Your data stays yours.** Recordings and transcripts never leave the device except to the
-  transcription service you chose. There is no account and no analytics.
-- **Config that follows you.** Sources, models and preferences sync to your own WebDAV server. API
+- **Your data stays yours.** Recordings never leave the device except to the transcription service
+  you chose. There is no account and no analytics.
+- **Config and transcripts that follow you.** Sources, models, preferences and the text of every
+  finished transcription sync to your own WebDAV server. Audio is optional and off by default. API
   keys travel only when the connection is safe: HTTPS, or a private address such as your local
   network, Tailscale or ZeroTier.
 - **One layout, every shape.** Phone, tablet, foldable and desktop, following the series' adaptive

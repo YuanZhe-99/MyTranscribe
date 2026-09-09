@@ -20,15 +20,25 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/providers/app_settings.dart';
 import '../../../shared/services/import_export_service.dart';
 import '../../../shared/utils/adaptive_layout.dart';
+import '../../../shared/utils/byte_format.dart';
 import '../../../shared/utils/platform_capabilities.dart';
-import '../../media/widgets/media_tools_tile.dart';
 import '../../../shared/views/webdav_config_page.dart';
+import '../../jobs/services/job_providers.dart';
+import '../../media/widgets/media_tools_tile.dart';
 import 'backup_page.dart';
 import 'license_page.dart';
 import 'privacy_policy_page.dart';
+import 'speaker_names_page.dart';
 
 /// Which sub-page the detail pane is showing.
-enum _SettingsDetail { webdav, backup, mediaTools, privacy, license }
+enum _SettingsDetail {
+  webdav,
+  backup,
+  mediaTools,
+  speakerNames,
+  privacy,
+  license,
+}
 
 class SettingsPage extends ConsumerStatefulWidget {
   /// Purpose: Create a settings page instance.
@@ -116,6 +126,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     _SettingsDetail.webdav => const WebDAVConfigPage(),
     _SettingsDetail.backup => const BackupPage(),
     _SettingsDetail.mediaTools => const MediaToolsPage(),
+    _SettingsDetail.speakerNames => const SpeakerNamesPage(),
     _SettingsDetail.privacy => const PrivacyPolicyPage(),
     _SettingsDetail.license => const AppLicensePage(),
   };
@@ -177,6 +188,45 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       SnackBar(
         content: Text(ok ? l10n.backupRestored : l10n.backupRestoreFailed),
       ),
+    );
+  }
+
+  /// Purpose: Free space by removing every finished transcription's audio.
+  /// Inputs: None.
+  /// Returns: None.
+  /// Side effects: Confirms, then deletes the converted and window audio of
+  /// every finished transcription on this device.
+  /// Notes: Internal helper used within this file only. Confirmed first,
+  /// because it cannot be undone from inside the app — the audio can only come
+  /// back by transcribing the recording again. The transcripts themselves are
+  /// untouched and go on syncing, which is the point: a phone can keep every
+  /// transcript it has ever made without keeping the sound.
+  Future<void> _removeAllAudio() async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.settingsRemoveAllAudio),
+        content: Text(l10n.settingsRemoveAllAudioConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.ok),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final cleaned = await ref.read(jobRunnerProvider).discardAllAudio();
+    if (!mounted) return;
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.settingsRemoveAllAudioDone(cleaned))),
     );
   }
 
@@ -337,6 +387,21 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             value: settings.keepChunkFiles,
             onChanged: notifier.setKeepChunkFiles,
           ),
+          ListTile(
+            leading: const Icon(Icons.people_outline),
+            title: Text(l10n.settingsSpeakerNames),
+            subtitle: Text(l10n.settingsSpeakerNamesSubtitle),
+            trailing: const Icon(Icons.chevron_right),
+            selected: _twoPane && _detail == _SettingsDetail.speakerNames,
+            onTap: () => _open(_SettingsDetail.speakerNames),
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.save_alt_outlined),
+            title: Text(l10n.settingsAutoSaveTranscriptFiles),
+            subtitle: Text(l10n.settingsAutoSaveTranscriptFilesSubtitle),
+            value: settings.autoSaveTranscriptFiles,
+            onChanged: notifier.setAutoSaveTranscriptFiles,
+          ),
         ]),
         _section(l10n.settingsData, [
           ListTile(
@@ -366,6 +431,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             title: Text(l10n.importData),
             subtitle: Text(l10n.settingsImportSubtitle),
             onTap: _importZip,
+          ),
+          Builder(
+            builder: (context) {
+              final total = ref.watch(convertedAudioTotalProvider).value ?? 0;
+              return ListTile(
+                leading: const Icon(Icons.cleaning_services_outlined),
+                title: Text(l10n.settingsRemoveAllAudio),
+                subtitle: Text(
+                  total == 0
+                      ? l10n.settingsRemoveAllAudioNothing
+                      : l10n.settingsRemoveAllAudioSubtitle(
+                          formatBytes(total),
+                        ),
+                ),
+                enabled: total > 0,
+                onTap: total > 0 ? _removeAllAudio : null,
+              );
+            },
           ),
         ]),
         _section(l10n.settingsAbout, [

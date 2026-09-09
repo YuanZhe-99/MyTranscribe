@@ -160,18 +160,29 @@ Do not change these without the user explicitly deciding to:
   `ImportExportService`, and `AutoSyncService` are thin wrappers over `myapps_data`. If a change
   seems to require editing a facade's public API, stop — behavior changes belong in the package.
 - `lib/app/data_modules.dart` is the single source of truth for data-file names, backup module keys,
-  the remote path and the archive prefix. Never hardcode them elsewhere. A second data module is
-  appended to the registry, never inserted before `transcribe_settings.json`.
+  the remote path and the archive prefix. Never hardcode them elsewhere. The registry holds two
+  modules — `transcribe_settings.json` then `transcribe_transcripts.json` — and a further one is
+  appended, never inserted before them: the engines treat registry order as significant.
 - **`transcribe_secrets.json` is never a data module, and job folders are never data modules.** The
   sync, backup and ZIP engines only touch the file names in the registry, which is what keeps API
   keys and recordings out of all three *structurally*. Adding either to the registry would silently
   start uploading them.
+- **Transcriptions travel through the projection, not through the folders.**
+  `transcribe_transcripts.json` carries the record and the transcript of each finished job; it is
+  rebuilt from `jobs/` before a sync and applied back afterwards by `TranscriptSyncService`. Three
+  rules in that file keep it from deleting somebody's recordings — a re-run is frozen rather than
+  dropped, deletions come only from the three-way merge, and an unreadable record aborts the
+  projection rather than leaving a gap in it. Do not relax one without reading why it is there.
+- **Audio travels only through the opt-in side channel.** The converted `audio.mp3` goes to `audio/`
+  beside the data files, and only when the device's own `syncIncludesAudio` is on; with it off, no
+  request about audio is made at all. The original recording never travels.
 - **API keys leave the device only to the service they belong to**, and to the user's WebDAV server
   only when the endpoint is secure — HTTPS, or plain HTTP to a private address. The rule lives in
   `secure_endpoint_policy.dart` and is stated in the privacy policy; changing what counts as secure
   changes a promise already made to the user.
-- **Recordings and transcripts stay on the device.** Audio goes to the configured transcription
-  service and nowhere else. Nothing is uploaded to a service the user did not configure.
+- **Recordings stay on the device.** Audio goes to the configured transcription service and, when
+  the user turns audio sync on, the converted copy goes to their own WebDAV server. Nothing is
+  uploaded to a service the user did not configure.
 - **Record ids are a compatibility contract.** A provider or model record is addressed by its id
   across devices; renaming a shipped template id orphans every device's overrides for it. Ids may be
   added; a shipped id is never changed.

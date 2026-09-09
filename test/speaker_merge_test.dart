@@ -53,6 +53,63 @@ Transcript build() => const Transcript(
 );
 
 void main() {
+  group('marking a speaker unknown', () {
+    test('takes their lines away without touching the text', () {
+      final unknown = build().unassignSpeaker('spk_2');
+
+      expect(unknown.speakers.map((s) => s.id), ['spk_1', 'spk_3']);
+      expect(unknown.segments.map((s) => s.speakerId), [
+        'spk_1',
+        null,
+        'spk_3',
+      ]);
+      expect(unknown.segments.map((s) => s.text), ['one', 'two', 'three']);
+    });
+
+    test('drops the window labels that led to them', () {
+      // A label left pointing at a speaker who no longer exists would put a
+      // re-run's lines back on a record nothing else knows about.
+      expect(build().unassignSpeaker('spk_2').speakerMap, {
+        '0:A': 'spk_1',
+        '1:Y': 'spk_3',
+      });
+    });
+
+    test('counts the lines nobody is credited with', () {
+      expect(build().unassignedCount, 0);
+      expect(build().unassignSpeaker('spk_2').unassignedCount, 1);
+    });
+
+    test('renumbers whoever is left', () {
+      final unknown = build().unassignSpeaker('spk_2');
+      expect(unknown.displayNameOf('spk_3', (n) => 'Speaker $n'), 'Speaker 2');
+    });
+
+    test('an id that is not there changes nothing', () {
+      expect(build().unassignSpeaker('spk_9').speakers, hasLength(3));
+      expect(build().unassignSpeaker('spk_9').unassignedCount, 0);
+    });
+
+    test('reads as unknown only when the transcript has speakers', () {
+      final unknown = build().unassignSpeaker('spk_2');
+      String fallback(int n) => 'Speaker $n';
+
+      expect(unknown.nameFor(null, fallback: fallback, unknown: '未知'), '未知');
+      expect(
+        unknown.nameFor('spk_2', fallback: fallback, unknown: '未知'),
+        '未知',
+        reason: 'a line still pointing at a removed record reads the same way',
+      );
+      expect(
+        const Transcript(
+          jobId: 'job',
+        ).nameFor(null, fallback: fallback, unknown: '未知'),
+        isNull,
+        reason: 'nothing was diarized, so there is nothing to be unsure about',
+      );
+    });
+  });
+
   group('merging a speaker away', () {
     test('moves every line of theirs to the survivor', () {
       final merged = build().mergeSpeakers('spk_2', 'spk_1');

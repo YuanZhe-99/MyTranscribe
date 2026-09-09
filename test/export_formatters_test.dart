@@ -8,6 +8,7 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_transcribe/features/jobs/models/transcription_job.dart';
 import 'package:my_transcribe/features/jobs/services/output_writer.dart';
 import 'package:my_transcribe/features/transcript/models/transcript.dart';
 import 'package:my_transcribe/features/transcript/services/export_formatters.dart';
@@ -256,6 +257,80 @@ void main() {
     test('names its columns', () {
       final text = renderCsv(build([(0, 1, null, 'x')]), name);
       expect(text, contains('index,start,end,speaker,text'));
+    });
+  });
+
+  group('a line nobody is credited with', () {
+    /// Purpose: Build a diarized transcript with one unattributed line.
+    /// Inputs: None.
+    /// Returns: A [Transcript].
+    /// Side effects: None.
+    /// Notes: Internal helper used within this file only.
+    Transcript withUnknown() => build(
+      [
+        (0, 5, 'spk_1', 'hello'),
+        (5, 10, null, 'somebody else'),
+      ],
+      speakers: const [Speaker(id: 'spk_1')],
+    );
+
+    /// Purpose: Name a speaker the way the app does, Unknown included.
+    /// Inputs: The [id].
+    /// Returns: The name.
+    /// Side effects: None.
+    /// Notes: Internal helper used within this file only.
+    String? named(String? id) => withUnknown().nameFor(
+      id,
+      fallback: defaultSpeakerName,
+      unknown: defaultUnknownSpeakerName,
+    );
+
+    test('says Unknown in every format instead of nothing at all', () {
+      final transcript = withUnknown();
+
+      expect(renderTxt(transcript, named), contains('Unknown: somebody else'));
+      expect(renderMarkdown(transcript, named), contains('**Unknown**'));
+      expect(
+        renderMarkdown(transcript, named),
+        isNot(contains('**Speaker**')),
+        reason: 'the Markdown export used to print a bare label here',
+      );
+      expect(renderSrt(transcript, named), contains('Unknown'));
+      expect(renderVtt(transcript, named), contains('Unknown'));
+      expect(renderCsv(transcript, named), contains('Unknown'));
+    });
+
+    test('the files written beside a recording say it too', () {
+      final transcript = withUnknown();
+      expect(renderJobPlainText(transcript), contains('Unknown:'));
+      expect(
+        renderJobMarkdown(
+          TranscriptionJob(
+            id: 'job',
+            createdAt: DateTime.utc(2026, 9, 9),
+            modifiedAt: DateTime.utc(2026, 9, 9),
+            sourcePath: '/tmp/lecture.mp3',
+            sourceName: 'lecture.mp3',
+            sourceBytes: 1,
+            providerId: 'p',
+            modelId: 'm',
+            modelName: 'whisper',
+          ),
+          transcript,
+        ),
+        contains('**Unknown**'),
+      );
+    });
+
+    test('a transcript that identified nobody never says it', () {
+      final plain = build([(0, 5, null, 'just words')]);
+      String? none(String? id) => plain.nameFor(
+        id,
+        fallback: defaultSpeakerName,
+        unknown: defaultUnknownSpeakerName,
+      );
+      expect(renderTxt(plain, none), isNot(contains('Unknown')));
+      expect(renderMarkdown(plain, none), isNot(contains('Unknown')));
     });
   });
 

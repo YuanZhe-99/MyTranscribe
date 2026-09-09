@@ -443,6 +443,57 @@ class SettingsRepository {
     });
   }
 
+  /// Purpose: Change the defaults without reading them first.
+  /// Inputs: A [change] applied to whatever the defaults are now.
+  /// Returns: A future completing after the write.
+  /// Side effects: Writes the settings file; notifies auto-sync.
+  /// Notes: A read-modify-write done inside the mutation, so two callers that
+  /// both touch the defaults cannot overwrite each other with a copy each read
+  /// before the other wrote. Unknown payload fields survive, because the change
+  /// is applied to a parsed record that carries them.
+  Future<void> updateDefaults(
+    TranscribeDefaults Function(TranscribeDefaults current) change, {
+    DateTime? now,
+  }) async {
+    await _mutate((settings) {
+      final existing = settings.byId(defaultsRecordId);
+      final current = existing == null
+          ? const TranscribeDefaults()
+          : TranscribeDefaults.fromPayload(existing.payload);
+      final stamp = (now ?? DateTime.now()).toUtc();
+      final payload = change(current).toPayload();
+      return settings.upsert(
+        existing == null
+            ? SettingsRecord(
+                id: defaultsRecordId,
+                kind: SettingsRecordKind.defaults,
+                createdAt: stamp,
+                modifiedAt: stamp,
+                payload: payload,
+              )
+            : existing.touch(payload, now: stamp),
+      );
+    });
+  }
+
+  /// Purpose: Remember a speaker name so it can be offered next time.
+  /// Inputs: [name].
+  /// Returns: A future completing after the write.
+  /// Side effects: Writes the settings file; notifies auto-sync.
+  /// Notes: The list is synced, because the people in your recordings are the
+  /// same people on either device.
+  Future<void> rememberSpeakerName(String name) =>
+      updateDefaults((current) => current.rememberSpeakerName(name));
+
+  /// Purpose: Stop offering a speaker name.
+  /// Inputs: [name].
+  /// Returns: A future completing after the write.
+  /// Side effects: Writes the settings file; notifies auto-sync.
+  /// Notes: Only the suggestion is forgotten; speakers already named keep the
+  /// name they were given.
+  Future<void> forgetSpeakerName(String name) =>
+      updateDefaults((current) => current.forgetSpeakerName(name));
+
   /// Purpose: Remove a source and every model belonging to it.
   /// Inputs: [providerId].
   /// Returns: A future completing after the write.

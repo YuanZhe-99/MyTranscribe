@@ -201,6 +201,12 @@ abstract class AppLocalizations {
   /// **'Sources and models'**
   String get backupModuleSettings;
 
+  /// No description provided for @backupModuleTranscripts.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcriptions'**
+  String get backupModuleTranscripts;
+
   /// No description provided for @backupNoBackups.
   ///
   /// In en, this message translates to:
@@ -303,12 +309,6 @@ abstract class AppLocalizations {
   /// **'Close'**
   String get commonClose;
 
-  /// No description provided for @commonCopy.
-  ///
-  /// In en, this message translates to:
-  /// **'Copy'**
-  String get commonCopy;
-
   /// No description provided for @commonEdit.
   ///
   /// In en, this message translates to:
@@ -360,7 +360,7 @@ abstract class AppLocalizations {
   /// No description provided for @jobDeleteConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Delete this transcription? The converted audio and the transcript files kept by this app go with it. The original recording is not touched.'**
+  /// **'Delete this transcription? The converted audio and the transcript go with it, and it is removed from your other devices at the next sync. The original recording is not touched.'**
   String get jobDeleteConfirm;
 
   /// No description provided for @jobDeleted.
@@ -417,12 +417,6 @@ abstract class AppLocalizations {
   /// **'Open the transcript'**
   String get jobOpenTranscript;
 
-  /// No description provided for @jobPathCopied.
-  ///
-  /// In en, this message translates to:
-  /// **'Path copied'**
-  String get jobPathCopied;
-
   /// No description provided for @jobRemoveAudio.
   ///
   /// In en, this message translates to:
@@ -432,7 +426,7 @@ abstract class AppLocalizations {
   /// No description provided for @jobRemoveAudioConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Remove this recording\'s converted copy from this device? The transcript stays. Playback falls back to the original recording while it can still be found.'**
+  /// **'Remove this recording\'s converted copy from this device? The transcript stays, and still syncs. Playback falls back to the original recording while it can still be found. Sync will not download the copy again.'**
   String get jobRemoveAudioConfirm;
 
   /// No description provided for @jobRename.
@@ -482,12 +476,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Transcribe this recording again? The transcript is built from scratch, so corrections made in the viewer — speaker names, edited lines — are lost.'**
   String get jobRunAgainConfirm;
-
-  /// No description provided for @jobSectionOutputs.
-  ///
-  /// In en, this message translates to:
-  /// **'Transcript files'**
-  String get jobSectionOutputs;
 
   /// No description provided for @jobSectionPlan.
   ///
@@ -1281,6 +1269,72 @@ abstract class AppLocalizations {
   /// **'About'**
   String get settingsAbout;
 
+  /// No description provided for @settingsRemoveAllAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove converted audio'**
+  String get settingsRemoveAllAudio;
+
+  /// No description provided for @settingsRemoveAllAudioConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the converted audio of every finished transcription on this device? The transcripts stay and still sync. Sync will not download the removed audio again.'**
+  String get settingsRemoveAllAudioConfirm;
+
+  /// No description provided for @settingsRemoveAllAudioDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Converted audio removed from {count} transcriptions'**
+  String settingsRemoveAllAudioDone(int count);
+
+  /// No description provided for @settingsRemoveAllAudioNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to remove'**
+  String get settingsRemoveAllAudioNothing;
+
+  /// No description provided for @settingsRemoveAllAudioSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keeps every transcript. Frees {size} on this device'**
+  String settingsRemoveAllAudioSubtitle(String size);
+
+  /// No description provided for @settingsSpeakerNames.
+  ///
+  /// In en, this message translates to:
+  /// **'Speaker names'**
+  String get settingsSpeakerNames;
+
+  /// No description provided for @settingsSpeakerNamesAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a name'**
+  String get settingsSpeakerNamesAdd;
+
+  /// No description provided for @settingsSpeakerNamesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No names yet. Name a speaker in a transcript and it is offered here.'**
+  String get settingsSpeakerNamesEmpty;
+
+  /// No description provided for @settingsSpeakerNamesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'People in your recordings, offered when you name a speaker'**
+  String get settingsSpeakerNamesSubtitle;
+
+  /// No description provided for @settingsAutoSaveTranscriptFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Save transcript files beside the recording'**
+  String get settingsAutoSaveTranscriptFiles;
+
+  /// No description provided for @settingsAutoSaveTranscriptFilesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Writes a Markdown and a text file next to the recording each time a transcription finishes'**
+  String get settingsAutoSaveTranscriptFilesSubtitle;
+
   /// No description provided for @settingsData.
   ///
   /// In en, this message translates to:
@@ -1446,7 +1500,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsSyncSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Keep your sources and models on your own server'**
+  /// **'Keep your sources, models and transcripts on your own server'**
   String get settingsSyncSubtitle;
 
   /// No description provided for @settingsTheme.
@@ -1623,6 +1677,18 @@ abstract class AppLocalizations {
   /// **'WebDAV Sync'**
   String get settingsWebDAVSync;
 
+  /// No description provided for @settingsWebDAVSyncAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Also sync audio'**
+  String get settingsWebDAVSyncAudio;
+
+  /// No description provided for @settingsWebDAVSyncAudioDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Copies each transcription\'s converted audio to your server, and fetches what other devices uploaded'**
+  String get settingsWebDAVSyncAudioDesc;
+
   /// No description provided for @settingsWebDAVSyncFailed.
   ///
   /// In en, this message translates to:
@@ -1664,6 +1730,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Username'**
   String get settingsWebDAVUsername;
+
+  /// No description provided for @syncAudioSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{uploaded} audio files sent, {downloaded} received'**
+  String syncAudioSummary(int uploaded, int downloaded);
 
   /// No description provided for @syncConflictDesc.
   ///
@@ -1767,12 +1839,6 @@ abstract class AppLocalizations {
   /// **'Copy the whole transcript'**
   String get viewerCopyAll;
 
-  /// No description provided for @viewerEditNobody.
-  ///
-  /// In en, this message translates to:
-  /// **'Nobody in particular'**
-  String get viewerEditNobody;
-
   /// No description provided for @viewerEditSegment.
   ///
   /// In en, this message translates to:
@@ -1869,6 +1935,12 @@ abstract class AppLocalizations {
   /// **'Show times'**
   String get viewerShowTimestamps;
 
+  /// No description provided for @viewerSpeakerForget.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop offering this name'**
+  String get viewerSpeakerForget;
+
   /// No description provided for @viewerSpeakerFallback.
   ///
   /// In en, this message translates to:
@@ -1880,6 +1952,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} lines'**
   String viewerSpeakerLines(int count);
+
+  /// No description provided for @viewerSpeakerMarkedUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is now unknown'**
+  String viewerSpeakerMarkedUnknown(String name);
 
   /// No description provided for @viewerSpeakerMerge.
   ///
@@ -1917,11 +1995,29 @@ abstract class AppLocalizations {
   /// **'Rename'**
   String get viewerSpeakerRename;
 
+  /// No description provided for @viewerSpeakerSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Names you have used'**
+  String get viewerSpeakerSuggestions;
+
+  /// No description provided for @viewerSpeakerUnassign.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as unknown'**
+  String get viewerSpeakerUnassign;
+
   /// No description provided for @viewerSpeakerUncertain.
   ///
   /// In en, this message translates to:
   /// **'Some of this speaker\'s lines were an uncertain match across a segment boundary.'**
   String get viewerSpeakerUncertain;
+
+  /// No description provided for @viewerSpeakerUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get viewerSpeakerUnknown;
 
   /// No description provided for @viewerSpeakers.
   ///

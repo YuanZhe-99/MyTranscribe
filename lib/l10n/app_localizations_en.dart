@@ -66,6 +66,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupModuleSettings => 'Sources and models';
 
   @override
+  String get backupModuleTranscripts => 'Transcriptions';
+
+  @override
   String get backupNoBackups => 'No backups yet';
 
   @override
@@ -120,9 +123,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonClose => 'Close';
 
   @override
-  String get commonCopy => 'Copy';
-
-  @override
   String get commonEdit => 'Edit';
 
   @override
@@ -148,7 +148,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get jobDeleteConfirm =>
-      'Delete this transcription? The converted audio and the transcript files kept by this app go with it. The original recording is not touched.';
+      'Delete this transcription? The converted audio and the transcript go with it, and it is removed from your other devices at the next sync. The original recording is not touched.';
 
   @override
   String get jobDeleted => 'Transcription deleted';
@@ -180,14 +180,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get jobOpenTranscript => 'Open the transcript';
 
   @override
-  String get jobPathCopied => 'Path copied';
-
-  @override
   String get jobRemoveAudio => 'Remove converted audio';
 
   @override
   String get jobRemoveAudioConfirm =>
-      'Remove this recording\'s converted copy from this device? The transcript stays. Playback falls back to the original recording while it can still be found.';
+      'Remove this recording\'s converted copy from this device? The transcript stays, and still syncs. Playback falls back to the original recording while it can still be found. Sync will not download the copy again.';
 
   @override
   String get jobRename => 'Rename';
@@ -213,9 +210,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get jobRunAgainConfirm =>
       'Transcribe this recording again? The transcript is built from scratch, so corrections made in the viewer — speaker names, edited lines — are lost.';
-
-  @override
-  String get jobSectionOutputs => 'Transcript files';
 
   @override
   String get jobSectionPlan => 'How it was sent';
@@ -658,6 +652,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAbout => 'About';
 
   @override
+  String get settingsRemoveAllAudio => 'Remove converted audio';
+
+  @override
+  String get settingsRemoveAllAudioConfirm =>
+      'Remove the converted audio of every finished transcription on this device? The transcripts stay and still sync. Sync will not download the removed audio again.';
+
+  @override
+  String settingsRemoveAllAudioDone(int count) {
+    return 'Converted audio removed from $count transcriptions';
+  }
+
+  @override
+  String get settingsRemoveAllAudioNothing => 'Nothing to remove';
+
+  @override
+  String settingsRemoveAllAudioSubtitle(String size) {
+    return 'Keeps every transcript. Frees $size on this device';
+  }
+
+  @override
+  String get settingsSpeakerNames => 'Speaker names';
+
+  @override
+  String get settingsSpeakerNamesAdd => 'Add a name';
+
+  @override
+  String get settingsSpeakerNamesEmpty =>
+      'No names yet. Name a speaker in a transcript and it is offered here.';
+
+  @override
+  String get settingsSpeakerNamesSubtitle =>
+      'People in your recordings, offered when you name a speaker';
+
+  @override
+  String get settingsAutoSaveTranscriptFiles =>
+      'Save transcript files beside the recording';
+
+  @override
+  String get settingsAutoSaveTranscriptFilesSubtitle =>
+      'Writes a Markdown and a text file next to the recording each time a transcription finishes';
+
+  @override
   String get settingsData => 'Data';
 
   @override
@@ -745,7 +781,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsSyncSubtitle =>
-      'Keep your sources and models on your own server';
+      'Keep your sources, models and transcripts on your own server';
 
   @override
   String get settingsTheme => 'Theme';
@@ -838,6 +874,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsWebDAVSync => 'WebDAV Sync';
 
   @override
+  String get settingsWebDAVSyncAudio => 'Also sync audio';
+
+  @override
+  String get settingsWebDAVSyncAudioDesc =>
+      'Copies each transcription\'s converted audio to your server, and fetches what other devices uploaded';
+
+  @override
   String get settingsWebDAVSyncFailed => 'Sync failed';
 
   @override
@@ -859,6 +902,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsWebDAVUsername => 'Username';
+
+  @override
+  String syncAudioSummary(int uploaded, int downloaded) {
+    return '$uploaded audio files sent, $downloaded received';
+  }
 
   @override
   String get syncConflictDesc =>
@@ -926,9 +974,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewerCopyAll => 'Copy the whole transcript';
 
   @override
-  String get viewerEditNobody => 'Nobody in particular';
-
-  @override
   String get viewerEditSegment => 'Edit this line';
 
   @override
@@ -981,6 +1026,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewerShowTimestamps => 'Show times';
 
   @override
+  String get viewerSpeakerForget => 'Stop offering this name';
+
+  @override
   String viewerSpeakerFallback(int number) {
     return 'Speaker $number';
   }
@@ -988,6 +1036,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String viewerSpeakerLines(int count) {
     return '$count lines';
+  }
+
+  @override
+  String viewerSpeakerMarkedUnknown(String name) {
+    return '$name is now unknown';
   }
 
   @override
@@ -1013,8 +1066,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewerSpeakerRename => 'Rename';
 
   @override
+  String get viewerSpeakerSuggestions => 'Names you have used';
+
+  @override
+  String get viewerSpeakerUnassign => 'Mark as unknown';
+
+  @override
   String get viewerSpeakerUncertain =>
       'Some of this speaker\'s lines were an uncertain match across a segment boundary.';
+
+  @override
+  String get viewerSpeakerUnknown => 'Unknown';
 
   @override
   String get viewerSpeakers => 'Speakers';

@@ -96,8 +96,8 @@ A transcription is called after its recording until somebody says otherwise. The
 from the detail page or by holding a row in the list, and clearing it puts the recording's file name
 back.
 
-It is a label and only a label. The two files written beside the recording keep the recording's own
-name, because a folder of them is read by file name and renaming something inside the app is not a
+It is a label and only a label. The two files written beside the recording — when that option is on;
+it is off by default — keep the recording's own name, because a folder of them is read by file name and renaming something inside the app is not a
 reason to rename anything on disk. A file exported from the viewer does take the name, because that
 is a file the user is deliberately saving somewhere — with the characters a file name may not
 contain replaced by underscores. The `- Audio:` line in every rendered transcript goes on naming the

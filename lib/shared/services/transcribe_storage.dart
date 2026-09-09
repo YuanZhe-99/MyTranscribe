@@ -407,6 +407,25 @@ class TranscribeStorage {
   static Future<void> setFfprobePath(String? path) =>
       _setString('ffprobePath', path);
 
+  /// Purpose: Read whether this device also syncs the converted audio.
+  /// Inputs: None.
+  /// Returns: `Future<bool>` — false unless the user turned it on.
+  /// Side effects: Reads `storage_config.json`.
+  /// Notes: **Device-local, deliberately.** A laptop with room to spare and a
+  /// phone that is nearly full want different answers, and the transcripts sync
+  /// either way. Off by default: an hour of audio is tens of megabytes, and
+  /// nobody should discover that by watching their data allowance.
+  static Future<bool> getSyncIncludesAudio() async =>
+      await _getBool('syncIncludesAudio') ?? false;
+
+  /// Purpose: Turn audio sync on or off for this device.
+  /// Inputs: `on`.
+  /// Returns: None.
+  /// Side effects: Rewrites `storage_config.json`.
+  /// Notes: Off is stored as an absent key.
+  static Future<void> setSyncIncludesAudio(bool on) =>
+      _setBool('syncIncludesAudio', on ? true : null);
+
   /// Purpose: Read the hosts the user marked safe for API keys over plain
   /// HTTP.
   /// Inputs: None.
@@ -507,6 +526,26 @@ class TranscribeStorage {
   /// Notes: None.
   static Future<void> setKeepChunkFiles(bool keep) =>
       _setBool('keepChunkFiles', keep ? true : null);
+
+  /// Purpose: Read whether a finished job writes a Markdown and a text file
+  /// beside the recording.
+  /// Inputs: None.
+  /// Returns: `Future<bool>` — false unless the user turned it on.
+  /// Side effects: Reads `storage_config.json`.
+  /// Notes: Off by default. The app used to do this unasked, which left files
+  /// in whatever folder the recording happened to be in — a folder the user may
+  /// well have moved or emptied since. The transcript itself lives in the job's
+  /// own folder either way; this is only about exporting a copy automatically.
+  static Future<bool> getAutoSaveTranscriptFiles() async =>
+      await _getBool('autoSaveTranscriptFiles') ?? false;
+
+  /// Purpose: Turn the automatic transcript files on or off.
+  /// Inputs: `on`.
+  /// Returns: None.
+  /// Side effects: Rewrites `storage_config.json`.
+  /// Notes: Off is stored as an absent key.
+  static Future<void> setAutoSaveTranscriptFiles(bool on) =>
+      _setBool('autoSaveTranscriptFiles', on ? true : null);
 
   /// Purpose: Read which view the transcript opens in.
   /// Inputs: None.

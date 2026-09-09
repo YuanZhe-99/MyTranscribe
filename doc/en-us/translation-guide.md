@@ -67,12 +67,16 @@ sibling repository's Section 5.1 in the same change.
 | overlap | 重叠 | 重疊 | |
 | resume (a job) | 继续 | 繼續 | |
 | speaker | 说话人 | 說話人 | |
+| unknown speaker | 未知 | 未知 | A line nobody is credited with. English `Unknown` in files written without an interface language. |
+| speaker names (the saved list) | 说话人名称 | 說話者名稱 | Names offered when naming a speaker. |
 | speaker identification | 说话人识别 | 說話人識別 | |
 | speaker unification | 说话人统一 | 說話人統一 | Keeping one identity across segments. |
 | known speaker reference | 已知说话人样本 | 已知說話人樣本 | |
 | timestamp | 时间戳 | 時間戳 | |
 | segment (of a transcript) | 片段 | 片段 | Distinct from 分段, which is a piece of audio. |
 | API key | API 密钥 | API 金鑰 | |
+| transcripts projection | 转写投影 | 轉寫投影 | The syncable file built from the job folders. |
+| converted audio | 转换后的音频 | 轉換後的音訊 | The listening copy, not the original recording. |
 | secure endpoint | 安全端点 | 安全端點 | |
 | trusted host | 受信任主机 | 受信任主機 | |
 | diarization | 说话人分离 | 說話人分離 | Prefer 说话人识别 in user-facing text. |

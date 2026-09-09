@@ -21,6 +21,8 @@ import 'package:myapps_data/myapps_data.dart' show SyncWakeLock;
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
+import '../../../shared/services/auto_sync_service.dart';
+import '../../../shared/services/transcribe_storage.dart';
 import '../../media/services/media_toolkit.dart';
 import '../../providers/services/dialects.dart';
 import '../../providers/services/provider_dialect.dart';
@@ -36,6 +38,7 @@ import 'chunk_planner.dart';
 import 'job_store.dart';
 import 'output_writer.dart';
 import 'transcript_merger.dart';
+import 'transcript_sync.dart';
 
 /// What the runner is doing, for the pages watching it.
 class JobQueueState {
@@ -65,8 +68,9 @@ class JobQueueState {
 /// Runs jobs.
 class JobRunner {
   /// Purpose: Create the runner.
-  /// Inputs: The [toolkit] resolver, the [repository], the [client] factory and
-  /// an id generator, all injectable for tests.
+  /// Inputs: The [toolkit] resolver, the [repository], the client factory, the
+  /// key lookup, the [writeTranscriptFiles] question and an id generator, all
+  /// injectable for tests.
   /// Returns: A new runner.
   /// Side effects: None until [enqueue] or [restore] is called.
   /// Notes: Everything it touches is injected, so the whole state machine can
@@ -77,17 +81,21 @@ class JobRunner {
     required SettingsRepository repository,
     TranscriptionClient Function()? clientFactory,
     Future<String?> Function(String providerId)? keyLookup,
+    Future<bool> Function()? writeTranscriptFiles,
     Uuid? uuid,
   }) : _toolkit = toolkit,
        _repository = repository,
        _clientFactory = clientFactory ?? TranscriptionClient.new,
        _keyLookup = keyLookup ?? SecretsStore.keyFor,
+       _writeTranscriptFiles =
+           writeTranscriptFiles ?? TranscribeStorage.getAutoSaveTranscriptFiles,
        _uuid = uuid ?? const Uuid();
 
   final Future<MediaToolkit> Function() _toolkit;
   final SettingsRepository _repository;
   final TranscriptionClient Function() _clientFactory;
   final Future<String?> Function(String) _keyLookup;
+  final Future<bool> Function() _writeTranscriptFiles;
   final Uuid _uuid;
 
   /// What the runner is doing, for the UI to watch.
@@ -308,6 +316,7 @@ class JobRunner {
     }
     await JobStore.delete(jobId);
     _titles.remove(jobId);
+    _syncLater();
     _bump();
   }
 
@@ -342,6 +351,7 @@ class JobRunner {
         finished: renamed,
       );
     }
+    _syncLater();
     _bump();
   }
 
@@ -358,6 +368,29 @@ class JobRunner {
     await JobStore.deleteConvertedAudio(jobId);
     _bump();
     return true;
+  }
+
+  /// Purpose: Remove every finished transcription's converted audio at once.
+  /// Inputs: None.
+  /// Returns: How many transcriptions were cleaned.
+  /// Side effects: Deletes converted and window audio; leaves a marker in each
+  /// folder.
+  /// Notes: The point of the whole feature is a device that keeps the text and
+  /// not the sound: after this the transcripts are still readable, still
+  /// correctable and still sync, and the space the audio took is back. A job
+  /// that is running or waiting is skipped, for the reason [discardAudio]
+  /// refuses one. Each folder gets the marker that stops sync from fetching the
+  /// audio straight back, so this is not undone by the next sync.
+  Future<int> discardAllAudio() async {
+    var cleaned = 0;
+    for (final job in await JobStore.loadAll()) {
+      if (_running == job.id || _queue.contains(job.id)) continue;
+      if (!job.stage.isFinished) continue;
+      await JobStore.deleteConvertedAudio(job.id);
+      cleaned++;
+    }
+    if (cleaned > 0) _bump();
+    return cleaned;
   }
 
   /// Purpose: Work through the queue.
@@ -570,6 +603,10 @@ class JobRunner {
           await cancel.dispose();
           _mediaCancel = null;
         }
+        // There is a converted copy again, so the marker left by "remove
+        // converted audio" no longer describes anything true. Left in place it
+        // would stop sync from ever fetching this recording's audio again.
+        await JobStore.clearAudioDiscardedMarker(job.id);
       }
       audioSource = normalized;
     }
@@ -742,12 +779,15 @@ class JobRunner {
       speakerMap: speakerMap,
     );
     await TranscriptStore.save(transcript);
-    final outputs = await _writeOutputs(job, transcript);
+    final outputs = await _writeTranscriptFiles()
+        ? await _writeOutputs(job, transcript)
+        : const <String>[];
 
     if (!job.options.keepChunks && !plan.uploadsOriginal) {
       await JobStore.deleteChunkAudio(job.id);
     }
 
+    _syncLater();
     return _save(
       job.copyWith(
         stage: JobStage.done,
@@ -1010,6 +1050,20 @@ class JobRunner {
   /// that writes or deletes a record, so the providers that read them can
   /// re-read without any page having to remember to ask.
   void _bump() => revision.value++;
+
+  /// Purpose: Tell sync that a transcription is worth sending.
+  /// Inputs: None.
+  /// Returns: None.
+  /// Side effects: Marks the projection stale and nudges auto-sync.
+  /// Notes: Internal helper used within this file only. Called when a job
+  /// finishes, is renamed and is deleted — never once per window. A run writes
+  /// its record after every window, and syncing each of those would upload the
+  /// same growing document dozens of times for one recording. Auto-sync's own
+  /// debounce would absorb most of that; not asking is cheaper still.
+  void _syncLater() {
+    TranscriptSyncService.markDirty();
+    AutoSyncService.instance.notifySaved();
+  }
 
   /// Purpose: Stop the job when the user has asked to.
   /// Inputs: [job].

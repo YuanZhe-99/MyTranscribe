@@ -12,10 +12,13 @@ library;
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:myapps_data/myapps_data.dart' show atomicWriteString;
 import 'package:path/path.dart' as p;
 
+import '../../../app/data_modules.dart';
 import '../../../shared/services/transcribe_storage.dart';
+import '../../../shared/utils/file_retry.dart';
 import '../models/transcription_job.dart';
 
 /// The record inside a job's folder.
@@ -41,6 +44,23 @@ class JobStore {
   /// Side effects: None.
   /// Notes: Matches the storage hub's shape.
   JobStore._();
+
+  /// Bumped whenever something other than the runner changed a job folder.
+  ///
+  /// The runner has its own revision notifier, which everything watches to
+  /// learn that a record was written. Sync, a backup restore and a ZIP import
+  /// all write job folders too, and none of them goes through the runner —
+  /// before this, a transcription that arrived from another device sat
+  /// invisible until the app was restarted.
+  static final ValueNotifier<int> changedOutsideRunner = ValueNotifier(0);
+
+  /// Purpose: Say that a job folder changed behind the runner's back.
+  /// Inputs: None.
+  /// Returns: None.
+  /// Side effects: Notifies every listener of [changedOutsideRunner].
+  /// Notes: Called once per apply, not once per job: the point is to make the
+  /// pages re-read, and one bump does that for all of them.
+  static void notifyChangedOutsideRunner() => changedOutsideRunner.value++;
 
   /// Purpose: Locate a job's record.
   /// Inputs: [jobId].
@@ -127,7 +147,39 @@ class JobStore {
   static Future<void> save(TranscriptionJob job) async {
     final file = await recordFile(job.id);
     final content = const JsonEncoder.withIndent('  ').convert(job.toJson());
-    await _retrying(() => atomicWriteString(file, content));
+    await retryingFileOperation(() => atomicWriteString(file, content));
+  }
+
+  /// Purpose: Write a job's record exactly as it arrived.
+  /// Inputs: [jobId] and the raw [json] map.
+  /// Returns: A future completing after the write.
+  /// Side effects: Atomically writes `job.json`.
+  /// Notes: For the sync's apply step, which must not round-trip a record
+  /// through the model: the nested types inside one — the options, the plan,
+  /// each chunk result, the media probe — have no `extraJson`, so parsing a
+  /// record written by a newer build and writing it back would quietly drop
+  /// whatever that build added, and the two devices would take turns stripping
+  /// each other's fields for ever.
+  static Future<void> saveRawQuiet(
+    String jobId,
+    Map<String, dynamic> json,
+  ) async {
+    final file = await recordFile(jobId);
+    final content = const JsonEncoder.withIndent('  ').convert(json);
+    await retryingFileOperation(() => atomicWriteString(file, content));
+  }
+
+  /// Purpose: Read one job's record without interpreting it.
+  /// Inputs: [jobId].
+  /// Returns: The raw map, or null when there is none or it will not parse.
+  /// Side effects: Reads the record.
+  /// Notes: The other half of [saveRawQuiet]; what the projection sends.
+  static Future<Map<String, dynamic>?> loadRaw(String jobId) async {
+    final file = await recordFile(jobId);
+    if (!await file.exists()) return null;
+    final raw = await retryingFileOperation(file.readAsString);
+    if (raw.trim().isEmpty) return null;
+    return jsonDecode(raw) as Map<String, dynamic>;
   }
 
   /// Purpose: Read one job.
@@ -143,7 +195,7 @@ class JobStore {
       // Retried for the same reason the write is: a running job replaces this
       // file constantly, and a read that lands in that instant must not make
       // the job look as though it is not there.
-      final raw = await _retrying(file.readAsString);
+      final raw = await retryingFileOperation(file.readAsString);
       if (raw.trim().isEmpty) return null;
       return TranscriptionJob.fromJson(jsonDecode(raw) as Map<String, dynamic>);
     } catch (_) {
@@ -207,7 +259,7 @@ class JobStore {
     await for (final entry in dir.list()) {
       if (entry is! File || !entry.path.endsWith('.mp3')) continue;
       try {
-        await _retrying(entry.delete, attempts: 10);
+        await retryingFileOperation(entry.delete, attempts: 10);
       } catch (_) {
         left++;
       }
@@ -240,17 +292,51 @@ class JobStore {
   /// Inputs: [jobId].
   /// Returns: The size in bytes, and whether the converted copy exists.
   /// Side effects: Walks the job folder.
-  /// Notes: One walk for both answers, because the page asks both at once. The
-  /// converted copy is almost all of the size — a third of the original
-  /// recording — so the figure and the offer to remove it belong together.
-  static Future<({int bytes, bool hasConvertedAudio})> storageInfo(
-    String jobId,
-  ) async {
+  /// Notes: One walk for all three answers, because the page asks them at
+  /// once. The converted copy is almost all of the size — a third of the
+  /// original recording — so the figure and the offer to remove it belong
+  /// together. Whether the recording itself is still reachable is what decides
+  /// if a re-run is even possible: a transcription that arrived from another
+  /// device never had one here.
+  static Future<({int bytes, bool hasConvertedAudio, bool hasSource})>
+  storageInfo(String jobId) async {
     final audio = await normalizedAudio(jobId);
+    final record = await load(jobId);
+    final sourcePath = record?.sourcePath ?? '';
     return (
       bytes: await sizeOnDisk(jobId),
       hasConvertedAudio: await audio.exists(),
+      hasSource: sourcePath.isNotEmpty && await File(sourcePath).exists(),
     );
+  }
+
+  /// Purpose: Add up the converted audio every job on this device is holding.
+  /// Inputs: None.
+  /// Returns: Bytes.
+  /// Side effects: Lists the jobs folder and every job folder in it.
+  /// Notes: The listening copies and any window audio still beside them — what
+  /// "remove converted audio" would actually free. The original recordings are
+  /// not counted: they are not the app's to delete.
+  static Future<int> convertedAudioBytes() async {
+    final jobs = await TranscribeStorage.jobsDir();
+    if (!await jobs.exists()) return 0;
+    var total = 0;
+    await for (final entry in jobs.list()) {
+      if (entry is! Directory) continue;
+      await for (final file in entry.list(recursive: true)) {
+        if (file is! File) continue;
+        final name = p.basename(file.path);
+        final inChunks = p.basename(file.parent.path) == chunksDirName;
+        if (name != normalizedAudioFileName &&
+            !(inChunks && name.endsWith('.mp3'))) {
+          continue;
+        }
+        try {
+          total += await file.length();
+        } catch (_) {}
+      }
+    }
+    return total;
   }
 
   /// Purpose: Remove the converted audio, keeping the transcript.
@@ -263,15 +349,74 @@ class JobStore {
   /// Nothing else goes: the record, the transcript, the raw replies and the
   /// speaker samples all stay, so the transcript is still readable, still
   /// correctable, and the speaker matching can still be re-run.
+  ///
+  /// A marker is left behind saying the removal was deliberate. Without it the
+  /// next sync would helpfully download again exactly what the user had just
+  /// deleted to free space.
   static Future<void> deleteConvertedAudio(String jobId) async {
     await deleteChunkAudio(jobId);
     final audio = await normalizedAudio(jobId);
-    if (!await audio.exists()) return;
+    if (!await audio.exists()) {
+      await _markAudioDiscarded(jobId);
+      return;
+    }
     try {
-      await _retrying(audio.delete, attempts: 10);
+      await retryingFileOperation(audio.delete, attempts: 10);
+      await _markAudioDiscarded(jobId);
     } catch (_) {
       // Held by the player, most likely. It will still be there next time, and
       // the offer to remove it with it.
+    }
+  }
+
+  /// Purpose: Locate the marker saying a job's audio was removed on purpose.
+  /// Inputs: [jobId].
+  /// Returns: `Future<File>`.
+  /// Side effects: May create the job folder.
+  /// Notes: None.
+  static Future<File> audioDiscardedMarker(String jobId) async {
+    final dir = await TranscribeStorage.jobDir(jobId, create: true);
+    return File(p.join(dir.path, audioDiscardedMarkerName));
+  }
+
+  /// Purpose: Say whether a job's audio was removed on purpose.
+  /// Inputs: [jobId].
+  /// Returns: Whether the marker is there.
+  /// Side effects: Reads the file system.
+  /// Notes: Read by the audio side channel before it downloads anything.
+  static Future<bool> hasAudioDiscardedMarker(String jobId) async =>
+      (await audioDiscardedMarker(jobId)).exists();
+
+  /// Purpose: Forget that a job's audio was removed on purpose.
+  /// Inputs: [jobId].
+  /// Returns: A future completing after the deletion.
+  /// Side effects: Deletes the marker when it is there.
+  /// Notes: The runner calls this the moment a re-run produces a converted copy
+  /// again: the audio the user threw away is not the audio they have now.
+  static Future<void> clearAudioDiscardedMarker(String jobId) async {
+    final marker = await audioDiscardedMarker(jobId);
+    if (await marker.exists()) {
+      try {
+        await retryingFileOperation(marker.delete);
+      } catch (_) {
+        // Harmless: the worst case is one audio file not being uploaded.
+      }
+    }
+  }
+
+  /// Purpose: Leave the marker behind.
+  /// Inputs: [jobId].
+  /// Returns: A future completing after the write.
+  /// Side effects: Writes an empty file into the job folder.
+  /// Notes: Internal helper used within this file only. A failure is ignored:
+  /// the audio is already gone, and a missing marker only means sync may fetch
+  /// it back once.
+  static Future<void> _markAudioDiscarded(String jobId) async {
+    try {
+      final marker = await audioDiscardedMarker(jobId);
+      await retryingFileOperation(() => marker.writeAsString(''));
+    } catch (_) {
+      // See above.
     }
   }
 
@@ -292,30 +437,6 @@ class JobStore {
     if (sourcePath.isEmpty) return null;
     final source = File(sourcePath);
     return await source.exists() ? source : null;
-  }
-
-  /// Purpose: Retry a file operation that a momentary lock defeated.
-  /// Inputs: [action], and how many [attempts] to make.
-  /// Returns: What [action] returns.
-  /// Side effects: Whatever [action] does, possibly more than once.
-  /// Notes: Internal helper used within this file only. The delay grows with
-  /// each attempt, so six attempts span about a tenth of a second and ten span
-  /// about a third — far longer than a scanner or a concurrent reader holds a
-  /// small file, and short enough that nobody notices. The final failure is
-  /// thrown, not swallowed: a record that truly cannot be written is worth
-  /// reporting, and a caller that can carry on says so by catching it.
-  static Future<T> _retrying<T>(
-    Future<T> Function() action, {
-    int attempts = 6,
-  }) async {
-    for (var attempt = 1; ; attempt++) {
-      try {
-        return await action();
-      } on FileSystemException {
-        if (attempt >= attempts) rethrow;
-        await Future<void>.delayed(Duration(milliseconds: 8 * attempt));
-      }
-    }
   }
 
   /// Purpose: Resolve one of a job's subfolders.

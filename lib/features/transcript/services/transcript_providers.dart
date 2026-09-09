@@ -12,6 +12,7 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/services/transcribe_storage.dart';
+import '../../jobs/services/job_providers.dart';
 import '../models/transcript.dart';
 import 'transcript_store.dart';
 
@@ -57,11 +58,29 @@ class ViewerPreferences {
   });
 }
 
+/// How many times a transcript has been written since the app started.
+///
+/// Purpose: Let anything that writes a transcript ask the viewer to re-read it.
+/// Inputs: None.
+/// Returns: A counter.
+/// Side effects: None.
+/// Notes: The viewer keeps its own edited copy in page state, which dies with
+/// the route; without this the next open would be served the first read for the
+/// rest of the session, and a rename would look as though it had never been
+/// saved. The job list solves the same problem the same way — see
+/// `jobRevisionProvider`.
+final transcriptRevisionProvider = StateProvider<int>((ref) => 0);
+
 /// One job's transcript, or null when it has none.
 final transcriptProvider = FutureProvider.family<Transcript?, String>((
   ref,
   jobId,
 ) async {
+  // A finished run, the viewer's own save and the sync's apply step all bump
+  // one of these, and each is a reason the file on disk is no longer what was
+  // read.
+  ref.watch(jobRevisionProvider);
+  ref.watch(transcriptRevisionProvider);
   return TranscriptStore.load(jobId);
 });
 

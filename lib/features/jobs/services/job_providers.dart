@@ -33,12 +33,22 @@ final jobRunnerProvider = Provider<JobRunner>((ref) {
 /// the only way a record was re-read was a page happening to refresh the list
 /// after a button was pressed, so a job that finished while its own page was
 /// open went on showing the stage it started at until the app was restarted.
+///
+/// The runner is not the only writer. Sync, a backup restore and a ZIP import
+/// all write job folders without going through it, which is why this adds the
+/// store's own notifier: a transcription that arrived from another device has
+/// to appear without the app being restarted too.
 final jobRevisionProvider = Provider<int>((ref) {
   final runner = ref.watch(jobRunnerProvider);
-  void forward() => ref.state = runner.revision.value;
+  final outside = JobStore.changedOutsideRunner;
+  void forward() => ref.state = runner.revision.value + outside.value;
   runner.revision.addListener(forward);
-  ref.onDispose(() => runner.revision.removeListener(forward));
-  return runner.revision.value;
+  outside.addListener(forward);
+  ref.onDispose(() {
+    runner.revision.removeListener(forward);
+    outside.removeListener(forward);
+  });
+  return runner.revision.value + outside.value;
 });
 
 /// Every job on disk, newest first.
@@ -67,10 +77,23 @@ final jobProvider = FutureProvider.family<TranscriptionJob?, String>((
 /// Read for the detail page. Watches the revision so removing the converted
 /// copy updates the figure without the page asking again.
 final jobStorageProvider =
-    FutureProvider.family<({int bytes, bool hasConvertedAudio}), String>((
+    FutureProvider.family<
+      ({int bytes, bool hasConvertedAudio, bool hasSource}),
+      String
+    >((
       ref,
       jobId,
     ) async {
       ref.watch(jobRevisionProvider);
       return JobStore.storageInfo(jobId);
     });
+
+/// How much converted audio every finished transcription is holding, in bytes.
+///
+/// Read by the settings page so the offer to remove it can say what it buys
+/// back. Watches the revision, so the figure drops to zero the moment the
+/// cleanup runs rather than after the page is reopened.
+final convertedAudioTotalProvider = FutureProvider<int>((ref) async {
+  ref.watch(jobRevisionProvider);
+  return JobStore.convertedAudioBytes();
+});

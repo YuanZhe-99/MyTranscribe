@@ -87,7 +87,7 @@ Future<SegmentEdit?> showSegmentEditSheet(
                   items: [
                     DropdownMenuItem(
                       value: null,
-                      child: Text(l10n.viewerEditNobody),
+                      child: Text(l10n.viewerSpeakerUnknown),
                     ),
                     // Indexed, so the fallback can number a speaker by their
                     // position rather than by their id, which can have gaps.

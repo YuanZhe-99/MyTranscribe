@@ -29,13 +29,16 @@ it can still be found. The bar says there is nothing to play only when neither i
 ## Speakers
 
 Where the model returned speaker labels, a panel lists them with a colour, a name and how much each
-one spoke. Names are yours to set. Two speakers that are really one person can be merged,
-and a single misattributed line is moved in the line editor. Splitting one speaker into two in bulk
+one spoke. Names are yours to set, and a name you have used before is offered as a chip that applies
+in one tap. Two speakers that are really one person can be merged; a label that is not one person at
+all can be marked unknown, which takes its lines away from everybody rather than giving them to the
+wrong person. A single misattributed line is moved in the line editor. Splitting one speaker into two in bulk
 is not built: moving lines one at a time does the same job, and until somebody meets a recording
 where that is not enough, a bulk operation would be guesswork about what they wanted.
 
-Nothing here rewrites the text. Segments point at a speaker, so renaming or merging changes one
-record and every paragraph follows. Because the raw responses are kept, the speaker matching can
+Every edit is written to disk the moment it is made, and re-read the next time the transcript is
+opened. Nothing here rewrites the text: segments point at a speaker, so renaming, merging or marking
+somebody unknown changes one record and every paragraph follows. Because the raw responses are kept, the speaker matching can
 also be re-run from scratch without uploading anything again.
 
 ## Getting it out

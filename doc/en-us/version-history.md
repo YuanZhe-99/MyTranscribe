@@ -3,6 +3,80 @@
 Newest first. Each entry says what changed and, where it matters, why — the reasoning is the part
 that is hard to recover later.
 
+## 0.2.1 — 2026-09-09
+
+What the first recording somebody actually kept found. A Microsoft meeting, three speakers, three
+hundred lines, read and corrected and left overnight. Six things came out of it.
+
+**A rename that would not stay**
+
+- Renaming a speaker, going back and opening the transcript again showed "Speaker 1" once more. The
+  write was correct all along; the provider holding the transcript was never refreshed, so every
+  open after the first was served the copy read at the first one, for the rest of the session.
+  There is a revision counter now — the same shape the job list already used — and the viewer keeps
+  the last copy it read so that a refresh does not replace the page with a spinner and lose the
+  scroll position. A newer copy arriving from sync replaces the one the page is holding.
+- Two adjacent defects went with it. In a narrow window the speakers panel opens as a bottom sheet,
+  which is built once and outlives the build that opened it, so a second rename in one sheet session
+  was made against the transcript as it was before the first and undid it. And the rename dialog
+  disposed its text field the moment it was dismissed, while the dialog was still animating away —
+  which threw on the very next frame.
+
+**Files the app wrote without being asked**
+
+- A finished transcription used to leave a Markdown and a text file in whatever folder the recording
+  happened to be in. That is not somewhere the app should assume it may write, and not somewhere the
+  user necessarily still has. It is now a switch in Settings › Transcription, **off by default**.
+  The transcript itself lives in the app's own folder either way.
+- The detail page no longer lists those paths. It was showing file locations that may have been
+  moved or emptied since.
+
+**Naming people**
+
+- Names you have given speakers before are remembered and offered in the rename dialog as chips that
+  apply in one tap. The same handful of people turn up in recording after recording, and retyping
+  them each time is the kind of friction that makes a feature go unused. The list syncs with the
+  rest of the configuration, because the people in your recordings are the same people on either
+  device, and Settings › Transcription › Speaker names manages it.
+- **Unknown.** The speaker matching fails in two directions and only one of them had a repair. One
+  person coming back as two is fixed by merging. A label that is not one person at all — a stretch
+  of crosstalk, or a guess made on too little evidence — is now fixed by marking it unknown, which
+  is more honest than folding it into somebody who is a person. Those lines read "Unknown" on screen
+  and in all six export formats; a diarized Markdown export used to print a bare `**Speaker**` over
+  them. Nothing does this automatically.
+
+**Transcripts sync**
+
+- The text of every finished transcription now travels to your own WebDAV server, is in every local
+  backup and is in a ZIP export, so a transcription made on one device is readable on the other.
+  Job folders are still not a data module: the small half of each one — the record and the
+  transcript, never the audio — is projected into a file of its own before a sync and applied back
+  afterwards, so hours of private audio still cannot end up in a bundle by accident.
+- Deleting a transcription reaches your other devices at the next sync. A transcription being re-run
+  does not: it is frozen in the projection rather than dropped from it, because otherwise its
+  temporary absence would read as a deletion and the other device would delete the folder — audio
+  included — while its owner watched the recording transcribe again. Force download, restoring a
+  backup and importing a ZIP are additive: none of them has a base snapshot to tell "the server
+  never had this" apart from "somebody deleted this".
+- A transcription that arrived over sync has no recording on this device, so its page does not offer
+  to run it again.
+
+**Audio, if you want it**
+
+- The converted listening copy can travel too, under "Also sync audio" on the sync page. It is
+  **off by default and set per device**: a laptop with room to spare and a phone that is nearly full
+  want different answers, and the transcripts sync either way. With the switch off, no request about
+  audio is made at all. Original recordings never travel.
+- Settings › Data › **Remove converted audio** frees every listening copy on the device at once and
+  says how much that is. Every transcript stays, still readable and still syncing, and the next sync
+  does not bring the audio back.
+
+**Also**
+
+- Transcript files are written with the same retry the job records have had since 0.1.0. An atomic
+  replace is a rename, and on Windows a rename fails outright while anything else holds the file
+  open.
+
 ## 0.2.0 — 2026-09-06
 
 What the first real recording found. An eighty-one-minute lecture went through OpenRouter end to

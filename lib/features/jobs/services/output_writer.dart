@@ -58,7 +58,11 @@ String renderJobMarkdown(TranscriptionJob job, Transcript transcript) {
   final languages = job.options.languages;
   return renderMarkdown(
     transcript,
-    (id) => transcript.displayNameOf(id, defaultSpeakerName),
+    (id) => transcript.nameFor(
+      id,
+      fallback: defaultSpeakerName,
+      unknown: defaultUnknownSpeakerName,
+    ),
     subtitleLines: [
       '- Audio: `${job.sourceName}`',
       '- Model: `${job.modelName}`',
@@ -81,5 +85,9 @@ String renderJobMarkdown(TranscriptionJob job, Transcript transcript) {
 /// them. With speakers, each paragraph is prefixed with the name.
 String renderJobPlainText(Transcript transcript) => renderTxt(
   transcript,
-  (id) => transcript.displayNameOf(id, defaultSpeakerName),
+  (id) => transcript.nameFor(
+      id,
+      fallback: defaultSpeakerName,
+      unknown: defaultUnknownSpeakerName,
+    ),
 );

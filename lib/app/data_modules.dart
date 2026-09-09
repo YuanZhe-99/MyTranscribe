@@ -17,6 +17,14 @@
 /// be backed up. Both are excluded *structurally* — the sync, backup and ZIP
 /// engines only ever touch the file names in this registry — rather than by a
 /// filter somebody could forget to update.
+///
+/// **What the transcripts module is.** `transcribe_transcripts.json` carries
+/// the small half of every finished job folder: the record and the transcript,
+/// and nothing else. It is a projection, rebuilt from `jobs/` before a sync and
+/// applied back into it afterwards by `TranscriptSyncService`, so the folders
+/// stay the app's source of truth and the audio stays where it is. The
+/// converted listening copy travels only through an opt-in side channel, under
+/// `audio/` beside these files, never as a module.
 library;
 
 import 'dart:convert';
@@ -24,6 +32,7 @@ import 'dart:io';
 
 import 'package:myapps_data/myapps_data.dart';
 
+import '../features/jobs/models/transcripts_document.dart';
 import '../features/providers/models/transcribe_settings.dart';
 import '../shared/services/sync_merge.dart';
 import '../shared/services/transcribe_storage.dart';
@@ -45,6 +54,24 @@ const settingsModuleId = 'settings';
 ///
 /// Never in [transcribeModuleRegistry]; see the library note above.
 const secretsFileName = 'transcribe_secrets.json';
+
+/// Local and remote name of the transcripts projection (I1/I2).
+const transcriptsDataFileName = 'transcribe_transcripts.json';
+
+/// Backup bundle module key for that file (I2).
+const transcriptsModuleId = 'transcripts';
+
+/// Remote subdirectory holding one converted audio file per transcription.
+///
+/// Not a module: audio travels through an app-level side channel that only
+/// runs when the device has opted in, the same shape the API keys use.
+const audioRemoteDirName = 'audio';
+
+/// Marker inside a job folder saying its converted audio was removed on purpose.
+///
+/// Without it, the next sync would helpfully download again exactly what the
+/// user had just deleted to free space.
+const audioDiscardedMarkerName = 'audio.discarded';
 
 /// Directory under the app dir holding one folder per transcription job.
 const jobsDirName = 'jobs';
@@ -193,12 +220,110 @@ DataModule buildSettingsModule() => DataModule(
       ),
 );
 
+/// Purpose: Encode a transcripts document the way the projection writes it.
+/// Inputs: [document].
+/// Returns: Pretty-printed JSON.
+/// Side effects: None.
+/// Notes: The same indentation everything else uses, so an unchanged document
+/// hits the engine's raw-equality fast path instead of re-uploading (I6).
+String encodeTranscripts(TranscriptsDocument document) =>
+    _prettyJson.convert(document.toJson());
+
+/// Purpose: Validate a `transcribe_transcripts.json` payload before it is
+/// written.
+/// Inputs: [json] raw module content.
+/// Returns: None; throws when the payload will not parse at all.
+/// Side effects: None.
+/// Notes: Deliberately shallow. A single unusable record is dropped by the
+/// parser rather than rejected here, because refusing the whole file would
+/// block every other transcription over one damaged entry.
+void validateTranscriptsJson(String json) {
+  TranscriptsDocument.fromJson(jsonDecode(json) as Map<String, dynamic>);
+}
+
+/// Purpose: Merge local/remote/base transcripts JSON for the shared engine.
+/// Inputs: [localJson], [remoteJson], optional [baseJson], [autoResolve].
+/// Returns: A complete outcome, or a pending one carrying the conflicts.
+/// Side effects: None.
+/// Notes: The same shape as [mergeSettingsModule]; the typed result rides along
+/// as opaque `state` so `WebDAVService` can hand real conflicts to the dialog.
+ModuleMergeOutcome mergeTranscriptsModule({
+  required String localJson,
+  required String remoteJson,
+  required String? baseJson,
+  required bool autoResolve,
+}) {
+  final result = mergeTranscriptsData(
+    localJson,
+    remoteJson,
+    baseJson,
+    autoResolve: autoResolve,
+  );
+  if (!result.hasConflicts) {
+    return ModuleMergeOutcome(
+      mergedJson: encodeTranscripts(
+        TranscriptsDocument(
+          records: result.merged,
+          extraJson: result.extraJson,
+        ),
+      ),
+      state: result,
+    );
+  }
+  return ModuleMergeOutcome(
+    state: result,
+    conflicts: [
+      for (final conflict in result.conflicts)
+        ModuleConflict(
+          id: conflict.id,
+          localRecord: conflict.localRecord,
+          remoteRecord: conflict.remoteRecord,
+          displayName: conflict.displayName,
+        ),
+    ],
+    buildResolvedJson: (resolutions) => encodeTranscripts(
+      result.buildResolved({
+        for (final entry in resolutions.entries)
+          if (entry.value is TranscriptSyncRecord)
+            entry.key: entry.value as TranscriptSyncRecord,
+      }),
+    ),
+  );
+}
+
+/// Purpose: Describe `transcribe_transcripts.json` to the shared engines.
+/// Inputs: None.
+/// Returns: The transcripts [DataModule].
+/// Side effects: None.
+/// Notes: The file is a projection of `jobs/`, rebuilt before the engine runs
+/// and applied back into the job folders afterwards — see
+/// `TranscriptSyncService`. The engine knows none of that; to it this is one
+/// more flat file with a merge function.
+DataModule buildTranscriptsModule() => DataModule(
+  fileName: transcriptsDataFileName,
+  moduleId: transcriptsModuleId,
+  validate: validateTranscriptsJson,
+  merge:
+      ({
+        required String localJson,
+        required String remoteJson,
+        required String? baseJson,
+        required bool autoResolve,
+      }) => mergeTranscriptsModule(
+        localJson: localJson,
+        remoteJson: remoteJson,
+        baseJson: baseJson,
+        autoResolve: autoResolve,
+      ),
+);
+
 /// Purpose: Provide MyTranscribe's ordered module registry.
 /// Inputs: None.
-/// Returns: A registry holding the single settings module.
+/// Returns: A registry holding the settings and transcripts modules.
 /// Side effects: None.
 /// Notes: Built once; the shared engines treat registry order as significant,
-/// so a second module must be appended, never inserted before this one.
+/// so a further module must be appended, never inserted before these.
 final ModuleRegistry transcribeModuleRegistry = ModuleRegistry([
   buildSettingsModule(),
+  buildTranscriptsModule(),
 ]);

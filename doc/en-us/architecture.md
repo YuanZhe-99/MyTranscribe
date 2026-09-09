@@ -52,20 +52,26 @@ result), `media` (FFmpeg), `secrets` (API keys) and `settings`.
   from Flutter and is therefore testable as pure functions. A numeric width comparison inside a
   widget file is a bug.
 
-## The three kinds of data
+## The four kinds of data
 
 This distinction runs through the whole app and is worth stating once:
 
 | Kind | Example | Synced | In backups and ZIP |
 |---|---|---|---|
-| Configuration | sources, models, defaults | yes, as one data module | yes |
+| Configuration | sources, models, defaults | yes, as a data module | yes |
+| Transcripts | the record and text of a finished transcription | yes, as a data module projected from `jobs/` | yes |
 | Secrets | API keys | only to a secure endpoint, by a separate exchange | no |
-| Work | recordings, chunk audio, transcripts | no | no |
+| Recordings and audio | the original file, the chunk audio, the converted copy | no — the converted copy only, only by an opt-in side channel | no |
 
 The exclusions are **structural**, not filtered: the sync, backup and ZIP engines only ever touch
 the file names in the registry in `lib/app/data_modules.dart`, and neither the secrets file nor the
-job folders are in it. Adding either to the registry would silently start uploading it. See
-[`data-formats.md`](data-formats.md).
+job folders are in it. Adding either to the registry would silently start uploading it.
+
+A transcription's *text* still travels, because the small half of each job folder — the record and
+the transcript, never the audio — is projected into a module file of its own before a sync and
+applied back into `jobs/` afterwards. The converted listening copy travels only on a device that
+asked for it, through an app-level side channel like the one the keys use. See
+[`data-formats.md`](data-formats.md) and [`sync.md`](sync.md).
 
 ## The shared package
 

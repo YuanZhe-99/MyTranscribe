@@ -64,6 +64,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupModuleSettings => '来源和模型';
 
   @override
+  String get backupModuleTranscripts => '转写记录';
+
+  @override
   String get backupNoBackups => '暂无备份';
 
   @override
@@ -115,9 +118,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonClose => '关闭';
 
   @override
-  String get commonCopy => '复制';
-
-  @override
   String get commonEdit => '编辑';
 
   @override
@@ -142,7 +142,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get jobAudioRemoved => '已删除转换后的音频';
 
   @override
-  String get jobDeleteConfirm => '删除这条转写记录？本应用保存的转换后音频和转写文件会一并删除，原始录音不受影响。';
+  String get jobDeleteConfirm =>
+      '删除这条转写记录？转换后的音频和转写稿会一并删除，下次同步时也会从你的其他设备上删除。原始录音不受影响。';
 
   @override
   String get jobDeleted => '转写记录已删除';
@@ -174,14 +175,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get jobOpenTranscript => '打开转写稿';
 
   @override
-  String get jobPathCopied => '路径已复制';
-
-  @override
   String get jobRemoveAudio => '删除转换后的音频';
 
   @override
   String get jobRemoveAudioConfirm =>
-      '从本设备删除这段录音转换后的副本？转写稿会保留。只要还能找到原始录音，播放会回退到它。';
+      '从本设备删除这段录音转换后的副本？转写稿会保留，也照常同步。只要还能找到原始录音，播放会回退到它。同步不会再把这个副本下载回来。';
 
   @override
   String get jobRename => '重命名';
@@ -207,9 +205,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get jobRunAgainConfirm =>
       '重新转写这段录音？转写稿会从头重新生成，你在查看器里做过的修改——说话人名称、改过的文字——都会丢失。';
-
-  @override
-  String get jobSectionOutputs => '转写文件';
 
   @override
   String get jobSectionPlan => '发送方式';
@@ -638,6 +633,45 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAbout => '关于';
 
   @override
+  String get settingsRemoveAllAudio => '移除转换后的音频';
+
+  @override
+  String get settingsRemoveAllAudioConfirm =>
+      '移除本设备上所有已完成转写的转换后音频？转写稿会保留，也照常同步。同步不会再把这些音频下载回来。';
+
+  @override
+  String settingsRemoveAllAudioDone(int count) {
+    return '已移除 $count 条转写的转换后音频';
+  }
+
+  @override
+  String get settingsRemoveAllAudioNothing => '没有可移除的内容';
+
+  @override
+  String settingsRemoveAllAudioSubtitle(String size) {
+    return '转写稿全部保留，可释放本设备 $size';
+  }
+
+  @override
+  String get settingsSpeakerNames => '说话人名称';
+
+  @override
+  String get settingsSpeakerNamesAdd => '添加名称';
+
+  @override
+  String get settingsSpeakerNamesEmpty => '还没有名称。在转写中给说话人起名后，这里就会出现。';
+
+  @override
+  String get settingsSpeakerNamesSubtitle => '你录音里出现过的人，命名说话人时会作为候选';
+
+  @override
+  String get settingsAutoSaveTranscriptFiles => '在录音旁保存转写文件';
+
+  @override
+  String get settingsAutoSaveTranscriptFilesSubtitle =>
+      '每次转写完成后，在录音文件旁写入一个 Markdown 文件和一个文本文件';
+
+  @override
   String get settingsData => '数据';
 
   @override
@@ -720,7 +754,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsStorageLocationSubtitle => '录音和转写稿的存放位置';
 
   @override
-  String get settingsSyncSubtitle => '把来源和模型同步到你自己的服务器';
+  String get settingsSyncSubtitle => '把来源、模型和转写稿同步到你自己的服务器';
 
   @override
   String get settingsTheme => '主题';
@@ -812,6 +846,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsWebDAVSync => 'WebDAV 同步';
 
   @override
+  String get settingsWebDAVSyncAudio => '同时同步音频';
+
+  @override
+  String get settingsWebDAVSyncAudioDesc => '把每条转写转换后的音频上传到你的服务器，并取回其他设备上传的音频';
+
+  @override
   String get settingsWebDAVSyncFailed => '同步失败';
 
   @override
@@ -833,6 +873,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsWebDAVUsername => '用户名';
+
+  @override
+  String syncAudioSummary(int uploaded, int downloaded) {
+    return '已上传 $uploaded 个音频，下载 $downloaded 个';
+  }
 
   @override
   String get syncConflictDesc => '上次同步之后，两台设备都改过它。请保留其中一个版本。';
@@ -896,9 +941,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get viewerCopyAll => '复制整份转写稿';
 
   @override
-  String get viewerEditNobody => '不指定';
-
-  @override
   String get viewerEditSegment => '编辑这一句';
 
   @override
@@ -951,6 +993,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get viewerShowTimestamps => '显示时间';
 
   @override
+  String get viewerSpeakerForget => '不再提示这个名称';
+
+  @override
   String viewerSpeakerFallback(int number) {
     return '说话人 $number';
   }
@@ -958,6 +1003,11 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String viewerSpeakerLines(int count) {
     return '$count 句';
+  }
+
+  @override
+  String viewerSpeakerMarkedUnknown(String name) {
+    return '$name 的发言已归为未知';
   }
 
   @override
@@ -983,7 +1033,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get viewerSpeakerRename => '重命名';
 
   @override
+  String get viewerSpeakerSuggestions => '用过的名称';
+
+  @override
+  String get viewerSpeakerUnassign => '归为未知';
+
+  @override
   String get viewerSpeakerUncertain => '该说话人有部分语句在分段边界上的匹配并不确定。';
+
+  @override
+  String get viewerSpeakerUnknown => '未知';
 
   @override
   String get viewerSpeakers => '说话人';
@@ -1049,6 +1108,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get backupModuleSettings => '來源和模型';
 
   @override
+  String get backupModuleTranscripts => '轉寫紀錄';
+
+  @override
   String get backupNoBackups => '暫無備份';
 
   @override
@@ -1100,9 +1162,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get commonClose => '關閉';
 
   @override
-  String get commonCopy => '複製';
-
-  @override
   String get commonEdit => '編輯';
 
   @override
@@ -1127,7 +1186,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get jobAudioRemoved => '已刪除轉換後的音訊';
 
   @override
-  String get jobDeleteConfirm => '刪除這筆轉寫記錄？本應用保存的轉換後音訊與轉寫檔案會一併刪除，原始錄音不受影響。';
+  String get jobDeleteConfirm =>
+      '刪除這筆轉寫紀錄？轉換後的音訊與逐字稿會一併刪除，下次同步時也會從你的其他裝置上刪除。原始錄音不受影響。';
 
   @override
   String get jobDeleted => '轉寫記錄已刪除';
@@ -1159,14 +1219,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get jobOpenTranscript => '開啟轉寫稿';
 
   @override
-  String get jobPathCopied => '路徑已複製';
-
-  @override
   String get jobRemoveAudio => '刪除轉換後的音訊';
 
   @override
   String get jobRemoveAudioConfirm =>
-      '從本裝置刪除這段錄音轉換後的副本？逐字稿會保留。只要還找得到原始錄音，播放會改用它。';
+      '從本裝置刪除這段錄音轉換後的副本？逐字稿會保留，也照常同步。只要還找得到原始錄音，播放會改用它。同步不會再把這個副本下載回來。';
 
   @override
   String get jobRename => '重新命名';
@@ -1192,9 +1249,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get jobRunAgainConfirm =>
       '重新轉寫這段錄音？逐字稿會從頭重新產生，你在檢視器中做過的修改——說話人名稱、改過的文字——都會遺失。';
-
-  @override
-  String get jobSectionOutputs => '轉寫檔案';
 
   @override
   String get jobSectionPlan => '傳送方式';
@@ -1623,6 +1677,45 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get settingsAbout => '關於';
 
   @override
+  String get settingsRemoveAllAudio => '移除轉換後的音訊';
+
+  @override
+  String get settingsRemoveAllAudioConfirm =>
+      '移除本裝置上所有已完成轉寫的轉換後音訊？逐字稿會保留，也照常同步。同步不會再把這些音訊下載回來。';
+
+  @override
+  String settingsRemoveAllAudioDone(int count) {
+    return '已移除 $count 筆轉寫的轉換後音訊';
+  }
+
+  @override
+  String get settingsRemoveAllAudioNothing => '沒有可移除的內容';
+
+  @override
+  String settingsRemoveAllAudioSubtitle(String size) {
+    return '逐字稿全部保留，可釋放本裝置 $size';
+  }
+
+  @override
+  String get settingsSpeakerNames => '說話者名稱';
+
+  @override
+  String get settingsSpeakerNamesAdd => '新增名稱';
+
+  @override
+  String get settingsSpeakerNamesEmpty => '還沒有名稱。在轉寫中為說話者命名後，這裡就會出現。';
+
+  @override
+  String get settingsSpeakerNamesSubtitle => '你錄音裡出現過的人，命名說話者時會作為候選';
+
+  @override
+  String get settingsAutoSaveTranscriptFiles => '在錄音旁儲存轉寫檔案';
+
+  @override
+  String get settingsAutoSaveTranscriptFilesSubtitle =>
+      '每次轉寫完成後，在錄音檔案旁寫入一個 Markdown 檔案和一個文字檔案';
+
+  @override
   String get settingsData => '資料';
 
   @override
@@ -1705,7 +1798,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get settingsStorageLocationSubtitle => '錄音和逐字稿的存放位置';
 
   @override
-  String get settingsSyncSubtitle => '把來源和模型同步到你自己的伺服器';
+  String get settingsSyncSubtitle => '把來源、模型和逐字稿同步到你自己的伺服器';
 
   @override
   String get settingsTheme => '主題';
@@ -1797,6 +1890,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get settingsWebDAVSync => 'WebDAV 同步';
 
   @override
+  String get settingsWebDAVSyncAudio => '同時同步音訊';
+
+  @override
+  String get settingsWebDAVSyncAudioDesc => '把每筆轉寫轉換後的音訊上傳到你的伺服器，並取回其他裝置上傳的音訊';
+
+  @override
   String get settingsWebDAVSyncFailed => '同步失敗';
 
   @override
@@ -1818,6 +1917,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get settingsWebDAVUsername => '使用者名稱';
+
+  @override
+  String syncAudioSummary(int uploaded, int downloaded) {
+    return '已上傳 $uploaded 個音訊，下載 $downloaded 個';
+  }
 
   @override
   String get syncConflictDesc => '上次同步之後，兩台裝置都改過它。請保留其中一個版本。';
@@ -1881,9 +1985,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get viewerCopyAll => '複製整份轉寫稿';
 
   @override
-  String get viewerEditNobody => '不指定';
-
-  @override
   String get viewerEditSegment => '編輯這一句';
 
   @override
@@ -1936,6 +2037,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get viewerShowTimestamps => '顯示時間';
 
   @override
+  String get viewerSpeakerForget => '不再提示這個名稱';
+
+  @override
   String viewerSpeakerFallback(int number) {
     return '說話人 $number';
   }
@@ -1943,6 +2047,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String viewerSpeakerLines(int count) {
     return '$count 句';
+  }
+
+  @override
+  String viewerSpeakerMarkedUnknown(String name) {
+    return '$name 的發言已歸為未知';
   }
 
   @override
@@ -1968,7 +2077,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get viewerSpeakerRename => '重新命名';
 
   @override
+  String get viewerSpeakerSuggestions => '用過的名稱';
+
+  @override
+  String get viewerSpeakerUnassign => '歸為未知';
+
+  @override
   String get viewerSpeakerUncertain => '該說話人有部分語句在分段邊界上的比對並不確定。';
+
+  @override
+  String get viewerSpeakerUnknown => '未知';
 
   @override
   String get viewerSpeakers => '說話人';

@@ -40,9 +40,25 @@ short sample of each speaker from where they were first identified and sends it 
 window. The model then returns that speaker under the same name, and no inference is needed. This is
 the reliable path, and it is available on some services and not others.
 
-**The user decides.** The speakers panel merges two speakers, and the line editor moves a single
-line to somebody else. Every operation changes one record rather than rewriting the text, and
-because the raw responses are kept, the matching can be re-run without uploading anything again.
+**The user decides.** The speakers panel merges two speakers, marks one as unknown, and names
+anybody; the line editor moves a single line to somebody else. Every operation changes one record
+rather than rewriting the text, and because the raw responses are kept, the matching can be re-run
+without uploading anything again.
+
+"Unknown" is the other half of merging, and it exists because the matching fails in two directions.
+One person coming back as two is repaired by a merge. A label that is not one person at all — a
+stretch of crosstalk, or a guess made on too little evidence — is repaired by admitting nobody
+knows, which is more honest than folding it into somebody who *is* a person. Those lines then read
+"Unknown" on screen and in every export, and the panel counts them in a row of their own. Nothing
+does this automatically; a machine that decides it is unsure is how a transcript loses speakers it
+had correctly identified.
+
+**Names you have used before.** Naming a speaker remembers the name, and the next rename dialog
+offers it as a chip that applies in one tap. The same handful of people turn up in recording after
+recording, and retyping them each time is the kind of friction that makes a feature go unused. The
+list is synced with the rest of the configuration, because the people in your recordings are the
+same people on either device, and it can be tidied in Settings › Transcription › Speaker names or by
+dismissing a chip in the dialog.
 
 ## What this cannot do
 

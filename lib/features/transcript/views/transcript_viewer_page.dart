@@ -20,6 +20,7 @@ import '../../../shared/utils/adaptive_layout.dart';
 import '../../jobs/models/transcription_job.dart';
 import '../../jobs/services/job_providers.dart';
 import '../../jobs/services/job_store.dart';
+import '../../providers/services/settings_repository.dart';
 import '../models/transcript.dart';
 import '../services/export_formatters.dart';
 import '../services/speaker_palette.dart';
@@ -65,6 +66,23 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
   /// while the write happens behind it.
   Transcript? _edited;
 
+  /// The last transcript this page managed to read from disk.
+  ///
+  /// The same cache, and for the same reason, as [_job]: the transcript is
+  /// re-read whenever a revision moves, and a re-reading `FutureProvider`
+  /// reports `AsyncLoading` with no previous value in Riverpod 1.x. Without
+  /// this the page would be replaced by a spinner — losing the scroll position
+  /// — every time the runner wrote a record.
+  Transcript? _stored;
+
+  /// How many edits this page has made, so an open sheet can rebuild.
+  ///
+  /// A modal sheet is built once, outside this page's build, so it would
+  /// otherwise close over the transcript as it was when the sheet opened, and a
+  /// second rename in the same sheet session would be made against that stale
+  /// copy and undo the first.
+  final _edits = ValueNotifier<int>(0);
+
   /// The view options, seeded from the device's preferences on the first build.
   ViewerMode _mode = ViewerMode.transcript;
   bool _group = true;
@@ -109,6 +127,7 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
     _player.dispose();
     _scroll.dispose();
     _search.dispose();
+    _edits.dispose();
     super.dispose();
   }
 
@@ -133,14 +152,19 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
   /// Returns: The name, or null when nobody is identified.
   /// Side effects: None.
   /// Notes: Internal helper used within this file only. Passed into the export
-  /// formatters, so a file says exactly what the screen says. An unnamed
-  /// speaker is numbered by their position in the transcript rather than by
-  /// their id, which can have gaps — see [Transcript.displayNameOf].
+  /// formatters, so a file says exactly what the screen says — including the
+  /// lines nobody is credited with, which now read "Unknown" everywhere instead
+  /// of being silently dropped in some formats and printed as a bare
+  /// `**Speaker**` in others. See [Transcript.nameFor].
   String? _nameOf(
     Transcript transcript,
     String? speakerId,
     AppLocalizations l10n,
-  ) => transcript.displayNameOf(speakerId, l10n.viewerSpeakerFallback);
+  ) => transcript.nameFor(
+    speakerId,
+    fallback: l10n.viewerSpeakerFallback,
+    unknown: l10n.viewerSpeakerUnknown,
+  );
 
   /// Purpose: Bring the line being played into view.
   /// Inputs: Which [line] is playing, identified however the current view
@@ -172,11 +196,18 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
   /// Side effects: Writes `transcript.json`.
   /// Notes: Internal helper used within this file only. Saved immediately
   /// rather than on leaving the page: a correction the user made and then lost
-  /// to a crash is worse than a file written a few times too often.
+  /// to a crash is worse than a file written a few times too often. The screen
+  /// is updated before the write, so a correction never waits for a disk; the
+  /// revision is bumped after it, so the next open of this transcript re-reads
+  /// the file instead of being served the first read for the rest of the
+  /// session — which is exactly how a rename used to be lost.
   Future<void> _save(Transcript next) async {
     final stamped = next.copyWith(editedAt: DateTime.now().toUtc());
     setState(() => _edited = stamped);
+    _edits.value++;
     await TranscriptStore.save(stamped);
+    if (!mounted) return;
+    ref.read(transcriptRevisionProvider.notifier).state++;
   }
 
   /// Purpose: Build the page.
@@ -215,14 +246,26 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
 
     // Riverpod 1.x has no hasValue; an AsyncData carrying null means the job
     // genuinely has no transcript, which is not the same as still reading.
-    if (_edited == null && stored is! AsyncData<Transcript?>) {
+    if (stored is AsyncData<Transcript?>) _stored = stored.value ?? _stored;
+
+    // A copy that arrived from another device while this page was open is
+    // newer than the one being held here, so it wins.
+    if (_edited case final mine?) {
+      final theirs = _stored?.editedAt;
+      if (theirs != null &&
+          (mine.editedAt == null || theirs.isAfter(mine.editedAt!))) {
+        _edited = null;
+      }
+    }
+
+    if (_edited == null && _stored == null && stored is! AsyncData<Transcript?>) {
       return Scaffold(
         appBar: AppBar(),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
-    final transcript = _edited ?? stored.value;
+    final transcript = _edited ?? _stored;
     if (transcript == null || transcript.segments.isEmpty) {
       return Scaffold(
         appBar: AppBar(title: Text(job?.displayName ?? '')),
@@ -277,14 +320,21 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
                 tooltip: l10n.viewerSpeakers,
                 icon: const Icon(Icons.record_voice_over_outlined),
                 onPressed: transcript.hasSpeakers
-                    ? () => _showSheet(_speakersPanel(l10n, transcript))
+                    ? () => _showSheet(
+                        (_) => ValueListenableBuilder<int>(
+                          valueListenable: _edits,
+                          builder: (_, _, _) =>
+                              _speakersPanel(l10n, _edited ?? _stored!),
+                        ),
+                      )
                     : null,
               ),
               IconButton(
                 tooltip: l10n.viewerOptions,
                 icon: const Icon(Icons.tune),
                 onPressed: () => _showSheet(
-                  _optionsPanel(l10n, hasSpeakers: transcript.hasSpeakers),
+                  (_) =>
+                      _optionsPanel(l10n, hasSpeakers: transcript.hasSpeakers),
                 ),
               ),
             ],
@@ -475,14 +525,18 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: _fontSize,
-                            color: speakerColor(
-                              speakerIndex < 0
-                                  ? 0
-                                  : transcript
+                            // "Unknown" matches no speaker record, and giving
+                            // it the first palette colour made it look like a
+                            // person.
+                            color: speakerIndex < 0
+                                ? Theme.of(context).colorScheme
+                                      .onSurfaceVariant
+                                : speakerColor(
+                                    transcript
                                         .speakers[speakerIndex]
                                         .colorIndex,
-                              palette,
-                            ),
+                                    palette,
+                                  ),
                           ),
                         ),
                       if (_showTimes) ...[
@@ -546,16 +600,21 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
                       children: [
                         if (_showTimes)
                           _timeChip(transcript, segment.startSeconds),
-                        if (speaker != null) ...[
+                        // Shown for a line nobody is credited with too, once
+                        // this transcript identifies anybody at all: "Unknown"
+                        // is a fact about the line, not an empty label.
+                        if (transcript.hasSpeakers) ...[
                           const SizedBox(width: 8),
                           Text(
                             _nameOf(transcript, segment.speakerId, l10n) ?? '',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
-                              color: speakerColor(
-                                speaker.colorIndex,
-                                Theme.of(context).brightness,
-                              ),
+                              color: speaker == null
+                                  ? scheme.onSurfaceVariant
+                                  : speakerColor(
+                                      speaker.colorIndex,
+                                      Theme.of(context).brightness,
+                                    ),
                             ),
                           ),
                         ],
@@ -709,6 +768,20 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
   Widget _speakersPanel(AppLocalizations l10n, Transcript transcript) =>
       SpeakersPanel(
         transcript: transcript,
+        // Null while the library is still being read, and in a widget test
+        // where nothing overrides it — an empty list simply offers nothing.
+        knownNames:
+            ref.watch(settingsLibraryProvider).value?.defaults
+                .knownSpeakerNames ??
+            const [],
+        onNameUsed: (name) async {
+          await ref.read(settingsRepositoryProvider).rememberSpeakerName(name);
+          if (mounted) ref.refresh(settingsLibraryProvider);
+        },
+        onForgetName: (name) async {
+          await ref.read(settingsRepositoryProvider).forgetSpeakerName(name);
+          if (mounted) ref.refresh(settingsLibraryProvider);
+        },
         onRename: (speakerId, name) => _save(
           transcript.copyWith(
             speakers: [
@@ -720,6 +793,14 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
             ],
           ),
         ),
+        onUnassign: (speakerId) async {
+          final name = _nameOf(transcript, speakerId, l10n) ?? speakerId;
+          await _save(transcript.unassignSpeaker(speakerId));
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.viewerSpeakerMarkedUnknown(name))),
+          );
+        },
         onMerge: (from, into) async {
           final names = (
             _nameOf(transcript, from, l10n),
@@ -738,12 +819,15 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
       );
 
   /// Purpose: Show a panel as a sheet on a narrow window.
-  /// Inputs: The [child].
+  /// Inputs: A [build] callback for the panel.
   /// Returns: None.
   /// Side effects: Opens a modal sheet.
   /// Notes: Internal helper used within this file only. The same panel widget
-  /// as the sidebar's, so a phone and a desktop offer the same controls.
-  void _showSheet(Widget child) {
+  /// as the sidebar's, so a phone and a desktop offer the same controls. A
+  /// builder rather than a widget: a sheet outlives the build that opened it,
+  /// and the speakers panel must be rebuilt from the current transcript after
+  /// every rename or the next one in the same sheet session would undo it.
+  void _showSheet(WidgetBuilder build) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -752,10 +836,10 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
         expand: false,
         initialChildSize: 0.6,
         maxChildSize: 0.9,
-        builder: (_, controller) => ListView(
+        builder: (sheetContext, controller) => ListView(
           controller: controller,
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-          children: [child],
+          children: [build(sheetContext)],
         ),
       ),
     );

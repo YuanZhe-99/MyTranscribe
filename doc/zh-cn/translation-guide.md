@@ -63,12 +63,16 @@
 | overlap | 重叠 | 重疊 | |
 | resume (a job) | 继续 | 繼續 | |
 | speaker | 说话人 | 說話人 | |
+| unknown speaker | 未知 | 未知 | 没有人被记名的句子。在没有界面语言可用时写出的文件里用英文 `Unknown`。 |
+| speaker names (the saved list) | 说话人名称 | 說話者名稱 | 命名说话人时提供的候选名称。 |
 | speaker identification | 说话人识别 | 說話人識別 | |
 | speaker unification | 说话人统一 | 說話人統一 | 跨分段保持同一身份。 |
 | known speaker reference | 已知说话人样本 | 已知說話人樣本 | |
 | timestamp | 时间戳 | 時間戳 | |
 | segment (of a transcript) | 片段 | 片段 | 与"分段"不同，后者指一块音频。 |
 | API key | API 密钥 | API 金鑰 | |
+| transcripts projection | 转写投影 | 轉寫投影 | 由任务文件夹生成的、可同步的文件。 |
+| converted audio | 转换后的音频 | 轉換後的音訊 | 供回放的副本，不是原始录音。 |
 | secure endpoint | 安全端点 | 安全端點 | |
 | trusted host | 受信任主机 | 受信任主機 | |
 | diarization | 说话人分离 | 說話人分離 | 面向用户的文案优先用"说话人识别"。 |

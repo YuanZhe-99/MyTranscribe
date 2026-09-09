@@ -15,8 +15,11 @@ import 'dart:io';
 import 'package:myapps_data/myapps_data.dart' show atomicWriteString;
 import 'package:path/path.dart' as p;
 
+import '../../../shared/services/auto_sync_service.dart';
 import '../../../shared/services/transcribe_storage.dart';
+import '../../../shared/utils/file_retry.dart';
 import '../../jobs/services/transcript_merger.dart';
+import '../../jobs/services/transcript_sync.dart';
 import '../models/transcript.dart';
 
 /// The transcript inside a job's folder.
@@ -52,7 +55,10 @@ class TranscriptStore {
     try {
       final file = await fileFor(jobId);
       if (!await file.exists()) return null;
-      final raw = await file.readAsString();
+      // Retried for the same reason the write is: the viewer replaces this file
+      // on every correction, and a re-read that lands on its atomic rename must
+      // not make the transcript look as though it is not there.
+      final raw = await retryingFileOperation(file.readAsString);
       if (raw.trim().isEmpty) return null;
       return Transcript.fromJson(jsonDecode(raw) as Map<String, dynamic>);
     } catch (_) {
@@ -60,18 +66,64 @@ class TranscriptStore {
     }
   }
 
-  /// Purpose: Write a job's transcript.
+  /// Purpose: Write a job's transcript without telling anything else.
   /// Inputs: [transcript].
   /// Returns: A future completing after the write.
   /// Side effects: Atomically writes `transcript.json`.
   /// Notes: Atomic, because this file is what the user's corrections live in
-  /// and a half-written one would lose them all.
-  static Future<void> save(Transcript transcript) async {
+  /// and a half-written one would lose them all. Retried, because an atomic
+  /// replace is a rename and on Windows a rename fails outright while anything
+  /// else holds the file open. Quiet: the sync's own apply step writes through
+  /// here, so that a transcript arriving from another device is not immediately
+  /// queued for upload again.
+  static Future<void> saveQuiet(Transcript transcript) async {
     final file = await fileFor(transcript.jobId);
-    await atomicWriteString(
-      file,
-      const JsonEncoder.withIndent('  ').convert(transcript.toJson()),
-    );
+    final content = const JsonEncoder.withIndent(
+      '  ',
+    ).convert(transcript.toJson());
+    await retryingFileOperation(() => atomicWriteString(file, content));
+  }
+
+  /// Purpose: Write a job's transcript as the user's own edit.
+  /// Inputs: [transcript].
+  /// Returns: A future completing after the write.
+  /// Side effects: Writes `transcript.json` and marks the sync projection
+  /// stale.
+  /// Notes: Every path the user's corrections take goes through here, so this
+  /// is where sync learns that there is something new to send.
+  static Future<void> save(Transcript transcript) async {
+    await saveQuiet(transcript);
+    TranscriptSyncService.markDirty();
+    AutoSyncService.instance.notifySaved();
+  }
+
+  /// Purpose: Write a transcript exactly as it arrived.
+  /// Inputs: [jobId] and the raw [json] map.
+  /// Returns: A future completing after the write.
+  /// Side effects: Atomically writes `transcript.json`.
+  /// Notes: For the sync's apply step, for the reason given on
+  /// `JobStore.saveRawQuiet`: a copy from a newer build must be written back
+  /// byte-for-byte, not round-tripped through this build's model.
+  static Future<void> saveRawQuiet(
+    String jobId,
+    Map<String, dynamic> json,
+  ) async {
+    final file = await fileFor(jobId);
+    final content = const JsonEncoder.withIndent('  ').convert(json);
+    await retryingFileOperation(() => atomicWriteString(file, content));
+  }
+
+  /// Purpose: Read a transcript without interpreting it.
+  /// Inputs: [jobId].
+  /// Returns: The raw map, or null when there is none or it will not parse.
+  /// Side effects: Reads the file.
+  /// Notes: The other half of [saveRawQuiet]; what the projection sends.
+  static Future<Map<String, dynamic>?> loadRaw(String jobId) async {
+    final file = await fileFor(jobId);
+    if (!await file.exists()) return null;
+    final raw = await retryingFileOperation(file.readAsString);
+    if (raw.trim().isEmpty) return null;
+    return jsonDecode(raw) as Map<String, dynamic>;
   }
 
   /// Purpose: Build a transcript from a job's merged segments.

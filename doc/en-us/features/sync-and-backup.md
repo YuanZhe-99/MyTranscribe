@@ -37,6 +37,16 @@ whole archive before writing a single file.
 
 ## What is not here
 
-Your recordings and transcripts. They stay on the device, and each transcript has its own export
-options in the viewer. Sending hours of audio through a sync folder is not something the app does
-quietly on your behalf. See [`../data-formats.md`](../data-formats.md).
+Your recordings. They stay on the device, and sending hours of audio through a sync folder is not
+something the app does quietly on your behalf.
+
+Your transcripts *do* travel: the text of every finished transcription syncs, is in every backup and
+is in a ZIP export, so a transcription made on one device is readable on the other. The recording it
+was made from is not, which is why a transcription that arrived over sync does not offer to run
+again.
+
+The converted listening copy is in between. It is off by default and switched on per device, under
+"Also sync audio" on the sync page — useful on a laptop, usually not what you want on a phone. A
+device that wants the text and not the sound can clear the lot with Settings › Data › Remove
+converted audio, and the next sync will not bring it back. See
+[`../data-formats.md`](../data-formats.md) and [`../sync.md`](../sync.md).

@@ -14,6 +14,7 @@ import 'package:my_transcribe/app/data_modules.dart';
 import 'package:my_transcribe/features/providers/models/model_config.dart';
 import 'package:my_transcribe/features/providers/models/provider_config.dart';
 import 'package:my_transcribe/features/providers/models/provider_templates.dart';
+import 'package:my_transcribe/features/providers/models/transcribe_defaults.dart';
 import 'package:my_transcribe/features/providers/models/transcribe_settings.dart';
 import 'package:my_transcribe/features/providers/services/settings_repository.dart';
 
@@ -23,6 +24,59 @@ void main() {
 
   TranscribeSettings seeded() =>
       repository.seedInto(const TranscribeSettings(), now: seededAt);
+
+  group('remembered speaker names', () {
+    test('keeps the most recent first and never repeats one', () {
+      final defaults = const TranscribeDefaults()
+          .rememberSpeakerName('张老师')
+          .rememberSpeakerName('李同学')
+          .rememberSpeakerName('张老师');
+
+      expect(defaults.knownSpeakerNames, ['张老师', '李同学']);
+    });
+
+    test('treats a differently-cased name as the same name', () {
+      final defaults = const TranscribeDefaults()
+          .rememberSpeakerName('Alice')
+          .rememberSpeakerName('alice');
+
+      expect(defaults.knownSpeakerNames, ['alice']);
+    });
+
+    test('ignores a blank name', () {
+      expect(
+        const TranscribeDefaults().rememberSpeakerName('   ').knownSpeakerNames,
+        isEmpty,
+      );
+    });
+
+    test('stops growing, because a long list is not a suggestion', () {
+      var defaults = const TranscribeDefaults();
+      for (var index = 0; index < 60; index++) {
+        defaults = defaults.rememberSpeakerName('Person $index');
+      }
+
+      expect(defaults.knownSpeakerNames, hasLength(40));
+      expect(defaults.knownSpeakerNames.first, 'Person 59');
+    });
+
+    test('forgets one by name, whatever its case', () {
+      final defaults = const TranscribeDefaults()
+          .rememberSpeakerName('张老师')
+          .rememberSpeakerName('Bob')
+          .forgetSpeakerName('bob');
+
+      expect(defaults.knownSpeakerNames, ['张老师']);
+    });
+
+    test('forgetting a name that was never there changes nothing', () {
+      final defaults = const TranscribeDefaults()
+          .rememberSpeakerName('张老师')
+          .forgetSpeakerName('Nobody');
+
+      expect(defaults.knownSpeakerNames, ['张老师']);
+    });
+  });
 
   group('seeding', () {
     test('two devices seed byte-identical documents', () {

@@ -9,6 +9,7 @@ library;
 import 'package:myapps_data/myapps_data.dart' as shared;
 
 import '../../app/data_modules.dart';
+import '../../features/jobs/services/transcript_sync.dart';
 
 class ImportExportService {
   /// Shared ZIP engine configured strictly.
@@ -34,7 +35,13 @@ class ImportExportService {
   /// Notes: Bundles the registry's data files. Recordings, transcripts, API
   /// keys, `webdav_config.json`, `.sync_base/` and `backups/` are never
   /// included — the registry is the allowlist, so exclusion is structural.
-  static Future<String?> exportZIP(String destDir) => _zip.exportZip(destDir);
+  ///
+  /// The transcripts projection is rebuilt first, so an export taken straight
+  /// after a correction carries it.
+  static Future<String?> exportZIP(String destDir) async {
+    await TranscriptSyncService.writeProjection();
+    return _zip.exportZip(destDir);
+  }
 
   /// Purpose: Import sources, models and defaults from a ZIP file.
   /// Inputs: `filePath`.
@@ -43,5 +50,22 @@ class ImportExportService {
   /// Notes: Only the registry's data files are extracted, every entry must
   /// resolve inside the app dir, and an archive containing anything else is
   /// rejected without writing.
-  static Future<bool> importZIP(String filePath) => _zip.importZip(filePath);
+  ///
+  /// The transcriptions in the archive are written into the job folders,
+  /// **additively**: an archive says what it holds, not what the user deleted,
+  /// so nothing local is removed because it is missing from one.
+  static Future<bool> importZIP(String filePath) async {
+    final before = await TranscriptSyncService.readProjectionFile();
+    final ok = await _zip.importZip(filePath);
+    if (!ok) return false;
+    final after = await TranscriptSyncService.readProjectionFile();
+    if (after != null && after != before) {
+      await TranscriptSyncService.apply(
+        before: before,
+        after: after,
+        allowDeletions: false,
+      );
+    }
+    return true;
+  }
 }

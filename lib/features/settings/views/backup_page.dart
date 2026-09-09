@@ -496,6 +496,7 @@ class _RestoreModuleDialogState extends State<_RestoreModuleDialog> {
         l10n.backupModuleSettings,
         Icons.library_books_outlined,
       ),
+      transcriptsModuleId: (l10n.backupModuleTranscripts, Icons.notes_outlined),
     };
     return AlertDialog(
       title: Text(l10n.backupRestoreModules),

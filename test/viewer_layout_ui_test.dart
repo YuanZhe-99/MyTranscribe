@@ -21,6 +21,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_transcribe/features/jobs/models/transcription_job.dart';
+import 'package:my_transcribe/features/providers/models/transcribe_defaults.dart';
+import 'package:my_transcribe/features/providers/services/settings_repository.dart';
 import 'package:my_transcribe/features/transcript/models/transcript.dart';
 import 'package:my_transcribe/features/jobs/services/job_providers.dart';
 import 'package:my_transcribe/features/transcript/services/transcript_providers.dart';
@@ -129,6 +131,7 @@ void main() {
     List<(double, double, String?, String)> segments, {
     List<Speaker> speakers = const [],
     bool approximate = false,
+    List<String> knownNames = const [],
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
@@ -149,6 +152,16 @@ void main() {
           jobProvider(jobId).overrideWithValue(AsyncValue.data(job)),
           viewerPreferencesProvider.overrideWithValue(
             const AsyncValue.data(ViewerPreferences()),
+          ),
+          // Left un-overridden this would read disk and stay loading for ever
+          // in the fake-async zone; the page tolerates that, but a test about
+          // the suggestions needs them to be there.
+          settingsLibraryProvider.overrideWithValue(
+            AsyncValue.data(
+              SettingsLibrary(
+                defaults: TranscribeDefaults(knownSpeakerNames: knownNames),
+              ),
+            ),
           ),
         ],
         child: const MaterialApp(
@@ -295,9 +308,168 @@ void main() {
       );
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('counts the lines nobody is credited with', (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('zh'));
+      await pumpViewer(
+        tester,
+        const Size(412, 915),
+        [
+          (0, 5, 'spk_1', '大家好。'),
+          (5, 10, null, '听不清是谁。'),
+          (10, 15, null, '也听不清。'),
+        ],
+        speakers: const [Speaker(id: 'spk_1', colorIndex: 0)],
+      );
+
+      await tester.tap(find.byTooltip(l10n.viewerSpeakers));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.viewerSpeakerUnknown), findsWidgets);
+      expect(find.text(l10n.viewerSpeakerLines(2)), findsOneWidget);
+    });
+
+    testWidgets('marking a speaker unknown takes them off the list', (
+      tester,
+    ) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('zh'));
+      await pumpViewer(
+        tester,
+        const Size(412, 915),
+        [
+          (0, 5, 'spk_1', '大家好。'),
+          (5, 10, 'spk_2', '老师好。'),
+        ],
+        speakers: const [
+          Speaker(id: 'spk_1', name: '张老师', colorIndex: 0),
+          Speaker(id: 'spk_2', colorIndex: 1),
+        ],
+      );
+
+      await tester.tap(find.byTooltip(l10n.viewerSpeakers));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.more_vert).at(1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.viewerSpeakerUnassign).last);
+      await tester.pumpAndSettle();
+
+      // The write never completes in this zone, but the screen is updated
+      // before it is started, which is the behaviour being checked.
+      expect(find.text('张老师'), findsWidgets);
+      expect(find.text(l10n.viewerSpeakerUnknown), findsWidgets);
+      expect(find.text(l10n.viewerSpeakerLines(1)), findsWidgets);
+    });
+
+    testWidgets('offers a name used before, and applies it in one tap', (
+      tester,
+    ) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('zh'));
+      await pumpViewer(
+        tester,
+        const Size(412, 915),
+        [(0, 5, 'spk_1', '大家好。')],
+        speakers: const [Speaker(id: 'spk_1', colorIndex: 0)],
+        knownNames: const ['张老师', '李同学'],
+      );
+
+      await tester.tap(find.byTooltip(l10n.viewerSpeakers));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.more_vert).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.viewerSpeakerRename).last);
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.viewerSpeakerSuggestions), findsOneWidget);
+      expect(find.text('李同学'), findsOneWidget);
+
+      await tester.tap(find.text('张老师'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('张老师'), findsWidgets);
+    });
+
+    testWidgets('two renames in one sheet session both stick', (tester) async {
+      // The sheet is built once, outside the page's build. Before the panel was
+      // rebuilt from the current transcript, the second rename was made against
+      // the copy captured when the sheet opened and undid the first.
+      final l10n = await AppLocalizations.delegate.load(const Locale('zh'));
+      await pumpViewer(
+        tester,
+        const Size(412, 915),
+        [
+          (0, 5, 'spk_1', '大家好。'),
+          (5, 10, 'spk_2', '老师好。'),
+        ],
+        speakers: const [
+          Speaker(id: 'spk_1', colorIndex: 0),
+          Speaker(id: 'spk_2', colorIndex: 1),
+        ],
+      );
+
+      await tester.tap(find.byTooltip(l10n.viewerSpeakers));
+      await tester.pumpAndSettle();
+
+      for (final (index, name) in [(0, '老师'), (1, '学生')]) {
+        await tester.tap(find.byIcon(Icons.more_vert).at(index));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(l10n.viewerSpeakerRename).last);
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField).last, name);
+        await tester.tap(find.text(l10n.save).last);
+        await tester.pumpAndSettle();
+      }
+
+      expect(find.text('老师'), findsWidgets);
+      expect(find.text('学生'), findsWidgets);
+    });
   });
 
   group('the transcript on disk', () {
+    test('a rename is on disk and is re-read on the next open', () async {
+      // The regression behind "I renamed Speaker 1, went back, came in again
+      // and it was Speaker 1 once more": the provider was never refreshed, so
+      // the second open was served the first read for the rest of the session.
+      final container = ProviderContainer(
+        overrides: [
+          jobProvider(jobId).overrideWithValue(AsyncValue.data(job)),
+          viewerPreferencesProvider.overrideWithValue(
+            const AsyncValue.data(ViewerPreferences()),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await TranscriptStore.save(
+        Transcript(
+          jobId: jobId,
+          speakers: const [Speaker(id: 'spk_1', colorIndex: 0)],
+          segments: const [
+            TranscriptSegment(
+              id: 'seg_0',
+              chunkIndex: 0,
+              startSeconds: 0,
+              endSeconds: 5,
+              speakerId: 'spk_1',
+              text: '大家好。',
+            ),
+          ],
+        ),
+      );
+
+      final first = await container.read(transcriptProvider(jobId).future);
+      expect(first!.speakers.single.name, isNull);
+
+      await TranscriptStore.save(
+        first.copyWith(
+          speakers: [first.speakers.single.copyWith(name: '张老师')],
+        ),
+      );
+      container.read(transcriptRevisionProvider.notifier).state++;
+
+      final again = await container.read(transcriptProvider(jobId).future);
+      expect(again!.speakers.single.name, '张老师');
+    });
+
     test('round-trips through JSON, keeping fields it does not know', () async {
       // A file written by a newer build must survive being read and rewritten
       // by this one.

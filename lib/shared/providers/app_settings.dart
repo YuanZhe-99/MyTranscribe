@@ -51,6 +51,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
     final showTimestamps = await TranscribeStorage.getViewerShowTimestamps();
     final groupSpeakers = await TranscribeStorage.getViewerGroupSpeakers();
     final keepChunks = await TranscribeStorage.getKeepChunkFiles();
+    final autoSaveFiles = await TranscribeStorage.getAutoSaveTranscriptFiles();
 
     final themeMode = switch (modeStr) {
       'light' => ThemeMode.light,
@@ -77,6 +78,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
       viewerShowTimestamps: showTimestamps,
       viewerGroupSpeakers: groupSpeakers,
       keepChunkFiles: keepChunks,
+      autoSaveTranscriptFiles: autoSaveFiles,
     );
   }
 
@@ -161,6 +163,18 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
     state = state.copyWith(keepChunkFiles: keep);
     TranscribeStorage.setKeepChunkFiles(keep);
   }
+
+  /// Purpose: Choose whether a finished job writes transcript files beside the
+  /// recording.
+  /// Inputs: `on`.
+  /// Returns: None.
+  /// Side effects: Persists the choice.
+  /// Notes: Off by default. The files land in whatever folder the recording
+  /// came from, which is not always somewhere the user wants them.
+  void setAutoSaveTranscriptFiles(bool on) {
+    state = state.copyWith(autoSaveTranscriptFiles: on);
+    TranscribeStorage.setAutoSaveTranscriptFiles(on);
+  }
 }
 
 class AppSettings {
@@ -191,6 +205,10 @@ class AppSettings {
   /// Whether a finished job keeps its chunk audio for inspection.
   final bool keepChunkFiles;
 
+  /// Whether a finished job writes a Markdown and a text file beside the
+  /// recording it was made from.
+  final bool autoSaveTranscriptFiles;
+
   /// Purpose: Create an app settings instance.
   /// Inputs: All fields.
   /// Returns: A new `AppSettings` instance.
@@ -205,6 +223,7 @@ class AppSettings {
     this.viewerShowTimestamps = true,
     this.viewerGroupSpeakers = true,
     this.keepChunkFiles = false,
+    this.autoSaveTranscriptFiles = false,
   });
 
   /// Purpose: Create a copy with selected fields replaced.
@@ -220,6 +239,7 @@ class AppSettings {
     bool? viewerShowTimestamps,
     bool? viewerGroupSpeakers,
     bool? keepChunkFiles,
+    bool? autoSaveTranscriptFiles,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -228,6 +248,8 @@ class AppSettings {
       viewerShowTimestamps: viewerShowTimestamps ?? this.viewerShowTimestamps,
       viewerGroupSpeakers: viewerGroupSpeakers ?? this.viewerGroupSpeakers,
       keepChunkFiles: keepChunkFiles ?? this.keepChunkFiles,
+      autoSaveTranscriptFiles:
+          autoSaveTranscriptFiles ?? this.autoSaveTranscriptFiles,
     );
   }
 }

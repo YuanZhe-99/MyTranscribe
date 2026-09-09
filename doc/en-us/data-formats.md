@@ -10,16 +10,19 @@ default directory, because it is the file that records the custom path.
 
 | File | Contents | Synced | Backup / ZIP |
 |---|---|---|---|
-| `transcribe_settings.json` | sources, models, defaults | yes — the only data module | yes |
+| `transcribe_settings.json` | sources, models, defaults | yes — a data module | yes |
+| `transcribe_transcripts.json` | every finished transcription's record and text | yes — a data module | yes |
 | `transcribe_secrets.json` | API keys, one per source | only to a secure endpoint, by a separate exchange | **no** |
 | `storage_config.json` | device-local preferences | no | no |
 | `webdav_config.json` | server URL, credentials, auto-sync flag | no | no |
 | `.sync_base/` | the last agreed copy of each module, the client id, the local upload lock | no | no |
 | `backups/` | bundles, and a content-addressed blob store | no | no |
-| `jobs/<id>/` | one transcription job: audio, chunks, raw responses, transcript, exports | **no** | **no** |
+| `jobs/<id>/` | one transcription job: audio, chunks, raw responses, transcript, exports | **no** — but the record and the transcript are projected into the module above | **no**, likewise |
 
-The last three exclusions are structural. The sync, backup and ZIP engines only ever touch the file
-names in the registry in `lib/app/data_modules.dart`, and that registry holds exactly one entry.
+The exclusions are structural. The sync, backup and ZIP engines only ever touch the file names in
+the registry in `lib/app/data_modules.dart`, which is what keeps hours of audio and every API key
+out of a bundle that goes to a server. The transcripts module is how the *text* of a transcription
+travels anyway: it is a projection of the job folders, described below.
 
 ## `transcribe_settings.json` — the synced document
 
@@ -78,6 +81,36 @@ Deletion is a real removal, not a tombstone. The shared merge engine reads delet
 snapshot: a record present in the base and absent locally is a deletion this device made, and it
 propagates.
 
+## `transcribe_transcripts.json` — the transcripts projection
+
+The second data module, and the only one nothing writes to directly. It is a **projection** of
+`jobs/`: rebuilt from the job folders before a sync, a backup or a ZIP export, and applied back into
+them afterwards. `jobs/` stays the source of truth; this file is a transport artefact.
+
+```jsonc
+{ "records": [ { "id": "<jobId>",
+                 "createdAt": "2026-09-01T09:00:00.000Z",
+                 "modifiedAt": "2026-09-09T11:30:00.000Z",
+                 "job":        { /* the whole of job.json */ },
+                 "transcript": { /* the whole of transcript.json */ } } ] }
+```
+
+Records are sorted by id and pretty-printed with two spaces, so two devices holding the same data
+produce byte-identical files and hit the sync engine's raw-equality fast path. `modifiedAt` is the
+later of the record's own time and the transcript's `editedAt`, because renaming a speaker does not
+touch the record but is exactly the kind of change that has to travel.
+
+`job` and `transcript` are the **raw maps**, carried through unparsed. The nested types inside a job
+record — the options, the plan, each chunk result, the media probe — have no `extraJson` of their
+own, so parsing a record written by a newer build and writing it back would drop whatever that build
+added; the two devices would then take turns stripping each other's fields and re-uploading for
+ever.
+
+What is projected, and what applying one is allowed to do to the folders, is in
+[`sync.md`](sync.md): only finished transcriptions are projected fresh, a job being re-run is frozen
+rather than dropped, deletions come only from the three-way merge, and a record that cannot be read
+stops the projection rather than leaving a gap in it.
+
 ## `transcribe_secrets.json` — the keys
 
 ```jsonc
@@ -112,6 +145,8 @@ setting. A value of the wrong type reads as unset, so a hand-edited file cannot 
 | `lastTab` | the tab to open on |
 | `viewerFontSize`, `viewerShowTimestamps`, `viewerGroupSpeakers` | transcript viewer preferences |
 | `keepChunkFiles` | keep a job's split audio after it finishes |
+| `autoSaveTranscriptFiles` | write a Markdown and a text file beside the recording when a job finishes; off by default |
+| `syncIncludesAudio` | also copy each transcription's converted audio to the server; off by default |
 | `ffmpegPath`, `ffprobePath` | the user's own tool paths |
 | `secretsTrustedHosts` | hosts the user marked safe for keys over plain HTTP |
 | `autoBackupEnabled`, `backupRetentionDays` | owned by the shared backup engine |
@@ -134,6 +169,7 @@ audio have no business in a bundle that goes to a server.
 | `chunks/chunk_0000.response.json` | the provider's raw answer, kept — this is what makes a resume and a re-run of speaker unification possible without uploading again |
 | `speakers/<id>.wav` | a short sample per speaker, where the API accepts known-speaker references |
 | `transcript.json` | segments, speakers, the mapping between window-local labels and global speakers, and the user's corrections |
+| `audio.discarded` | a marker saying the converted audio was removed on purpose, so sync never fetches it back |
 | `exports/` | rendered Markdown, text, subtitles and so on |
 
 The job record is rewritten atomically after every chunk, which is what a resume reads. A chunk is
@@ -148,3 +184,9 @@ the destination, flush it, then rename. A crash mid-write leaves the previous fi
 than a half-written one. Pretty-printing with two-space indentation is not cosmetic — sync compares
 raw strings before merging, so a file the engine wrote differently from the storage hub would look
 changed on every sync and re-upload forever.
+
+Job records and transcripts are also **retried**. An atomic replace is a rename, and on Windows a
+rename fails outright while anything else holds the file open — a virus scanner, the search indexer,
+the list reading it. The collision lasts milliseconds, and losing an hour-long job or a page of
+corrections to it would be absurd, so `retryingFileOperation` makes six attempts over about a tenth
+of a second before giving up.

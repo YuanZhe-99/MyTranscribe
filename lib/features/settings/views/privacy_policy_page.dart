@@ -50,10 +50,20 @@ class PrivacyPolicyPage extends StatelessWidget {
 MyTranscribe has no servers. There is no account, no analytics, no crash
 reporting and no advertising. Nothing is collected about you.
 
-Your recordings and transcripts
-  They are stored on your device, in the app's own folder. They are never
-  uploaded anywhere by the app itself, and they are not included in backups,
-  ZIP exports or WebDAV sync.
+Your recordings
+  Recordings are stored on your device, in the app's own folder. The app never
+  uploads one anywhere except to the transcription service you chose, and they
+  are not included in backups, ZIP exports or WebDAV sync.
+
+  The app also makes a smaller converted copy of each recording, to work from
+  and to play back. That copy is sent to your own WebDAV server only if you
+  turn on "Also sync audio", which is off by default.
+
+Your transcripts
+  The text of each transcription is stored on your device and is included in
+  local backups, in ZIP exports, and in WebDAV sync once you configure it — so
+  that a transcription made on one device can be read on another. It goes to
+  your own server and nowhere else.
 
 Transcription
   To transcribe a recording, the app sends the audio to the transcription
@@ -76,8 +86,9 @@ Your API keys
 
 WebDAV sync
   Sync is off until you configure it, and it talks only to the server you
-  entered. It carries your sources, models and preferences, and — subject to
-  the rule above — your API keys.
+  entered. It carries your sources, models and preferences, the text of your
+  transcriptions, and — subject to the rule above — your API keys. Audio
+  travels only when you turn it on.
 
 Permissions
   The app asks for network access, to reach the transcription service and your

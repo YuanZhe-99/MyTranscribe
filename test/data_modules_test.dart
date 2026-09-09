@@ -1,4 +1,4 @@
-/// Purpose: Pin the persisted names and the shape of the settings module.
+/// Purpose: Pin the persisted names and the shape of the data modules.
 /// Inputs: None.
 /// Returns: None.
 /// Side effects: None.
@@ -11,18 +11,23 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_transcribe/app/data_modules.dart';
+import 'package:my_transcribe/features/jobs/models/transcripts_document.dart';
 import 'package:my_transcribe/features/providers/models/transcribe_settings.dart';
 
 void main() {
   group('the registry', () {
-    test('holds exactly the settings module', () {
-      expect(transcribeModuleRegistry.modules, hasLength(1));
-      final module = transcribeModuleRegistry.modules.single;
-      expect(module.fileName, 'transcribe_settings.json');
-      expect(module.moduleId, 'settings');
+    test('holds the settings and transcripts modules, in that order', () {
+      // Order is significant to the shared engines, and both names are
+      // persisted contracts. A further module is appended, never inserted.
+      final modules = transcribeModuleRegistry.modules;
+      expect(modules, hasLength(2));
+      expect(modules[0].fileName, 'transcribe_settings.json');
+      expect(modules[0].moduleId, 'settings');
+      expect(modules[1].fileName, 'transcribe_transcripts.json');
+      expect(modules[1].moduleId, 'transcripts');
     });
 
-    test('does not carry the API keys or the job folder', () {
+    test('does not carry the API keys, the job folder or the audio', () {
       // The whole security argument rests on this: sync, backup and ZIP only
       // touch the file names in the registry, so keys and recordings are
       // excluded structurally rather than by a filter someone has to remember.
@@ -31,6 +36,9 @@ void main() {
       expect(names, isNot(contains(jobsDirName)));
       expect(names, isNot(contains('webdav_config.json')));
       expect(names, isNot(contains('storage_config.json')));
+      // The converted audio travels through an opt-in side channel instead, so
+      // a device that never asks for it never sends a byte of one.
+      expect(names, isNot(contains(audioRemoteDirName)));
     });
 
     test('names the remote directory and the archive prefix', () {
@@ -174,6 +182,86 @@ void main() {
 
     test('a records field of the wrong type reads as empty', () {
       expect(TranscribeSettings.fromJson({'records': 7}).records, isEmpty);
+    });
+  });
+
+  group('the transcripts module', () {
+    /// Purpose: Build a projection record for a test.
+    /// Inputs: The [id] and an optional [title].
+    /// Returns: A [TranscriptSyncRecord].
+    /// Side effects: None.
+    /// Notes: Internal helper used within this file only.
+    TranscriptSyncRecord record(String id, {String? title}) =>
+        TranscriptSyncRecord(
+          id: id,
+          createdAt: DateTime.utc(2026, 9, 1),
+          modifiedAt: DateTime.utc(2026, 9, 9),
+          job: {'id': id, 'title': ?title},
+          transcript: {'jobId': id, 'segments': []},
+        );
+
+    test('accepts an empty document and rejects what is not JSON', () {
+      expect(() => validateTranscriptsJson('{}'), returnsNormally);
+      expect(() => validateTranscriptsJson('{"records": []}'), returnsNormally);
+      expect(() => validateTranscriptsJson('not json'), throwsFormatException);
+    });
+
+    test('encodes sorted by id, so two devices agree byte for byte', () {
+      // The merge returns records in set-iteration order. Without the sort, two
+      // devices holding identical data would encode it differently, miss the
+      // engine's raw-equality fast path and re-upload each other's document
+      // forever.
+      final encoded = encodeTranscripts(
+        TranscriptsDocument(records: [record('b'), record('a')]),
+      );
+      expect(encoded.indexOf('"a"'), lessThan(encoded.indexOf('"b"')));
+      expect(encoded, contains('\n  "records"'));
+    });
+
+    test('round-trips, keeping fields it does not understand', () {
+      final encoded = encodeTranscripts(
+        const TranscriptsDocument(extraJson: {'somethingNewer': 1}),
+      );
+      final parsed = TranscriptsDocument.fromJson(
+        jsonDecode(encoded) as Map<String, dynamic>,
+      );
+      expect(parsed.extraJson['somethingNewer'], 1);
+    });
+
+    test('drops a record it cannot use rather than failing the file', () {
+      // One damaged entry from another device must not stop every other
+      // transcription from syncing.
+      final parsed = TranscriptsDocument.fromJson({
+        'records': [
+          {'id': '', 'job': {}, 'transcript': {}},
+          {'id': 'ok', 'job': {}, 'transcript': {}},
+          {'id': 'nomaps'},
+        ],
+      });
+      expect(parsed.ids, {'ok'});
+    });
+
+    test('refuses an id that would name a path outside the job folder', () {
+      expect(TranscriptSyncRecord.isSafeId('job-1'), isTrue);
+      expect(TranscriptSyncRecord.isSafeId('..'), isFalse);
+      expect(TranscriptSyncRecord.isSafeId('a/b'), isFalse);
+      expect(TranscriptSyncRecord.isSafeId(r'a\b'), isFalse);
+      expect(TranscriptSyncRecord.isSafeId(''), isFalse);
+    });
+
+    test('names a transcription by its title, then its recording', () {
+      expect(record('x', title: 'Week 3').displayName, 'Week 3');
+      expect(
+        TranscriptSyncRecord(
+          id: 'x',
+          createdAt: DateTime.utc(2026),
+          modifiedAt: DateTime.utc(2026),
+          job: const {'sourceName': 'lecture.mp3'},
+          transcript: const {},
+        ).displayName,
+        'lecture.mp3',
+      );
+      expect(record('x').displayName, 'x');
     });
   });
 }

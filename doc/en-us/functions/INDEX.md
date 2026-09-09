@@ -11,7 +11,7 @@ find lib -name "*.dart" -not -path "lib/l10n/*" | xargs grep -h '/// Purpose:' |
 
 Generated localization code under `lib/l10n/` is excluded from the convention and from these counts.
 
-At the 0.2.0 release that command reports **798** documented declarations across **81** source
+At the 0.2.1 release that command reports **881** documented declarations across **86** source
 files, and every one of those files appears in the tables below.
 
 ## Status
@@ -67,15 +67,19 @@ is covered by a concept page, and a table of one-line stubs would say less than 
 | `lib/features/media/widgets/media_tools_tile.dart` | [features/media-tools.md](../features/media-tools.md) |
 | `lib/features/settings/views/settings_page.dart` | [features/sync-and-backup.md](../features/sync-and-backup.md) |
 | `lib/features/settings/views/backup_page.dart` | [backup-restore.md](../backup-restore.md) |
+| `lib/features/settings/views/speaker_names_page.dart` | [features/diarization-and-speakers.md](../features/diarization-and-speakers.md) |
 | `lib/features/settings/views/license_page.dart` | — |
 | `lib/features/settings/views/privacy_policy_page.dart` | — |
 | `lib/features/jobs/models/transcription_job.dart` | [data-formats.md](../data-formats.md) |
+| `lib/features/jobs/models/transcripts_document.dart` | [data-formats.md](../data-formats.md), [sync.md](../sync.md) |
 | `lib/features/jobs/models/chunk_plan.dart` | [algorithms/chunk-planner.md](../algorithms/chunk-planner.md) |
 | `lib/features/jobs/services/chunk_planner.dart` | [algorithms/chunk-planner.md](../algorithms/chunk-planner.md) |
 | `lib/features/jobs/services/transcript_merger.dart` | [algorithms/overlap-merge.md](../algorithms/overlap-merge.md) |
 | `lib/features/jobs/services/job_store.dart` | [data-formats.md](../data-formats.md) |
 | `lib/features/jobs/services/job_runner.dart` | [features/transcription-jobs.md](../features/transcription-jobs.md) |
 | `lib/features/jobs/services/job_providers.dart` | [features/transcription-jobs.md](../features/transcription-jobs.md) |
+| `lib/features/jobs/services/transcript_sync.dart` | [sync.md](../sync.md) |
+| `lib/features/jobs/services/audio_sync_service.dart` | [sync.md](../sync.md) |
 | `lib/features/jobs/services/output_writer.dart` | [features/exports.md](../features/exports.md) |
 | `lib/features/jobs/views/new_job_page.dart` | [features/chunking-and-resume.md](../features/chunking-and-resume.md) |
 | `lib/features/jobs/views/job_detail_page.dart` | [features/transcription-jobs.md](../features/transcription-jobs.md) |
@@ -115,6 +119,7 @@ is covered by a concept page, and a table of one-line stubs would say less than 
 | `lib/shared/services/auto_sync_service.dart` | [sync.md](../sync.md) |
 | `lib/shared/providers/app_settings.dart` | [data-formats.md](../data-formats.md) |
 | `lib/shared/utils/adaptive_layout.dart` | [adaptive-layout.md](../adaptive-layout.md) |
+| `lib/shared/utils/file_retry.dart` | [data-formats.md](../data-formats.md) |
 | `lib/shared/utils/platform_capabilities.dart` | [platform-notes.md](../platform-notes.md) |
 | `lib/shared/views/webdav_config_page.dart` | [sync.md](../sync.md) |
 | `lib/shared/widgets/shell_scaffold.dart` | [adaptive-layout.md](../adaptive-layout.md) |

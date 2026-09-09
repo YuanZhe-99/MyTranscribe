@@ -14,6 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:myapps_data/myapps_data.dart' as shared;
 
 import '../../app/data_modules.dart';
+import '../../features/jobs/services/transcript_sync.dart';
 import 'transcribe_storage.dart';
 
 // The bundle format and its result types are the package's. Shapes:
@@ -95,7 +96,13 @@ class BackupService {
   /// Returns: `Future<File?>` — the bundle, or null on failure.
   /// Side effects: Writes the bundle, then runs retention cleanup.
   /// Notes: None.
-  static Future<File?> createBackup() => _engine.createBackup();
+  ///
+  /// The transcripts projection is rebuilt first, so a bundle taken straight
+  /// after a correction carries it.
+  static Future<File?> createBackup() async {
+    await TranscriptSyncService.writeProjection();
+    return _engine.createBackup();
+  }
 
   /// Purpose: Take the once-per-day automatic backup when it is due.
   /// Inputs: None.
@@ -103,8 +110,12 @@ class BackupService {
   /// Side effects: May create a backup.
   /// Notes: No-op when [autoBackupEnabled] is false; re-entrancy guarded, and
   /// "already backed up today" is decided by scanning bundle file names.
-  static Future<void> runAutoBackupIfNeeded() =>
-      _engine.runAutoBackupIfNeeded();
+  static Future<void> runAutoBackupIfNeeded() async {
+    // Cheap when nothing has changed: the projection keeps a dirty flag, so the
+    // daily check costs one file-exists test on a quiet day.
+    await TranscriptSyncService.writeProjection();
+    await _engine.runAutoBackupIfNeeded();
+  }
 
   /// Purpose: List backups, newest first.
   /// Inputs: None.
@@ -129,10 +140,31 @@ class BackupService {
   /// Notes: Every selected payload is validated before anything is written,
   /// and WebDAV auto-sync is disabled before the first write, re-enabled only
   /// when the restore failed without writing (I5).
+  ///
+  /// The transcriptions a bundle carries are written into the job folders
+  /// afterwards, **additively**. A bundle says what it held when it was taken,
+  /// not what the user has deleted since, so nothing local is removed because
+  /// it is missing from one.
   static Future<shared.RestoreResult> restoreBackup(
     File file, {
     Set<String>? moduleKeys,
-  }) => _engine.restoreBackup(file, moduleKeys: moduleKeys);
+  }) async {
+    final before = await TranscriptSyncService.readProjectionFile();
+    final result = await _engine.restoreBackup(file, moduleKeys: moduleKeys);
+    final wanted =
+        moduleKeys == null || moduleKeys.contains(transcriptsModuleId);
+    if (result.ok && result.wroteAnything && wanted) {
+      final after = await TranscriptSyncService.readProjectionFile();
+      if (after != null && after != before) {
+        await TranscriptSyncService.apply(
+          before: before,
+          after: after,
+          allowDeletions: false,
+        );
+      }
+    }
+    return result;
+  }
 
   /// Purpose: Delete one backup bundle.
   /// Inputs: `file`.

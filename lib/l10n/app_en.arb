@@ -31,6 +31,7 @@
   "backupKeepForever": "Forever",
   "backupLocalOnlyNote": "Backups stay on this device. They are never uploaded anywhere.",
   "backupModuleSettings": "Sources and models",
+  "backupModuleTranscripts": "Transcriptions",
   "backupNoBackups": "No backups yet",
   "backupRestore": "Restore",
   "backupRestoreConfirm": "This replaces the selected data with the backup. Continue?",
@@ -48,7 +49,6 @@
   "capabilityUnsupported": "No",
   "commonAdd": "Add",
   "commonClose": "Close",
-  "commonCopy": "Copy",
   "commonEdit": "Edit",
   "commonRemove": "Remove",
   "commonRetry": "Retry",
@@ -57,7 +57,7 @@
   "exportData": "Export to ZIP",
   "importData": "Import from ZIP",
   "jobAudioRemoved": "Converted audio removed",
-  "jobDeleteConfirm": "Delete this transcription? The converted audio and the transcript files kept by this app go with it. The original recording is not touched.",
+  "jobDeleteConfirm": "Delete this transcription? The converted audio and the transcript go with it, and it is removed from your other devices at the next sync. The original recording is not touched.",
   "jobDeleted": "Transcription deleted",
   "jobDiskUsage": "Uses {size} on this device",
   "@jobDiskUsage": {
@@ -74,9 +74,8 @@
   "jobFieldSource": "Source",
   "jobFieldStarted": "Started",
   "jobOpenTranscript": "Open the transcript",
-  "jobPathCopied": "Path copied",
   "jobRemoveAudio": "Remove converted audio",
-  "jobRemoveAudioConfirm": "Remove this recording's converted copy from this device? The transcript stays. Playback falls back to the original recording while it can still be found.",
+  "jobRemoveAudioConfirm": "Remove this recording's converted copy from this device? The transcript stays, and still syncs. Playback falls back to the original recording while it can still be found. Sync will not download the copy again.",
   "jobRename": "Rename",
   "jobRenameHint": "Leave empty to use the recording's file name",
   "jobRenameTitle": "Name this transcription",
@@ -85,7 +84,6 @@
   "jobRetryWithoutSpeakers": "Try again without speaker names",
   "jobRunAgain": "Run again",
   "jobRunAgainConfirm": "Transcribe this recording again? The transcript is built from scratch, so corrections made in the viewer — speaker names, edited lines — are lost.",
-  "jobSectionOutputs": "Transcript files",
   "jobSectionPlan": "How it was sent",
   "jobSectionProblem": "What went wrong",
   "jobSectionRecording": "Recording",
@@ -311,6 +309,31 @@
   "secretsTrustedHosts": "Trusted hosts",
   "secretsTrustedHostsHelp": "Plain HTTP addresses you allow keys to reach, for a server only your network can see. One host per entry; use *.example.com for subdomains. Kept on this device only.",
   "settingsAbout": "About",
+  "settingsRemoveAllAudio": "Remove converted audio",
+  "settingsRemoveAllAudioConfirm": "Remove the converted audio of every finished transcription on this device? The transcripts stay and still sync. Sync will not download the removed audio again.",
+  "settingsRemoveAllAudioDone": "Converted audio removed from {count} transcriptions",
+  "@settingsRemoveAllAudioDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsRemoveAllAudioNothing": "Nothing to remove",
+  "settingsRemoveAllAudioSubtitle": "Keeps every transcript. Frees {size} on this device",
+  "@settingsRemoveAllAudioSubtitle": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsSpeakerNames": "Speaker names",
+  "settingsSpeakerNamesAdd": "Add a name",
+  "settingsSpeakerNamesEmpty": "No names yet. Name a speaker in a transcript and it is offered here.",
+  "settingsSpeakerNamesSubtitle": "People in your recordings, offered when you name a speaker",
+  "settingsAutoSaveTranscriptFiles": "Save transcript files beside the recording",
+  "settingsAutoSaveTranscriptFilesSubtitle": "Writes a Markdown and a text file next to the recording each time a transcription finishes",
   "settingsData": "Data",
   "settingsExportSubtitle": "Save your sources and models to a file",
   "settingsGeneral": "General",
@@ -338,7 +361,7 @@
   "settingsSelectItem": "Select an item from the list",
   "settingsStorageLocation": "Storage Location",
   "settingsStorageLocationSubtitle": "Where recordings and transcripts are kept",
-  "settingsSyncSubtitle": "Keep your sources and models on your own server",
+  "settingsSyncSubtitle": "Keep your sources, models and transcripts on your own server",
   "settingsTheme": "Theme",
   "settingsThemeDark": "Dark",
   "settingsThemeLight": "Light",
@@ -368,6 +391,8 @@
   "settingsWebDAVRemotePath": "Remote Path",
   "settingsWebDAVServerURL": "Server URL",
   "settingsWebDAVSync": "WebDAV Sync",
+  "settingsWebDAVSyncAudio": "Also sync audio",
+  "settingsWebDAVSyncAudioDesc": "Copies each transcription's converted audio to your server, and fetches what other devices uploaded",
   "settingsWebDAVSyncFailed": "Sync failed",
   "settingsWebDAVSyncNow": "Sync Now",
   "settingsWebDAVSyncSuccess": "Sync completed",
@@ -382,6 +407,17 @@
   "settingsWebDAVSyncing": "Syncing…",
   "settingsWebDAVTestConnection": "Test Connection",
   "settingsWebDAVUsername": "Username",
+  "syncAudioSummary": "{uploaded} audio files sent, {downloaded} received",
+  "@syncAudioSummary": {
+    "placeholders": {
+      "uploaded": {
+        "type": "int"
+      },
+      "downloaded": {
+        "type": "int"
+      }
+    }
+  },
   "syncConflictDesc": "This was changed on both devices since the last sync. Keep one version.",
   "syncConflictTitle": "Sync conflict: {name}",
   "@syncConflictTitle": {
@@ -430,7 +466,6 @@
   "viewerAutoScroll": "Follow playback",
   "viewerCopied": "Transcript copied",
   "viewerCopyAll": "Copy the whole transcript",
-  "viewerEditNobody": "Nobody in particular",
   "viewerEditSegment": "Edit this line",
   "viewerEditSpeaker": "Who said it",
   "viewerEditText": "What was said",
@@ -464,6 +499,7 @@
   },
   "viewerSearchHint": "Search this transcript",
   "viewerShowTimestamps": "Show times",
+  "viewerSpeakerForget": "Stop offering this name",
   "viewerSpeakerFallback": "Speaker {number}",
   "@viewerSpeakerFallback": {
     "placeholders": {
@@ -477,6 +513,14 @@
     "placeholders": {
       "count": {
         "type": "int"
+      }
+    }
+  },
+  "viewerSpeakerMarkedUnknown": "{name} is now unknown",
+  "@viewerSpeakerMarkedUnknown": {
+    "placeholders": {
+      "name": {
+        "type": "String"
       }
     }
   },
@@ -503,6 +547,9 @@
   },
   "viewerSpeakerName": "Name",
   "viewerSpeakerRename": "Rename",
+  "viewerSpeakerSuggestions": "Names you have used",
+  "viewerSpeakerUnassign": "Mark as unknown",
   "viewerSpeakerUncertain": "Some of this speaker's lines were an uncertain match across a segment boundary.",
+  "viewerSpeakerUnknown": "Unknown",
   "viewerSpeakers": "Speakers"
 }

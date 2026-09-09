@@ -182,7 +182,7 @@ String renderMarkdown(
     for (final run in groupBySpeaker(transcript, nameOf)) {
       lines
         ..add(
-          '**${run.speaker ?? 'Speaker'}** '
+          '**${run.speaker ?? defaultUnknownSpeakerName}** '
           '[${timestamp(run.startSeconds)}]: ${run.text}',
         )
         ..add('');
@@ -213,6 +213,14 @@ String renderMarkdown(
 /// the user exports from the viewer uses the localized fallback instead, and
 /// the two only differ for a speaker nobody has named.
 String defaultSpeakerName(int number) => 'Speaker $number';
+
+/// What a line nobody is credited with is called, outside the interface.
+///
+/// English on purpose, and for the same reason as [defaultSpeakerName]: the job
+/// runner writes files with no localizations to ask. The viewer passes its own
+/// translated word instead. Before this existed, a diarized Markdown export
+/// printed a bare `**Speaker**` over every line the matching could not place.
+const defaultUnknownSpeakerName = 'Unknown';
 
 /// Purpose: Render a transcript as SubRip subtitles.
 /// Inputs: The [transcript] and how to [nameOf] each speaker.

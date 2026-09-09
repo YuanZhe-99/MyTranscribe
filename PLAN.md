@@ -21,7 +21,7 @@ configuration that follows you to another device.
 | Theme | `FlexScheme.tealM3` | Distinct from MyAnime deep purple, MyDay indigo, MyDevice blue, MyNihongo sakura. |
 | Media pipeline | Normalize the whole recording once to mono 16 kHz 64 kbps MP3, then cut windows with `-c:a copy` | One decode instead of one per window; chunk sizes become predictable at 8000 bytes a second; the normalized file doubles as the transcript's listening copy. |
 | FFmpeg | Linked in on Android, iOS and macOS; external executables on Windows | The maintained plugin publishes x86_64 Windows binaries only, and this project's development machine is Windows on ARM64. |
-| Sync scope | Configuration only | Recordings and transcripts are large and private; only config backup was asked for. |
+| Sync scope | Configuration and transcript text; audio opt-in; recordings never | The text is small and is the part worth having on both devices. Recordings are large and private, and the converted copy is large enough that a phone should be able to say no. |
 | API keys | Local file outside the module registry; synced only to a secure endpoint | Sync, backup and ZIP only touch registry files, so exclusion is structural. |
 | Remotes | Gitea for development, GitHub public | Gitea has no runner and is pushed first; GitHub runs the builds and carries the Releases. `flutter analyze` and `flutter test` locally remain the gate. |
 
@@ -209,6 +209,38 @@ Enrollment did not run, and that is correct: `microsoft/mai-transcribe-2` has no
 limit in its template and OpenRouter's JSON body has no field for a reference clip. The matching
 worked on overlap alone.
 
+### M9 — Six fixes from the first real recording ✅
+
+The first recording somebody actually kept — a Microsoft meeting, three speakers, 301 lines — was
+read, corrected and left overnight. Six things came out of that.
+
+- [x] **A renamed speaker was back to "Speaker 1" on the next open.** The write was correct; the
+      provider was never refreshed, so the second open was served the first read for the rest of
+      the session. There is a revision counter now, the viewer caches the last copy it read so a
+      refresh does not flash a spinner, and a newer copy arriving from sync replaces the one the
+      page is holding. Two adjacent defects went with it: a second rename in one bottom-sheet
+      session undid the first, and the rename dialog disposed its text controller while the dialog
+      was still animating away
+- [x] **The Markdown and text files beside the recording are now opt-in**, off by default, and the
+      detail page no longer lists paths that may have been moved since
+- [x] **Global speaker names.** The synced list existed in the model and had no call sites. Naming
+      a speaker remembers the name; the next rename dialog offers it as a chip that applies in one
+      tap; Settings › Transcription › Speaker names manages the list
+- [x] **"Unknown".** The matching fails in two directions, and only one of them had a repair. A
+      label that is not one person at all can now be marked unknown instead of being folded into
+      somebody who is. Those lines read "Unknown" on screen and in all six export formats, which
+      also fixed a diarized Markdown export printing a bare `**Speaker**`
+- [x] **Transcripts sync.** A second data module, projected from `jobs/` before the engine runs and
+      applied back afterwards, so job folders still are not modules and no audio travels with the
+      text. Deleting a transcription reaches the other device; a re-run does not
+- [x] **Audio is optional.** The converted copy travels through an app-level side channel, off by
+      default and switched on per device, plus a bulk "remove converted audio" that keeps every
+      transcript and stops sync from fetching the sound back
+- [x] **Done**: `test/transcript_sync_test.dart` holds the three rules that keep the projection
+      from deleting somebody's recordings, `test/transcripts_merge_test.dart` and
+      `test/audio_sync_test.dart` cover the merge and the side channel, and
+      `test/viewer_layout_ui_test.dart` has the rename regression that started all this
+
 ## What is not done, and why
 
 The open item of the 0.1.0 plan is closed: an 81-minute lecture has now gone through OpenRouter end
@@ -229,7 +261,7 @@ Recorded when a choice is made that later work should not quietly reverse.
   configurations.
 - **2026-09-05** — Recordings and transcripts are not a data module and will not become one without
   a deliberate decision: it would put hours of private audio into every backup bundle and every ZIP
-  export.
+  export. *Superseded in part on 2026-09-09, below: the text now travels, the audio still does not.*
 - **2026-09-05** — A job that fails or is cancelled part-way is written back from the runner's
   latest saved state, not from the record it started with. The first version wrote the initial copy,
   which erased the plan and every finished window, so the next run paid for them all again — exactly
@@ -279,3 +311,31 @@ Recorded when a choice is made that later work should not quietly reverse.
 - **2026-09-06** — Renaming a transcription changes a label and nothing on disk. The files beside
   the recording keep the recording's name, because a folder of them is read by file name; an export
   takes the new name, because that is a file the user is deliberately saving somewhere.
+- **2026-09-09** — Transcript *text* syncs; job folders still are not a data module. The record and
+  the transcript of each finished job are projected into `transcribe_transcripts.json` before a sync
+  and applied back into `jobs/` afterwards. This supersedes the 2026-09-05 entry above for the text
+  only: the recordings and the chunk audio are still excluded structurally, and the converted
+  listening copy travels only through an opt-in side channel, per device, off by default. The
+  argument that changed: a transcript is what the user actually wants on their other device, and it
+  is a few hundred kilobytes.
+- **2026-09-09** — The projection carries `job.json` and `transcript.json` as **raw maps**, not
+  parsed models. The nested types inside a job record have no `extraJson`, so a build that parsed a
+  newer record and wrote it back would drop the newer build's fields; the two devices would then
+  take turns stripping each other's and re-uploading for ever. Anything added to that document must
+  keep this property.
+- **2026-09-09** — A transcription that is being re-run is **frozen** in the projection rather than
+  dropped from it. Only finished jobs are projected fresh, so without this rule a re-run would look
+  like a deletion and the other device would delete the folder — audio included — while its owner
+  watched the recording transcribe again. For the same family of reasons, deletions are honoured
+  only on the three-way merge path, where the base snapshot proves an absence was a deletion; force
+  download, backup restore and ZIP import are additive.
+- **2026-09-09** — A `job.json` that exists but cannot be read **aborts** the projection instead of
+  being left out of it. A gap in the document is indistinguishable from a deletion, and a transient
+  Windows lock is not a reason to delete somebody's transcription on another device.
+- **2026-09-09** — "Unknown" is manual only. The matching refuses a doubtful join rather than
+  guessing, and the repair for its other failure — a label that is not one person — is the user
+  saying so. A rule that decided this automatically is how a transcript loses speakers it had
+  correctly identified.
+- **2026-09-09** — The transcript files beside a recording became opt-in and default off. Writing
+  them unasked left files in whatever folder the recording was in at the time, which is not
+  somewhere the app should assume it may write, and not somewhere the user necessarily still has.

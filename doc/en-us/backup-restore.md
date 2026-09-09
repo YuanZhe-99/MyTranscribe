@@ -1,8 +1,8 @@
 # Backup, restore and ZIP transfer
 
 Two ways to keep a copy of the configuration: local bundles kept on the device, and a ZIP file the
-user can put anywhere. Both carry **only** what the module registry lists, which today is the
-settings file. Neither carries API keys, recordings or transcripts.
+user can put anywhere. Both carry **only** what the module registry lists: the settings file and
+the transcripts projection. Neither carries API keys or recordings.
 
 The engines live in the shared `myapps_data` package; this page describes how they are configured
 here.
@@ -58,9 +58,17 @@ what is there.
   restore on a borrowed machine. Keys reach a new device through a secure sync, or by being typed
   in. This is a trade the user should know about: restoring a backup on a fresh device gives you
   your sources and models, but you will re-enter your keys.
-- **Recordings and transcripts.** Hours of private audio in every bundle, and a bundle would stop
-  being something you can casually copy.
+- **Recordings and audio.** Hours of private audio in every bundle, and a bundle would stop being
+  something you can casually copy. The *text* of each transcription is included, through the
+  transcripts module; the sound is not.
 - **`webdav_config.json` and `storage_config.json`.** Server credentials, and preferences that
   describe *this* device.
 
-All four are excluded structurally: the engines only touch the file names in the registry.
+All of these are excluded structurally: the engines only touch the file names in the registry.
+
+Restoring the transcripts module is **additive**. What the bundle holds is written into `jobs/`, but
+nothing local is deleted for being absent from it: a bundle says what it held when it was taken, not
+what the user has deleted since. The same goes for a ZIP import.
+
+One compatibility note: a 0.2.0 build ignores the new module in a bundle, but its ZIP import is
+strict about unknown entries and will **reject** an archive exported by this build.

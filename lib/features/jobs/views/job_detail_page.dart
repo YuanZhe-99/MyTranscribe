@@ -9,7 +9,6 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
@@ -295,32 +294,6 @@ class _Body extends ConsumerWidget {
             ),
           ),
         ],
-        if (job.outputs.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          _SectionTitle(l10n.jobSectionOutputs),
-          for (final path in job.outputs)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.description_outlined),
-              title: Text(path.split(RegExp(r'[\\/]')).last),
-              subtitle: Text(
-                path,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              trailing: IconButton(
-                tooltip: l10n.commonCopy,
-                icon: const Icon(Icons.copy_outlined),
-                onPressed: () async {
-                  await Clipboard.setData(ClipboardData(text: path));
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(l10n.jobPathCopied)));
-                },
-              ),
-            ),
-        ],
         const SizedBox(height: 24),
         _SectionTitle(l10n.jobSectionRecording),
         _Field(l10n.jobFieldSize, formatBytes(job.sourceBytes)),
@@ -448,6 +421,10 @@ class _Actions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final runner = ref.read(jobRunnerProvider);
+    // Null while the probe is still running; treated as "yes" then, so the
+    // button does not flicker in and out every time the page opens.
+    final storage = ref.watch(jobStorageProvider(job.id)).value;
+    final canRerun = storage == null || storage.hasSource;
     final buttons = <Widget>[];
 
     if (job.stage.isRunning || queued) {
@@ -471,13 +448,18 @@ class _Actions extends ConsumerWidget {
             label: Text(l10n.jobOpenTranscript),
           ),
         )
-        ..add(
-          OutlinedButton.icon(
-            onPressed: () => _confirmRunAgain(context, l10n, runner),
-            icon: const Icon(Icons.replay),
-            label: Text(l10n.jobRunAgain),
-          ),
-        );
+        ..addAll([
+          // Running again means transcribing the recording, and there is not
+          // always one on this device: a transcription that arrived over sync
+          // never had it, and a recording the user has since moved or deleted
+          // is the same situation. The button would only produce a failure.
+          if (canRerun)
+            OutlinedButton.icon(
+              onPressed: () => _confirmRunAgain(context, l10n, runner),
+              icon: const Icon(Icons.replay),
+              label: Text(l10n.jobRunAgain),
+            ),
+        ]);
     } else {
       final resuming = job.chunks.isNotEmpty;
       buttons.add(

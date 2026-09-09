@@ -146,20 +146,26 @@ void main() {
   });
 
   /// Purpose: Build a runner over the fakes.
-  /// Inputs: The [toolkit] and the [server].
+  /// Inputs: The [toolkit], the [server], and whether the runner should write
+  /// transcript files beside the recording.
   /// Returns: A [JobRunner].
   /// Side effects: None.
-  /// Notes: Internal helper used within this file only.
-  JobRunner runner(_FakeToolkit toolkit, FakeTranscriptionServer server) =>
-      JobRunner(
-        toolkit: () async => toolkit,
-        repository: repository,
-        clientFactory: () => TranscriptionClient(
-          clientFactory: () => server,
-          sleep: (_) async {},
-        ),
-        keyLookup: (_) async => 'sk-test',
-      );
+  /// Notes: Internal helper used within this file only. [writeFiles] defaults
+  /// to true here and to the device setting — off — in the app, so that the
+  /// assertions about the Markdown and text files keep meaning what they say
+  /// without every test having to turn the setting on.
+  JobRunner runner(
+    _FakeToolkit toolkit,
+    FakeTranscriptionServer server, {
+    bool writeFiles = true,
+  }) => JobRunner(
+    toolkit: () async => toolkit,
+    repository: repository,
+    clientFactory: () =>
+        TranscriptionClient(clientFactory: () => server, sleep: (_) async {}),
+    keyLookup: (_) async => 'sk-test',
+    writeTranscriptFiles: () async => writeFiles,
+  );
 
   /// Purpose: Create a job against a built-in OpenAI model.
   /// Inputs: The [run]ner, the [model] wire name, the [path], and the
@@ -252,6 +258,79 @@ void main() {
         ).existsSync(),
         isTrue,
       );
+    });
+
+    test('writes nothing beside the recording unless asked', () async {
+      // The app used to leave a Markdown and a text file in whatever folder the
+      // recording came from, whether or not anybody wanted them there.
+      final run = runner(
+        _FakeToolkit(),
+        FakeTranscriptionServer([FakeReply.text('hello there')]),
+        writeFiles: false,
+      );
+      final job = await runToCompletion(run, (await createJob(run)).id);
+
+      expect(job.outputs, isEmpty);
+      final beside = Directory(p.dirname(job.sourcePath));
+      final left = beside
+          .listSync()
+          .map((entry) => p.basename(entry.path))
+          .toList();
+      expect(left, isNot(contains('lecture.transcript.md')));
+      expect(left, isNot(contains('lecture.transcript.txt')));
+      expect(
+        left,
+        isNot(contains('.mytranscribe_write_test')),
+        reason: 'not even the probe file the writer uses',
+      );
+      expect(
+        await TranscriptStore.load(job.id),
+        isNotNull,
+        reason: 'the transcript itself still lives in the job folder',
+      );
+    });
+
+    test('removes every finished transcription\'s audio at once', () async {
+      // The device that keeps the text and not the sound.
+      final first = await runToCompletion(
+        runner(
+          _FakeToolkit(),
+          FakeTranscriptionServer([FakeReply.text('one')]),
+        ),
+        (await createJob(
+          runner(
+            _FakeToolkit(),
+            FakeTranscriptionServer([FakeReply.text('one')]),
+          ),
+        )).id,
+      );
+      final run = runner(
+        _FakeToolkit(),
+        FakeTranscriptionServer([FakeReply.text('two')]),
+      );
+      final second = await runToCompletion(run, (await createJob(run)).id);
+
+      for (final id in [first.id, second.id]) {
+        await (await JobStore.normalizedAudio(id)).writeAsString('audio');
+      }
+      expect(await JobStore.convertedAudioBytes(), greaterThan(0));
+
+      expect(await run.discardAllAudio(), 2);
+
+      for (final id in [first.id, second.id]) {
+        expect(await (await JobStore.normalizedAudio(id)).exists(), isFalse);
+        expect(
+          await JobStore.hasAudioDiscardedMarker(id),
+          isTrue,
+          reason: 'so the next sync does not fetch it straight back',
+        );
+        expect(
+          await TranscriptStore.load(id),
+          isNotNull,
+          reason: 'the transcript is the whole point of keeping the job',
+        );
+      }
+      expect(await JobStore.convertedAudioBytes(), 0);
     });
 
     test('deletes the window audio but keeps the raw replies', () async {

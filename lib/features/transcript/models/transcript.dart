@@ -328,6 +328,61 @@ class Transcript {
     return null;
   }
 
+  /// Purpose: Say what to call whoever said a line, including nobody.
+  /// Inputs: The [speakerId], the [fallback] for an unnamed speaker, and what
+  /// to call an [unknown] one.
+  /// Returns: A name, or null when this transcript identifies nobody at all.
+  /// Side effects: None.
+  /// Notes: The one place the whole app decides this, so the screen, the
+  /// clipboard and all six export formats agree. A line with no speaker in a
+  /// transcript that *has* speakers is a real fact worth printing — it is the
+  /// part the diarization could not place, or the part the user marked as
+  /// unknown on purpose. A transcript with no speakers at all never says
+  /// "Unknown": there was no diarization, so there is nothing to be unsure
+  /// about. A dangling id — a record removed but a line still pointing at it —
+  /// reads as unknown for the same reason.
+  String? nameFor(
+    String? speakerId, {
+    required String Function(int number) fallback,
+    required String unknown,
+  }) =>
+      displayNameOf(speakerId, fallback) ?? (hasSpeakers ? unknown : null);
+
+  /// How many lines nobody is credited with.
+  int get unassignedCount =>
+      segments.where((segment) => speaker(segment.speakerId) == null).length;
+
+  /// Purpose: Take a speaker's lines away from them.
+  /// Inputs: The speaker [id].
+  /// Returns: A new [Transcript] whose lines are credited to nobody.
+  /// Side effects: None.
+  /// Notes: The other half of [mergeSpeakers]. The matching sometimes produces
+  /// a speaker who is not one person — a stretch of crosstalk, or a label it
+  /// placed on too little evidence — and folding that into somebody who *is* a
+  /// person is worse than admitting nobody knows. Nothing is deleted but the
+  /// speaker record and the window labels that led to it; the text is
+  /// untouched, because it was always right.
+  Transcript unassignSpeaker(String id) {
+    if (speaker(id) == null) return this;
+    return copyWith(
+      speakers: [
+        for (final existing in speakers)
+          if (existing.id != id) existing,
+      ],
+      speakerMap: {
+        for (final entry in speakerMap.entries)
+          if (entry.value != id) entry.key: entry.value,
+      },
+      segments: [
+        for (final segment in segments)
+          if (segment.speakerId == id)
+            segment.copyWith(clearSpeaker: true)
+          else
+            segment,
+      ],
+    );
+  }
+
   /// Purpose: Fold one speaker into another.
   /// Inputs: The speaker to merge away [from], and the one to merge [into].
   /// Returns: A new [Transcript].
