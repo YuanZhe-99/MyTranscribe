@@ -523,7 +523,7 @@ next (D19).
 The Dart-only foundation, testable on the host in milliseconds, so that every later adapter plugs
 into something already proven with a fake.
 
-- [ ] `AGENTS.md`, in the first commit of L0: the sentence under Required workflow that says this
+- [x] `AGENTS.md`, in the first commit of L0: the sentence under Required workflow that says this
       repository has no on-device AI is rewritten — on-device transcription is this app's
       feature from this plan on — so that it stops sending implementing agents back to ask
 - [ ] `localModel` record kind (D1): model, parsing, `extraJson`, template seeding with derived

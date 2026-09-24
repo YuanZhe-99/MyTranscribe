@@ -65,8 +65,9 @@ at `packages/myapps_data`. Their documentation is at `packages/myapps_data/doc/e
 9. For normal code changes, ask whether to push. The user must confirm the release version before a
    release push.
 
-**If the request does not fit this app, say so instead of implementing it.** This repo has no
-on-device AI, no learning content and no media playback beyond a transcript's own audio; a request
+**If the request does not fit this app, say so instead of implementing it.** On-device
+transcription with a downloaded model is this app's own feature (`PLAN.md`); any other on-device
+AI, learning content, and media playback beyond a transcript's own audio are not, and a request
 that assumes one of those was probably meant for a sibling app. Ask before building it.
 
 ## Documentation maintenance
