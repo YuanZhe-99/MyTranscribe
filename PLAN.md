@@ -7,6 +7,14 @@ packages available that day. Every external claim below carries the date it was 
 this field moves monthly, and an implementer who finds a claim stale should re-verify it and note
 the correction in the decisions log rather than build on the stale version.
 
+**The user asked for this plan and settled its open questions on 2026-09-24** (the first entry of
+the decisions log): release 0.3.0 first, unverified support for the devices this project cannot
+test (D20), the iOS 17 / macOS 14 deployment targets (D12), no Tensor SDK (D14), and the plan's
+defaults for everything else. Nothing below waits for another decision from the user except the
+two confirmations `AGENTS.md` always requires — the version of each later release and every push.
+`AGENTS.md` still says this repository has no on-device AI; that sentence describes the app before
+this plan, L0 rewrites it, and it is not a reason to stop work under this plan.
+
 **This file is temporary.** It replaces the 0.1.0–0.2.1 plan, whose nine milestones are all closed
 and recorded in `doc/en-us/version-history.md`. When the last milestone here is closed, the
 closing steps in §10 delete it, and nothing in `doc/` may depend on it by then. Until then,
@@ -30,15 +38,19 @@ What this plan adds, in order of certainty:
    each has a maintained open-weight release and at least one runtime with a C ABI that a Flutter
    app can link on all four of our platforms: OpenAI **Whisper large-v3** and **large-v3-turbo**,
    NVIDIA **Parakeet TDT 0.6B v3**, and the newest open Qwen ASR release (§2.2 names it).
-2. **The GPU or NPU, where a specific model × chip pair is verified.** Not a global "use
+2. **The GPU or NPU, where a specific model × chip pair has a route.** Not a global "use
    hardware acceleration" switch: an option appears only when this device, this model package and
-   this runtime have a documented route, and what actually ran is recorded on the job.
+   this runtime have a route that passed its smoke test on this device, and what actually ran is
+   recorded on the job. Most of the devices this app runs on cannot be tested by this project, so
+   their routes ship as **unverified support**, say so, and are held to stricter rules (D20).
 3. **Optionally, the operating system's own recogniser** on iOS, macOS and Android when nothing is
    downloaded — a fallback with its own privacy line, never a silent substitute.
 
-Out of scope, deliberately: live microphone transcription (the app does not record and asks for no
-microphone permission), training or fine-tuning, a model server, translation, Linux and Web. A
-request for one of those is a request for a different app, per `AGENTS.md`.
+Out of scope, deliberately: live microphone transcription (the app does not record; the only
+microphone permission it will ever ask for is the one Android's recogniser checks even when it is
+given a file, and only once the user turns that fallback on — L6), training or fine-tuning, a
+model server, translation, Linux and Web. A request for one of those is a request for a different
+app, per `AGENTS.md`.
 
 Two constraints from the existing code shape everything below and are worth restating:
 
@@ -48,8 +60,8 @@ Two constraints from the existing code shape everything below and are worth rest
   is built from source for ARM64 or fetched as an ARM64 archive, and verified with a real
   `flutter build windows` on the ARM64 machine before it is called done.
 - **The test phone is a Pixel 10** — a Google Tensor G5, not a Snapdragon. Qualcomm Android
-  routes can be built here but not verified here; the plan says so wherever it matters rather than
-  pretending a build is a verification.
+  routes can be built here but not verified here; they ship as unverified support (D20), and the
+  plan says so wherever it matters rather than pretending a build is a verification.
 
 ## 2. What the survey established (2026-09-24)
 
@@ -79,7 +91,7 @@ and what was found:
 2. **Google Tensor** (the Pixel 8/9/10 family — the test phone is a Pixel 10) is surveyed in §2.4.
    In one line: CPU is the shippable route; the GPU is a Vulkan experiment with a driver that has
    had correctness bugs; the NPU is reachable only through a sign-up-gated beta SDK, for Parakeet
-   only.
+   only, and the user decided not to apply for it (D14).
 3. **Qualcomm on Windows and on Android are different targets** with different runtimes, packaging,
    signing rules and model assets — §2.5. The report's "Qualcomm" rows are split accordingly.
 4. **The operating system's own recogniser** as a fallback — §2.6 — exists on iOS, macOS and
@@ -98,7 +110,8 @@ New since the report, independent of the four gaps:
   since 3.38 and need no per-OS build files; Swift Package Manager is the default for iOS and
   macOS. Both decide how the native packages here are built (D9, D12).
 - **FluidAudio v0.17.1** (2026-09-23) requires **iOS 17 / macOS 14**; **argmax-oss-swift v1.1.0**
-  (WhisperKit, 2026-08-06) requires iOS 16 / macOS 13. The app is at iOS 14 / macOS 10.15 (D12).
+  (WhisperKit, 2026-08-06) requires iOS 16 / macOS 13. The app is at iOS 14 / macOS 10.15; the
+  user approved raising it to iOS 17 / macOS 14 (D12).
 - The two whisper.cpp pub packages (`whisper_ggml` 2.6.0, `whisper_cpp_flutter_plus` 0.4.1) are
   not usable on this project's Windows ARM64 machine (D9).
 - NVIDIA has newer open ASR models than Parakeet v3 — `parakeet-unified-en-0.6b` (2026-04,
@@ -143,9 +156,9 @@ producing one is an optional task inside L2, not a dependency of it.
 | **FluidAudio** | v0.17.1 (2026-09-23) | iOS 17+, macOS 14+ | Swift plugin, SwiftPM, Pigeon (D12) | Parakeet v3 Core ML (`FluidInference/parakeet-tdt-0.6b-v3-coreml`), Qwen3-ASR 0.6B Core ML (`FluidInference/qwen3-asr-0.6b-coreml`, f32 and int8; 1.7B not published) | Neural Engine, with CPU/GPU fallback decided by Core ML | Apache-2.0; auto-downloads from Hugging Face unless `offlineMode` — we load from our own `models/` (D17); diarization pipelines exist (L8) |
 | **argmax-oss-swift / WhisperKit** | v1.1.0 (2026-08-06) | iOS 16+, macOS 13+ | same plugin, optional | Whisper Core ML packages | Neural Engine + GPU | optional; whisper.cpp's Core ML encoder covers Whisper on Apple without it |
 | **ONNX Runtime + QNN EP** | §2.5 | Windows ARM64, Android (Snapdragon) | own plugin per OS | Qualcomm AI Hub Whisper-Large-V3-Turbo, per SoC | Hexagon NPU | §2.5 |
-| **OpenVINO GenAI** | 2026.x | Windows x64 (Intel) | C++ plugin, later | Whisper large-v3 exported to IR | Intel GPU and NPU (WhisperPipeline) | L7; no verifying device in this project |
-| **Ryzen AI (VitisAI)** | at lock time | Windows x64 (AMD) | whisper.cpp flag | `amd/whisper-large-v3-onnx-npu` companion resources | encoder on the NPU | L7; no verifying device |
-| **LiteRT / Tensor SDK** | beta (2026-05-19) | Android (Tensor G5/G6) | would need a Kotlin/NDK plugin; none exists | `litert-community/parakeet-tdt-0.6b-v3` (Tensor G5 artifact) | Tensor TPU | §2.4; not planned |
+| **OpenVINO GenAI** | 2026.x | Windows x64 (Intel) | C++ plugin, later | Whisper large-v3 exported to IR | Intel GPU and NPU (WhisperPipeline) | L7; no verifying device here — shipped as unverified support (D20) |
+| **Ryzen AI (VitisAI)** | at lock time | Windows x64 (AMD) | whisper.cpp flag | `amd/whisper-large-v3-onnx-npu` companion resources | encoder on the NPU | L7; no verifying device — unverified support (D20) |
+| **LiteRT / Tensor SDK** | beta (2026-05-19) | Android (Tensor G5/G6) | would need a Kotlin/NDK plugin; none exists | `litert-community/parakeet-tdt-0.6b-v3` (Tensor G5 artifact) | Tensor TPU | not planned: the user declined the beta on 2026-09-24 (§2.4, D14) |
 | **OS recognisers** | §2.6 | iOS, macOS, Android | Swift / Kotlin plugin, Pigeon | none — the OS's own | the OS's own | L6 |
 
 ### 2.4 Google Tensor (Pixel 8 / 9 / 10)
@@ -163,7 +176,7 @@ The test device is a Pixel 10. Facts, all checked 2026-09-24:
   figures for Parakeet do not transfer. No published whisper.cpp or sherpa-onnx numbers exist for
   any Pixel; the nearest datapoint (Galaxy S10, sherpa-onnx int8) is Parakeet v3 at RTF 0.09 and
   Whisper small at 0.41. **Grade E** until this project measures it — which L1 and L2 do.
-- **GPU (an experiment, off by default).** llama.cpp's Vulkan backend runs on the Mali-G715
+- **GPU (an experiment).** llama.cpp's Vulkan backend runs on the Mali-G715
   (community verified, grade B) and on the Pixel 10's PowerVR only fragilely: the vendor id was
   added in 2026-03 with shader-compile workarounds; all k-quant matrix-vector shaders produced
   wrong output on driver 1.662.3024 (2026-07); a shared-memory fallback was merged 2026-09-10;
@@ -184,7 +197,9 @@ The test device is a Pixel 10. Facts, all checked 2026-09-24:
   and the ML Kit GenAI APIs serve Gemini Nano only. **Grades: Parakeet × G5 = A for the artifact,
   U for speed and for a Flutter route; Whisper and Qwen × Tensor NPU = U.** Offering it would mean
   applying for the beta, shipping a 1.3 GB AI Pack for two chips, and a Kotlin plugin nobody has
-  written — a separate decision for the user, not a milestone here.
+  written. **The user decided on 2026-09-24 not to apply**, so the Tensor NPU is not offered and
+  is not a milestone; an SDK that later needs no sign-up and has a route from Flutter would be a
+  new decision for the user, not an implementer's call.
 - **Memory.** Native allocations are not bounded by the Java heap; the low-memory killer decides by
   foreground state and pressure. A local job runs in a foreground service with a notification,
   prefers quantized artifacts (turbo q5_0 547 MiB; Parakeet int8 ~0.6 GB), refuses to load an
@@ -212,7 +227,7 @@ ends. Everything below was checked 2026-09-24.
 | CPU | ORT `onnxruntime-win-arm64-1.30.0`; sherpa-onnx builds for win-arm64 (its Flutter package gained `windows/arm64/` DLLs in PR #3957, merged 2026-09-20, **after** the 1.13.8 pub release); whisper.cpp `whisper-bin-win-cpu-arm64.zip` (clang; MSVC lacks the FP16 intrinsics). Oryon Gen 1/2: NEON, dotprod, i8mm, BF16, **no SVE/SVE2**; X2 Elite adds SVE2 and SME. | sherpa-onnx AAR / `sherpa_onnx_android_arm64`; whisper.cpp through the NDK. |
 | Memory | 16–64 GB. AI Hub reports the precompiled Turbo encoder at ~1.7 GB peak on X Elite. | up to 24 GB; the same encoder at 63–73 MB peak on phones (AI Hub estimate). |
 | Signing | The ggml **Hexagon** backend needs test-signing → developer only (D13). The QNN EP path uses Microsoft-signed drivers and needs nothing. | No test-signing for QNN; the HTP libraries come signed in the runtime AAR. |
-| Verifiable in this project | **Yes** — the Snapdragon X development machine: CPU, OpenCL GPU, and the QNN NPU with an AI Hub asset. | **No** — no Snapdragon phone. Built behind a flag, marked unverified, verified by whoever has one. |
+| Verifiable in this project | **Yes** — the Snapdragon X development machine: CPU, OpenCL GPU, and the QNN NPU with an AI Hub asset. | **No** — no Snapdragon phone. Shipped as unverified support (D20), gated by the smoke test on each device; a diagnostics report from somebody who has one goes into the matrix as a community result. |
 
 AI Hub's own profile numbers for Whisper-Large-V3-Turbo on the NPU (encoder for a 30 s frame /
 one decoder step): X Elite 561 / 8.5 ms; X2 Elite 251 / 4.9 ms; 8 Gen 3 402 / 7.8 ms; 8 Elite
@@ -221,7 +236,8 @@ one decoder step): X Elite 561 / 8.5 ms; X2 Elite 251 / 4.9 ms; 8 Gen 3 402 / 7.
 `onnxruntime-android-qnn` 1.29.0 + `qnn-runtime` 2.45.0, Whisper-Small at RTF 0.093).
 
 What this settles for the plan: on the development machine the NPU route is **A** for Turbo and
-can be verified end to end (L5a); on Android it is **A** on paper and **unverified** here (L5b);
+can be verified end to end (L5a); on Android it is **A** on paper and **unverified** here, and
+ships as such (L5b, D20);
 full large-v3, Parakeet and Qwen have **no** Qualcomm NPU package on either platform (**U**), and
 the sherpa-onnx QNN export code is the only starting point for Parakeet (**E**). The GPU route on
 every Qualcomm chip is OpenCL, and for whisper it is **E** until the smoke test passes on that
@@ -252,12 +268,13 @@ Facts that shape L6:
   data **at real-time rate**, so the adapter feeds PCM through a pipe paced at one second per
   second and detects the microphone fallback (a session that produces nothing as the pipe
   drains). `RECORD_AUDIO` is still checked by the recognition service even with a file source
-  (from the AOSP source), so **this fallback would add the microphone permission the app has never
-  asked for** — the manifest change, the runtime prompt and the privacy-policy line are part of
-  L6 and the user confirms them before it ships. Language packs download through
-  `checkRecognitionSupport` and `triggerModelDownload` (API 33/34) with a system prompt. Other
-  OEMs are whatever their overlay says; one Android 15 OEM build reports no on-device service while
-  Google voice typing works, and Chinese Xiaomi ROMs have no Google services at all.
+  (from the AOSP source), so **this fallback adds the microphone permission the app has never
+  asked for**. The user took the plan's default on 2026-09-24: L6 declares it in the manifest,
+  requests it at runtime only when the fallback is switched on, and says why in the privacy
+  policy. Language packs download through `checkRecognitionSupport` and `triggerModelDownload`
+  (API 33/34) with a system prompt. Other OEMs are whatever their overlay says; one Android 15
+  OEM build reports no on-device service while Google voice typing works, and Chinese Xiaomi ROMs
+  have no Google services at all — their routes ship unverified (D20).
 - **Windows.** Nothing shippable: the stable API takes no file and sends audio to a web service;
   the on-device one is an experimental SDK channel that requires an MSIX package with a capability
   this app's installer does not have. Not offered (D15).
@@ -269,19 +286,22 @@ Facts that shape L6:
 
 Grades per the report: **A** vendor or model author documents this model on this route; **B** a
 third-party implementation exists; **E** a generic backend exists but this model × device is
-unverified; **U** nothing found. "Here" means a device this project owns can verify it. The
-implementer copies this table into `doc/en-us/local-asr-support-matrix.md` and keeps it current;
-the code's `EvidenceLevel` is the same information.
+unverified; **U** nothing found. "Tested here" means a device this project owns can run §7's
+acceptance list on it. A target with "no" there still ships: its routes are **unverified
+support** (D20) — built, covered by CI, gated by the smoke test on each device, marked as untested,
+and never picked automatically unless D20's evidence rule allows it. The implementer copies this
+table into `doc/en-us/local-asr-support-matrix.md` and keeps it current; the code's
+`EvidenceLevel` carries the grades, and its tested-here table carries the last column.
 
-| Target | Whisper large-v3 / turbo | Parakeet TDT v3 | Qwen3-ASR 0.6B (1.7B) | Verifiable here |
+| Target | Whisper large-v3 / turbo | Parakeet TDT v3 | Qwen3-ASR 0.6B (1.7B) | Tested here |
 |---|---|---|---|---|
-| **Windows x64** — Intel / AMD / NVIDIA GPU; Intel NPU; AMD NPU | CPU **B** (whisper.cpp); GPU Vulkan **B**; Intel NPU **A** (OpenVINO GenAI, L7); AMD NPU **A** for the encoder (Ryzen AI 300 on Windows, L7); CUDA **B** (not planned — a 1 GB dependency) | CPU **B** (sherpa-onnx); GPU **B** (transcribe.cpp Vulkan); NPU **U** | CPU **B** (sherpa-onnx int8; 1.7B **E**, own export); GPU **B** (transcribe.cpp Vulkan); NPU **U** | build only — no x64 machine; the diagnostics smoke test verifies on each user's device |
-| **Windows ARM64** — Snapdragon X Elite (this machine); X2 Elite | CPU **B**; GPU OpenCL **E** (upstream binary exists; whisper-specific bugs open on Adreno); NPU **A** for **Turbo only** (AI Hub asset, ORT QNN EP), large-v3 **U** | CPU **B** (sherpa-onnx, ARM64 DLLs pending a pub release); GPU **U** (transcribe.cpp has no OpenCL and no ARM64 evidence); NPU **E** (sherpa-onnx QNN export code; a PoC encoder on X Elite, 2026-09-22) | CPU **B**; GPU **E** (llama.cpp's Qwen port over OpenCL); NPU **U** | **yes**: CPU, OpenCL, QNN |
-| **Android** — Snapdragon 8 Gen 3 / 8 Elite / 8 Elite Gen 5 | CPU **B**; GPU OpenCL **E** (assertion open on 830); NPU **A** for **Turbo only** (per-SoC asset) | CPU **B**; GPU **E**; NPU **E** | CPU **B**; GPU **E**; NPU **U** | no |
-| **Android** — Google Tensor G3 / G4 / **G5 (Pixel 10)** | CPU **E** (no published numbers); GPU Vulkan **E** (PowerVR driver correctness bugs; Mali works for LLMs); NPU **U** | CPU **E**; GPU **E**; NPU **A/U** (a Google-published Tensor G5 artifact, beta SDK, no route from Flutter) | CPU **E**; GPU **E**; NPU **U** | **yes**: CPU, Vulkan experiment |
-| **Android** — MediaTek Dimensity, Samsung Exynos | CPU **E**; GPU Vulkan **E**; NPU **U** | CPU **E**; GPU **E**; NPU **U** | CPU **E**; GPU **E**; NPU **U** | no |
-| **macOS** — Apple Silicon (Intel Mac: CPU only) | CPU/Metal **B** (whisper.cpp, Metal on by default); Core ML encoder **B**; WhisperKit **B** (optional) | CPU **B** (sherpa-onnx); Neural Engine **B** (FluidAudio, macOS 14+) | CPU **B**; Neural Engine **B/E** (FluidAudio, 0.6B only; the converter's own WER 4.4 % vs 2.11 % is a signal to gate on) | **yes**: the 2024 Mac mini |
-| **iOS** — A-series / M-series | CPU/Metal **B**; Core ML encoder **B**; WhisperKit **B** | CPU **B**; Neural Engine **B** (iOS 17+) | CPU **B**; Neural Engine **B/E** | an iPhone, if one is available; otherwise CI build only |
+| **Windows x64** — Intel / AMD / NVIDIA GPU; Intel NPU; AMD NPU | CPU **B** (whisper.cpp); GPU Vulkan **B**; Intel NPU **A** (OpenVINO GenAI, L7); AMD NPU **A** for the encoder (Ryzen AI 300 on Windows, L7); CUDA **B** (not planned — a 1 GB dependency) | CPU **B** (sherpa-onnx); GPU **B** (transcribe.cpp Vulkan); NPU **U** | CPU **B** (sherpa-onnx int8; 1.7B **E**, own export); GPU **B** (transcribe.cpp Vulkan); NPU **U** | **no** — no x64 machine: shipped unverified (D20); the x64 build's CPU route also runs under emulation on the ARM64 machine, which checks the code path but not the speed |
+| **Windows ARM64** — Snapdragon X Elite (this machine); X2 Elite | CPU **B**; GPU OpenCL **E** (upstream binary exists; whisper-specific bugs open on Adreno); NPU **A** for **Turbo only** (AI Hub asset, ORT QNN EP), large-v3 **U** | CPU **B** (sherpa-onnx, ARM64 DLLs pending a pub release); GPU **U** (transcribe.cpp has no OpenCL and no ARM64 evidence); NPU **E** (sherpa-onnx QNN export code; a PoC encoder on X Elite, 2026-09-22) | CPU **B**; GPU **E** (llama.cpp's Qwen port over OpenCL); NPU **U** | **yes** on the X Elite: CPU, OpenCL, QNN; the X2 Elite ships unverified (D20) |
+| **Android** — Snapdragon 8 Gen 3 / 8 Elite / 8 Elite Gen 5 | CPU **B**; GPU OpenCL **E** (assertion open on 830); NPU **A** for **Turbo only** (per-SoC asset) | CPU **B**; GPU **E**; NPU **E** | CPU **B**; GPU **E**; NPU **U** | **no** — shipped unverified (D20) |
+| **Android** — Google Tensor G3 / G4 / **G5 (Pixel 10)** | CPU **E** (no published numbers); GPU Vulkan **E** (PowerVR driver correctness bugs; Mali works for LLMs); NPU **U** | CPU **E**; GPU **E**; NPU **A/U** (a Google-published Tensor G5 artifact, beta SDK, no route from Flutter; not planned — D14) | CPU **E**; GPU **E**; NPU **U** | **yes** on the G5 (Pixel 10): CPU, Vulkan experiment; the G3 and G4 ship unverified (D20) |
+| **Android** — MediaTek Dimensity, Samsung Exynos | CPU **E**; GPU Vulkan **E**; NPU **U** | CPU **E**; GPU **E**; NPU **U** | CPU **E**; GPU **E**; NPU **U** | **no** — shipped unverified (D20) |
+| **macOS** — Apple Silicon (Intel Mac: CPU only) | CPU/Metal **B** (whisper.cpp, Metal on by default); Core ML encoder **B**; WhisperKit **B** (optional) | CPU **B** (sherpa-onnx); Neural Engine **B** (FluidAudio, macOS 14+) | CPU **B**; Neural Engine **B/E** (FluidAudio, 0.6B only; the converter's own WER 4.4 % vs 2.11 % is a signal to gate on) | **yes** on Apple Silicon: the 2024 Mac mini; Intel Macs ship unverified (D20) |
+| **iOS** — A-series / M-series | CPU/Metal **B**; Core ML encoder **B**; WhisperKit **B** | CPU **B**; Neural Engine **B** (iOS 17+) | CPU **B**; Neural Engine **B/E** | an iPhone, if one is available; otherwise the Simulator on the Mac for the code path, and the device routes ship unverified (D20) |
 | **OS recogniser** (L6) | iOS/macOS 26+ `SpeechAnalyzer` on-device **A**; below that `SFSpeechRecognizer` on-device **A** where the locale supports it; Android on-device **A** in the API, file input **E** on Google's service; Windows **none** | | | Pixel 10 and the Mac |
 
 ## 3. Decisions
@@ -293,24 +313,25 @@ a new dated entry saying why, and does not silently do otherwise.
 | # | Decision | Why |
 |---|---|---|
 | D1 | **A local model is a new synced record kind, `localModel`, not a new provider dialect.** Built-in definitions seed with derived ids (`local:whisper-large-v3-turbo`); a model the user adds from a file gets a uuid. The record carries identity, languages, limits and capabilities; nothing device-specific. | A 0.2.x build parses an unknown *dialect* as `openaiCompatible` and would show a phantom source with an empty URL; it parses an unknown record *kind* as `unknown` and carries it through untouched — that contract exists precisely for this. The list follows the user to their other device (a model added on the desktop shows as "not downloaded" on the phone) while the files do not. |
-| D2 | **Everything device-specific lives outside the synced document.** Which artifacts are installed, their hashes, the chosen compute device, verification records and the fallback policy are in device-local files (§4.4). | A path, a GPU and a verification are properties of the device, exactly like `ffmpegPath` and the trusted-host list. Syncing them would make one device's GPU choice appear as a promise on another. |
+| D2 | **Everything device-specific lives outside the synced document.** Which artifacts are installed, their hashes, the chosen compute device, smoke-test results and the fallback policy are in device-local files (§4.4). | A path, a GPU and a smoke-test result are properties of the device, exactly like `ffmpegPath` and the trusted-host list. Syncing them would make one device's GPU choice appear as a promise on another. |
 | D3 | **The model files are never a data module.** `models/` is not in `lib/app/data_modules.dart`, so sync, backup and ZIP export cannot touch it. | Structural exclusion, the same rule that keeps recordings and API keys out. A 1.5 GB model in a backup bundle would be absurd, and it is re-downloadable. |
 | D4 | **One engine protocol, `LocalAsrEngine`, with adapters underneath; the job runner speaks to a `TranscriptionBackend` that is either the existing HTTP client or a local engine.** The runner's stage machine, per-window persistence, resume, cancel and the overlap merge are reused unchanged. | The runner is the most-tested code in the app and the merge already handles two transcriptions of the same seconds. A local engine that returns segments per window slots in where an HTTP reply did. |
 | D5 | **Local engines receive 16 kHz mono PCM cut from the normalized MP3 by FFmpeg; they never receive the original file.** The normalized copy remains the viewer's listening copy. | Three runtimes, three feature extractors, one PCM contract (§8.1 of the report). whisper.cpp's library takes float samples, sherpa-onnx takes float samples, FluidAudio takes an `AVAudioPCMBuffer`; giving them all the same PCM removes a class of "works on one engine" bugs. It also means a local job needs the media toolkit — on Windows, FFmpeg — which the app already offers to download. |
 | D6 | **Model identity is never substituted silently.** Turbo is not large-v3, the 0.6B Qwen is not the 1.7B, and the OS recogniser is not a model. The record the user chose is the record the job records as requested; an allowed fallback is a separate, visible event with its own reason, and the fallback policy is the user's setting (`none` / `same model on CPU` / `system recogniser`). | The report's rule 9. A transcript that quietly came from a weaker model is worse than a failed job, because nothing later reveals it. |
-| D7 | **Capabilities are the intersection of four sources**: the model's own (`modelCapabilities`), what the converted package kept (`artifactCapabilities`), what the adapter on this platform exposes (`runtimeCapabilities`), and what this device has verified (`verification`). The UI shows the intersection; the three-state `Capability` enum already in the app is reused, and `unknown` stays a real answer. | The report §2. Qwen3-ASR documents streaming and a forced aligner; the ONNX export, the GGUF port and the Core ML conversion keep neither, and this app needs neither — but the record must not claim them. |
-| D8 | **Evidence grades are in the code, not only in the docs.** An `EvidenceLevel` enum (`official`, `community`, `experimental`, `unverified`) on every engine×model×device route, mirroring the report's A/B/E/U, and a `PlacementKind` (`cpu`, `gpu`, `npu`, `mixed`, `unknown`) recorded on every finished window from what the runtime actually reported. | "NPU" in a menu is a promise. `unknown` is what to say when the runtime gives no placement evidence; a fabricated percentage is a lie the diagnostics page would repeat forever. |
+| D7 | **Capabilities are the intersection of four sources**: the model's own (`modelCapabilities`), what the converted package kept (`artifactCapabilities`), what the adapter on this platform exposes (`runtimeCapabilities`), and what this device's smoke test showed (`smokeTest`). The UI shows the intersection; the three-state `Capability` enum already in the app is reused, and `unknown` stays a real answer. | The report §2. Qwen3-ASR documents streaming and a forced aligner; the ONNX export, the GGUF port and the Core ML conversion keep neither, and this app needs neither — but the record must not claim them. |
+| D8 | **Evidence grades are in the code, not only in the docs.** An `EvidenceLevel` enum (`official`, `community`, `experimental`, `none`) on every engine×model×device route, mirroring the report's A/B/E/U — `none` rather than `unverified`, which is the product's word for a route this project has not tested (D20) — and a `PlacementKind` (`cpu`, `gpu`, `npu`, `mixed`, `unknown`) recorded on every finished window from what the runtime actually reported. | "NPU" in a menu is a promise. `unknown` is what to say when the runtime gives no placement evidence; a fabricated percentage is a lie the diagnostics page would repeat forever. |
 | D9 | **whisper.cpp is compiled from a pinned tag inside a build hook, in a package of our own (`packages/local_asr_whisper`).** Not a pub package: the two that exist ship x86_64-only Windows binaries (`whisper_ggml` 2.6.0, AVX2 prebuilt) or no desktop at all (`whisper_cpp_flutter_plus` 0.4.1, Android and iOS only) — checked 2026-09-24 — and neither would build on the ARM64 development machine. Build hooks are the recommended FFI route since Flutter 3.38, need no per-OS build files, and the hook may run CMake with the backend flags per target. On Windows, x64 and ARM64 alike, the hook compiles with **clang/LLVM**: it is what upstream builds its own Windows ARM64 binaries with (`whisper-bin-win-cpu-arm64.zip` and `whisper-bin-win-opencl-adreno-arm64.zip` since b5130, 2026-09-11), MSVC's `cl.exe` lacks the FP16 vector intrinsics, and the OpenCL backend does not support it at all. | The FFmpeg precedent: a plugin that cannot build on this machine is not a plugin this project can use. Pinning a tag (v1.9.4, released 2026-09-11, at the time of writing) is what makes a bug reproducible. |
 | D10 | **GPU backends are separate dynamic libraries loaded at runtime (`GGML_BACKEND_DL`), never linked into the base library.** Vulkan on Windows x64, OpenCL on Windows ARM64 and Android, Metal on Apple; the CPU backend is always present. A backend whose vendor SDK is absent at build time is simply not produced, and the app reports "not built" rather than failing to start. | A missing `vulkan-1.dll` or a driver without OpenCL must not take the whole app down. The ggml backend registry is designed for exactly this, and it is how one binary can say honestly which routes it has. |
 | D11 | **sherpa-onnx is the Parakeet and Qwen baseline on all four platforms**, from the official `sherpa_onnx` pub package at the first release whose Windows sub-package carries the ARM64 DLLs (upstream merged them on 2026-09-20, after the 1.13.8 release of 2026-09-10), otherwise vendored and trimmed exactly as FFmpeg was, with the ARM64 archive fetched by hash in a build hook. Pinned at or above 1.13.8 for the Qwen fixes. | It already publishes both models with Android, iOS, Windows and macOS support and has a Dart API; establishing the CPU baseline first is what §12 of the report and this app's own history (M1: verify on real hardware before optimising) both say. |
-| D12 | **The Apple native adapter uses FluidAudio for Parakeet and Qwen on the Neural Engine, through a typed Pigeon channel; WhisperKit is optional and later.** This raises the deployment targets to **iOS 17 and macOS 14** in the milestone that adds it, recorded in `platform-notes.md`. | FluidAudio's `Package.swift` declares `.macOS(.v14), .iOS(.v17)` (checked 2026-09-24, v0.17.1 released 2026-09-23); a Swift package cannot be weak-linked below its platform floor, so the choice is raise the targets or not ship the adapter. whisper.cpp's own Core ML encoder needs no SDK and stays available on the current targets, which is why Whisper comes first (L1) and the Swift adapter later (L4). **The user confirms this bump before L4 starts; it is the one decision here that removes devices from the supported list.** |
+| D12 | **The Apple native adapter uses FluidAudio for Parakeet and Qwen on the Neural Engine, through a typed Pigeon channel; WhisperKit is optional and later.** This raises the deployment targets to **iOS 17 and macOS 14**, recorded in `platform-notes.md`. | FluidAudio's `Package.swift` declares `.macOS(.v14), .iOS(.v17)` (checked 2026-09-24, v0.17.1 released 2026-09-23); a Swift package cannot be weak-linked below its platform floor, so the choice is raise the targets or not ship the adapter. whisper.cpp's own Core ML encoder needs no SDK and stays available on the current targets, which is why Whisper comes first (L1) and the Swift adapter later (L4). **The user approved the bump on 2026-09-24.** It is still the one decision here that removes devices, so it lands in the first milestone that needs it — L4, or L1 if the pinned whisper.cpp's Metal backend or Core ML encoder turns out to need a newer floor than iOS 14 / macOS 10.15 — and that release's notes say which devices it drops. |
 | D13 | **Qualcomm is two targets with two runtimes, never one.** Windows on Snapdragon (X Elite / X2 Elite, this project's own machine) and Android on Snapdragon (8 Gen 3 / 8 Elite / 8 Elite Gen 5) get separate adapters, separate model assets and separate verification records. The GPU route on both is the ggml OpenCL backend, which upstream verifies on exactly these chips (Adreno 750/830/840, X1-85, X2-90) on both operating systems (checked 2026-09-24); **Vulkan is not a Qualcomm route** — it produced gibberish and ran slower than the CPU on Adreno X1, and whisper.cpp crashes inside the Adreno Vulkan driver on the 830. The NPU route is ONNX Runtime's QNN execution provider with Qualcomm AI Hub's precompiled **Whisper-Large-V3-Turbo** assets, per SoC — and **the ggml Hexagon backend is not a shipping route on Windows**, because upstream's own guide requires `bcdedit /set TESTSIGNING ON` for its NPU libraries. | A Windows ARM64 build is not an Android build, an X Elite context binary is not an 8 Elite one, and a route that needs test-signing is a developer tool, not a feature. |
-| D14 | **Google Tensor is CPU first, GPU experimental, NPU not offered.** The Pixel 10 verification is of the CPU path with Arm dot-product and i8mm kernels and, separately, of whether a Vulkan build of whisper.cpp runs correctly at all on its PowerVR GPU. The Tensor NPU is reachable only through Google's Tensor SDK beta — sign-up gated, ahead-of-time compiled, delivered as a Play AI Pack, G5 and G6 only — and only Parakeet has a published artifact for it; that is a separate decision for the user (§2.4), not a milestone here. | The user's phone is the one Android device this project can verify on, and a plan that only verified Snapdragon would verify nothing. |
-| D15 | **The OS recogniser is a fallback and an explicit choice, off by default.** On Apple platforms: `SpeechAnalyzer` where the OS has it, `SFSpeechRecognizer` with on-device recognition required below that; on Android: `SpeechRecognizer` on-device with file input where the OS has it. Server-side recognition is never used unless the user turns on a separately worded switch. Windows has no file-transcription OS API and offers nothing. | The user asked for it as optional. Its value is a transcript on a phone with no model downloaded; its cost is a different privacy line, which the policy page states in the same words the switch uses. |
+| D14 | **Google Tensor is CPU first, GPU experimental, NPU not offered.** The Pixel 10 verification is of the CPU path with Arm dot-product and i8mm kernels and, separately, of whether a Vulkan build of whisper.cpp runs correctly at all on its PowerVR GPU. The Tensor NPU is reachable only through Google's Tensor SDK beta — sign-up gated, ahead-of-time compiled, delivered as a Play AI Pack, G5 and G6 only — and only Parakeet has a published artifact for it; **the user decided on 2026-09-24 not to apply for it**, so it is not offered and not a milestone (§2.4). | The user's phone is the one Android device this project can verify on, and a plan that only verified Snapdragon would verify nothing. |
+| D15 | **The OS recogniser is a fallback and an explicit choice, off by default.** On Apple platforms: `SpeechAnalyzer` where the OS has it, `SFSpeechRecognizer` with on-device recognition required below that; on Android: `SpeechRecognizer` on-device with file input where the OS has it. Server-side recognition is never used unless the user turns on a separately worded switch. Windows has no file-transcription OS API and offers nothing. On Android the recogniser checks `RECORD_AUDIO` even for a file, so the app declares it and asks for it only when the fallback is switched on — the default the user took on 2026-09-24. | The user asked for it as optional. Its value is a transcript on a phone with no model downloaded; its cost is a different privacy line, which the policy page states in the same words the switch uses. |
 | D16 | **Heavy work never runs on the UI isolate, and one native handle has one owner.** FFI adapters run in a dedicated long-lived engine isolate that owns the model handle; platform-channel adapters run on a native worker thread. Cancellation is cooperative — a flag the runtime polls at a segment or token boundary — and resources are released only after the native call has returned. | Report §6.3. `await` on an FFI call is not concurrency; a model handle shared between isolates is a crash. |
 | D17 | **Downloads are manifest-driven, resumable, hash-verified and atomic.** A manifest per artifact (§4.4) lists every file with size and SHA-256; the downloader uses HTTP range requests to resume, verifies each file, unpacks into a temporary directory and renames into place; a model in use holds a lease so an update cannot replace files under a running job. Downloads come only from the URL in the manifest, only when the user asks. | Report §4.2. Also the privacy promise: the app gains one new kind of endpoint — a model host — and contacts it only on a tap. |
 | D18 | **Speaker labels are not offered by any local model in this plan's first release.** All three ASR families are `diarization: unsupported`; a later, optional milestone (L8) may add a separate diarization pipeline that produces window-local labels the existing unifier can join. | Report §8.3: timestamps are not speakers. The unifier's bias against a doubtful join is exactly the right shape for a local pipeline too, but that is a second model, a second download and a second memory budget, and it is not the point of this plan. |
-| D19 | **The first release of this plan is 0.3.0**, after L0–L2 (local transcription on the CPU on all four platforms, with the honest capability model). GPU, Apple native, Qualcomm NPU and the OS fallback each ship in their own minor release as they are verified. | A milestone that ships is a milestone that gets used, and the first real recording through a local model will find things no test does — that is what M8 and M9 taught. |
+| D19 | **The first release of this plan is 0.3.0** (`0.3.0+4` — the version the user confirmed on 2026-09-24), after L0–L2: local transcription on the CPU on all four platforms, with the honest capability model. The later milestones ship in later releases — 0.4.0 onward by default, one milestone per release or several together — each version confirmed by the user when it is ready, as `AGENTS.md` requires. No release waits for a verification this project cannot perform (D20). | A milestone that ships is a milestone that gets used, and the first real recording through a local model will find things no test does — that is what M8 and M9 taught. |
+| D20 | **A route this project cannot test on real hardware ships as unverified support; it is not held back.** *Verified* means this project ran §7's acceptance list on hardware of that class and recorded it in the support matrix, and that stays the gate for the classes its own devices cover: Windows ARM64 on the Snapdragon X machine, Tensor G5 on the Pixel 10, Apple Silicon Macs on the Mac mini, and an iPhone if one becomes available. Every other route is **unverified**: built and linked in CI, covered by the host and fake-engine tests, exercised wherever anything here can run it (the x64 build under emulation on the ARM64 machine, the iOS Simulator), and shipped with five safeguards. (1) The product says it has not been tested on this kind of device. (2) Auto picks an accelerator route only when this project tested it on this kind of device, or when its evidence is **A** or **B**, it passed its smoke test here and ran faster than the CPU in it; an untested **E** or **U** route runs only when the user chooses it, and the CPU route is Auto's floor everywhere, tested or not. (3) Every route, verified or not, runs its smoke test on this device before its first job and again when the adapter, model, OS or driver changes; a failure disables it here, with the reason. (4) An in-flight marker is written before each native call and cleared after it; a marker found at the next start means the process died inside that route, which is recorded as `crashed` here and never picked automatically again, and the interrupted job resumes under the fallback policy, whose default is the same model on the CPU. (5) The diagnostics page copies a report — device, OS, driver, route, smoke-test result, speed; no file names, no text — that the user may send by hand; a report from real hardware goes into the matrix as a community result, which can raise a route's evidence grade but never makes it tested here. | The user decided this on 2026-09-24: most devices this app targets — Snapdragon and MediaTek phones, x64 PCs with Intel, AMD or NVIDIA graphics, Intel and AMD NPUs, iPhones — cannot be tested here, so unverified support is the only support they can have. The safeguards make an untested route cost its user a failed check or one lost window, never a crash loop or a silently wrong transcript. |
 
 ## 4. Architecture
 
@@ -332,6 +353,7 @@ lib/features/local/
               local_transcription_backend.dart   TranscriptionBackend over an engine, for the runner
               local_model_templates.dart   the built-in localModel records and their manifests
               pcm_window_cutter.dart       FFmpeg: window of the normalized file → 16 kHz mono PCM
+              route_smoke_test.dart        the check every route passes on this device first (D20)
   engines/    whisper_cpp_engine.dart      FFI adapter (isolate owner)
               sherpa_onnx_engine.dart      Dart-API adapter (isolate owner)
               apple_speech_engine.dart     Pigeon client for FluidAudio / WhisperKit / SpeechAnalyzer
@@ -378,7 +400,9 @@ abstract interface class LocalAsrEngine {
 ```
 
 - `EngineRoute` carries `modelId`, `artifactId`, `device` (`cpu` / `gpu` / `npu`), `evidence`
-  (`EvidenceLevel`), `available` with `unavailableReason`, the capabilities the route keeps
+  (`EvidenceLevel`), `testedHere` (this project verified the route on hardware of this device's
+  class — the table in `engine-routing.md`, copied from the support matrix; D20), this device's
+  smoke-test result, `available` with `unavailableReason`, the capabilities the route keeps
   (timestamp kinds, languages, `maxWindowSeconds`), and a memory estimate with its source
   (`measured` / `documented` / `unknown`).
 - `PreparedSession` carries the session id, the artifact revision, the requested device, the
@@ -388,9 +412,10 @@ abstract interface class LocalAsrEngine {
 - Errors use one code set (report §11.2): `MODEL_MISSING`, `MODEL_CORRUPT`, `MODEL_FORMAT_MISMATCH`,
   `UNSUPPORTED_LANGUAGE`, `UNSUPPORTED_FEATURE`, `BACKEND_NOT_BUILT`, `DRIVER_MISSING`,
   `DEVICE_UNAVAILABLE`, `MODEL_COMPILE_FAILED`, `OUT_OF_MEMORY`, `INPUT_TOO_LONG`, `DEVICE_LOST`,
-  `CANCELLED`. Each carries a user-readable message, whether it is retryable, and the fallback
-  routes the policy allows — the runner maps them onto `JobFailureKind` the way it maps HTTP
-  failures today, adding kinds rather than reusing `rejected` for a missing driver.
+  `ROUTE_CRASHED` (the process died inside the route, found by the in-flight marker at the next
+  start — D20), `CANCELLED`. Each carries a user-readable message, whether it is retryable, and
+  the fallback routes the policy allows — the runner maps them onto `JobFailureKind` the way it
+  maps HTTP failures today, adding kinds rather than reusing `rejected` for a missing driver.
 
 ### 4.3 The job, stage by stage
 
@@ -438,7 +463,7 @@ Additions to `data-formats.md`, all under `getAppDir()` unless stated:
 | `transcribe_settings.json` › records of kind `localModel` | id, `templateId`, `displayName`, `family` (`whisper` / `parakeet` / `qwen` / `custom`), `languages`, `maxDurationSeconds`, `diarization` / `wordTimestamps` / `segmentTimestamps` (three-state), `artifacts` (the artifact ids this record may use, by adapter), `overriddenFields`, `templateVersion`, `extraJson` | yes — already a data module | yes |
 | `models/<artifactId>/` | the installed files of one artifact, plus `manifest.json`: `modelId`, `artifactId`, `adapterId`, `format` (`ggml` / `onnx` / `coreml` / `qnn`), `quantization`, `revision`, `files[]` with `path`, `bytes`, `sha256`, `sourceUrl`, `licenseId`, `licenseText`, `attribution`, `installedAt`, `minimumRamBytes` with its `estimateSource` | **no** | **no** |
 | `models/.downloads/` | partial downloads, resumable | no | no |
-| `local_engine_state.json` | per device: installed artifacts and their verification records (`adapterVersion + modelHash + osVersion + driverVersion + deviceId + precision` → `notTested` / `passed` / `failed`, with the smoke-test output), the chosen device per model, `fallbackPolicy`, `allowServerSpeechRecognition` | no | no |
+| `local_engine_state.json` | per device: installed artifacts and their smoke-test results (keyed by `adapterVersion + modelHash + osVersion + driverVersion + deviceId + precision` → `notRun` / `passed` / `failed` / `crashed`, with the output and the measured speed), the in-flight marker (route and UTC time, written before a native call and cleared after it — D20), the chosen device per model, `fallbackPolicy` (default: the same model on the CPU), `allowServerSpeechRecognition` | no | no |
 | `storage_config.json` › `modelsPath` | an optional override for where `models/` lives, like `ffmpegPath` | no | no |
 | `jobs/<id>/chunks/chunk_0000.wav` | a local job's PCM window, deleted like the MP3 windows | no | no |
 | `jobs/<id>/job.json` › `route`, `chunks[].placement`, `artifactRevision` | what was asked for and what ran | via the projection, as a raw map | likewise |
@@ -451,22 +476,26 @@ support ticket).
 ### 4.5 The pages
 
 - **Library › This device** — a section above the sources: each local model with its state
-  (not downloaded / downloading with progress and a cancel / verifying / ready / failed with the
-  reason), size on disk, the routes this device offers with their evidence grade in plain words
-  ("Verified on this device", "Documented by the vendor, not yet tried here", "Experimental"),
-  and Remove. Adding a model from a file the user already has (a GGML or an ONNX package) is
-  here too, with the manifest built from the file's own metadata and marked `custom`.
+  (not downloaded / downloading with progress and a cancel / verifying / checking this device /
+  ready / failed with the reason), size on disk, the routes this device offers — each saying in
+  plain words whether it has been tested on this kind of device or not yet (D20), what backs it
+  ("Documented by the vendor", "Experimental"), and whether it passed its check here — and
+  Remove. Adding a model from a file the user already has (a GGML or an ONNX package) is here
+  too, with the manifest built from the file's own metadata and marked `custom`.
 - **New job** — the source dropdown gains "This device"; choosing a local model shows the
-  compute-device chooser (Auto / Compatibility (CPU) / the verified options), the plan preview
-  with the new reason codes, and a line saying the audio stays on the device.
+  compute-device chooser (Auto / Compatibility (CPU) / every route that passed its check here,
+  the untested ones marked as such), the plan preview with the new reason codes, and a line
+  saying the audio stays on the device.
 - **Job detail** — the route requested, the placement that ran, per window in the advanced
   section; a fallback, when one happened, is a visible line with the reason.
 - **Settings › Transcription** — the fallback policy; the system-recogniser switch (with its
   privacy wording) where the platform has one; the models location on desktop.
 - **Settings › About › Diagnostics** — the device: OS, architecture, SoC where readable, GPU and
-  driver where readable, RAM; every route with its probe result and verification record; a
-  "Run smoke test" per route. This is where "Encoder: GPU; decoder: CPU" is said, never on the
-  job page.
+  driver where readable, RAM; every route with its probe result, evidence grade, whether this
+  project has tested it on this kind of device, and its smoke-test result; a "Run smoke test" per
+  route; and **Copy report** — the same facts as plain text, with no file names, paths or
+  transcript text, for the user to send by hand if they choose (the app sends it nowhere). This
+  is where "Encoder: GPU; decoder: CPU" is said, never on the job page.
 
 Settings copy follows `AGENTS.md`: one line saying what it does for the person; the protocol
 names and version numbers are on the diagnostics page and in the docs.
@@ -477,18 +506,26 @@ Each milestone is a shippable increment with its own verification. `AGENTS.md`'s
 to every one: read the docs first, keep the change scoped, update the documentation in the same
 commit, run `flutter analyze` and `flutter test` before committing, report in English and
 Chinese, ask before pushing. The boxes below are the checklist that `AGENTS.md` says to keep
-current; a box is ticked only when the "Done when" line holds, and a verification that could not
-be done on this project's hardware is written as such rather than ticked.
+current; a box is ticked only when the "Done when" line holds. A verification that could not be
+done on this project's hardware is never ticked as a verification: the route's box is ticked as
+**shipped unverified** once it meets D20 — built and linked in CI, covered by the host tests,
+exercised wherever anything here can run it, gated by the smoke test — and the support matrix
+says so.
 
-Order of work: **L0 → L1 → L2 → release 0.3.0 → L3 → L4 → L5 → L6 → L7 → L8 → L9**, except that
-L6 may be pulled forward after L2 if the user wants the phone fallback early; it depends on nothing
-after L0. L7 and L8 are optional and are skipped, not half-done, if nobody can verify them.
+Order of work: **L0 → L1 → L2 → release 0.3.0 → L3 → L4 → L5 → L6 → L7 → L8 → L9**. The user
+took the default on 2026-09-24, so L6 stays in its place rather than being pulled forward. L7
+ships unverified support rather than being skipped for want of a device (D20); L8 closes on its
+numbers either way. After 0.3.0, each milestone may ship in its own release or together with the
+next (D19).
 
 ### L0 — Protocol, records and the artifact manager (no native code)
 
 The Dart-only foundation, testable on the host in milliseconds, so that every later adapter plugs
 into something already proven with a fake.
 
+- [ ] `AGENTS.md`, in the first commit of L0: the sentence under Required workflow that says this
+      repository has no on-device AI is rewritten — on-device transcription is this app's
+      feature from this plan on — so that it stops sending implementing agents back to ask
 - [ ] `localModel` record kind (D1): model, parsing, `extraJson`, template seeding with derived
       ids, refresh with `overriddenFields`; a test that a 0.2.1-shaped document with a
       `localModel` record round-trips through `TranscribeSettings` untouched, and that
@@ -500,9 +537,12 @@ into something already proven with a fake.
       errors and placement, for every later test
 - [ ] `EngineRegistry` (which adapters exist in this build; probe caching) and `EngineRouter` as a
       pure function: filters by language (Parakeet is never a candidate for zh, ja or ko — report
-      §2), by timestamp needs, by installed artifacts, by device availability; prefers a verified
-      route over a documented one over an experimental one; never substitutes a model; emits a
-      `fallback` decision only within the user's policy. Tests for each rule
+      §2), by timestamp needs, by installed artifacts, by device availability and by this
+      device's smoke-test result; Auto follows D20 — a route tested here on this kind of device,
+      else an **A** or **B** route that passed its smoke test and beat the CPU in it, else the
+      CPU, never an untested **E** or **U** route; never substitutes a model; emits a `fallback`
+      decision only within the user's policy. The tested-here table lives in `engine-routing.md`
+      beside the rules. Tests for each rule
 - [ ] `ArtifactManifest`, `ArtifactManager` and `ArtifactDownloader` (D17): resumable ranges,
       per-file SHA-256, atomic install, remove, the lease, disk-space checks that count download,
       unpack and install space separately; tests against a fake `http.Client` including a
@@ -511,7 +551,10 @@ into something already proven with a fake.
       source revisions in the URLs and hashes measured at implementation time — never copied from
       a table in this file
 - [ ] `local_engine_state.json` and the `modelsPath` accessor in `TranscribeStorage`; `models/`
-      excluded from iCloud backup on Apple platforms
+      excluded from iCloud backup on Apple platforms; smoke-test results keyed as §4.4 says, so an
+      adapter, model, OS or driver change asks for a new check; the in-flight marker and its
+      startup rule (a marker left behind → the route is `crashed` here, `ROUTE_CRASHED` on the
+      interrupted job, which resumes under the fallback policy), tested with the fake engine
 - [ ] Planner **time-only mode** with `windowCappedByEngine` and `windowCappedByMemory`, the
       fingerprint additions, and the rule that a local job always decodes to PCM; tests in
       `chunk_planner_test.dart`
@@ -539,11 +582,14 @@ iOS and macOS at once. Metal comes with the Apple build and is reported honestly
 
 - [ ] `packages/whisper.cpp` submodule at a release tag (v1.9.4 at writing; re-check);
       `packages/local_asr_whisper` FFI package with `hook/build.dart` driving CMake:
-      `GGML_BACKEND_DL=ON`, CPU backend always; `GGML_METAL` and `WHISPER_COREML` on Apple;
-      no GPU backend elsewhere yet (L3). On Windows the hook uses **clang/LLVM** (what upstream
-      builds its own Windows ARM64 binaries with; MSVC's `cl.exe` lacks the FP16 intrinsics and
-      is unsupported by the OpenCL backend). A Linux host build is included because
-      `flutter test` on the Ubuntu runner runs the Dart VM there
+      `GGML_BACKEND_DL=ON`, CPU backend always, with runtime feature dispatch
+      (`GGML_CPU_ALL_VARIANTS` where the pinned ggml supports it on that target — check at lock
+      time) so that a CPU nobody here has tested gets a kernel it can run rather than an illegal
+      instruction; `GGML_METAL` and `WHISPER_COREML` on Apple; no GPU backend elsewhere yet
+      (L3). On Windows the hook uses **clang/LLVM** (what upstream builds its own Windows ARM64
+      binaries with; MSVC's `cl.exe` lacks the FP16 intrinsics and is unsupported by the OpenCL
+      backend). A Linux host build is included because `flutter test` on the Ubuntu runner runs
+      the Dart VM there
 - [ ] `ffigen` bindings for `whisper.h`; `WhisperCppEngine` in its own isolate (D16): load,
       `whisper_full` with `abort_callback`, `progress_callback`, `new_segment_callback`; language
       from the job's first language or auto-detect; threads from the core count; DTW word
@@ -555,9 +601,16 @@ iOS and macOS at once. Metal comes with the Apple build and is reported honestly
 - [ ] Memory guard: refuse to load an artifact whose `minimumRamBytes` exceeds available memory,
       with `OUT_OF_MEMORY` and the numbers; measure the real peak on each verifying device and
       write it into the verification record
+- [ ] The smoke test (D20): a bundled English clip of about ten seconds whose licence allows
+      shipping it (whisper.cpp's `samples/jfk.wav`, a public-domain speech, is the usual one)
+      through the route on this device; its text compared with the clip's expected text within
+      a threshold fixed in `engine-routing.md`, its speed measured; run automatically after an
+      install ("checking this device") and before a route's first job whenever its key has no
+      `passed` result; the in-flight marker written around every native call from here on
 - [ ] Library › This device, the new-job changes, the job-detail placement line, the
-      diagnostics page with "Run smoke test" (§4.5); ARB strings in all three catalogs;
-      `flutter gen-l10n` committed; widget tests at the six geometries in Simplified Chinese
+      diagnostics page with "Run smoke test" and "Copy report" (§4.5); ARB strings in all three
+      catalogs; `flutter gen-l10n` committed; widget tests at the six geometries in Simplified
+      Chinese
 - [ ] `integration_test/local_asr_test.dart`: loads `ggml-tiny` (75 MB, fetched once and cached
       by the test), transcribes a bundled ten-second fixture, cancels a run, releases; on-device
       only. `test/local_asr_live_test.dart` does the same on the host behind
@@ -569,13 +622,16 @@ iOS and macOS at once. Metal comes with the Apple build and is reported honestly
       the 81-minute lecture from M8 through large-v3-turbo and large-v3, compared line by line
       with the OpenRouter transcript), **Pixel 10** (CPU; turbo q5_0 and turbo; memory under the
       3 GB Google reserves; a foreground service with a notification keeps the job alive),
-      **macOS** (the Mac mini; Metal placement recorded), **iOS** if an iPhone is available,
-      otherwise the CI build and "unverified"
+      **macOS** (the Mac mini; Metal placement recorded), **iOS** on an iPhone if one is
+      available, otherwise the Simulator on the Mac for the code path and the device shipped
+      unverified; **Windows x64** shipped unverified, its CPU route run under emulation on this
+      machine; every other Android device shipped unverified (D20)
 - [ ] Docs: `platform-notes.md` (the toolchain per platform, clang on Windows, the submodule),
       `ci-cd.md` (new steps and caches, the tiny-model tests), `features/local-models.md`
 - [ ] **Done when**: a real recording is transcribed on Windows ARM64 and on the Pixel 10 with
-      the placement it actually ran on, the tests above are green, and both language trees say
-      how
+      the placement it actually ran on, the targets nothing here can test ship unverified with
+      their smoke test passing wherever anything can run it, the tests above are green, and both
+      language trees say how
 
 ### L2 — Parakeet and Qwen on the CPU (sherpa-onnx), and release 0.3.0
 
@@ -600,30 +656,38 @@ iOS and macOS at once. Metal comes with the Apple build and is reported honestly
 - [ ] Docs, glossary, `version-history.md` entry for 0.3.0; `AGENTS.md` behaviour contract
       gains the model-download endpoint and the "audio never leaves the device with a local model"
       promise; `PRIVACY_POLICY.md` and the privacy page gain the local-model paragraph
-- [ ] **Release 0.3.0**: version locations, tag, push — only when the user confirms, per
-      `AGENTS.md`
+- [ ] **Release 0.3.0** — the version the user confirmed on 2026-09-24: `pubspec.yaml`
+      `0.3.0+4` and `msix_version` `0.3.0.0`, the three `installer.iss` fields, the
+      `version-history.md` entry, the annotated tag `v0.3.0`; the push still waits for the
+      user's yes, per `AGENTS.md`
 - [ ] **Done when**: all three model families transcribe on the CPU on Windows ARM64, the Pixel
-      10 and the Mac, the language rule holds, and 0.3.0 is tagged
+      10 and the Mac, the language rule holds, iOS, Windows x64 and every other Android device
+      ship unverified per D20, and 0.3.0 is tagged
 
 ### L3 — GPU routes, each behind its own smoke test
 
-Nothing here is on by default. A route is offered when its backend was built, its driver answers,
-and the smoke test on this device passed; the diagnostics page shows the others as "not built",
-"no driver" or "failed" with the reason.
+A route is offered when its backend was built, its driver answers, and its smoke test on this
+device passed; Auto picks it only under D20's rule, so an **E** route is never on unless this
+project tested it on that kind of device or the user chose it. The diagnostics page shows the
+others as "not built", "no driver", "failed" or "crashed" with the reason.
 
-- [ ] Runtime backend loading and the smoke test itself: load the backend library, run ggml's
-      backend-operation self-test for the ops whisper uses, transcribe the ten-second fixture,
-      compare the text with the CPU result, record pass/fail with driver and library versions
+- [ ] Runtime backend loading and the GPU half of the smoke test: load the backend library, run
+      ggml's backend-operation self-test for the ops whisper uses, then L1's clip, its text
+      compared with the CPU result as well as with the expected text, and its speed with the
+      CPU's; record pass/fail with driver and library versions
 - [ ] **Windows ARM64 — OpenCL on Adreno X1** (`-DGGML_OPENCL=ON`, clang, the trimmed Adreno
       OpenCL SDK from the `snapdragon-toolchain` releases, pinned by version and hash, installed
       by CI and on this machine). Verify here: turbo and large-v3 on this machine, RTF and memory
       versus the CPU; the open upstream OpenCL bugs (Adreno 830 assertion, X2 Elite driver crash)
       noted in the matrix
 - [ ] **Windows x64 — Vulkan** (`-DGGML_VULKAN=ON`, the Vulkan SDK pinned on the runner).
-      Build only here; verified per user device by the smoke test
+      Shipped unverified (D20): no x64 machine here; the smoke test gates it on each user's
+      device, and as a **B** route Auto may use it where it passed and beat the CPU
 - [ ] **Android — OpenCL on Adreno** (`libggml-opencl.so`, headers and loader from the Khronos
-      repositories as upstream's Android guide does). Build only; **unverified** — no Snapdragon
-      phone; the smoke test gates it on a user's device
+      repositories as upstream's Android guide does). Shipped unverified (D20) — no Snapdragon
+      phone; an **E** route, so until the evidence changes it runs only by the user's choice after
+      its smoke test passes; the open upstream bugs (Adreno 830 assertion, 643 segfault) in the
+      matrix
 - [ ] **Android — Vulkan on Tensor G5** (`libggml-vulkan.so`; f16 and Q8_0 artifacts only, no
       k-quants; gated on driver ≥ 1.662.3024). Verify here on the Pixel 10: correctness first,
       then RTF and energy against the CPU; if the self-test fails on the PowerVR driver, the
@@ -632,21 +696,24 @@ and the smoke test on this device passed; the diagnostics page shows the others 
       package for macOS and Windows x64; on Windows ARM64 it has no OpenCL and no evidence, so
       the Qwen candidate there is llama.cpp's Qwen3-ASR port over the same OpenCL backend — a
       single ggml build shared with whisper.cpp (report §10.2), only if the smoke test and a
-      long-audio test pass. Either is optional; skipped is a valid outcome
+      long-audio test pass. Each closes on its result: shipped (unverified where nothing here
+      can run it), or dropped because a test that could be run here failed — recorded either way
 - [ ] Docs and matrix updated with every result, including the negative ones
 - [ ] **Done when**: the OpenCL route is verified on this machine, the Tensor Vulkan experiment
-      has a recorded result either way, and no GPU option ever appears without a passing smoke
-      test
+      has a recorded result either way, the routes nothing here can test ship unverified, and no
+      GPU option ever appears without a passing smoke test
 
 ### L4 — Apple native: the Neural Engine
 
-Requires the deployment-target bump to iOS 17 / macOS 14 (D12). **Ask the user before starting**;
-if declined, whisper.cpp's Core ML encoder (already in L1) is the Apple acceleration and this
-milestone is closed as declined.
+Raises the deployment targets to iOS 17 / macOS 14, which the user approved on 2026-09-24 (D12);
+nothing here waits for another confirmation. If L1 already had to raise them, this milestone
+uses them as they are.
 
-- [ ] Deployment targets raised in the Xcode projects; `platform-notes.md` says which devices
-      that excludes (iPhone X and earlier; Intel and pre-2018 Macs are unaffected for the CPU
-      path only if the app keeps building for them — it does not, so say so)
+- [ ] Deployment targets raised to iOS 17 / macOS 14 in the Xcode projects, the Podfiles and
+      package manifests, and anything in CI that names them; `platform-notes.md`, the README's
+      requirements and the release notes say which devices that drops — on Apple's lists at the
+      time of writing, the iPhone 8, 8 Plus and X and the iPads of that generation, and Macs from
+      before 2018 other than the 2017 iMac Pro; confirm both against Apple's pages when it is done
 - [ ] `packages/local_asr_apple`: a SwiftPM plugin (Flutter 3.44 default) depending on
       FluidAudio pinned by exact version; a Pigeon API with `probe`, `prepare`, `transcribe`
       (events through a Flutter API callback), `cancel`, `release`; inference on a native queue
@@ -663,8 +730,10 @@ milestone is closed as declined.
       numbers on the diagnostics page
 - [ ] Optional: WhisperKit through the same plugin for Whisper on the Neural Engine, only if the
       whisper.cpp Core ML encoder from L1 is measurably worse on the Mac
-- [ ] Verification on the Mac mini (macOS) and an iPhone (iOS) — memory under pressure,
-      background/foreground during a job, a 16 GB and an 8 GB device if both exist
+- [ ] Verification on the Mac mini (macOS) — memory under pressure (an 8 GB machine as well if
+      one exists), background/foreground during a job; iOS on an iPhone if one is available,
+      otherwise the Simulator for the code path and the iOS route shipped unverified (D20) — the
+      Simulator runs neither the Neural Engine nor a phone's memory limit
 - [ ] **Done when**: Parakeet and Qwen transcribe through FluidAudio on the Mac with the
       placement recorded, the Qwen gate has a number, and the docs say what the target bump cost
 
@@ -685,20 +754,26 @@ record is the **turbo** record; large-v3 is not offered on this route.
       the model licence (Apache-2.0) and the runtime licence recorded separately
 - [ ] **L5a — Windows ARM64**: `Qualcomm.ML.OnnxRuntime.QNN` 2.6.0 (or the newest with the same
       ORT compatibility) as a build-hook download by hash; the plugin EP registered by path;
-      Windows ML considered and declined unless the user wants the OS-serviced EP (it excludes the
-      X2 Elite today). **Verify here**: the lecture through the NPU on this machine, encoder and
-      decoder placement from QNN profiling, RTF against CPU and OpenCL, and — because an NPU that
-      is slower may still be worth it — energy measured, not assumed
+      Windows ML declined — the default the user took on 2026-09-24 — because its catalogue does
+      not list the X2 Elite, which the NuGet EP covers. **Verify here**: the lecture through the
+      NPU on this machine, encoder and decoder placement from QNN profiling, RTF against CPU and
+      OpenCL, and — because an NPU that is slower may still be worth it — energy measured, not
+      assumed; the X2 Elite (v81) asset ships unverified (D20)
 - [ ] **L5b — Android**: `com.qualcomm.qti:onnxruntime-android-qnn` + `qnn-runtime` (or
       Microsoft's AAR), the manifest and packaging rules from §2.5 (`uses-native-library`,
       `ADSP_LIBRARY_PATH`, legacy packaging). The `qnn-runtime` licence text is read and the
-      redistribution question answered **before** the AAR is added. **Unverified here**; built
-      behind `--dart-define=LOCAL_ASR_QNN=true`, off in the store flavour until somebody with a
-      Snapdragon phone verifies it and records the device
+      redistribution question answered **before** the AAR is added; if it does not clearly allow
+      shipping the runtime inside an app, L5b closes on that answer, written into
+      `platform-notes.md`, and nothing is shipped. Otherwise it **ships unverified** (D20) — no
+      Snapdragon phone here — in both flavours, the per-SoC asset downloaded only for the SoC the
+      device reports, gated by the smoke test. Its added size is measured; if it pushes the Play
+      bundle past the store's limit, the store flavour leaves it out (the first feature gated on
+      the flavour) rather than downloading native code, which Play's policy forbids
 - [ ] Docs: `platform-notes.md` (the two runtimes, the packaging rules, the licence answer),
       the matrix, `features/local-models.md`
-- [ ] **Done when**: L5a is verified on this machine with placement evidence; L5b builds, is
-      documented as unverified, and shows nothing on a device that has not passed the smoke test
+- [ ] **Done when**: L5a is verified on this machine with placement evidence; L5b ships
+      unverified or is closed on the licence answer, and shows nothing on a device that has not
+      passed the smoke test
 
 ### L6 — The operating system's recogniser (optional fallback)
 
@@ -715,28 +790,42 @@ Off by default; a visible choice; never a silent substitute (D15).
       available; `EXTRA_AUDIO_SOURCE` (API 33) fed from a pipe at real-time pace with the three
       format extras and a segmented session; language packs via `checkRecognitionSupport` and
       `triggerModelDownload`; word timing from `RECOGNITION_PARTS` when returned; detection of the
-      microphone fallback; `RECORD_AUDIO` requested at runtime only when this switch is on, with
-      the manifest and privacy-policy change **confirmed by the user first** (§2.6)
+      microphone fallback, first of all by the smoke test (a known clip through the pipe) before
+      any real job uses the recogniser; `RECORD_AUDIO` declared in the manifest and requested at
+      runtime only when this switch is turned on — the default the user took on 2026-09-24
+      (§2.6) — with the privacy policy, the store listing and `platform-notes.md` saying why a
+      file API needs it
 - [ ] Windows: not offered; `hasSystemSpeechRecognizer` is false there and the setting is absent
 - [ ] The job records `engine: system`, the transcript header says so, `diarization: unsupported`,
       timestamps marked by their kind
-- [ ] Verification on the Pixel 10 and the Mac; on an iPhone if available
+- [ ] Verification on the Pixel 10 and the Mac; on an iPhone if available; other Android
+      devices, and iOS without an iPhone, ship unverified (D20)
 - [ ] Docs: `features/system-speech.md` in both languages; the privacy page and
       `PRIVACY_POLICY.md`; `platform-notes.md` for the new plist keys and the Android permission
 - [ ] **Done when**: a phone with no model downloaded transcribes a recording through the system
       recogniser after the user turned it on, the transcript says which engine produced it, and
       the policy says where the audio went
 
-### L7 — Windows x64 NPUs (optional; no verifying device)
+### L7 — Windows x64 NPUs (unverified support)
 
-- [ ] Intel: OpenVINO GenAI `WhisperPipeline` on `NPU` (large-v3 exported to IR by our tooling;
-      the compile cache with a size cap; "preparing model" as its own state); a C++ wrapper in a
-      build hook; **only if** a Core Ultra machine can verify it
+No Core Ultra or Ryzen AI machine exists here, so both routes ship as unverified support (D20)
+rather than being skipped for want of one. A route closes only for a reason that is not
+verification — its runtime cannot be fetched in CI without an account, its licence does not allow
+shipping it, or it would more than double the Windows x64 download — and the matrix and the
+decisions log say which.
+
+- [ ] Intel: OpenVINO GenAI `WhisperPipeline` on `NPU` (large-v3 exported to IR by our tooling
+      and hashed into a manifest like any artifact; the compile cache with a size cap; "preparing
+      model" as its own state); a C++ wrapper in a build hook against the OpenVINO runtime pinned
+      by version and hash, in the Windows x64 build only; the code path exercised with the `CPU`
+      device wherever the x64 build can run here
 - [ ] AMD: whisper.cpp `WHISPER_VITISAI` with the Ryzen AI runtime and the `.rai` encoder cache,
-      Windows and Ryzen AI 300 only (report §5.2), **only if** such a machine can verify it
-- [ ] Otherwise: closed as "not verifiable", the matrix says **A on paper, unverified here**
+      Windows and Ryzen AI 300 only (report §5.2); the runtime is found on the user's machine at
+      run time unless its licence allows bundling it
+- [ ] The matrix says **A on paper, unverified here** for each route that ships, and gives the
+      reason for each that closed
 
-### L8 — Local speaker labels (optional stretch)
+### L8 — Local speaker labels (a stretch that closes on its numbers)
 
 - [ ] sherpa-onnx offline speaker diarization (segmentation model + speaker embedding model) as a
       second artifact family, run per window after the ASR window is released from memory,
@@ -749,8 +838,9 @@ Off by default; a visible choice; never a silent substitute (D15).
 
 ### L9 — Closing
 
-- [ ] Every milestone above closed (ticked, declined by the user, or "not verifiable" with the
-      reason); every unverified route is in `local-asr-support-matrix.md` in both languages
+- [ ] Every milestone above closed — ticked, with each route it ships marked verified or
+      unverified, or closed on a recorded reason that is not "could not be verified" (D20); every
+      unverified route is in `local-asr-support-matrix.md` in both languages
 - [ ] The closing steps in §10 executed, ending with the deletion of this file
 
 ### 5.1 The artifacts the templates ship with
@@ -788,7 +878,8 @@ New pages:
 - `algorithms/engine-routing.md` — the router's rules and their order (§4.2, L0), derived not
   described, with the same worked examples the tests use.
 - `local-asr-support-matrix.md` — §2.7 as a living page, one row per target, with the
-  verification records (device, OS, driver, artifact hash, RTF, peak memory, date).
+  verification records (device, OS, driver, artifact hash, RTF, peak memory, date), the routes
+  that ship unverified, and any diagnostics report received from somebody else's hardware.
 - `features/system-speech.md` (L6) — the fallback, per platform, and its privacy line.
 - `decisions.md` — created in the closing step (§10) from the decisions log below.
 
@@ -807,29 +898,37 @@ new reason codes; L0), `features/media-tools.md` (PCM output; L0), `features/exp
 
 Glossary (`translation-guide.md` §5.2, app-specific — none of these is cross-cutting, so no
 sibling repository changes): local model, engine, download (a model), compute device, on this
-device, verified / unverified / experimental, placement, fallback, system recogniser, artifact
-(the downloaded package). The implementer chooses the Simplified and Traditional terms with the
-guide's rule in mind (設定 not 設置, 檔案 not 文件, 轉寫 not 转写) and adds them before the first
-ARB string that uses them.
+device, verified / unverified / experimental, tested on this kind of device, smoke test (a
+route's check on this device), placement, fallback, system recogniser, artifact (the downloaded
+package), diagnostics report. The implementer chooses the Simplified and Traditional terms with
+the guide's rule in mind (設定 not 設置, 檔案 not 文件, 轉寫 not 转写) and adds them before the
+first ARB string that uses them.
 
 Privacy: `PRIVACY_POLICY.md` and `privacy_policy_page.dart` gain, at L2, a paragraph saying that
-with a downloaded model the audio never leaves the device and that the only new network contact
-is the model download the user asks for; at L6, the paragraph on the system recogniser saying
-per platform whether audio can leave the device and how the switch is worded; at L6 on Android,
-the microphone permission and why an API needs it for a file.
+with a downloaded model the audio never leaves the device, that the only new network contact is
+the model download the user asks for, and that the diagnostics report is text the user copies and
+the app sends nowhere; at L6, the paragraph on the system recogniser saying per platform whether
+audio can leave the device and how the switch is worded; at L6 on Android, the microphone
+permission and why an API needs it for a file.
 
-`AGENTS.md`: the behaviour contract gains the local-model promises (audio stays on the device;
-downloads only from the manifest, only on a tap; `models/` is never a data module; model identity
-is never substituted; placement is recorded, never inferred), and the "Working with the shared
-package" section gains the whisper.cpp submodule rule (§4.1). Only rules about how to work go
-there; the explanations go in the docs.
+`AGENTS.md`: in L0, the sentence saying this repository has no on-device AI is rewritten (the user
+asked for this feature; the sentence predates it). As the features land, the opening paragraph
+mentions the local models; the behaviour contract gains the local-model promises (audio stays on
+the device; downloads only from the manifest, only on a tap; `models/` is never a data module;
+model identity is never substituted; placement is recorded, never inferred; a route not tested on
+this kind of device says so and is picked by Auto only as D20 allows); and in L1 the "Working with
+the shared package" section gains the whisper.cpp submodule rule (§4.1). Only rules about how to
+work go there; the explanations go in the docs.
 
 ## 7. Tests and verification
 
 Host tests (`test/`), all runnable with no model, no network and no device:
 
 - `local_model_config_test.dart` — parsing, `extraJson`, templates, the unknown-kind round trip
-- `engine_router_test.dart` — every rule in `algorithms/engine-routing.md`, as pure cases
+- `engine_router_test.dart` — every rule in `algorithms/engine-routing.md`, as pure cases, D20's
+  Auto rule among them
+- `local_engine_state_test.dart` — smoke-test keys, the in-flight marker, and what a marker left
+  behind does at the next start
 - `artifact_manager_test.dart` — resume, hash mismatch, full disk, atomic install, the lease
 - `chunk_planner_test.dart` — time-only mode and the new reasons
 - `job_runner_test.dart` — the fake engine through the whole machine (L0)
@@ -844,13 +943,18 @@ On-device tests (`integration_test/`), run by hand per `integration_test/README.
 - `media_toolkit_test.dart` — extended with the PCM window
 - `local_asr_test.dart` — load, transcribe, cancel, release with the tiny model; the same
   assertions on every platform, so a wrong architecture or a missing symbol fails at the first
-  call in the test and not in front of the user
+  call in the test and not in front of the user; run in the iOS Simulator and, for the Windows
+  x64 build, under emulation on the ARM64 machine too — as close as this project gets to those
+  targets
 
 Acceptance per route, before its box is ticked (report §11.1): artifact verification, cold load,
 first compile where there is one, a short clip, a long recording split into windows, two jobs
 back to back, cancel, switching models, low memory, background and foreground on mobile, offline
 with the network switched off. Each record names the SoC, OS, driver, runtime versions, artifact
-hash, quantization and decoding settings, and gives RTF, first-result latency and peak memory.
+hash, quantization and decoding settings, and gives RTF, first-result latency and peak memory. A
+route with no device here to run this list on gets no acceptance record: its box is ticked as
+shipped unverified once D20's conditions hold, and a diagnostics report from somebody else's
+hardware is recorded as that, with its date, never as this project's verification.
 
 ## 8. CI
 
@@ -860,12 +964,13 @@ hash, quantization and decoding settings, and gives RTF, first-result latency an
   GitHub runner, the Android NDK comes with Flutter, Xcode with the macOS runners.
 - **Both Windows jobs install LLVM** (a pinned release, by URL and hash; the ARM64 runner takes
   the `woa64` installer) — clang is the compiler for whisper.cpp there (L1).
-- **windows-x64** installs the Vulkan SDK (pinned) for `ggml-vulkan.dll` (L3).
+- **windows-x64** installs the Vulkan SDK (pinned) for `ggml-vulkan.dll` (L3) and fetches the
+  OpenVINO runtime (pinned, by hash) for the Intel NPU route (L7).
 - **windows-arm64** unpacks the trimmed Adreno OpenCL SDK tarball from the `snapdragon-toolchain`
   releases (pinned version and hash) for `ggml-opencl.dll` (L3), and downloads the Qualcomm ORT
   QNN package by hash (L5a).
 - **android** fetches the Khronos OpenCL headers and loader at pinned commits for
-  `libggml-opencl.so` (L3), and the QNN AARs only behind the L5b flag.
+  `libggml-opencl.so` (L3), and the QNN AARs once the licence answer allows them (L5b).
 - The native build directories are cached, keyed by submodule commit, OS, architecture, backend
   set and toolchain version, so a docs-only push does not rebuild ggml five times.
 - `flutter test` on the Ubuntu runner runs the host live test with the tiny model cached by
@@ -884,12 +989,15 @@ certificate.
   on the current driver. That is a recorded result, not a blocker; the CPU path is the product.
 - **sherpa-onnx Windows ARM64 in the pub package** — merged upstream on 2026-09-20, not yet
   released. If the next release slips, L2 vendors (D11).
-- **Deployment-target bump** (D12) is the one change that removes devices; it waits for the user.
+- **Deployment-target bump** (D12) — approved by the user on 2026-09-24. It still removes
+  devices, so it lands only in the first milestone that needs it, and that release's notes say
+  which.
 - **Qualcomm runtime redistribution** — the AI Hub Model License text could not be read; the
   QAIRT EULA marks files confidential. L5b does not add the AAR until the answer is in the docs.
 - **AI Hub pipeline churn** — assets must be rebuilt with compile + link; pin every version.
 - **Android microphone permission for the fallback** (§2.6) — a stated property of the app
-  changes; the user decides.
+  changes; the user took the default on 2026-09-24: declared, asked for only when the fallback is
+  switched on, explained in the privacy policy and the store listing.
 - **Memory on 8 GB phones** — large-v3 f16 will not fit; the guard refuses with numbers rather
   than crashing, and the matrix says which artifacts fit which devices.
 - **Long audio through Qwen ports** — llama.cpp's port fails past about two minutes; our windows
@@ -897,12 +1005,20 @@ certificate.
 - **Qwen 1.7B** has no published sherpa-onnx export; optional own export in L2.
 - **Upstream drift** — every claim here is dated; the implementer re-verifies at lock time and
   records corrections in the decisions log.
-- **App Store review** — downloading model weights is data, not code; the privacy label gains
-  nothing new for local models and the "microphone" answer changes only with L6 on iOS.
+- **Store review** — downloading model weights is data, not code; the privacy labels gain
+  nothing new for local models. L6 adds the speech-recognition usage string on Apple platforms and
+  the microphone permission on Android, and the store listings change in the release that ships
+  them.
 - **What this project cannot verify**: Snapdragon Android, MediaTek, Exynos, Intel and AMD NPUs,
-  Windows x64 GPUs, an iPhone unless one is available. The plan builds those routes behind the
-  smoke test and says "unverified" in the product until somebody with the hardware records a
-  result.
+  Windows x64 CPUs and GPUs, an iPhone unless one is available. These routes ship as unverified
+  support (D20): built, CI-tested, gated by the smoke test on each device, marked as untested in
+  the product, and picked by Auto only as D20 allows. A diagnostics report from somebody with the
+  hardware is recorded in the matrix as a community result.
+- **Unverified routes in users' hands** — a route that passes a ten-second check can still fail
+  on a long recording: a GPU driver timeout, a leak, the Qwen port's long-audio bug. The
+  in-flight marker, the fallback policy (the same model on the CPU by default) and the per-window
+  persistence bound the damage to one window, and the job says what happened.
+- **Tensor NPU** — not pursued: the user declined the Tensor SDK beta on 2026-09-24 (D14).
 
 ## 10. Closing this plan
 
@@ -932,11 +1048,28 @@ Recorded when a choice is made that later work should not quietly reverse. Newes
 each date. This log outlives this file: the closing step in §10 moves it, verbatim, to
 `doc/en-us/decisions.md`.
 
+- **2026-09-24** — **The user settled the plan's open questions** the day it was written:
+  release **0.3.0** first (D19); **unverified support** for the devices this project cannot test
+  (D20); the deployment targets raised to **iOS 17 / macOS 14** (D12); **no** application for
+  Google's Tensor SDK (D14); and the plan's defaults for everything else — the Android microphone
+  permission declared for the L6 fallback and asked for only when it is switched on, the NuGet QNN
+  execution provider rather than Windows ML on Windows ARM64, L6 kept in its place in the order,
+  L7 shipped as unverified support, L8 closed on its numbers, and the fallback policy defaulting
+  to the same model on the CPU. The entries below are written as settled.
+- **2026-09-24** — **Unverified is a shipping state** (D20). Most devices this app targets cannot
+  be tested here, so a route this project has not tested on a class of device ships marked as
+  untested instead of being held back. It is built and covered by CI; it passes a smoke test on
+  each device before its first job; Auto uses it only when its evidence is A or B and it passed
+  that test and beat the CPU in it, never when it is an untested E or U route; a crash inside it
+  is found at the next start by the in-flight marker and ends its automatic use on that device;
+  and a diagnostics report from somebody else's hardware can raise its evidence grade but never
+  makes it tested here. The code's grade for "nothing found" is `none`, so that "unverified"
+  means only this.
 - **2026-09-24** — Local models enter the synced document as a **new record kind**,
   `localModel`, not as a new provider dialect. A 0.2.x build reads an unknown dialect as
   `openaiCompatible` and would show a phantom source; it reads an unknown kind as `unknown` and
   carries it untouched, which is the contract that kind was written for. The files themselves,
-  the chosen compute device and every verification record are device-local and never sync (D1,
+  the chosen compute device and every smoke-test result are device-local and never sync (D1,
   D2).
 - **2026-09-24** — `models/` is not a data module and will not become one: a re-downloadable
   1.5 GB file has no place in a backup bundle, a ZIP or a WebDAV upload, and the exclusion is
@@ -949,9 +1082,9 @@ each date. This log outlives this file: the closing step in §10 moves it, verba
   local job therefore needs the media toolkit on every platform (D5).
 - **2026-09-24** — No silent model substitution, ever: turbo is not large-v3, the OS recogniser is
   not a model, and a fallback is a visible event under the user's own policy (D6). Capabilities
-  are the intersection of model, artifact, runtime and device verification, with `unknown` a real
-  answer (D7). Evidence grades and placement kinds are enums in the code, and a placement the
-  runtime did not report is `unknown`, never a guess (D8).
+  are the intersection of model, artifact, runtime and the device's smoke test, with `unknown` a
+  real answer (D7). Evidence grades and placement kinds are enums in the code, and a placement
+  the runtime did not report is `unknown`, never a guess (D8).
 - **2026-09-24** — whisper.cpp is built from a pinned tag in a build hook of our own, with clang
   on Windows, because both existing pub packages ship x86_64-only Windows binaries or no desktop
   at all and neither builds on this project's ARM64 machine; GPU backends are separate dynamic
@@ -964,9 +1097,10 @@ each date. This log outlives this file: the closing step in §10 moves it, verba
   API-only. The record scheme lets a future open release become a new template without code
   changes, and the implementer re-checks the Qwen organisation at lock time.
 - **2026-09-24** — The Apple native adapter is FluidAudio on the Neural Engine, which needs iOS
-  17 / macOS 14; the deployment-target bump waits for the user's explicit confirmation before L4,
-  because it is the one decision in this plan that removes devices. Whisper's Apple acceleration
-  in L1 is whisper.cpp's own Metal and Core ML encoder, which need no bump (D12).
+  17 / macOS 14. The user approved the deployment-target bump; because it is the one decision in
+  this plan that removes devices, it lands in the first milestone that needs it — L4, unless
+  whisper.cpp's Metal or Core ML path needs it in L1. Whisper's Apple acceleration in L1 is
+  whisper.cpp's own Metal and Core ML encoder (D12).
 - **2026-09-24** — Qualcomm is two targets: Windows on Snapdragon and Android on Snapdragon get
   separate adapters, runtimes, assets and verification. The NPU route is ONNX Runtime's QNN
   execution provider with Qualcomm AI Hub's Whisper-Large-V3-Turbo assets per HTP architecture;
@@ -974,17 +1108,18 @@ each date. This log outlives this file: the closing step in §10 moves it, verba
   The GPU route on every Qualcomm chip is OpenCL; Vulkan produced gibberish on Adreno X1 and
   crashes on the 830 (D13).
 - **2026-09-24** — Google Tensor is CPU first, a Vulkan experiment second, and no NPU: the Tensor
-  SDK is a sign-up-gated beta for G5/G6 with a Parakeet artifact and no Flutter route, which is a
-  separate decision for the user (D14).
+  SDK is a sign-up-gated beta for G5/G6 with a Parakeet artifact and no Flutter route, and the
+  user decided not to apply for it (D14).
 - **2026-09-24** — The OS recogniser is an off-by-default fallback with its own privacy line;
   server-side recognition only behind a separately worded switch; nothing on Windows, which has
-  no shippable file-transcription API (D15). On Android it would add the microphone permission
-  the app has never asked for, so it too waits for the user's confirmation.
+  no shippable file-transcription API (D15). On Android it adds the microphone permission the
+  app has never asked for; the user accepted that, with the permission asked for only when the
+  fallback is switched on.
 - **2026-09-24** — Downloads are manifest-driven, resumable, hash-verified and atomic, from the
   manifest's URL only, on a tap only (D17). Speaker labels are not offered by any local model in
   the first release; a diarization pipeline is an optional later milestone (D18). The first
-  release of this plan is 0.3.0 after L0–L2; every later route ships in its own minor release
-  when verified (D19).
+  release of this plan is 0.3.0 after L0–L2, the version the user confirmed; later milestones
+  ship in later releases without waiting for a verification this project cannot do (D19, D20).
 - **2026-09-24** — This plan file is temporary. It replaces the closed 0.1.0–0.2.1 plan and is
   deleted by its own closing step once every milestone is closed, with the decisions log moved
   into the docs and every reference to `PLAN.md` removed in the same commit.
