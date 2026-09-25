@@ -59,6 +59,13 @@ is installed: Visual Studio's own when the image has the component, otherwise a 
 checked against its published SHA-256. The Ubuntu job installs Ninja; elsewhere the hook falls back
 to Makefiles when Ninja is missing.
 
+That is the source build this project is leaving (decision D21 of `PLAN.md`): the app build will
+only download prebuilt libraries. `.github/workflows/native-prebuild.yml` builds the ones upstream
+does not publish in a usable form — Android arm64-v8a and x86_64, and Windows ARM64 at ARMv8.2
+without OpenMP — and publishes them as the assets of a GitHub Release tagged
+`whisper-bin-<upstream version>-<n>`, which the `v*` release trigger ignores. It runs by hand from
+the Actions tab, once per upstream version, with the upstream tag and the release tag as inputs.
+
 ## Fresh clone
 
 ```bash

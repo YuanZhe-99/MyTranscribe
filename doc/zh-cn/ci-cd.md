@@ -50,6 +50,12 @@ CI 不构建 MSIX：打包它需要签名证书，而本仓库没有。要产出
 镜像带有该组件时用 Visual Studio 自己的，否则用一个固定的 LLVM 发行版，并按其公布的 SHA-256 核对。Ubuntu 作
 业安装 Ninja；在其他地方缺少 Ninja 时，钩子回退到 Makefiles。
 
+这是本项目正在放弃的源码构建（`PLAN.md` 的决定 D21）：应用构建将只下载预编译的库。
+`.github/workflows/native-prebuild.yml` 负责构建上游没有以可用形式发布的那些 —— Android arm64-v8a 与 x86_64，
+以及 ARMv8.2、不带 OpenMP 的 Windows ARM64 —— 并把它们作为一个 GitHub Release 的附件发布，标签为
+`whisper-bin-<上游版本>-<n>`，`v*` 发布触发器会忽略它。它从 Actions 页手动运行，每个上游版本一次，输入是上游
+标签和发布标签。
+
 ## 全新克隆
 
 ```bash
