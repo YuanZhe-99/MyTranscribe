@@ -47,7 +47,8 @@ never silently runs the other.
 | Parakeet TDT 0.6B v3 | parakeet | `parakeet-tdt-0.6b-v3-q8_0-ggml` | 638 MiB | segment, word | 25 European languages; **no Chinese, Japanese or Korean** |
 | Qwen3-ASR 0.6B | qwen | `qwen3-asr-0.6b-int8-onnx` | 838 MiB archive | none | any (the model detects) |
 
-No local model labels speakers. Every built-in window ceiling is 600 seconds — an app ceiling chosen
+No local model labels speakers itself; a separate package does, for any of them (see
+[Speaker labels](#speaker-labels)). Every built-in window ceiling is 600 seconds — an app ceiling chosen
 for memory and visible progress, not a promise from the model — and an engine may lower it for its
 routes: Parakeet takes two-minute windows, because whisper.cpp's Parakeet encodes a whole window
 with attention over every frame of it, and Qwen3-ASR takes 30-second windows, because sherpa-onnx's
@@ -186,6 +187,33 @@ GPU finished before a fallback came from the same model and are kept. See
 The failure kinds a local job adds are `modelNotInstalled`, `modelDamaged`, `unsupportedByModel`,
 `engineUnavailable`, `outOfMemory` and `routeCrashed`, each with the engine's own words.
 
+## Speaker labels
+
+Labelling who spoke is one package shared by every local model, not a property of any of them:
+`speaker-labels-pyannote3-campplus`, 35 MB, downloaded from **Settings › Local models ›
+Speaker labels** and removed from the same row. It holds two models that sherpa-onnx's offline
+speaker diarization runs together — pyannote's segmentation 3.0 (MIT), which finds where a voice
+starts and stops, and 3D-Speaker's CAM++ embedding (Apache-2.0), which tells voices apart — and
+both files are checked against their SHA-256 like any other package.
+
+Once it is installed, **Speakers** on a local job turns on. The job then takes the diarized
+overlap instead of the plain one, as a remote job with speakers does, and after each window is
+transcribed the labeller runs over the same window: the diarizer's turns are compared with the
+transcript's segments, and each segment takes the speaker it overlaps longest. A segment no turn
+touches keeps no label. The labels are window-local — `S1`, `S2`, … numbered by the diarizer in
+that window — and the job joins them across windows with the same
+[speaker unifier](../algorithms/speaker-unification.md) and the same thresholds as a remote job.
+
+The labeller runs in its own worker isolate and keeps its models loaded between windows. It
+lowers no ceiling and changes no route: the ASR engine has finished the window before the labeller
+starts. A labelling failure leaves that window without speakers rather than failing the job — the
+transcript is what the job is for. Qwen3-ASR's windows have no real timestamps, so every segment
+spans the whole window and takes the window's dominant voice.
+
+The package needs sherpa-onnx, so on iOS, where the app bundles none, the row is absent and local
+jobs offer no speakers. It was checked on this machine with two speakers in a short English
+recording; it has not been measured against a remote model's labels on a long meeting.
+
 ## The pages
 
 - **Library › This device** lists the local models above the sources, each with its state here:
@@ -204,7 +232,8 @@ The failure kinds a local job adds are `modelNotInstalled`, `modelDamaged`, `uns
   or the runs of windows that shared one — and shows every fallback as its own line.
 - **Settings › Local models** holds the fallback policy and the **Diagnostics** page: this device's
   class, OS and processors; the engine's version, build flags and compute devices; every route
-  with its grade, whether it was tested here, and its check; and **Copy report**.
+  with its grade, whether it was tested here, and its check; and **Copy report**. Below them is
+  the **Speaker labels** row (not on iOS), which downloads or removes the speaker-labels package.
 
 The copied report names the device, the engine, and each route's model id, adapter, backend, grade,
 tested-here flag, availability, check outcome and speed. It holds no file names, no paths and no

@@ -26,6 +26,7 @@ import 'engine_registry.dart';
 import 'engine_router.dart';
 import 'local_asr_engine.dart';
 import 'route_smoke_test.dart';
+import 'speaker_labeler.dart';
 
 /// One local window's result.
 class LocalWindowResult {
@@ -68,8 +69,13 @@ class LocalTranscriptionBackend {
     required this.registry,
     this.smokeTester,
     this.smokeClip,
+    this.speakerLabeler,
     DateTime Function()? clock,
   }) : _clock = clock ?? DateTime.now;
+
+  /// Labels who spoke in each window when a job asks for speakers (L8); null
+  /// in tests that need none.
+  final SpeakerLabeler? speakerLabeler;
 
   /// The adapters, packages and engine state.
   final EngineRegistry registry;
@@ -417,15 +423,23 @@ class LocalJobSession {
         );
       }
       if (error != null) throw error;
-      final text = segments
+      // Speaker labels (L8): a separate model over the same window, when the
+      // job asked for speakers and the package is installed. The labels are
+      // local to this window; the speaker unifier joins them across windows.
+      final labeller = _backend.speakerLabeler;
+      final labelled = options.diarize && labeller != null
+          ? await labeller.label(pcm, segments)
+          : segments;
+      final text = labelled
           .map((s) => s.text)
           .where((t) => t.isNotEmpty)
           .join(' ');
       return (
         TranscriptionResult(
           text: text,
-          segments: segments,
+          segments: labelled,
           hasRealTimestamps: timed,
+          hasSpeakers: labelled.any((s) => s.speaker != null),
         ),
         placement,
       );

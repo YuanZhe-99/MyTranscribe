@@ -28,6 +28,7 @@ import '../../local/models/engine_capability.dart';
 import '../../local/services/engine_registry.dart';
 import '../../local/services/local_models_controller.dart';
 import '../../local/views/engine_diagnostics_page.dart';
+import '../../local/views/speaker_labels_tile.dart';
 import '../../media/widgets/media_tools_tile.dart';
 import 'backup_page.dart';
 import 'license_page.dart';
@@ -444,6 +445,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               },
             ),
           ),
+          if (hasSpeakerLabels) const SpeakerLabelsTile(),
           ListTile(
             leading: const Icon(Icons.memory_outlined),
             title: Text(l10n.settingsDiagnostics),

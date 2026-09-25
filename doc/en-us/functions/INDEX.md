@@ -117,6 +117,8 @@ is covered by a concept page, and a table of one-line stubs would say less than 
 | `lib/features/local/services/artifact_downloader.dart` | [features/local-models.md](../features/local-models.md) |
 | `lib/features/local/services/artifact_manager.dart` | [features/local-models.md](../features/local-models.md) |
 | `lib/features/local/services/local_engine_state_store.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/services/speaker_labeler.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/views/speaker_labels_tile.dart` | [features/local-models.md](../features/local-models.md) |
 | `lib/features/local/services/local_model_templates.dart` | [features/local-models.md](../features/local-models.md) |
 | `lib/features/local/services/local_transcription_backend.dart` | [features/local-models.md](../features/local-models.md) |
 | `lib/features/local/services/pcm_window_cutter.dart` | [features/media-tools.md](../features/media-tools.md) |

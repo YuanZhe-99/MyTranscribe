@@ -28,6 +28,16 @@ const _functions = {
   'SherpaOnnxDecodeOfflineStream',
   'SherpaOnnxGetOfflineStreamResult',
   'SherpaOnnxDestroyOfflineRecognizerResult',
+  // Speaker labels (L8): offline diarization.
+  'SherpaOnnxCreateOfflineSpeakerDiarization',
+  'SherpaOnnxDestroyOfflineSpeakerDiarization',
+  'SherpaOnnxOfflineSpeakerDiarizationGetSampleRate',
+  'SherpaOnnxOfflineSpeakerDiarizationProcess',
+  'SherpaOnnxOfflineSpeakerDiarizationResultGetNumSpeakers',
+  'SherpaOnnxOfflineSpeakerDiarizationResultGetNumSegments',
+  'SherpaOnnxOfflineSpeakerDiarizationResultSortByStartTime',
+  'SherpaOnnxOfflineSpeakerDiarizationDestroySegment',
+  'SherpaOnnxOfflineSpeakerDiarizationDestroyResult',
 };
 
 /// Purpose: Generate the binding file.
@@ -62,6 +72,8 @@ Future<void> main(List<String> args) async {
         struct: (s) {
           if (s.name.startsWith('SherpaOnnxOffline') ||
               s.name == 'SherpaOnnxFeatureConfig' ||
+              s.name == 'SherpaOnnxFastClusteringConfig' ||
+              s.name == 'SherpaOnnxSpeakerEmbeddingExtractorConfig' ||
               s.name == 'SherpaOnnxHomophoneReplacerConfig') {
             s.isIncluded = true;
           }

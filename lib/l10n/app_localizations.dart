@@ -933,6 +933,12 @@ abstract class AppLocalizations {
   /// **'This model does not label speakers.'**
   String get newJobDiarizeUnsupported;
 
+  /// No description provided for @newJobDiarizeLocalPackage.
+  ///
+  /// In en, this message translates to:
+  /// **'Download speaker labels in Settings › Local models to label who spoke.'**
+  String get newJobDiarizeLocalPackage;
+
   /// No description provided for @newJobKeepChunks.
   ///
   /// In en, this message translates to:
@@ -2414,6 +2420,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use the system\'s speech recognition, on this device'**
   String get settingsFallbackSystem;
+
+  /// No description provided for @settingsSpeakerLabels.
+  ///
+  /// In en, this message translates to:
+  /// **'Speaker labels'**
+  String get settingsSpeakerLabels;
+
+  /// No description provided for @settingsSpeakerLabelsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Label who spoke in transcriptions made on this device ({megabytes} MB)'**
+  String settingsSpeakerLabelsSubtitle(int megabytes);
+
+  /// No description provided for @settingsSpeakerLabelsInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloaded: transcriptions on this device can label who spoke'**
+  String get settingsSpeakerLabelsInstalled;
+
+  /// No description provided for @settingsSpeakerLabelsDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get settingsSpeakerLabelsDownload;
+
+  /// No description provided for @settingsSpeakerLabelsRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get settingsSpeakerLabelsRemove;
 
   /// No description provided for @settingsDiagnostics.
   ///

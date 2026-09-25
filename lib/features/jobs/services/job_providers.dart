@@ -34,6 +34,7 @@ final jobRunnerProvider = Provider<JobRunner>((ref) {
         state: ref.read(localEngineStateStoreProvider),
       ),
       smokeClip: loadSmokeClip,
+      speakerLabeler: ref.read(speakerLabelerProvider),
     ),
   );
 });
@@ -93,10 +94,7 @@ final jobStorageProvider =
     FutureProvider.family<
       ({int bytes, bool hasConvertedAudio, bool hasSource}),
       String
-    >((
-      ref,
-      jobId,
-    ) async {
+    >((ref, jobId) async {
       ref.watch(jobRevisionProvider);
       return JobStore.storageInfo(jobId);
     });

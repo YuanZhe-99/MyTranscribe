@@ -452,6 +452,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get newJobDiarizeUnsupported => '该模型不标注说话人。';
 
   @override
+  String get newJobDiarizeLocalPackage => '在 设置 › 本地模型 中下载说话人标签，即可标注谁在说话。';
+
+  @override
   String get newJobKeepChunks => '保留切分后的音频';
 
   @override
@@ -1279,6 +1282,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsFallbackSystem => '使用系统自带的语音识别（在本设备上）';
 
   @override
+  String get settingsSpeakerLabels => '说话人标签';
+
+  @override
+  String settingsSpeakerLabelsSubtitle(int megabytes) {
+    return '在本设备上转写时标注谁在说话（$megabytes MB）';
+  }
+
+  @override
+  String get settingsSpeakerLabelsInstalled => '已下载：在本设备上转写时可以标注谁在说话';
+
+  @override
+  String get settingsSpeakerLabelsDownload => '下载';
+
+  @override
+  String get settingsSpeakerLabelsRemove => '移除';
+
+  @override
   String get settingsDiagnostics => '诊断';
 
   @override
@@ -1749,6 +1769,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get newJobDiarizeUnsupported => '該模型不標註說話人。';
+
+  @override
+  String get newJobDiarizeLocalPackage => '在 設定 › 本機模型 中下載說話人標籤，即可標註誰在說話。';
 
   @override
   String get newJobKeepChunks => '保留切分後的音訊';
@@ -2576,6 +2599,23 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get settingsFallbackSystem => '使用系統內建的語音辨識（在本機上）';
+
+  @override
+  String get settingsSpeakerLabels => '說話人標籤';
+
+  @override
+  String settingsSpeakerLabelsSubtitle(int megabytes) {
+    return '在本機上轉寫時標註誰在說話（$megabytes MB）';
+  }
+
+  @override
+  String get settingsSpeakerLabelsInstalled => '已下載：在本機上轉寫時可以標註誰在說話';
+
+  @override
+  String get settingsSpeakerLabelsDownload => '下載';
+
+  @override
+  String get settingsSpeakerLabelsRemove => '移除';
 
   @override
   String get settingsDiagnostics => '診斷';

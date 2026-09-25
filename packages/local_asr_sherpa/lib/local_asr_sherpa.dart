@@ -202,3 +202,116 @@ class QwenAsrModel {
     _arena.releaseAll();
   }
 }
+
+/// One speaker turn: who spoke from when to when, in seconds.
+typedef SpeakerTurn = ({double start, double end, int speaker});
+
+/// Offline speaker diarization (L8 of the local-models plan): pyannote's
+/// segmentation model finds where speech changes hands, a speaker-embedding
+/// model tells voices apart, and clustering groups them.
+class SpeakerDiarizer {
+  SpeakerDiarizer._(this._native, this._arena);
+
+  Pointer<SherpaOnnxOfflineSpeakerDiarization> _native;
+  final Arena _arena;
+
+  /// Purpose: Load the two models.
+  /// Inputs: The pyannote [segmentation] model and the speaker [embedding]
+  /// model, as paths; the [threads]; the [speakers] when known, or null to
+  /// let clustering decide by [threshold].
+  /// Returns: The loaded diarizer.
+  /// Side effects: Reads the models.
+  /// Notes: The durations are sherpa-onnx's own example values: a turn
+  /// shorter than 0.3 s is dropped, and a gap shorter than 0.5 s joins two
+  /// turns of one speaker. Throws [SherpaException] when the models do not
+  /// load.
+  static SpeakerDiarizer load({
+    required String segmentation,
+    required String embedding,
+    int threads = 4,
+    int? speakers,
+    double threshold = 0.5,
+  }) {
+    SherpaLibrary.load();
+    final arena = Arena();
+    Pointer<Char> text(String value) =>
+        value.toNativeUtf8(allocator: arena).cast();
+    final config = arena<SherpaOnnxOfflineSpeakerDiarizationConfig>();
+    config.ref
+      ..segmentation.pyannote.model = text(segmentation)
+      ..segmentation.num_threads = threads
+      ..segmentation.provider = text('cpu')
+      ..embedding.model = text(embedding)
+      ..embedding.num_threads = threads
+      ..embedding.provider = text('cpu')
+      ..clustering.num_clusters = speakers ?? -1
+      ..clustering.threshold = threshold
+      ..min_duration_on = 0.3
+      ..min_duration_off = 0.5;
+    final native = SherpaOnnxCreateOfflineSpeakerDiarization(config);
+    if (native == nullptr) {
+      arena.releaseAll();
+      throw SherpaException(
+        'The speaker models at $segmentation did not load.',
+      );
+    }
+    return SpeakerDiarizer._(native, arena);
+  }
+
+  /// Purpose: Find who spoke when.
+  /// Inputs: 16 kHz mono [samples].
+  /// Returns: The turns, sorted by start; speakers numbered from zero within
+  /// this call.
+  /// Side effects: Runs the models.
+  /// Notes: Blocks. Speaker numbers mean nothing across calls: the app's
+  /// speaker unifier joins them across windows.
+  List<SpeakerTurn> process(Float32List samples) {
+    if (_native == nullptr) throw const SherpaException('Released.');
+    final buffer = calloc<Float>(samples.length);
+    try {
+      buffer.asTypedList(samples.length).setAll(0, samples);
+      final result = SherpaOnnxOfflineSpeakerDiarizationProcess(
+        _native,
+        buffer,
+        samples.length,
+      );
+      if (result == nullptr) return const [];
+      try {
+        final count = SherpaOnnxOfflineSpeakerDiarizationResultGetNumSegments(
+          result,
+        );
+        final sorted = SherpaOnnxOfflineSpeakerDiarizationResultSortByStartTime(
+          result,
+        );
+        try {
+          return [
+            for (var i = 0; i < count; i++)
+              (
+                start: sorted[i].start,
+                end: sorted[i].end,
+                speaker: sorted[i].speaker,
+              ),
+          ];
+        } finally {
+          SherpaOnnxOfflineSpeakerDiarizationDestroySegment(sorted);
+        }
+      } finally {
+        SherpaOnnxOfflineSpeakerDiarizationDestroyResult(result);
+      }
+    } finally {
+      calloc.free(buffer);
+    }
+  }
+
+  /// Purpose: Free the models.
+  /// Inputs: None.
+  /// Returns: None.
+  /// Side effects: Frees native memory.
+  /// Notes: Safe to call more than once.
+  void release() {
+    if (_native == nullptr) return;
+    SherpaOnnxDestroyOfflineSpeakerDiarization(_native);
+    _native = nullptr;
+    _arena.releaseAll();
+  }
+}

@@ -527,6 +527,7 @@ List<LocalModelTemplate> buildLocalModelTemplates() => [
 /// Notes: A package the user added from a file has no template manifest; its
 /// manifest exists only in its installed folder.
 ArtifactManifest? templateArtifact(String artifactId) {
+  if (artifactId == speakerLabelsManifest.artifactId) return speakerLabelsManifest;
   for (final template in buildLocalModelTemplates()) {
     for (final artifact in template.artifacts) {
       if (artifact.artifactId == artifactId) return artifact;
@@ -534,3 +535,49 @@ ArtifactManifest? templateArtifact(String artifactId) {
   }
   return null;
 }
+
+/// The adapter id of the speaker-labels package: no engine probes it, so it
+/// never becomes a transcription route.
+const speakerLabelsAdapterId = 'speaker_labels';
+
+/// The speaker-labels package (L8): pyannote's segmentation model and
+/// 3D-Speaker's CAM++ voice embedding, as sherpa-onnx publishes them, for
+/// labelling who spoke in a local job's windows.
+///
+/// It belongs to no model: it is downloaded from Settings › Local models and
+/// used by every local job that asks for speakers.
+const speakerLabelsManifest = ArtifactManifest(
+  artifactId: 'speaker-labels-pyannote3-campplus',
+  modelId: 'local:speaker-labels',
+  adapterId: speakerLabelsAdapterId,
+  format: ArtifactFormat.onnx,
+  revision: 'sherpa-onnx speaker models, 2024',
+  files: [
+    ArtifactFile(
+      path: 'sherpa-onnx-pyannote-segmentation-3-0.tar.bz2',
+      bytes: 6958444,
+      sha256:
+          '24615ee884c897d9d2ba09bb4d30da6bb1b15e685065962db5b02e76e4996488',
+      sourceUrl:
+          'https://github.com/k2-fsa/sherpa-onnx/releases/download/'
+          'speaker-segmentation-models/'
+          'sherpa-onnx-pyannote-segmentation-3-0.tar.bz2',
+      unpack: ArchiveKind.tarBz2,
+    ),
+    ArtifactFile(
+      path: '3dspeaker_speech_campplus_sv_zh_en_16k-common_advanced.onnx',
+      bytes: 28281164,
+      sha256:
+          'aa3cfc16963a10586a9393f5035d6d6b57e98d358b347f80c2a30bf4f00ceba2',
+      sourceUrl:
+          'https://github.com/k2-fsa/sherpa-onnx/releases/download/'
+          'speaker-recongition-models/'
+          '3dspeaker_speech_campplus_sv_zh_en_16k-common_advanced.onnx',
+    ),
+  ],
+  licenseId: 'MIT AND Apache-2.0',
+  licenseUrl: 'https://github.com/pyannote/pyannote-audio/blob/main/LICENSE',
+  attribution:
+      'pyannote segmentation-3.0 (MIT) and 3D-Speaker CAM++ (Apache-2.0), '
+      'converted to ONNX by the sherpa-onnx project.',
+);

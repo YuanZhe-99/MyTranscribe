@@ -899,6 +899,9 @@ class JobRunner {
                   startSeconds: segment.startSeconds,
                   endSeconds: segment.endSeconds,
                   text: segment.text,
+                  // Window-local labels from the speaker-labels package (L8),
+                  // joined across windows by the unifier in _finish.
+                  speaker: segment.speaker,
                 ),
             ],
             hasRealTimestamps: result.hasRealTimestamps,

@@ -258,3 +258,18 @@ String localDeviceClass({
 int localEngineThreads(int processors) => isMobilePlatform
     ? processors.clamp(1, 4)
     : (processors - (processors > 4 ? 2 : 1)).clamp(1, 8);
+
+/// Purpose: Report whether this platform can label speakers on the device.
+/// Inputs: None.
+/// Returns: `bool` — true on Android, Windows, macOS and Linux.
+/// Side effects: None.
+/// Notes: Speaker labels run on sherpa-onnx (L8), which the app bundles
+/// everywhere except iOS; there the Settings row is absent and the package is
+/// never offered.
+bool get hasSpeakerLabels => switch (defaultTargetPlatform) {
+  TargetPlatform.android ||
+  TargetPlatform.windows ||
+  TargetPlatform.macOS ||
+  TargetPlatform.linux => true,
+  TargetPlatform.iOS || TargetPlatform.fuchsia => false,
+};

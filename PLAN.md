@@ -1001,14 +1001,19 @@ decisions log say which.
 
 ### L8 — Local speaker labels (a stretch that closes on its numbers)
 
-- [ ] sherpa-onnx offline speaker diarization (segmentation model + speaker embedding model) as a
+- [x] sherpa-onnx offline speaker diarization (segmentation model + speaker embedding model) as a
       second artifact family, run per window after the ASR window is released from memory,
       producing window-local labels the existing unifier joins by overlap — the diarized overlap
       of 20 s applies again; FluidAudio's diarization on Apple as the second implementation
-- [ ] The M9 meeting (three speakers, 301 lines) as the acceptance recording; the unifier's
-      thresholds unchanged unless a documented decision changes them
-- [ ] **Done when**: the labels are at least as consistent as the OpenRouter ones on that
-      recording, or the milestone is closed as "not good enough" with the numbers
+      — built on sherpa-onnx only (package `speaker-labels-pyannote3-campplus`, 35 MB; not on
+      iOS). FluidAudio's diarization is not built: sherpa-onnx already runs on macOS, and iOS
+      would be its only gain
+- [x] The M9 meeting as the acceptance recording — **not run**: the user closed L2–L9 on CI
+      passing (2026-09-25), so the comparison was not made. Checked instead on sherpa-onnx's
+      two-speaker English clip, where it found both speakers. The unifier's thresholds are
+      unchanged
+- [x] **Done when** — closed as shipped without the comparison; the docs say so
+      (`features/local-models.md`, Speaker labels)
 
 ### L9 — Closing
 

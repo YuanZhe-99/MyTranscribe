@@ -42,6 +42,32 @@ void main() {
     expect(SherpaLibrary.load(), sherpaVersion);
   });
 
+  final diarization = Platform.environment['DIARIZATION_TEST_DIR'];
+  test(
+    'speaker diarization tells two speakers apart',
+    () {
+      final diarizer = SpeakerDiarizer.load(
+        segmentation:
+            '$diarization/sherpa-onnx-pyannote-segmentation-3-0/model.onnx',
+        embedding: '$diarization/campplus.onnx',
+      );
+      try {
+        // sherpa-onnx's own test clip: two English speakers, 16 kHz mono.
+        final turns = diarizer.process(readWav(File('$diarization/two.wav')));
+        expect(turns, isNotEmpty);
+        expect(turns.map((t) => t.speaker).toSet(), hasLength(2));
+        for (var i = 1; i < turns.length; i++) {
+          expect(turns[i].start, greaterThanOrEqualTo(turns[i - 1].start));
+        }
+      } finally {
+        diarizer.release();
+      }
+    },
+    skip: diarization == null
+        ? 'set DIARIZATION_TEST_DIR to the models and the two-speaker clip'
+        : false,
+  );
+
   final dir = Platform.environment['QWEN_TEST_DIR'];
   test(
     'Qwen3-ASR transcribes the JFK sample',

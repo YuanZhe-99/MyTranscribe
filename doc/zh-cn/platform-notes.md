@@ -203,6 +203,11 @@ C API 按指针接收配置，没有能读回默认值的函数，因此防止�
 `1.13.8`，否则不使用它。`onnxruntime.dll` 还链接 `MSVCP140_1.dll`，它属于同一个 Visual C++ 可再发行组件包。
 Android 的压缩包是所有目标里最大的下载（48 MiB），由钩子下载一次。
 
+同一个库也负责说话人标签（L8）：`tool/ffigen.dart` 还绑定了它的离线说话人分离函数
+（`SherpaOnnxCreateOfflineSpeakerDiarization` 及其相关调用），由 `local_asr_sherpa.dart` 中的 `SpeakerDiarizer`
+封装。不再额外打包任何原生文件；两个模型是一个下载的包（见[说话人标签](features/local-models.md#说话人标签)）。
+与 Qwen3-ASR 一样，iOS 上没有它。
+
 ### 神经网络引擎桥接层
 
 在 iOS 和 macOS 上，Parakeet 还能通过 FluidAudio 0.17.4 在神经网络引擎上运行（L4）。FluidAudio 要编译 C、C++

@@ -25,11 +25,11 @@ Apple, and it asks for permission to use speech recognition only after you choos
 
 ## Downloads
 
-The app downloads something only when you ask it to: a model for transcribing on this device, from
-the address shown on the model's page, or on Windows the FFmpeg tool it needs. It checks each file
-it downloads and sends nothing about you or your recordings with the request. Downloaded models stay
-on the device; they are not included in backups, ZIP exports or WebDAV sync. The app contacts no
-other network service.
+The app downloads something only when you ask it to: a model for transcribing on this device, or
+the package that labels speakers, from the address the app shows before it starts; or, on Windows,
+the FFmpeg tool it needs. It checks each file it downloads and sends nothing about you or your
+recordings with the request. Downloaded models and packages stay on the device; they are not
+included in backups, ZIP exports or WebDAV sync. The app contacts no other network service.
 
 ## Your API keys
 

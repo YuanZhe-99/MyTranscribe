@@ -462,6 +462,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newJobDiarizeUnsupported => 'This model does not label speakers.';
 
   @override
+  String get newJobDiarizeLocalPackage =>
+      'Download speaker labels in Settings › Local models to label who spoke.';
+
+  @override
   String get newJobKeepChunks => 'Keep the split audio';
 
   @override
@@ -1315,6 +1319,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsFallbackSystem =>
       'Use the system\'s speech recognition, on this device';
+
+  @override
+  String get settingsSpeakerLabels => 'Speaker labels';
+
+  @override
+  String settingsSpeakerLabelsSubtitle(int megabytes) {
+    return 'Label who spoke in transcriptions made on this device ($megabytes MB)';
+  }
+
+  @override
+  String get settingsSpeakerLabelsInstalled =>
+      'Downloaded: transcriptions on this device can label who spoke';
+
+  @override
+  String get settingsSpeakerLabelsDownload => 'Download';
+
+  @override
+  String get settingsSpeakerLabelsRemove => 'Remove';
 
   @override
   String get settingsDiagnostics => 'Diagnostics';

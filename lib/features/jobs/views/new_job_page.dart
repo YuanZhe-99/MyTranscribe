@@ -22,6 +22,8 @@ import '../../../shared/utils/byte_format.dart';
 import '../../local/models/artifact_manifest.dart';
 import '../../local/models/engine_capability.dart';
 import '../../local/models/local_model_config.dart';
+import '../../local/services/engine_registry.dart'
+    show speakerLabelsInstalledProvider;
 import '../../local/services/local_models_controller.dart';
 import '../../local/views/local_text.dart';
 import '../../media/models/media_info.dart';
@@ -148,7 +150,9 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
           engineMaxSeconds: local.maxDurationSeconds,
           artifactRevision: manifest.revision,
           requestedDevice: _device.value,
-          overlapSeconds: library.defaults.plainOverlapSeconds.toDouble(),
+          overlapSeconds: _localSpeakers
+              ? library.defaults.diarizedOverlapSeconds.toDouble()
+              : library.defaults.plainOverlapSeconds.toDouble(),
           toolkitAvailable: toolkitReady,
         ),
       );
@@ -174,6 +178,15 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
     );
   }
 
+  /// Purpose: Say whether a local job labels speakers.
+  /// Inputs: None.
+  /// Returns: True when speakers are asked for and the package is installed.
+  /// Side effects: None.
+  /// Notes: Internal helper used within this file only. A speakers job takes
+  /// the diarized overlap, because the unifier joins labels by it (L8).
+  bool get _localSpeakers =>
+      _diarize && ref.read(speakerLabelsInstalledProvider).value == true;
+
   /// Purpose: Create the job and start it.
   /// Inputs: The [library].
   /// Returns: None.
@@ -196,7 +209,10 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
               ? null
               : _prompt.text.trim(),
           keywords: local.supportsKeywords ? _split(_keywords.text) : const [],
-          overlapSeconds: library.defaults.plainOverlapSeconds.toDouble(),
+          diarize: _localSpeakers,
+          overlapSeconds: _localSpeakers
+              ? library.defaults.diarizedOverlapSeconds.toDouble()
+              : library.defaults.plainOverlapSeconds.toDouble(),
           keepChunks: _keepChunks,
           device: _device,
         ),
@@ -349,8 +365,13 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
               _switches(
                 l10n,
                 _isLocal
-                    ? (local?.diarization ?? Capability.unsupported)
+                    // No local model labels speakers itself; the separate
+                    // speaker-labels package does, once it is installed (L8).
+                    ? (ref.watch(speakerLabelsInstalledProvider).value == true
+                          ? Capability.supported
+                          : Capability.unsupported)
                     : (model?.diarization ?? Capability.unknown),
+                localPackageMissing: _isLocal,
               ),
               const SizedBox(height: 24),
               _planCard(l10n, plan),
@@ -634,14 +655,19 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
   }
 
   /// Purpose: Build the speaker and keep-audio switches.
-  /// Inputs: [l10n], the [model].
+  /// Inputs: [l10n], the model's speaker [capability], and whether a local
+  /// model only lacks the speaker-labels package ([localPackageMissing]).
   /// Returns: `Widget`.
   /// Side effects: None.
   /// Notes: Internal helper used within this file only. A model that is known
   /// not to label speakers gets a disabled switch with the reason, rather than
   /// a hidden one: hiding it would leave the user wondering where the feature
   /// went after they changed models.
-  Widget _switches(AppLocalizations l10n, Capability capability) {
+  Widget _switches(
+    AppLocalizations l10n,
+    Capability capability, {
+    bool localPackageMissing = false,
+  }) {
     return Column(
       children: [
         SwitchListTile(
@@ -652,7 +678,11 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
               : (value) => setState(() => _diarize = value),
           title: Text(l10n.newJobDiarize),
           subtitle: switch (capability) {
-            Capability.unsupported => Text(l10n.newJobDiarizeUnsupported),
+            Capability.unsupported => Text(
+              localPackageMissing
+                  ? l10n.newJobDiarizeLocalPackage
+                  : l10n.newJobDiarizeUnsupported,
+            ),
             Capability.unknown => Text(l10n.newJobDiarizeUnknown),
             Capability.supported => null,
           },

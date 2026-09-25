@@ -24,6 +24,7 @@ import '../models/engine_capability.dart';
 import 'artifact_manager.dart';
 import 'local_asr_engine.dart';
 import 'local_engine_state_store.dart';
+import 'speaker_labeler.dart';
 
 /// The adapters this build contains.
 class EngineRegistry {
@@ -155,4 +156,17 @@ final engineRegistryProvider = Provider<EngineRegistry>(
     artifacts: ref.watch(artifactManagerProvider),
     state: ref.watch(localEngineStateStoreProvider),
   ),
+);
+
+/// The speaker labeller (L8), one per app: its worker holds the speaker
+/// models once loaded.
+final speakerLabelerProvider = Provider<SpeakerLabeler>(
+  (ref) => SpeakerLabeler(artifacts: ref.watch(artifactManagerProvider)),
+);
+
+/// Whether the speaker-labels package is installed on this device; always
+/// false where the platform cannot label speakers.
+final speakerLabelsInstalledProvider = FutureProvider<bool>(
+  (ref) async =>
+      hasSpeakerLabels && await ref.watch(speakerLabelerProvider).available(),
 );

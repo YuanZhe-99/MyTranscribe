@@ -114,6 +114,22 @@ SherpaOnnxCreateOfflineRecognizer(
   ffi.Pointer<SherpaOnnxOfflineRecognizerConfig> config,
 );
 
+/// @brief Create an offline speaker diarization pipeline.
+///
+/// @param config Offline speaker diarization configuration.
+/// @return A newly allocated diarizer on success, or NULL on error. Free it
+/// with SherpaOnnxDestroyOfflineSpeakerDiarization().
+/// @see SherpaOnnxDestroyOfflineSpeakerDiarization
+@ffi.Native<
+  ffi.Pointer<SherpaOnnxOfflineSpeakerDiarization> Function(
+    ffi.Pointer<SherpaOnnxOfflineSpeakerDiarizationConfig>,
+  )
+>()
+external ffi.Pointer<SherpaOnnxOfflineSpeakerDiarization>
+SherpaOnnxCreateOfflineSpeakerDiarization(
+  ffi.Pointer<SherpaOnnxOfflineSpeakerDiarizationConfig> config,
+);
+
 /// @brief Create a non-streaming ASR input stream.
 ///
 /// @param recognizer A pointer returned by SherpaOnnxCreateOfflineRecognizer().
@@ -186,6 +202,17 @@ external void SherpaOnnxDestroyOfflineRecognizerResult(
   ffi.Pointer<SherpaOnnxOfflineRecognizerResult> r,
 );
 
+/// @brief Destroy an offline speaker diarizer.
+///
+/// @param sd A pointer returned by SherpaOnnxCreateOfflineSpeakerDiarization().
+/// @see SherpaOnnxCreateOfflineSpeakerDiarization
+@ffi.Native<
+  ffi.Void Function(ffi.Pointer<SherpaOnnxOfflineSpeakerDiarization>)
+>()
+external void SherpaOnnxDestroyOfflineSpeakerDiarization(
+  ffi.Pointer<SherpaOnnxOfflineSpeakerDiarization> sd,
+);
+
 /// @brief Destroy a non-streaming ASR stream.
 ///
 /// @param stream A pointer returned by SherpaOnnxCreateOfflineStream() or
@@ -240,6 +267,104 @@ SherpaOnnxGetOfflineStreamResult(ffi.Pointer<SherpaOnnxOfflineStream> stream);
 /// @endcode
 @ffi.Native<ffi.Pointer<ffi.Char> Function()>()
 external ffi.Pointer<ffi.Char> SherpaOnnxGetVersionStr();
+
+/// @brief Destroy a diarization result.
+///
+/// @param r A pointer returned by one of the
+/// SherpaOnnxOfflineSpeakerDiarizationProcess*() functions.
+@ffi.Native<
+  ffi.Void Function(ffi.Pointer<SherpaOnnxOfflineSpeakerDiarizationResult>)
+>()
+external void SherpaOnnxOfflineSpeakerDiarizationDestroyResult(
+  ffi.Pointer<SherpaOnnxOfflineSpeakerDiarizationResult> r,
+);
+
+/// @brief Destroy a segment array returned by
+/// SherpaOnnxOfflineSpeakerDiarizationResultSortByStartTime().
+///
+/// @param s A pointer returned by
+/// SherpaOnnxOfflineSpeakerDiarizationResultSortByStartTime().
+@ffi.Native<
+  ffi.Void Function(ffi.Pointer<SherpaOnnxOfflineSpeakerDiarizationSegment>)
+>()
+external void SherpaOnnxOfflineSpeakerDiarizationDestroySegment(
+  ffi.Pointer<SherpaOnnxOfflineSpeakerDiarizationSegment> s,
+);
+
+/// @brief Return the expected input sample rate.
+///
+/// @param sd A pointer returned by SherpaOnnxCreateOfflineSpeakerDiarization().
+/// @return Required input sample rate in Hz.
+@ffi.Native<
+  ffi.Int32 Function(ffi.Pointer<SherpaOnnxOfflineSpeakerDiarization>)
+>()
+external int SherpaOnnxOfflineSpeakerDiarizationGetSampleRate(
+  ffi.Pointer<SherpaOnnxOfflineSpeakerDiarization> sd,
+);
+
+/// @brief Run offline speaker diarization.
+///
+/// @param sd A pointer returned by SherpaOnnxCreateOfflineSpeakerDiarization().
+/// @param samples Input mono PCM samples normalized to [-1, 1].
+/// @param n Number of input samples.
+/// @return A newly allocated diarization result. Free it with
+/// SherpaOnnxOfflineSpeakerDiarizationDestroyResult().
+@ffi.Native<
+  ffi.Pointer<SherpaOnnxOfflineSpeakerDiarizationResult> Function(
+    ffi.Pointer<SherpaOnnxOfflineSpeakerDiarization>,
+    ffi.Pointer<ffi.Float>,
+    ffi.Int32,
+  )
+>()
+external ffi.Pointer<SherpaOnnxOfflineSpeakerDiarizationResult>
+SherpaOnnxOfflineSpeakerDiarizationProcess(
+  ffi.Pointer<SherpaOnnxOfflineSpeakerDiarization> sd,
+  ffi.Pointer<ffi.Float> samples,
+  int n,
+);
+
+/// @brief Return the number of diarization segments.
+///
+/// @param r A pointer returned by one of the
+/// SherpaOnnxOfflineSpeakerDiarizationProcess*() functions.
+/// @return Number of segments.
+@ffi.Native<
+  ffi.Int32 Function(ffi.Pointer<SherpaOnnxOfflineSpeakerDiarizationResult>)
+>()
+external int SherpaOnnxOfflineSpeakerDiarizationResultGetNumSegments(
+  ffi.Pointer<SherpaOnnxOfflineSpeakerDiarizationResult> r,
+);
+
+/// @brief Return the number of speakers in a diarization result.
+///
+/// @param r A pointer returned by one of the
+/// SherpaOnnxOfflineSpeakerDiarizationProcess*() functions.
+/// @return Number of speaker clusters.
+@ffi.Native<
+  ffi.Int32 Function(ffi.Pointer<SherpaOnnxOfflineSpeakerDiarizationResult>)
+>()
+external int SherpaOnnxOfflineSpeakerDiarizationResultGetNumSpeakers(
+  ffi.Pointer<SherpaOnnxOfflineSpeakerDiarizationResult> r,
+);
+
+/// @brief Return segments sorted by start time.
+///
+/// The returned array contains exactly
+/// SherpaOnnxOfflineSpeakerDiarizationResultGetNumSegments() entries.
+///
+/// @param r A pointer returned by one of the
+/// SherpaOnnxOfflineSpeakerDiarizationProcess*() functions.
+/// @return A newly allocated segment array. Free it with
+/// SherpaOnnxOfflineSpeakerDiarizationDestroySegment().
+@ffi.Native<
+  ffi.Pointer<SherpaOnnxOfflineSpeakerDiarizationSegment> Function(
+    ffi.Pointer<SherpaOnnxOfflineSpeakerDiarizationResult>,
+  )
+>()
+external ffi.Pointer<SherpaOnnxOfflineSpeakerDiarizationSegment>
+SherpaOnnxOfflineSpeakerDiarizationResultSortByStartTime(
+  ffi.Pointer<SherpaOnnxOfflineSpeakerDiarizationResult> r,
+);
 
 /// @brief Fast clustering configuration.
 ///

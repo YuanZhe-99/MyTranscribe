@@ -250,6 +250,12 @@ against a layout mismatch is the version: the library must report exactly `1.13.
 used. `onnxruntime.dll` also links `MSVCP140_1.dll`, part of the same Visual C++ Redistributable.
 The Android archive is the largest download of any target (48 MiB), fetched once by the hook.
 
+The same library runs speaker labels (L8): `tool/ffigen.dart` also binds its offline speaker
+diarization functions (`SherpaOnnxCreateOfflineSpeakerDiarization` and the calls around it), which
+`SpeakerDiarizer` in `local_asr_sherpa.dart` wraps. No further native file is bundled; the two
+models are a downloaded package (see [Speaker labels](features/local-models.md#speaker-labels)).
+Like Qwen3-ASR, it is absent on iOS.
+
 ### The Neural Engine bridge
 
 On iOS and macOS, Parakeet also runs on the Neural Engine through FluidAudio 0.17.4 (L4).

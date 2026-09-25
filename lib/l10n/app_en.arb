@@ -211,6 +211,7 @@
   "newJobDiarize": "Identify speakers",
   "newJobDiarizeUnknown": "It is not known whether this model labels speakers. If it refuses, you will be offered a run without them.",
   "newJobDiarizeUnsupported": "This model does not label speakers.",
+  "newJobDiarizeLocalPackage": "Download speaker labels in Settings › Local models to label who spoke.",
   "newJobKeepChunks": "Keep the split audio",
   "newJobKeepChunksHint": "For working out why a segment came back wrong. Uses more space.",
   "newJobKeywords": "Keywords",
@@ -761,6 +762,18 @@
   "settingsFallbackCpu": "Use the same model on the CPU",
   "settingsFallbackNone": "Stop the transcription",
   "settingsFallbackSystem": "Use the system's speech recognition, on this device",
+  "settingsSpeakerLabels": "Speaker labels",
+  "settingsSpeakerLabelsSubtitle": "Label who spoke in transcriptions made on this device ({megabytes} MB)",
+  "@settingsSpeakerLabelsSubtitle": {
+    "placeholders": {
+      "megabytes": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsSpeakerLabelsInstalled": "Downloaded: transcriptions on this device can label who spoke",
+  "settingsSpeakerLabelsDownload": "Download",
+  "settingsSpeakerLabelsRemove": "Remove",
   "settingsDiagnostics": "Diagnostics",
   "settingsDiagnosticsSubtitle": "What each local model can run on here",
   "diagnosticsDevice": "This device",
