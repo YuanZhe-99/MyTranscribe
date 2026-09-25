@@ -884,7 +884,7 @@ uses them as they are.
       one exists), background/foreground during a job; iOS on an iPhone if one is available,
       otherwise the Simulator for the code path and the iOS route shipped unverified (D20) — the
       Simulator runs neither the Neural Engine nor a phone's memory limit
-- [x] *(Amended: Parakeet only, and CI rather than a Mac.)* **Done when**: Parakeet and Qwen
+- [x] *(Amended: Parakeet only, and CI rather than a Mac.)* *Released as 0.3.3.* **Done when**: Parakeet and Qwen
       transcribe through FluidAudio on the Mac with the placement recorded, the Qwen gate has a
       number, and the docs say what the target bump cost
 

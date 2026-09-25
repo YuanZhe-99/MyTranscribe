@@ -3,6 +3,19 @@
 Newest first. Each entry says what changed and, where it matters, why — the reasoning is the part
 that is hard to recover later.
 
+## 0.3.3 — 2026-09-25
+
+Parakeet on the Apple Neural Engine (L4 of the local-models plan).
+
+- On iPhones, iPads and Macs, Parakeet can now run on the Neural Engine through FluidAudio, from a
+  Core ML package of its own (483 MB). The app downloads it like any other package — file by file,
+  checked against published hashes — and FluidAudio's own downloader stays off.
+- **iOS 17 and macOS 14 (Sonoma) are now the minimum.** FluidAudio needs them. The iPhone 8,
+  8 Plus and X, and Macs from before 2018 (the iMac before 2019, except the 2017 iMac Pro), stay on
+  0.3.2.
+- The route has not run on an Apple device here: it is built on GitHub's macOS machines and marked
+  as untested, and like every route it runs its ten-second check on the device first.
+
 ## 0.3.2 — 2026-09-25
 
 Local models on the GPU, where the device's own driver can take them (L3 of the local-models plan).

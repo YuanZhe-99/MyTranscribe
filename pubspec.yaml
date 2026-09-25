@@ -2,7 +2,7 @@ name: my_transcribe
 description: "MyTranscribe!!!!! — Your speech-to-text companion"
 publish_to: 'none'
 
-version: 0.3.2+6
+version: 0.3.3+7
 
 environment:
   sdk: ^3.11.3
@@ -129,7 +129,7 @@ msix_config:
   display_name: MyTranscribe!!!!!
   publisher_display_name: yuanzhe
   identity_name: com.yuanzhe.mytranscribe
-  msix_version: 0.3.2.0
+  msix_version: 0.3.3.0
   logo_path: assets/icon/app_icon.png
   capabilities: internetClient
   install_certificate: false
