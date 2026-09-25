@@ -31,7 +31,7 @@ foundation (L0) exists yet.
 | Target | Whisper large-v3 / turbo | Parakeet TDT v3 | Qwen3-ASR 0.6B (1.7B) | Tested here |
 |---|---|---|---|---|
 | **Windows x64** — Intel / AMD / NVIDIA GPU; Intel NPU; AMD NPU | CPU **B** (whisper.cpp, L1); GPU Vulkan **B** (L3); Intel NPU **A** (OpenVINO GenAI, L7); AMD NPU **A** for the encoder (Ryzen AI 300, L7) | CPU **B** (sherpa-onnx, L2); GPU **B** (transcribe.cpp Vulkan, L3); NPU **U** | CPU **B** (sherpa-onnx int8, L2; 1.7B **E**); GPU **B** (transcribe.cpp Vulkan, L3); NPU **U** | **no** — unverified support; the CPU route also runs under emulation on the ARM64 machine, which checks the code path but not the speed |
-| **Windows ARM64** — Snapdragon X Elite; X2 Elite | CPU **B** (L1); GPU OpenCL **E** (L3); NPU **A** for turbo only (Qualcomm AI Hub asset, ONNX Runtime QNN, L5a); large-v3 NPU **U** | CPU **B** (L2); GPU **U**; NPU **E** | CPU **B** (L2); GPU **E** (llama.cpp over OpenCL, L3); NPU **U** | **yes** on the X Elite: CPU, OpenCL, QNN; the X2 Elite is unverified |
+| **Windows ARM64** — Snapdragon X Elite; X2 Elite; 8cx Gen 3 | CPU **B** (L1); GPU OpenCL **E** (L3); NPU **A** for turbo only (Qualcomm AI Hub asset, ONNX Runtime QNN, L5a); large-v3 NPU **U** | CPU **B** (L2); GPU **U**; NPU **E** | CPU **B** (L2); GPU **E** (llama.cpp over OpenCL, L3); NPU **U** | **yes** on the 8cx Gen 3 (the development machine): CPU, and OpenCL and QNN where they run on that generation; the X Elite and X2 Elite are unverified |
 | **Android** — Snapdragon 8 Gen 3 / 8 Elite / 8 Elite Gen 5 | CPU **B** (L1); GPU OpenCL **E** (L3); NPU **A** for turbo only (per-SoC asset, L5b) | CPU **B** (L2); GPU **E**; NPU **E** | CPU **B** (L2); GPU **E**; NPU **U** | **no** — unverified support |
 | **Android** — Google Tensor G3 / G4 / G5 | CPU **E** (L1); GPU Vulkan **E** (L3, an experiment); NPU **U** | CPU **E** (L2); GPU **E**; NPU not planned (the Tensor SDK was declined) | CPU **E** (L2); GPU **E**; NPU **U** | **yes** on the G5 (Pixel 10): CPU, the Vulkan experiment; G3 and G4 are unverified |
 | **Android** — MediaTek Dimensity, Samsung Exynos | CPU **E** (L1); GPU Vulkan **E**; NPU **U** | CPU **E** (L2); GPU **E**; NPU **U** | CPU **E** (L2); GPU **E**; NPU **U** | **no** — unverified support |
@@ -50,7 +50,7 @@ line-by-line comparison of a real recording, which needs the user.
 
 ### Measured, not yet verified: Windows ARM64, whisper.cpp CPU, large-v3-turbo (2026-09-25)
 
-- **Device**: a Snapdragon X-series laptop, 8 cores, 32 GB; Windows 11 Pro 10.0.26200.9457. CPU
+- **Device**: a Snapdragon 8cx Gen 3 laptop, 8 cores, 32 GB; Windows 11 Pro 10.0.26200.9457. CPU
   only, so no driver is involved.
 - **Runtime**: whisper.cpp v1.9.4 from this project's Windows ARM64 set (`whisper-bin-v1.9.4-1`:
   ARMv8.2 with dot-product and FP16, no OpenMP), bindings `prebuilt1`.

@@ -27,7 +27,7 @@
 | 目标平台 | Whisper large-v3 / turbo | Parakeet TDT v3 | Qwen3-ASR 0.6B（1.7B） | 在此测试过 |
 |---|---|---|---|---|
 | **Windows x64** —— Intel / AMD / NVIDIA GPU；Intel NPU；AMD NPU | CPU **B**（whisper.cpp，L1）；GPU Vulkan **B**（L3）；Intel NPU **A**（OpenVINO GenAI，L7）；AMD NPU 编码器 **A**（Ryzen AI 300，L7） | CPU **B**（sherpa-onnx，L2）；GPU **B**（transcribe.cpp Vulkan，L3）；NPU **U** | CPU **B**（sherpa-onnx int8，L2；1.7B **E**）；GPU **B**（transcribe.cpp Vulkan，L3）；NPU **U** | **否** —— 未验证支持；CPU 路线也在 ARM64 机器上以仿真方式运行，这能检查代码路径，但检查不了速度 |
-| **Windows ARM64** —— Snapdragon X Elite；X2 Elite | CPU **B**（L1）；GPU OpenCL **E**（L3）；NPU **A**，仅限 turbo（Qualcomm AI Hub 资源，ONNX Runtime QNN，L5a）；large-v3 NPU **U** | CPU **B**（L2）；GPU **U**；NPU **E** | CPU **B**（L2）；GPU **E**（llama.cpp 基于 OpenCL，L3）；NPU **U** | 在 X Elite 上**是**：CPU、OpenCL、QNN；X2 Elite 未验证 |
+| **Windows ARM64** —— Snapdragon X Elite；X2 Elite；8cx Gen 3 | CPU **B**（L1）；GPU OpenCL **E**（L3）；NPU **A**，仅限 turbo（Qualcomm AI Hub 资源，ONNX Runtime QNN，L5a）；large-v3 NPU **U** | CPU **B**（L2）；GPU **U**；NPU **E** | CPU **B**（L2）；GPU **E**（llama.cpp 基于 OpenCL，L3）；NPU **U** | 在 8cx Gen 3（开发机）上**是**：CPU，以及在该代芯片上能运行的 OpenCL 和 QNN；X Elite 与 X2 Elite 未验证 |
 | **Android** —— Snapdragon 8 Gen 3 / 8 Elite / 8 Elite Gen 5 | CPU **B**（L1）；GPU OpenCL **E**（L3）；NPU **A**，仅限 turbo（按 SoC 区分的资源，L5b） | CPU **B**（L2）；GPU **E**；NPU **E** | CPU **B**（L2）；GPU **E**；NPU **U** | **否** —— 未验证支持 |
 | **Android** —— Google Tensor G3 / G4 / G5 | CPU **E**（L1）；GPU Vulkan **E**（L3，一项实验）；NPU **U** | CPU **E**（L2）；GPU **E**；NPU 不在计划中（Tensor SDK 已被放弃） | CPU **E**（L2）；GPU **E**；NPU **U** | 在 G5（Pixel 10）上**是**：CPU、Vulkan 实验；G3 与 G4 未验证 |
 | **Android** —— MediaTek Dimensity、Samsung Exynos | CPU **E**（L1）；GPU Vulkan **E**；NPU **U** | CPU **E**（L2）；GPU **E**；NPU **U** | CPU **E**（L2）；GPU **E**；NPU **U** | **否** —— 未验证支持 |
@@ -44,7 +44,7 @@
 
 ### 已测量、尚未验证：Windows ARM64，whisper.cpp CPU，large-v3-turbo（2026-09-25）
 
-- **设备**：一台骁龙 X 系列笔记本，8 核，32 GB；Windows 11 专业版 10.0.26200.9457。只用 CPU，因此不涉及驱动。
+- **设备**：一台骁龙 8cx Gen 3 笔记本，8 核，32 GB；Windows 11 专业版 10.0.26200.9457。只用 CPU，因此不涉及驱动。
 - **运行时**：whisper.cpp v1.9.4，来自本项目的 Windows ARM64 二进制集（`whisper-bin-v1.9.4-1`：ARMv8.2，带点积
   和 FP16，不用 OpenMP），绑定版本 `prebuilt1`。
 - **模型包**：`ggml-large-v3-turbo.bin`，f16，SHA-256

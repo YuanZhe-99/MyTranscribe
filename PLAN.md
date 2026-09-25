@@ -21,6 +21,13 @@ binaries wherever they exist and can be shipped, and a set this project builds o
 upstream version where they do not. D9 is superseded; the Dart↔native interface is redesigned
 around binding the upstream libraries directly. The L1 rework below comes before anything else.
 
+**And again on 2026-09-25, after 0.3.0 shipped**: no real-device sessions — the Pixel 10, the Mac
+and any iPhone are not tested, and every route on them ships as unverified support (D20); the CPU
+routes need no more measuring than a simple check; L2 to L9 go ahead in order, each tested
+simply, one release each. The one machine that is tested is this one — and it is a **Snapdragon
+8cx Gen 3**, not the X Elite the survey assumed (D13 as corrected): its GPU and NPU routes are
+tried here, and what fails here is a recorded result.
+
 **This file is temporary.** It replaces the 0.1.0–0.2.1 plan, whose nine milestones are all closed
 and recorded in `doc/en-us/version-history.md`. When the last milestone here is closed, the
 closing steps in §10 delete it, and nothing in `doc/` may depend on it by then. Until then,
@@ -60,7 +67,8 @@ app, per `AGENTS.md`.
 
 Two constraints from the existing code shape everything below and are worth restating:
 
-- **This project is developed on Windows on ARM64** (a Snapdragon X machine), and CI builds
+- **This project is developed on Windows on ARM64** (a Snapdragon 8cx Gen 3 machine — corrected
+  on 2026-09-25; the survey assumed an X Elite), and CI builds
   Windows x64 and ARM64 separately. A dependency that ships x86_64-only Windows binaries cannot be
   used; that is why FFmpeg is vendored and why `audioplayers` was chosen. Every native piece here
   is built from source for ARM64 or fetched as an ARM64 archive, and verified with a real
@@ -233,7 +241,7 @@ ends. Everything below was checked 2026-09-24.
 | CPU | ORT `onnxruntime-win-arm64-1.30.0`; sherpa-onnx builds for win-arm64 (its Flutter package gained `windows/arm64/` DLLs in PR #3957, merged 2026-09-20, **after** the 1.13.8 pub release); whisper.cpp `whisper-bin-win-cpu-arm64.zip` (clang; MSVC lacks the FP16 intrinsics). Oryon Gen 1/2: NEON, dotprod, i8mm, BF16, **no SVE/SVE2**; X2 Elite adds SVE2 and SME. | sherpa-onnx AAR / `sherpa_onnx_android_arm64`; whisper.cpp through the NDK. |
 | Memory | 16–64 GB. AI Hub reports the precompiled Turbo encoder at ~1.7 GB peak on X Elite. | up to 24 GB; the same encoder at 63–73 MB peak on phones (AI Hub estimate). |
 | Signing | The ggml **Hexagon** backend needs test-signing → developer only (D13). The QNN EP path uses Microsoft-signed drivers and needs nothing. | No test-signing for QNN; the HTP libraries come signed in the runtime AAR. |
-| Verifiable in this project | **Yes** — the Snapdragon X development machine: CPU, OpenCL GPU, and the QNN NPU with an AI Hub asset. | **No** — no Snapdragon phone. Shipped as unverified support (D20), gated by the smoke test on each device; a diagnostics report from somebody who has one goes into the matrix as a community result. |
+| Verifiable in this project | **Partly** — the development machine is an **8cx Gen 3** (corrected 2026-09-25), not an X Elite: CPU yes; the OpenCL GPU and the QNN NPU are tried there, but the AI Hub assets named above are compiled for the X Elite's HTP and the Adreno generation differs, so the X-series routes themselves ship unverified. | **No** — no Snapdragon phone. Shipped as unverified support (D20), gated by the smoke test on each device; a diagnostics report from somebody who has one goes into the matrix as a community result. |
 
 AI Hub's own profile numbers for Whisper-Large-V3-Turbo on the NPU (encoder for a 30 s frame /
 one decoder step): X Elite 561 / 8.5 ms; X2 Elite 251 / 4.9 ms; 8 Gen 3 402 / 7.8 ms; 8 Elite
@@ -241,8 +249,9 @@ one decoder step): X Elite 561 / 8.5 ms; X2 Elite 251 / 4.9 ms; 8 Gen 3 402 / 7.
 (report §9.3), and a working third-party recipe exists for the 8 Elite Gen 5 (Galaxy S26,
 `onnxruntime-android-qnn` 1.29.0 + `qnn-runtime` 2.45.0, Whisper-Small at RTF 0.093).
 
-What this settles for the plan: on the development machine the NPU route is **A** for Turbo and
-can be verified end to end (L5a); on Android it is **A** on paper and **unverified** here, and
+What this settles for the plan: on an X Elite the NPU route is **A** for Turbo; on the 8cx Gen 3
+development machine it is tried with whatever asset its HTP generation can run, and unverified
+otherwise (L5a, corrected 2026-09-25); on Android it is **A** on paper and **unverified** here, and
 ships as such (L5b, D20);
 full large-v3, Parakeet and Qwen have **no** Qualcomm NPU package on either platform (**U**), and
 the sherpa-onnx QNN export code is the only starting point for Parakeet (**E**). The GPU route on
@@ -302,7 +311,7 @@ table into `doc/en-us/local-asr-support-matrix.md` and keeps it current; the cod
 | Target | Whisper large-v3 / turbo | Parakeet TDT v3 | Qwen3-ASR 0.6B (1.7B) | Tested here |
 |---|---|---|---|---|
 | **Windows x64** — Intel / AMD / NVIDIA GPU; Intel NPU; AMD NPU | CPU **B** (whisper.cpp); GPU Vulkan **B**; Intel NPU **A** (OpenVINO GenAI, L7); AMD NPU **A** for the encoder (Ryzen AI 300 on Windows, L7); CUDA **B** (not planned — a 1 GB dependency) | CPU **B** (sherpa-onnx); GPU **B** (transcribe.cpp Vulkan); NPU **U** | CPU **B** (sherpa-onnx int8; 1.7B **E**, own export); GPU **B** (transcribe.cpp Vulkan); NPU **U** | **no** — no x64 machine: shipped unverified (D20); the x64 build's CPU route also runs under emulation on the ARM64 machine, which checks the code path but not the speed |
-| **Windows ARM64** — Snapdragon X Elite (this machine); X2 Elite | CPU **B**; GPU OpenCL **E** (upstream binary exists; whisper-specific bugs open on Adreno); NPU **A** for **Turbo only** (AI Hub asset, ORT QNN EP), large-v3 **U** | CPU **B** (sherpa-onnx, ARM64 DLLs pending a pub release); GPU **U** (transcribe.cpp has no OpenCL and no ARM64 evidence); NPU **E** (sherpa-onnx QNN export code; a PoC encoder on X Elite, 2026-09-22) | CPU **B**; GPU **E** (llama.cpp's Qwen port over OpenCL); NPU **U** | **yes** on the X Elite: CPU, OpenCL, QNN; the X2 Elite ships unverified (D20) |
+| **Windows ARM64** — Snapdragon X Elite; X2 Elite; 8cx Gen 3 (this machine) | CPU **B**; GPU OpenCL **E** (upstream binary exists; whisper-specific bugs open on Adreno); NPU **A** for **Turbo only** (AI Hub asset, ORT QNN EP), large-v3 **U** | CPU **B** (sherpa-onnx, ARM64 DLLs pending a pub release); GPU **U** (transcribe.cpp has no OpenCL and no ARM64 evidence); NPU **E** (sherpa-onnx QNN export code; a PoC encoder on X Elite, 2026-09-22) | CPU **B**; GPU **E** (llama.cpp's Qwen port over OpenCL); NPU **U** | **yes** on the X Elite: CPU, OpenCL, QNN; the X2 Elite ships unverified (D20) |
 | **Android** — Snapdragon 8 Gen 3 / 8 Elite / 8 Elite Gen 5 | CPU **B**; GPU OpenCL **E** (assertion open on 830); NPU **A** for **Turbo only** (per-SoC asset) | CPU **B**; GPU **E**; NPU **E** | CPU **B**; GPU **E**; NPU **U** | **no** — shipped unverified (D20) |
 | **Android** — Google Tensor G3 / G4 / **G5 (Pixel 10)** | CPU **E** (no published numbers); GPU Vulkan **E** (PowerVR driver correctness bugs; Mali works for LLMs); NPU **U** | CPU **E**; GPU **E**; NPU **A/U** (a Google-published Tensor G5 artifact, beta SDK, no route from Flutter; not planned — D14) | CPU **E**; GPU **E**; NPU **U** | **yes** on the G5 (Pixel 10): CPU, Vulkan experiment; the G3 and G4 ship unverified (D20) |
 | **Android** — MediaTek Dimensity, Samsung Exynos | CPU **E**; GPU Vulkan **E**; NPU **U** | CPU **E**; GPU **E**; NPU **U** | CPU **E**; GPU **E**; NPU **U** | **no** — shipped unverified (D20) |
@@ -330,7 +339,7 @@ a new dated entry saying why, and does not silently do otherwise.
 | D10 | **GPU backends are separate dynamic libraries loaded at runtime (`GGML_BACKEND_DL`), never linked into the base library.** Vulkan on Windows x64, OpenCL on Windows ARM64 and Android, Metal on Apple; the CPU backend is always present. A backend whose vendor SDK is absent at build time is simply not produced, and the app reports "not built" rather than failing to start. Under D21, "built" means "in the pinned binary set for that target". | A missing `vulkan-1.dll` or a driver without OpenCL must not take the whole app down. The ggml backend registry is designed for exactly this, and it is how one binary can say honestly which routes it has. |
 | D11 | **sherpa-onnx is the Parakeet and Qwen baseline on all four platforms**, from the official `sherpa_onnx` pub package at the first release whose Windows sub-package carries the ARM64 DLLs (upstream merged them on 2026-09-20, after the 1.13.8 release of 2026-09-10), otherwise vendored and trimmed exactly as FFmpeg was, with the ARM64 archive fetched by hash in a build hook. Pinned at or above 1.13.8 for the Qwen fixes. | It already publishes both models with Android, iOS, Windows and macOS support and has a Dart API; establishing the CPU baseline first is what §12 of the report and this app's own history (M1: verify on real hardware before optimising) both say. |
 | D12 | **The Apple native adapter uses FluidAudio for Parakeet and Qwen on the Neural Engine, through a typed Pigeon channel; WhisperKit is optional and later.** This raises the deployment targets to **iOS 17 and macOS 14**, recorded in `platform-notes.md`. | FluidAudio's `Package.swift` declares `.macOS(.v14), .iOS(.v17)` (checked 2026-09-24, v0.17.1 released 2026-09-23); a Swift package cannot be weak-linked below its platform floor, so the choice is raise the targets or not ship the adapter. whisper.cpp's own Core ML encoder needs no SDK and stays available on the current targets, which is why Whisper comes first (L1) and the Swift adapter later (L4). **The user approved the bump on 2026-09-24.** It is still the one decision here that removes devices, so it lands in the first milestone that needs it — L4, or L1 if the pinned whisper.cpp's Metal backend or Core ML encoder turns out to need a newer floor than iOS 14 / macOS 10.15 — and that release's notes say which devices it drops. |
-| D13 | **Qualcomm is two targets with two runtimes, never one.** Windows on Snapdragon (X Elite / X2 Elite, this project's own machine) and Android on Snapdragon (8 Gen 3 / 8 Elite / 8 Elite Gen 5) get separate adapters, separate model assets and separate verification records. The GPU route on both is the ggml OpenCL backend, which upstream verifies on exactly these chips (Adreno 750/830/840, X1-85, X2-90) on both operating systems (checked 2026-09-24); **Vulkan is not a Qualcomm route** — it produced gibberish and ran slower than the CPU on Adreno X1, and whisper.cpp crashes inside the Adreno Vulkan driver on the 830. The NPU route is ONNX Runtime's QNN execution provider with Qualcomm AI Hub's precompiled **Whisper-Large-V3-Turbo** assets, per SoC — and **the ggml Hexagon backend is not a shipping route on Windows**, because upstream's own guide requires `bcdedit /set TESTSIGNING ON` for its NPU libraries. | A Windows ARM64 build is not an Android build, an X Elite context binary is not an 8 Elite one, and a route that needs test-signing is a developer tool, not a feature. |
+| D13 | **Qualcomm is two targets with two runtimes, never one.** Windows on Snapdragon (X Elite / X2 Elite / 8cx Gen 3 — the last is this project's own machine, corrected 2026-09-25) and Android on Snapdragon (8 Gen 3 / 8 Elite / 8 Elite Gen 5) get separate adapters, separate model assets and separate verification records. The GPU route on both is the ggml OpenCL backend, which upstream verifies on exactly these chips (Adreno 750/830/840, X1-85, X2-90) on both operating systems (checked 2026-09-24); **Vulkan is not a Qualcomm route** — it produced gibberish and ran slower than the CPU on Adreno X1, and whisper.cpp crashes inside the Adreno Vulkan driver on the 830. The NPU route is ONNX Runtime's QNN execution provider with Qualcomm AI Hub's precompiled **Whisper-Large-V3-Turbo** assets, per SoC — and **the ggml Hexagon backend is not a shipping route on Windows**, because upstream's own guide requires `bcdedit /set TESTSIGNING ON` for its NPU libraries. | A Windows ARM64 build is not an Android build, an X Elite context binary is not an 8 Elite one, and a route that needs test-signing is a developer tool, not a feature. |
 | D14 | **Google Tensor is CPU first, GPU experimental, NPU not offered.** The Pixel 10 verification is of the CPU path with Arm dot-product and i8mm kernels and, separately, of whether a Vulkan build of whisper.cpp runs correctly at all on its PowerVR GPU. The Tensor NPU is reachable only through Google's Tensor SDK beta — sign-up gated, ahead-of-time compiled, delivered as a Play AI Pack, G5 and G6 only — and only Parakeet has a published artifact for it; **the user decided on 2026-09-24 not to apply for it**, so it is not offered and not a milestone (§2.4). | The user's phone is the one Android device this project can verify on, and a plan that only verified Snapdragon would verify nothing. |
 | D15 | **The OS recogniser is a fallback and an explicit choice, off by default.** On Apple platforms: `SpeechAnalyzer` where the OS has it, `SFSpeechRecognizer` with on-device recognition required below that; on Android: `SpeechRecognizer` on-device with file input where the OS has it. Server-side recognition is never used unless the user turns on a separately worded switch. Windows has no file-transcription OS API and offers nothing. On Android the recogniser checks `RECORD_AUDIO` even for a file, so the app declares it and asks for it only when the fallback is switched on — the default the user took on 2026-09-24. | The user asked for it as optional. Its value is a transcript on a phone with no model downloaded; its cost is a different privacy line, which the policy page states in the same words the switch uses. |
 | D16 | **Heavy work never runs on the UI isolate, and one native handle has one owner.** FFI adapters run in a dedicated long-lived engine isolate that owns the model handle; platform-channel adapters run on a native worker thread. Cancellation is cooperative — a flag the runtime polls at a segment or token boundary — and resources are released only after the native call has returned. | Report §6.3. `await` on an FFI call is not concurrency; a model handle shared between isolates is a crash. |
@@ -690,7 +699,9 @@ the hook, the LLVM and Ninja steps in CI.
 - [ ] ~~CI: every job builds the hook; LLVM installed on both Windows jobs; the whisper.cpp build
       output cached by submodule commit, OS, architecture and toolchain~~ — replaced by the
       rework's CI box
-- [ ] Verification on real hardware, each written into `local-asr-support-matrix.md` with the
+- [x] *(Closed by the user's decision of 2026-09-25: no device sessions; the Windows ARM64 run is
+      recorded as measured, and every other target ships unverified.)* Verification on real
+      hardware, each written into `local-asr-support-matrix.md` with the
       device, OS, driver, artifact hash, RTF and peak memory: **Windows ARM64** (this machine —
       the 81-minute lecture from M8 through large-v3-turbo and large-v3, compared line by line
       with the OpenRouter transcript), **Pixel 10** (CPU; turbo q5_0 and turbo; memory under the
@@ -1149,6 +1160,15 @@ Recorded when a choice is made that later work should not quietly reverse. Newes
 each date. This log outlives this file: the closing step in §10 moves it, verbatim, to
 `doc/en-us/decisions.md`.
 
+- **2026-09-25** — **No device sessions; simple tests; L2–L9 in order.** The user decided, after
+  0.3.0: the Pixel 10, Mac and iPhone runs are skipped, so everything on them ships as unverified
+  support (D20) — L1's device-verification box closes on that; the CPU routes are not measured
+  further; each milestone is tested simply (the package and live tests with the smallest model,
+  CI green on all five platforms) and released as the next 0.3.x. **The development machine is a
+  Snapdragon 8cx Gen 3** (Adreno "8cx Gen 3" GPU, driver 30.0.4122.4000; a Qualcomm Compute DSP),
+  not the X Elite this plan assumed from the survey: the Qualcomm GPU and NPU routes are tried on
+  it, and a route that does not run on this older generation is recorded as such — it says nothing
+  about the X series, which stays unverified.
 - **2026-09-24** — **Releases are v0.3.0, v0.3.1, …** The user approved tagging and chose the
   numbering: 0.3.0 when L1 is done rather than after L2, then one patch number per release. D19
   keeps its original text under the amendment.
