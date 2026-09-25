@@ -11,7 +11,8 @@ find lib -name "*.dart" -not -path "lib/l10n/*" | xargs grep -h '/// Purpose:' |
 
 `lib/l10n/` 下生成的本地化代码不属于该约定，也不计入这些计数。
 
-在 0.2.1 发布时，该命令报告 **86** 个源文件中共 **881** 处带说明的声明，其中每个文件都出现在下面的表格里。
+在 0.2.1 发布时，该命令报告 **86** 个源文件中共 **881** 处带说明的声明。加上本地模型计划的基础部分（L0）后，它报告
+**100** 个源文件中共 **1076** 处，其中每个文件都出现在下面的表格里。
 
 ## 状态
 
@@ -103,6 +104,20 @@ find lib -name "*.dart" -not -path "lib/l10n/*" | xargs grep -h '/// Purpose:' |
 | `lib/features/transcript/widgets/speakers_panel.dart` | [features/diarization-and-speakers.md](../features/diarization-and-speakers.md) |
 | `lib/features/transcript/widgets/segment_edit_sheet.dart` | [features/transcript-viewer.md](../features/transcript-viewer.md) |
 | `lib/features/transcript/widgets/audio_player_bar.dart` | [features/transcript-viewer.md](../features/transcript-viewer.md) |
+| `lib/features/local/models/local_model_config.dart` | [features/local-models.md](../features/local-models.md), [data-formats.md](../data-formats.md) |
+| `lib/features/local/models/engine_capability.dart` | [algorithms/engine-routing.md](../algorithms/engine-routing.md) |
+| `lib/features/local/models/artifact_manifest.dart` | [data-formats.md](../data-formats.md) |
+| `lib/features/local/models/local_engine_state.dart` | [data-formats.md](../data-formats.md) |
+| `lib/features/local/services/local_asr_engine.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/services/engine_registry.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/services/engine_router.dart` | [algorithms/engine-routing.md](../algorithms/engine-routing.md) |
+| `lib/features/local/services/artifact_downloader.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/services/artifact_manager.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/services/local_engine_state_store.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/services/local_model_templates.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/services/local_transcription_backend.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/services/pcm_window_cutter.dart` | [features/media-tools.md](../features/media-tools.md) |
+| `lib/features/local/services/route_smoke_test.dart` | [algorithms/engine-routing.md](../algorithms/engine-routing.md) |
 
 ## shared/
 

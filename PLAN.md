@@ -526,16 +526,16 @@ into something already proven with a fake.
 - [x] `AGENTS.md`, in the first commit of L0: the sentence under Required workflow that says this
       repository has no on-device AI is rewritten — on-device transcription is this app's
       feature from this plan on — so that it stops sending implementing agents back to ask
-- [ ] `localModel` record kind (D1): model, parsing, `extraJson`, template seeding with derived
+- [x] `localModel` record kind (D1): model, parsing, `extraJson`, template seeding with derived
       ids, refresh with `overriddenFields`; a test that a 0.2.1-shaped document with a
       `localModel` record round-trips through `TranscribeSettings` untouched, and that
       `SettingsRecordKind.parse` on the old enum reads it as `unknown`
-- [ ] `EvidenceLevel`, `PlacementKind`, `ComputeDevice`, `FallbackPolicy`, `EngineRoute`,
+- [x] `EvidenceLevel`, `PlacementKind`, `ComputeDevice`, `FallbackPolicy`, `EngineRoute`,
       `PreparedSession`, `AsrEvent`, the error code set (§4.2), each with its Function
       Explanation Layer comment
-- [ ] `LocalAsrEngine` and a `FakeLocalAsrEngine` in `test/` that scripts segments, delays,
+- [x] `LocalAsrEngine` and a `FakeLocalAsrEngine` in `test/` that scripts segments, delays,
       errors and placement, for every later test
-- [ ] `EngineRegistry` (which adapters exist in this build; probe caching) and `EngineRouter` as a
+- [x] `EngineRegistry` (which adapters exist in this build; probe caching) and `EngineRouter` as a
       pure function: filters by language (Parakeet is never a candidate for zh, ja or ko — report
       §2), by timestamp needs, by installed artifacts, by device availability and by this
       device's smoke-test result; Auto follows D20 — a route tested here on this kind of device,
@@ -543,35 +543,38 @@ into something already proven with a fake.
       CPU, never an untested **E** or **U** route; never substitutes a model; emits a `fallback`
       decision only within the user's policy. The tested-here table lives in `engine-routing.md`
       beside the rules. Tests for each rule
-- [ ] `ArtifactManifest`, `ArtifactManager` and `ArtifactDownloader` (D17): resumable ranges,
+- [x] `ArtifactManifest`, `ArtifactManager` and `ArtifactDownloader` (D17): resumable ranges,
       per-file SHA-256, atomic install, remove, the lease, disk-space checks that count download,
       unpack and install space separately; tests against a fake `http.Client` including a
       resumed download, a hash mismatch and a full disk
-- [ ] Built-in templates in `local_model_templates.dart` for the artifacts in §5.1, with pinned
+- [x] Built-in templates in `local_model_templates.dart` for the artifacts in §5.1, with pinned
       source revisions in the URLs and hashes measured at implementation time — never copied from
       a table in this file
-- [ ] `local_engine_state.json` and the `modelsPath` accessor in `TranscribeStorage`; `models/`
-      excluded from iCloud backup on Apple platforms; smoke-test results keyed as §4.4 says, so an
-      adapter, model, OS or driver change asks for a new check; the in-flight marker and its
+- [x] `local_engine_state.json` and the `modelsPath` accessor in `TranscribeStorage`; `models/`
+      excluded from iCloud backup on Apple platforms (by living in the caches directory — see the
+      decisions log); smoke-test results keyed as §4.4 says, so an adapter, model, OS or driver
+      change asks for a new check; the in-flight marker and its
       startup rule (a marker left behind → the route is `crashed` here, `ROUTE_CRASHED` on the
       interrupted job, which resumes under the fallback policy), tested with the fake engine
-- [ ] Planner **time-only mode** with `windowCappedByEngine` and `windowCappedByMemory`, the
+- [x] Planner **time-only mode** with `windowCappedByEngine` and `windowCappedByMemory`, the
       fingerprint additions, and the rule that a local job always decodes to PCM; tests in
       `chunk_planner_test.dart`
-- [ ] `MediaToolkit` PCM window output on both backends; `media_toolkit_live_test.dart` and
+- [x] `MediaToolkit` PCM window output on both backends; `media_toolkit_live_test.dart` and
       `integration_test/media_toolkit_test.dart` extended so both backends produce byte-identical
-      WAV headers and sample counts for the same window
-- [ ] `LocalTranscriptionBackend` and the runner's `transcribing` stage; `job_runner_test.dart`
+      WAV headers and sample counts for the same window (the external backend verified on the
+      ARM64 machine; the embedded one runs on a device by hand, per `integration_test/README.md`,
+      at the next device session)
+- [x] `LocalTranscriptionBackend` and the runner's `transcribing` stage; `job_runner_test.dart`
       drives a whole job through the fake engine: prepare once, three windows, a cancel mid-window
       that waits for the engine, a resume that reuses windows, a device change that discards them,
       a `fallback` event recorded on the job, an `OUT_OF_MEMORY` that fails the job with the new
       `JobFailureKind`
-- [ ] Docs: `features/local-models.md`, `algorithms/engine-routing.md`,
+- [x] Docs: `features/local-models.md`, `algorithms/engine-routing.md`,
       `local-asr-support-matrix.md` (from §2.7) written in both languages; `data-formats.md`,
       `sync.md`, `architecture.md`, `platform-notes.md`, `chunking-and-resume.md`,
       `algorithms/chunk-planner.md`, `media-tools.md`, `functions/INDEX.md` updated; glossary
       terms added (§6)
-- [ ] **Done when**: `flutter analyze` is clean, `flutter test` is green, the fake engine carries a
+- [x] **Done when**: `flutter analyze` is clean, `flutter test` is green, the fake engine carries a
       recording through the runner end to end, and `test/doc_mirror_test.dart` passes with the
       new pages
 
@@ -598,6 +601,9 @@ iOS and macOS at once. Metal comes with the Apple build and is reported honestly
 - [ ] Placement from `whisper_print_system_info` and the backend registry: `cpu` on CPU-only
       builds, `gpu` when the Metal backend took the graph, `mixed` when the Core ML encoder ran
       with a CPU decoder, `unknown` otherwise
+- [ ] Android: a backup rule (`android:dataExtractionRules` and `android:fullBackupContent`) that
+      excludes `models/` from Auto Backup and device transfer, before the first model can be
+      downloaded there; `platform-notes.md` updated (L0 left it, recorded in the decisions log)
 - [ ] Memory guard: refuse to load an artifact whose `minimumRamBytes` exceeds available memory,
       with `OUT_OF_MEMORY` and the numbers; measure the real peak on each verifying device and
       write it into the verification record
@@ -1048,6 +1054,36 @@ Recorded when a choice is made that later work should not quietly reverse. Newes
 each date. This log outlives this file: the closing step in §10 moves it, verbatim, to
 `doc/en-us/decisions.md`.
 
+- **2026-09-24** — L0: **0.2.x does not carry an unknown record kind "untouched".** It parses the
+  kind to `unknown` and writes the literal `unknown` back, so a `localModel` record that passes
+  through a 0.2.x device comes back without its kind — D1's premise was wrong on this one point.
+  Two repairs, both in `SettingsRecord`: this build writes an unknown kind back exactly as it found
+  it (so a later build's kind survives a round trip through this one), and every local model id
+  starts with `local:` — built-in and user-added alike — so a `kind: unknown` record with such an id
+  reads as `localModel` again and is written back with its kind at the next save. The 0.2.1 test
+  that asserted the old behaviour was changed to assert the new one.
+- **2026-09-24** — L0: **On Apple platforms `models/` lives in the caches directory** rather than
+  under the app directory with the do-not-back-up flag set, because setting that flag needs native
+  code and L0 has none. iCloud backup and Time Machine skip the caches directory; the cost is that
+  the system may purge it when space is short, which the library shows as "not downloaded" — the
+  honest state of a re-downloadable cache. On Android the manifest sets no backup rule, so Auto
+  Backup (which already gives up on this app past 25 MB of recordings) is addressed in L1 with an
+  explicit rule excluding `models/`, before a model can first be downloaded there.
+- **2026-09-24** — L0: **Template hashes are the ones the hosts publish**, not hashes computed from
+  whole downloads: Hugging Face's LFS object id for the whisper.cpp files — checked to be the file's
+  own SHA-256 by downloading `ggml-tiny.bin` (`be07e048…`) — and GitHub's release-asset digests for
+  the sherpa-onnx archives. The downloader verifies every file against them. An archive is verified
+  as an archive; the files it unpacks are hashed on the device and recorded in the installed
+  manifest, so the templates need not list what is inside.
+- **2026-09-24** — L0: **D4 is realised as a local branch of the runner, not an interface over both
+  transports.** Local jobs go through `LocalTranscriptionBackend` (route, one prepare per job, the
+  in-flight marker, mid-job fallback); the upload path is unchanged, and the stage machine's probe,
+  conversion, merge and rendering are shared helpers. Wrapping the HTTP client in the same interface
+  would have moved the most-tested code for no behaviour gain. A job records what the user asked to
+  run on as `options.device` and every fallback in a `fallbacks` list, beside the `route`,
+  `artifactRevision` and per-window `placement` §4.4 names; and the router is told which adapters
+  the build contains, since adapters describe routes only for installed packages and "nothing
+  installed" must read as `MODEL_MISSING`, not `BACKEND_NOT_BUILT`.
 - **2026-09-24** — **The user settled the plan's open questions** the day it was written:
   release **0.3.0** first (D19); **unverified support** for the devices this project cannot test
   (D20); the deployment targets raised to **iOS 17 / macOS 14** (D12); **no** application for

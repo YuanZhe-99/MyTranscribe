@@ -548,6 +548,21 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String jobStageTranscribing(int index, int total) {
+    return 'Transcribing segment $index of $total on this device';
+  }
+
+  @override
+  String planWindowByEngine(String seconds) {
+    return 'Segment length set by the local model\'s limit of $seconds seconds.';
+  }
+
+  @override
+  String planWindowByMemory(String seconds) {
+    return 'Segment length set by the memory this device has for the model: $seconds seconds.';
+  }
+
+  @override
   String planWindowByProvider(String seconds) {
     return 'Segment length set by the source\'s limit of $seconds seconds.';
   }

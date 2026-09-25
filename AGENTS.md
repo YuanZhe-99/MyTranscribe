@@ -38,6 +38,7 @@ about to change, verify against the code, then fix the docs in the same commit.
 | Backup, restore, ZIP transfer | `doc/en-us/backup-restore.md` |
 | Files on disk, what syncs, `storage_config.json` keys | `doc/en-us/data-formats.md` |
 | Per-feature behavior | `doc/en-us/features/*.md` |
+| Local models: records, packages, routes, which devices are tested | `doc/en-us/features/local-models.md`, `doc/en-us/algorithms/engine-routing.md`, `doc/en-us/local-asr-support-matrix.md` |
 | A named algorithm, derived rather than described | `doc/en-us/algorithms/*.md` |
 | When the UI splits into panes or columns; foldable rules | `doc/en-us/adaptive-layout.md` |
 | FFmpeg per platform, Gradle/AGP state, Apple entitlements | `doc/en-us/platform-notes.md` |
@@ -187,6 +188,13 @@ Do not change these without the user explicitly deciding to:
 - **Record ids are a compatibility contract.** A provider or model record is addressed by its id
   across devices; renaming a shipped template id orphans every device's overrides for it. Ids may be
   added; a shipped id is never changed.
+- **Local models stay on the device, and are never swapped.** `models/` and
+  `local_engine_state.json` are never data modules. Every local model id starts with `local:` —
+  0.2.x writes an unknown record kind back as `unknown`, and the prefix is how the record is
+  recognised again. The router only ever considers the chosen model's own packages; any move to
+  another route is written on the job as a fallback, within the user's policy. Where a window ran
+  is recorded from what the runtime reported, never inferred. A route not tested on this kind of
+  device says so, and Auto picks it only as `doc/en-us/algorithms/engine-routing.md` allows.
 - `android:configChanges` on the main activity keeps
   `screenLayout|screenSize|smallestScreenSize|density`, so folding does not recreate the activity.
 

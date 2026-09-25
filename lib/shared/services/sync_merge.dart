@@ -125,7 +125,7 @@ SettingsMergeResult mergeSettingsData(
     // between two identical configurations. Unknown fields are left out for
     // the same reason — the merge preserves both sides' anyway.
     serialize: (r) =>
-        jsonEncode({'id': r.id, 'kind': r.kind.name, 'payload': r.payload}),
+        jsonEncode({'id': r.id, 'kind': r.persistedKind, 'payload': r.payload}),
   );
 
   final merged = [

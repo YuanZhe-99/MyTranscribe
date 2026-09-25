@@ -1083,6 +1083,24 @@ abstract class AppLocalizations {
   /// **'Segment length set by the model\'s limit of {seconds} seconds.'**
   String planWindowByModel(String seconds);
 
+  /// No description provided for @jobStageTranscribing.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcribing segment {index} of {total} on this device'**
+  String jobStageTranscribing(int index, int total);
+
+  /// No description provided for @planWindowByEngine.
+  ///
+  /// In en, this message translates to:
+  /// **'Segment length set by the local model\'s limit of {seconds} seconds.'**
+  String planWindowByEngine(String seconds);
+
+  /// No description provided for @planWindowByMemory.
+  ///
+  /// In en, this message translates to:
+  /// **'Segment length set by the memory this device has for the model: {seconds} seconds.'**
+  String planWindowByMemory(String seconds);
+
   /// No description provided for @planWindowByProvider.
   ///
   /// In en, this message translates to:

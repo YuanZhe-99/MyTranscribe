@@ -39,6 +39,10 @@ void main() {
       // The converted audio travels through an opt-in side channel instead, so
       // a device that never asks for it never sends a byte of one.
       expect(names, isNot(contains(audioRemoteDirName)));
+      // Downloaded models are gigabytes and belong to one device; the engine
+      // state describes this device's processors (D2, D3).
+      expect(names, isNot(contains(modelsDirName)));
+      expect(names, isNot(contains(localEngineStateFileName)));
     });
 
     test('names the remote directory and the archive prefix', () {
@@ -109,9 +113,26 @@ void main() {
         'modifiedAt': '2026-01-01T00:00:00.000Z',
       });
       expect(record.kind, SettingsRecordKind.unknown);
-      // And writes the kind back as this build understood it, which is the
-      // honest thing: it did not interpret the record.
-      expect(record.toJson()['kind'], 'unknown');
+      // And writes the kind back exactly as it found it. 0.2.x wrote
+      // `unknown` here, which turned a later build's record kind into one
+      // nobody can read once it had passed through an older device.
+      expect(record.toJson()['kind'], 'somethingElse');
+    });
+
+    test('takes back a local model that an older build wrote as unknown', () {
+      // 0.2.x writes a kind it does not know as `unknown`; the `local:` id
+      // prefix is what lets this build recognise the record again.
+      final record = SettingsRecord.fromJson({
+        'id': 'local:whisper-large-v3-turbo',
+        'kind': 'unknown',
+        'payload': {'displayName': 'Whisper large-v3 turbo'},
+      });
+      expect(record.kind, SettingsRecordKind.localModel);
+      expect(record.toJson()['kind'], 'localModel');
+
+      final other = SettingsRecord.fromJson({'id': 'x', 'kind': 'unknown'});
+      expect(other.kind, SettingsRecordKind.unknown);
+      expect(other.toJson()['kind'], 'unknown');
     });
 
     test('falls back to the epoch, never to now', () {

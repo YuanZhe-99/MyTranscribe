@@ -22,10 +22,13 @@ import 'dart:io';
 import 'package:ffmpeg_kit_flutter_new_audio/ffmpeg_kit.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:my_transcribe/features/local/services/pcm_window_cutter.dart';
 import 'package:my_transcribe/features/media/services/embedded_ffmpeg_media_toolkit.dart';
 import 'package:my_transcribe/features/media/services/media_toolkit.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+
+import '../test/golden/pcm_header.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -121,6 +124,26 @@ void main() {
     expect(sampleInfo.durationSeconds, closeTo(3, 0.2));
     expect(sampleInfo.audioCodec, 'pcm_s16le');
     expect(sampleInfo.channels, 1);
+  });
+
+  testWidgets('cuts a PCM window with the same bytes as the desktop', (
+    _,
+  ) async {
+    final normalized = p.join(work.path, 'audio.mp3');
+    if (!File(normalized).existsSync()) {
+      await toolkit.normalize(fixture, normalized);
+    }
+    final window = File(p.join(work.path, 'chunk_0000.wav'));
+    final pcm = await PcmWindowCutter(toolkit).cut(normalized, 5, 8, window);
+
+    // Decoded rather than copied, so the length is exact to the sample, and
+    // bit-exact, so the header is the same whichever FFmpeg cut it.
+    expect(pcm.sampleCount, 8 * pcmSampleRate);
+    expect(pcm.dataOffset, 44);
+    expect(
+      window.readAsBytesSync().sublist(0, 44),
+      expectedPcmHeader(8 * pcmSampleRate),
+    );
   });
 
   testWidgets('a cancelled operation reports itself cancelled', (_) async {

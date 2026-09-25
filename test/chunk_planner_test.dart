@@ -409,4 +409,80 @@ void main() {
       );
     });
   });
+
+  group('a local model (time-only mode)', () {
+    LocalPlanRequest local({
+      double? duration = 3600,
+      int? engine = 600,
+      int? route,
+      int? memory,
+      bool toolkit = true,
+      String device = 'auto',
+      String revision = 'r1',
+      double? userWindow,
+    }) => LocalPlanRequest(
+      media: duration == null ? null : MediaInfo(durationSeconds: duration),
+      modelId: 'local:whisper',
+      engineMaxSeconds: engine,
+      routeMaxSeconds: route,
+      memoryMaxSeconds: memory,
+      artifactRevision: revision,
+      requestedDevice: device,
+      overlapSeconds: 5,
+      userWindowSeconds: userWindow,
+      toolkitAvailable: toolkit,
+    );
+
+    test('decodes even a short clip, as one window', () {
+      final plan = ChunkPlanner.planLocal(local(duration: 30)).plan!;
+      expect(plan.uploadsOriginal, isFalse, reason: 'no fast path');
+      expect(plan.windowCount, 1);
+      expect(plan.windows.single.endSeconds, 30);
+    });
+
+    test('needs FFmpeg and a duration, whatever the size', () {
+      expect(
+        ChunkPlanner.planLocal(local(duration: 30, toolkit: false)).failure,
+        PlanFailure.mediaToolkitMissing,
+      );
+      expect(
+        ChunkPlanner.planLocal(local(duration: null)).failure,
+        PlanFailure.durationUnknown,
+      );
+    });
+
+    test("caps the window at the engine's limit and says so", () {
+      final plan = ChunkPlanner.planLocal(local()).plan!;
+      expect(plan.strideSeconds, 595);
+      expect(plan.reasons.single.code, PlanReasonCode.windowCappedByEngine);
+      expect(plan.reasons.single.value, 600);
+      final byRoute = ChunkPlanner.planLocal(local(route: 300)).plan!;
+      expect(byRoute.reasons.single.value, 300);
+    });
+
+    test('caps the window by memory below the engine', () {
+      final plan = ChunkPlanner.planLocal(local(memory: 240)).plan!;
+      expect(plan.strideSeconds, 235);
+      expect(plan.reasons.single.code, PlanReasonCode.windowCappedByMemory);
+    });
+
+    test("falls back to the app's ceiling with no engine limit", () {
+      final plan = ChunkPlanner.planLocal(local(engine: null)).plan!;
+      expect(plan.reasons.single.code, PlanReasonCode.windowCappedByCeiling);
+      expect(plan.strideSeconds, maxAutoWindowSeconds - 5);
+    });
+
+    test('fingerprints the package revision and the device asked for', () {
+      final base = ChunkPlanner.planLocal(local()).plan!.fingerprint;
+      expect(ChunkPlanner.planLocal(local()).plan!.fingerprint, base);
+      expect(
+        ChunkPlanner.planLocal(local(revision: 'r2')).plan!.fingerprint,
+        isNot(base),
+      );
+      expect(
+        ChunkPlanner.planLocal(local(device: 'cpu')).plan!.fingerprint,
+        isNot(base),
+      );
+    });
+  });
 }

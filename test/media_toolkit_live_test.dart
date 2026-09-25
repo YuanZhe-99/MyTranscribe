@@ -23,11 +23,14 @@ import 'dart:ffi' show Abi;
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_transcribe/features/local/services/pcm_window_cutter.dart';
 import 'package:my_transcribe/features/media/services/external_ffmpeg_media_toolkit.dart';
 import 'package:my_transcribe/features/media/services/ffmpeg_downloader.dart';
 import 'package:my_transcribe/features/media/services/ffmpeg_locator.dart';
 import 'package:my_transcribe/features/media/services/media_toolkit.dart';
 import 'package:path/path.dart' as p;
+
+import 'golden/pcm_header.dart';
 
 /// Whether the large download test should run.
 const _liveDownload = bool.fromEnvironment('live_download');
@@ -183,6 +186,25 @@ void main() {
       expect(info.durationSeconds, closeTo(8, 0.2));
       expect(info.channels, 1);
       expect(info.sampleRate, 16000);
+    });
+
+    test('cuts a PCM window a local engine can take', () async {
+      if (skipWithoutFfmpeg()) return;
+      final normalized = p.join(work.path, 'audio.mp3');
+      if (!File(normalized).existsSync()) {
+        await toolkit.normalize(fixture, normalized);
+      }
+    final window = File(p.join(work.path, 'chunk_0000.wav'));
+    final pcm = await PcmWindowCutter(toolkit).cut(normalized, 5, 8, window);
+
+    // Decoded rather than copied, so the length is exact to the sample, and
+    // bit-exact, so the header is the same whichever FFmpeg cut it.
+    expect(pcm.sampleCount, 8 * pcmSampleRate);
+    expect(pcm.dataOffset, 44);
+    expect(
+      window.readAsBytesSync().sublist(0, 44),
+      expectedPcmHeader(8 * pcmSampleRate),
+    );
     });
 
     test('cuts a WAV sample at the requested point', () async {

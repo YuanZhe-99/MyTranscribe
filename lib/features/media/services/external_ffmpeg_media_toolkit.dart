@@ -230,14 +230,15 @@ class ExternalFfmpegMediaToolkit implements MediaToolkit {
 
   /// Purpose: Copy one time range out of a normalized recording.
   /// Inputs: [source], [startSeconds], [lengthSeconds], [destination],
-  /// optional [cancel].
+  /// optional [cancel], and the output [format].
   /// Returns: A future completing when the window is written.
   /// Side effects: Runs `ffmpeg`; writes and, on failure, deletes the output.
   /// Notes: `-ss` goes **before** `-i` so FFmpeg seeks rather than decoding
   /// and discarding everything up to the start — on a two-hour recording that
-  /// is the difference between instant and a minute. With `-c:a copy` the cut
-  /// lands on a frame boundary, so the window can be a few milliseconds off the
-  /// requested length; the merge is written not to care.
+  /// is the difference between instant and a minute. With a stream copy the
+  /// cut lands on a frame boundary, so the window can be a few milliseconds off
+  /// the requested length; the merge is written not to care. The PCM form is
+  /// decoded, so it starts where it was asked to.
   @override
   Future<void> extractWindow(
     String source,
@@ -245,6 +246,7 @@ class ExternalFfmpegMediaToolkit implements MediaToolkit {
     double lengthSeconds,
     String destination, {
     MediaCancelToken? cancel,
+    WindowFormat format = WindowFormat.streamCopy,
   }) async {
     await _run(
       await _require('ffmpeg'),
@@ -257,8 +259,7 @@ class ExternalFfmpegMediaToolkit implements MediaToolkit {
         '-t',
         lengthSeconds.toStringAsFixed(3),
         '-vn',
-        '-c:a',
-        'copy',
+        ...windowCodecArgs(format),
         destination,
       ],
       destination: destination,

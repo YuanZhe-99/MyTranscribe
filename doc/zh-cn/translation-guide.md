@@ -76,3 +76,16 @@
 | secure endpoint | 安全端点 | 安全端點 | |
 | trusted host | 受信任主机 | 受信任主機 | |
 | diarization | 说话人分离 | 說話人分離 | 面向用户的文案优先用"说话人识别"。 |
+| local model | 本地模型 | 本機模型 | 在设备上运行的模型。台湾用"本機"指"这台机器"。 |
+| engine | 引擎 | 引擎 | 运行本地模型的运行时；很少出现在面向用户的文案里。 |
+| download (a model) | 下载 | 下載 | |
+| compute device | 计算设备 | 運算裝置 | 模型运行所在的 CPU、GPU 或 NPU。台湾用"裝置"，不用"設備"。 |
+| on this device | 在本机 | 在本機 | |
+| verified / unverified / experimental | 已验证 / 未验证 / 实验性 | 已驗證 / 未驗證 / 實驗性 | 用于路线。"未验证"是一种发布状态，不是错误。 |
+| tested on this kind of device | 已在此类设备上测试 | 已在此類裝置上測試 | "已验证"对用户的含义。 |
+| smoke test (a route's check on this device) | 本机检查 | 本機檢查 | 面向用户的文案说"检查"，不说"冒烟测试"。 |
+| placement | 运行位置 | 執行位置 | 一个分段实际运行的位置：CPU、GPU、NPU。 |
+| fallback | 回退 | 備援 | 可见地改用另一条路线；绝不是悄悄替换。 |
+| system recogniser | 系统语音识别 | 系統語音辨識 | 操作系统自带的识别器。台湾把语音识别说成"辨識"。 |
+| artifact (the downloaded package) | 模型包 | 模型套件 | 一个本地模型要下载的文件。 |
+| diagnostics report | 诊断报告 | 診斷報告 | 用户复制的文本；应用不会把它发送到任何地方。 |

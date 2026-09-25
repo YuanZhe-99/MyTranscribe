@@ -31,6 +31,7 @@ String jobStageLabel(AppLocalizations l10n, TranscriptionJob job) {
     JobStage.normalizing => l10n.jobStageNormalizing,
     JobStage.cutting => l10n.jobStageCutting(current, total),
     JobStage.uploading => l10n.jobStageUploading(current, total),
+    JobStage.transcribing => l10n.jobStageTranscribing(current, total),
     JobStage.merging => l10n.jobStageMerging,
     JobStage.namingSpeakers => l10n.jobStageSpeakers,
     JobStage.rendering => l10n.jobStageRendering,
@@ -91,6 +92,8 @@ String planReasonText(AppLocalizations l10n, PlanReason reason) {
     PlanReasonCode.windowCappedByCeiling => l10n.planWindowByCeiling(value),
     PlanReasonCode.overlapForSpeakers => l10n.planOverlapForSpeakers(value),
     PlanReasonCode.windowChosenByUser => l10n.planWindowByUser,
+    PlanReasonCode.windowCappedByEngine => l10n.planWindowByEngine(value),
+    PlanReasonCode.windowCappedByMemory => l10n.planWindowByMemory(value),
   };
 }
 

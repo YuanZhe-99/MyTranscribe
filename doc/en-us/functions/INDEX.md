@@ -12,7 +12,8 @@ find lib -name "*.dart" -not -path "lib/l10n/*" | xargs grep -h '/// Purpose:' |
 Generated localization code under `lib/l10n/` is excluded from the convention and from these counts.
 
 At the 0.2.1 release that command reports **881** documented declarations across **86** source
-files, and every one of those files appears in the tables below.
+files. With the foundation of the local-models plan (L0) it reports **1076** across **100**, and
+every one of those files appears in the tables below.
 
 ## Status
 
@@ -106,6 +107,20 @@ is covered by a concept page, and a table of one-line stubs would say less than 
 | `lib/features/transcript/widgets/speakers_panel.dart` | [features/diarization-and-speakers.md](../features/diarization-and-speakers.md) |
 | `lib/features/transcript/widgets/segment_edit_sheet.dart` | [features/transcript-viewer.md](../features/transcript-viewer.md) |
 | `lib/features/transcript/widgets/audio_player_bar.dart` | [features/transcript-viewer.md](../features/transcript-viewer.md) |
+| `lib/features/local/models/local_model_config.dart` | [features/local-models.md](../features/local-models.md), [data-formats.md](../data-formats.md) |
+| `lib/features/local/models/engine_capability.dart` | [algorithms/engine-routing.md](../algorithms/engine-routing.md) |
+| `lib/features/local/models/artifact_manifest.dart` | [data-formats.md](../data-formats.md) |
+| `lib/features/local/models/local_engine_state.dart` | [data-formats.md](../data-formats.md) |
+| `lib/features/local/services/local_asr_engine.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/services/engine_registry.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/services/engine_router.dart` | [algorithms/engine-routing.md](../algorithms/engine-routing.md) |
+| `lib/features/local/services/artifact_downloader.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/services/artifact_manager.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/services/local_engine_state_store.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/services/local_model_templates.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/services/local_transcription_backend.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/services/pcm_window_cutter.dart` | [features/media-tools.md](../features/media-tools.md) |
+| `lib/features/local/services/route_smoke_test.dart` | [algorithms/engine-routing.md](../algorithms/engine-routing.md) |
 
 ## shared/
 

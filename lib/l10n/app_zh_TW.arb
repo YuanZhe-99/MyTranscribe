@@ -257,6 +257,33 @@
       }
     }
   },
+  "jobStageTranscribing": "正在本機轉寫第 {index} 段，共 {total} 段",
+  "@jobStageTranscribing": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "planWindowByEngine": "分段長度受本機模型 {seconds} 秒的限制。",
+  "@planWindowByEngine": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "planWindowByMemory": "分段長度受本裝置可供該模型使用的記憶體限制：{seconds} 秒。",
+  "@planWindowByMemory": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
   "planWindowByProvider": "分段長度受來源 {seconds} 秒的限制。",
   "@planWindowByProvider": {
     "placeholders": {

@@ -126,3 +126,22 @@ over `just_audio` and `media_kit` because its Windows backend is Media Foundatio
 source, so it builds on ARM64; the other two ship an x86_64-only libmpv and would fail the same way
 the FFmpeg plugin does. This was verified with a real `flutter build windows` on the ARM64 machine
 rather than taken from documentation.
+
+## Local models
+
+Where downloaded models live differs by platform, and `platform_capabilities.dart` decides it
+(`modelsLiveInCachesDirectory`):
+
+| Platform | Where `models/` is | Why |
+|---|---|---|
+| iOS, macOS | the app's caches directory | iCloud backup and Time Machine leave it out; a model is a re-downloadable cache, and gigabytes of it in a phone backup is a support ticket. The system may purge it when space runs short, and the library then shows the model as not downloaded. No native code is needed to mark a folder as excluded. |
+| Android, Windows | `models/` under the app directory | A custom storage path carries the models along. Android's Auto Backup is on by default — the manifest sets no rule — and skips an app whose data passes 25 MB, which recordings already do; a backup rule that excludes `models/` explicitly lands with L1, when a model can first be downloaded on Android. |
+
+A desktop user may move models anywhere with `modelsPath`; nothing is copied when it changes.
+
+Which engine adapters a platform may have at all is also decided there (`localEngineBackends`):
+whisper.cpp and sherpa-onnx everywhere; the Swift plugin on iOS and macOS; Android's recogniser on
+Android; ONNX Runtime with Qualcomm's QNN provider on Windows and Android. Whether a build actually
+contains one is the engine registry's answer. At L0 no adapter is compiled in; the toolchain each
+needs is recorded here as each milestone lands. `hasSystemSpeechRecognizer` is false on Windows,
+which has no file-transcription API, so the fallback setting is absent there rather than disabled.

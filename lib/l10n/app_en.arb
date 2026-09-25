@@ -257,6 +257,33 @@
       }
     }
   },
+  "jobStageTranscribing": "Transcribing segment {index} of {total} on this device",
+  "@jobStageTranscribing": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "planWindowByEngine": "Segment length set by the local model's limit of {seconds} seconds.",
+  "@planWindowByEngine": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "planWindowByMemory": "Segment length set by the memory this device has for the model: {seconds} seconds.",
+  "@planWindowByMemory": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
   "planWindowByProvider": "Segment length set by the source's limit of {seconds} seconds.",
   "@planWindowByProvider": {
     "placeholders": {

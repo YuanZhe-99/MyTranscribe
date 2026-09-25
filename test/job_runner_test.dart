@@ -16,6 +16,14 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_transcribe/features/jobs/models/transcription_job.dart';
+import 'package:my_transcribe/features/local/models/engine_capability.dart';
+import 'package:my_transcribe/features/local/models/local_engine_state.dart';
+import 'package:my_transcribe/features/local/services/artifact_manager.dart';
+import 'package:my_transcribe/features/local/services/engine_registry.dart';
+import 'package:my_transcribe/features/local/services/local_asr_engine.dart';
+import 'package:my_transcribe/features/local/services/local_engine_state_store.dart';
+import 'package:my_transcribe/features/local/services/local_model_templates.dart';
+import 'package:my_transcribe/features/local/services/local_transcription_backend.dart';
 import 'package:my_transcribe/features/jobs/services/job_runner.dart';
 import 'package:my_transcribe/features/jobs/services/job_store.dart';
 import 'package:my_transcribe/features/media/models/media_info.dart';
@@ -29,6 +37,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
+import 'golden/fake_local_asr_engine.dart';
 import 'golden/fake_transcription_server.dart';
 
 /// A model with no caps at all, so a small file uploads whole.
@@ -101,11 +110,20 @@ class _FakeToolkit implements MediaToolkit {
     double lengthSeconds,
     String destination, {
     MediaCancelToken? cancel,
+    WindowFormat format = WindowFormat.streamCopy,
   }) async {
     cancel?.throwIfCancelled();
     windowsCut++;
-    File(destination).writeAsBytesSync(Uint8List(2048));
+    if (format == WindowFormat.pcm16kMono) {
+      pcmWindows++;
+      File(destination).writeAsBytesSync(_wav(1600));
+    } else {
+      File(destination).writeAsBytesSync(Uint8List(2048));
+    }
   }
+
+  /// How many windows were cut as PCM for a local engine.
+  int pcmWindows = 0;
 
   @override
   Future<void> cutSample(
@@ -117,6 +135,36 @@ class _FakeToolkit implements MediaToolkit {
   }) async {
     File(destination).writeAsBytesSync(Uint8List(512));
   }
+}
+
+/// Purpose: Build a 16 kHz mono 16-bit WAV of silence.
+/// Inputs: The number of [samples].
+/// Returns: The file's bytes.
+/// Side effects: None.
+/// Notes: What FFmpeg writes for a PCM window, minus the audio; the cutter
+/// checks the header, so the fake has to write a real one.
+Uint8List _wav(int samples) {
+  final data = ByteData(44 + samples * 2);
+  void tag(int at, String text) {
+    for (var i = 0; i < 4; i++) {
+      data.setUint8(at + i, text.codeUnitAt(i));
+    }
+  }
+
+  tag(0, 'RIFF');
+  data.setUint32(4, 36 + samples * 2, Endian.little);
+  tag(8, 'WAVE');
+  tag(12, 'fmt ');
+  data.setUint32(16, 16, Endian.little);
+  data.setUint16(20, 1, Endian.little);
+  data.setUint16(22, 1, Endian.little);
+  data.setUint32(24, 16000, Endian.little);
+  data.setUint32(28, 32000, Endian.little);
+  data.setUint16(32, 2, Endian.little);
+  data.setUint16(34, 16, Endian.little);
+  tag(36, 'data');
+  data.setUint32(40, samples * 2, Endian.little);
+  return data.buffer.asUint8List();
 }
 
 void main() {
@@ -947,6 +995,327 @@ void main() {
       final all = await JobStore.loadAll();
       expect(all.first.id, second.id);
       expect(all.map((j) => j.id), containsAll(<String>[first.id, second.id]));
+    });
+  });
+
+  group('a local model', () {
+    const modelId = 'local:whisper-large-v3-turbo';
+    const artifactId = 'whisper-large-v3-turbo-ggml';
+
+    late Directory models;
+    late LocalEngineStateStore state;
+    late ArtifactManager artifacts;
+    late EngineRoute cpu;
+    late EngineRoute gpu;
+
+    setUp(() async {
+      models = Directory(p.join(root.path, 'models'));
+      state = LocalEngineStateStore(
+        file: () async => File(p.join(root.path, 'local_engine_state.json')),
+      );
+      artifacts = ArtifactManager(modelsDir: () async => models);
+      await fakeInstall(models, templateArtifact(artifactId)!);
+      cpu = fakeRoute(
+        adapterId: whisperCppAdapterId,
+        modelId: modelId,
+        artifactId: artifactId,
+        testedHere: true,
+      );
+      gpu = fakeRoute(
+        adapterId: whisperCppAdapterId,
+        modelId: modelId,
+        artifactId: artifactId,
+        device: ComputeDevice.gpu,
+        backend: 'opencl',
+        testedHere: true,
+      );
+      for (final (route, rtf) in [(cpu, 0.5), (gpu, 0.1)]) {
+        await state.recordSmokeTest(
+          route.smokeKey,
+          SmokeTestRecord(
+            routeKey: route.key,
+            outcome: SmokeTestOutcome.passed,
+            checkedAt: DateTime.utc(2026, 9, 24),
+            realTimeFactor: rtf,
+          ),
+        );
+      }
+    });
+
+    /// Purpose: Build a runner whose local jobs run on [engine].
+    /// Inputs: The [engine], and the [toolkit].
+    /// Returns: A [JobRunner].
+    /// Side effects: None.
+    /// Notes: Internal helper used within this file only.
+    JobRunner localRunner(FakeLocalAsrEngine engine, _FakeToolkit toolkit) =>
+        JobRunner(
+          toolkit: () async => toolkit,
+          repository: repository,
+          keyLookup: (_) async => null,
+          writeTranscriptFiles: () async => false,
+          localBackend: LocalTranscriptionBackend(
+            registry: EngineRegistry(
+              engines: [engine],
+              artifacts: artifacts,
+              state: state,
+            ),
+          ),
+        );
+
+    /// Purpose: Create a local job.
+    /// Inputs: The [run]ner and the job's [options].
+    /// Returns: The created job.
+    /// Side effects: Writes the job record.
+    /// Notes: Internal helper used within this file only.
+    Future<TranscriptionJob> createLocal(
+      JobRunner run, {
+      JobOptions options = const JobOptions(),
+    }) => run.create(
+      sourcePath: source.path,
+      providerId: localJobProviderId,
+      modelId: modelId,
+      modelName: 'whisper-large-v3-turbo',
+      options: options,
+    );
+
+    /// Purpose: Wait until a job's record reaches a stage and window.
+    /// Inputs: The [jobId], the [stage] and the window [index].
+    /// Returns: None.
+    /// Side effects: Polls the record.
+    /// Notes: Internal helper used within this file only.
+    Future<void> waitFor(String jobId, JobStage stage, int index) async {
+      for (var i = 0; i < 500; i++) {
+        final job = await JobStore.load(jobId);
+        if (job?.stage == stage && job?.currentChunk == index) return;
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+      fail('the job never reached $stage at window $index');
+    }
+
+    FakeLocalAsrEngine engine({
+      FakeWindow Function(String routeKey, int call)? script,
+    }) => FakeLocalAsrEngine(
+      adapterId: whisperCppAdapterId,
+      routes: [cpu, gpu],
+      script: script,
+    );
+
+    test(
+      'runs a whole job: loaded once, three windows, placement kept',
+      () async {
+        final fake = engine();
+        final toolkit = _FakeToolkit(duration: 1500);
+        final run = localRunner(fake, toolkit);
+        final job = await runToCompletion(run, (await createLocal(run)).id);
+
+        expect(
+          job.stage,
+          JobStage.done,
+          reason: '${job.error?.kind}: ${job.error?.message}',
+        );
+        expect(job.plan!.windowCount, 3);
+        expect(fake.prepared, [gpu.key], reason: 'Auto takes the tested GPU');
+        expect(fake.windows, hasLength(3));
+        expect(fake.released, hasLength(1));
+        expect(toolkit.pcmWindows, 3);
+        expect(job.route!.routeKey, gpu.key);
+        expect(job.route!.requested, 'auto');
+        expect(job.route!.testedHere, isTrue);
+        expect(job.artifactRevision, templateArtifact(artifactId)!.revision);
+        expect(
+          job.chunks.map((c) => c.placement),
+          everyElement(PlacementKind.gpu),
+        );
+        expect(job.chunks.every((c) => c.hasRealTimestamps), isTrue);
+        expect(job.fallbacks, isEmpty);
+        expect((await state.load()).inFlight, isNull);
+        expect(artifacts.isLeased(artifactId), isFalse);
+
+        final chunks = Directory(
+          p.join((await TranscribeStorage.jobDir(job.id)).path, 'chunks'),
+        );
+        expect(
+          chunks.listSync().where((f) => f.path.endsWith('.wav')),
+          isEmpty,
+          reason: 'the PCM windows are deleted like the MP3 ones',
+        );
+        expect(
+          (await TranscriptStore.load(job.id))!.segments.map((s) => s.text),
+          ['window 0', 'window 1', 'window 2'],
+        );
+      },
+    );
+
+    test('a cancel mid-window waits for the engine to stop', () async {
+      final fake = engine(
+        script: (_, call) => call == 1
+            ? const FakeWindow(delay: Duration(seconds: 30))
+            : FakeWindow.text('window $call'),
+      );
+      final run = localRunner(fake, _FakeToolkit(duration: 1500));
+      final created = await createLocal(run);
+      run.enqueue(created.id);
+      await waitFor(created.id, JobStage.transcribing, 1);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      run.cancel(created.id);
+
+      TranscriptionJob? job;
+      for (var i = 0; i < 400; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        job = await JobStore.load(created.id);
+        if (job!.stage.isFinished) break;
+      }
+      expect(job!.stage, JobStage.cancelled);
+      expect(fake.cancelled, [created.id]);
+      expect(job.chunks, hasLength(1), reason: 'the finished window is kept');
+      expect(fake.released, hasLength(1), reason: 'released after it stopped');
+      expect((await state.load()).inFlight, isNull);
+    });
+
+    test('a resume reuses the windows that finished', () async {
+      var failing = true;
+      final fake = engine(
+        script: (_, call) => failing && call == 2
+            ? const FakeWindow(
+                error: LocalAsrException(
+                  LocalAsrErrorCode.modelCorrupt,
+                  'bad tensor',
+                ),
+              )
+            : FakeWindow.text('window $call'),
+      );
+      final run = localRunner(fake, _FakeToolkit(duration: 1500));
+      final created = await createLocal(run);
+      final failed = await runToCompletion(run, created.id);
+      expect(failed.stage, JobStage.failed);
+      expect(failed.error!.kind, JobFailureKind.modelDamaged);
+      expect(failed.chunks, hasLength(2));
+
+      failing = false;
+      final done = await runToCompletion(run, created.id);
+      expect(done.stage, JobStage.done);
+      expect(fake.windows, hasLength(4), reason: 'only the missing window');
+    });
+
+    test('asking for another device discards the cached windows', () async {
+      final fake = engine();
+      final run = localRunner(fake, _FakeToolkit(duration: 1500));
+      final first = await runToCompletion(run, (await createLocal(run)).id);
+      expect(fake.windows, hasLength(3));
+
+      await JobStore.save(
+        first.copyWith(
+          options: JobOptions(device: RouteRequest.cpu),
+          stage: JobStage.queued,
+        ),
+      );
+      final again = await runToCompletion(run, first.id);
+      expect(again.stage, JobStage.done);
+      expect(fake.windows, hasLength(6), reason: 'every window again');
+      expect(again.chunks.map((c) => c.routeKey), everyElement(cpu.key));
+    });
+
+    test('a lost GPU moves to the CPU, visibly', () async {
+      final fake = engine(
+        script: (route, call) => route == gpu.key && call == 1
+            ? const FakeWindow(
+                error: LocalAsrException(
+                  LocalAsrErrorCode.deviceLost,
+                  'the GPU was reset',
+                ),
+              )
+            : FakeWindow.text('window $call'),
+      );
+      final run = localRunner(fake, _FakeToolkit(duration: 1500));
+      final job = await runToCompletion(run, (await createLocal(run)).id);
+
+      expect(job.stage, JobStage.done);
+      expect(fake.prepared, [gpu.key, cpu.key]);
+      expect(job.fallbacks.single.from, gpu.key);
+      expect(job.fallbacks.single.to, cpu.key);
+      expect(job.fallbacks.single.reason, 'DEVICE_LOST');
+      expect(job.fallbacks.single.atWindow, 1);
+      expect(job.chunks.map((c) => c.placement), [
+        PlacementKind.gpu,
+        PlacementKind.cpu,
+        PlacementKind.cpu,
+      ]);
+    });
+
+    test('runs out of memory on the CPU and says so', () async {
+      final fake = engine(
+        script: (_, call) => const FakeWindow(
+          error: LocalAsrException(
+            LocalAsrErrorCode.outOfMemory,
+            'needs 3.9 GB, 2.1 GB free',
+          ),
+        ),
+      );
+      final run = localRunner(fake, _FakeToolkit(duration: 1500));
+      final job = await runToCompletion(
+        run,
+        (await createLocal(
+          run,
+          options: const JobOptions(device: RouteRequest.cpu),
+        )).id,
+      );
+      expect(job.stage, JobStage.failed);
+      expect(job.error!.kind, JobFailureKind.outOfMemory);
+      expect(job.error!.message, contains('3.9 GB'));
+      expect(job.fallbacks, isEmpty, reason: 'the CPU has nowhere to go');
+    });
+
+    test('a crash inside a route is found at the next start', () async {
+      final fake = engine();
+      final run = localRunner(fake, _FakeToolkit(duration: 1500));
+      final created = await createLocal(run);
+      // The app died mid-window on the GPU: the record says so, and the
+      // marker is still there.
+      await JobStore.save(
+        created.copyWith(
+          stage: JobStage.transcribing,
+          currentChunk: 0,
+          route: JobRoute(requested: 'auto', routeKey: gpu.key),
+        ),
+      );
+      await state.markInFlight(
+        routeKey: gpu.key,
+        smokeKey: gpu.smokeKey,
+        jobId: created.id,
+      );
+
+      final restarted = localRunner(fake, _FakeToolkit(duration: 1500));
+      await restarted.restore();
+      TranscriptionJob? job;
+      for (var i = 0; i < 600; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        job = await JobStore.load(created.id);
+        if (job!.stage.isFinished) break;
+      }
+
+      expect(job!.stage, JobStage.done);
+      expect(
+        (await state.load()).smokeTestFor(gpu.smokeKey).outcome,
+        SmokeTestOutcome.crashed,
+      );
+      expect(fake.prepared, [cpu.key], reason: 'never the crashed route');
+      expect(job.fallbacks.single.reason, 'ROUTE_CRASHED');
+      expect(job.fallbacks.single.from, gpu.key);
+    });
+
+    test('says when the model is not downloaded here', () async {
+      await artifacts.remove(artifactId);
+      final run = localRunner(engine(), _FakeToolkit(duration: 1500));
+      final job = await runToCompletion(run, (await createLocal(run)).id);
+      expect(job.stage, JobStage.failed);
+      expect(job.error!.kind, JobFailureKind.modelNotInstalled);
+    });
+
+    test('says when this build has no on-device engine', () async {
+      final run = runner(_FakeToolkit(), FakeTranscriptionServer([]));
+      final job = await runToCompletion(run, (await createLocal(run)).id);
+      expect(job.stage, JobStage.failed);
+      expect(job.error!.kind, JobFailureKind.engineUnavailable);
     });
   });
 }

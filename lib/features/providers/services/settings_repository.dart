@@ -14,6 +14,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../shared/services/transcribe_storage.dart';
+import '../../local/models/local_model_config.dart';
+import '../../local/services/local_model_templates.dart';
 import '../models/model_config.dart';
 import '../models/provider_config.dart';
 import '../models/provider_templates.dart';
@@ -31,8 +33,14 @@ class SettingsLibrary {
   /// What a new transcription starts from.
   final TranscribeDefaults defaults;
 
+  /// Every model that runs on the device, in record order.
+  ///
+  /// The records only; whether each is downloaded here is the artifact
+  /// manager's question, because it differs per device.
+  final List<LocalModelConfig> localModels;
+
   /// Purpose: Create a library view.
-  /// Inputs: [providers], [models], [defaults].
+  /// Inputs: [providers], [models], [defaults], [localModels].
   /// Returns: A new immutable value.
   /// Side effects: None.
   /// Notes: None.
@@ -40,7 +48,20 @@ class SettingsLibrary {
     this.providers = const [],
     this.models = const [],
     this.defaults = const TranscribeDefaults(),
+    this.localModels = const [],
   });
+
+  /// Purpose: Find one local model by id.
+  /// Inputs: [id].
+  /// Returns: The local model, or null.
+  /// Side effects: None.
+  /// Notes: None.
+  LocalModelConfig? localModel(String? id) {
+    for (final model in localModels) {
+      if (model.id == id) return model;
+    }
+    return null;
+  }
 
   /// Purpose: List the models belonging to one source.
   /// Inputs: [providerId].
@@ -118,6 +139,10 @@ class SettingsRepository {
       settings = seedInto(settings);
       changed = true;
     }
+    if (settings.ofKind(SettingsRecordKind.localModel).isEmpty) {
+      settings = seedLocalModelsInto(settings);
+      changed = true;
+    }
 
     final refreshed = applyTemplateUpdates(settings);
     if (refreshed != null) {
@@ -150,7 +175,42 @@ class SettingsRepository {
       defaults: defaultsRecord == null
           ? const TranscribeDefaults()
           : TranscribeDefaults.fromPayload(defaultsRecord.payload),
+      localModels: [
+        for (final record in settings.ofKind(SettingsRecordKind.localModel))
+          LocalModelConfig.fromPayload(record.id, record.payload),
+      ],
     );
+  }
+
+  /// Purpose: Add the built-in local models to a document.
+  /// Inputs: [settings], optional [now] for tests.
+  /// Returns: A new document holding them.
+  /// Side effects: None.
+  /// Notes: Pure, and for the same reasons as [seedInto]: derived ids, so two
+  /// devices seed identical records and the first sync merges them, and an
+  /// existing record is never overwritten. It runs when the document has no
+  /// local model at all — a fresh install, or a device upgrading from 0.2.x —
+  /// so a user who removed every local model gets the built-in ones back, as
+  /// with the sources.
+  TranscribeSettings seedLocalModelsInto(
+    TranscribeSettings settings, {
+    DateTime? now,
+  }) {
+    final stamp = (now ?? DateTime.now()).toUtc();
+    var result = settings;
+    for (final template in buildLocalModelTemplates()) {
+      if (result.byId(template.model.id) != null) continue;
+      result = result.upsert(
+        SettingsRecord(
+          id: template.model.id,
+          kind: SettingsRecordKind.localModel,
+          createdAt: stamp,
+          modifiedAt: stamp,
+          payload: template.model.toPayload(),
+        ),
+      );
+    }
+    return result;
   }
 
   /// Purpose: Add the built-in sources and models to a document.
@@ -253,7 +313,58 @@ class SettingsRepository {
       }
     }
 
+    for (final template in buildLocalModelTemplates()) {
+      final record = result.byId(template.model.id);
+      if (record == null || record.kind != SettingsRecordKind.localModel) {
+        continue;
+      }
+      final current = LocalModelConfig.fromPayload(record.id, record.payload);
+      if (current.templateVersion >= localTemplateVersion) continue;
+      final merged = _mergeLocalTemplate(current, template.model);
+      result = result.upsert(record.touch(merged.toPayload(), now: stamp));
+      changed = true;
+    }
+
     return changed ? result : null;
+  }
+
+  /// Purpose: Take a local template's values for every field left alone.
+  /// Inputs: [current] the stored record, [template] the shipped one.
+  /// Returns: The merged record.
+  /// Side effects: None.
+  /// Notes: Internal helper used within this file only. The package lists are
+  /// a template field like any other: a new package reaches every device that
+  /// never edited the list.
+  LocalModelConfig _mergeLocalTemplate(
+    LocalModelConfig current,
+    LocalModelConfig template,
+  ) {
+    bool kept(String field) => current.overriddenFields.contains(field);
+    return LocalModelConfig(
+      id: current.id,
+      templateId: template.templateId,
+      displayName: kept('displayName')
+          ? current.displayName
+          : template.displayName,
+      family: template.family,
+      languages: kept('languages') ? current.languages : template.languages,
+      maxDurationSeconds: kept('maxDurationSeconds')
+          ? current.maxDurationSeconds
+          : template.maxDurationSeconds,
+      diarization: template.diarization,
+      wordTimestamps: kept('wordTimestamps')
+          ? current.wordTimestamps
+          : template.wordTimestamps,
+      segmentTimestamps: kept('segmentTimestamps')
+          ? current.segmentTimestamps
+          : template.segmentTimestamps,
+      supportsPrompt: template.supportsPrompt,
+      supportsKeywords: template.supportsKeywords,
+      artifacts: kept('artifacts') ? current.artifacts : template.artifacts,
+      overriddenFields: current.overriddenFields,
+      templateVersion: localTemplateVersion,
+      extraJson: current.extraJson,
+    );
   }
 
   /// Purpose: Take a template's values for every field the user left alone.
@@ -370,6 +481,49 @@ class SettingsRepository {
   /// Side effects: None.
   /// Notes: See [newProviderId].
   String newModelId() => 'model:${_uuid.v4()}';
+
+  /// Purpose: Generate the record id for a local model the user adds from a
+  /// file.
+  /// Inputs: None.
+  /// Returns: `local:` and a new uuid.
+  /// Side effects: None.
+  /// Notes: The prefix is what lets this build recognise the record after a
+  /// 0.2.x build wrote its kind back as `unknown`.
+  String newLocalModelId() => '$localModelIdPrefix${_uuid.v4()}';
+
+  /// Purpose: Insert or update one local model.
+  /// Inputs: [model], optional [now].
+  /// Returns: A future completing after the write.
+  /// Side effects: Writes the settings file; notifies auto-sync.
+  /// Notes: None.
+  Future<void> saveLocalModel(LocalModelConfig model, {DateTime? now}) async {
+    await _mutate((settings) {
+      final existing = settings.byId(model.id);
+      final stamp = (now ?? DateTime.now()).toUtc();
+      return settings.upsert(
+        existing == null
+            ? SettingsRecord(
+                id: model.id,
+                kind: SettingsRecordKind.localModel,
+                createdAt: stamp,
+                modifiedAt: stamp,
+                payload: model.toPayload(),
+              )
+            : existing.touch(model.toPayload(), now: stamp),
+      );
+    });
+  }
+
+  /// Purpose: Remove one local model from the library.
+  /// Inputs: [modelId].
+  /// Returns: A future completing after the write.
+  /// Side effects: Writes the settings file; notifies auto-sync.
+  /// Notes: Removes the record, which propagates to the user's other devices;
+  /// the downloaded packages on this device are the artifact manager's to
+  /// remove, and the caller does that separately.
+  Future<void> deleteLocalModel(String modelId) async {
+    await _mutate((settings) => settings.remove(modelId));
+  }
 
   /// Purpose: Insert or update one source.
   /// Inputs: [provider], optional [now].
@@ -536,6 +690,14 @@ class SettingsRepository {
       final record = settings.byId(recordId);
       if (record == null) return settings;
       final stamp = (now ?? DateTime.now()).toUtc();
+
+      for (final template in buildLocalModelTemplates()) {
+        if (template.model.id == recordId) {
+          return settings.upsert(
+            record.touch(template.model.toPayload(), now: stamp),
+          );
+        }
+      }
 
       for (final template in buildProviderTemplates()) {
         if (template.provider.id == recordId) {

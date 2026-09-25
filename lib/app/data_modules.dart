@@ -76,6 +76,25 @@ const audioDiscardedMarkerName = 'audio.discarded';
 /// Directory under the app dir holding one folder per transcription job.
 const jobsDirName = 'jobs';
 
+/// Directory holding one folder per installed local model package.
+///
+/// Never in [transcribeModuleRegistry]: a model is gigabytes, re-downloadable,
+/// and belongs to one device (decision D3 of the local-models plan). Keeping it
+/// out of the registry keeps it out of sync, backups and ZIP exports
+/// structurally, the way the job folders are kept out.
+const modelsDirName = 'models';
+
+/// Directory inside [modelsDirName] holding partial downloads and the staging
+/// folders an install is assembled in before it is renamed into place.
+const modelDownloadsDirName = '.downloads';
+
+/// The device-local state of the local engines: smoke-test results, the
+/// in-flight marker, the chosen device per model and the fallback policy.
+///
+/// Not a data module. Every value in it describes this device, and syncing a
+/// GPU choice or a check result would make it a promise on another one.
+const localEngineStateFileName = 'local_engine_state.json';
+
 /// Default remote WebDAV directory for MyTranscribe.
 const transcribeDefaultRemotePath = '/MyTranscribe';
 

@@ -63,6 +63,10 @@ what is there.
   transcripts module; the sound is not.
 - **`webdav_config.json` and `storage_config.json`.** Server credentials, and preferences that
   describe *this* device.
+- **Downloaded models and the engine state.** A model is gigabytes and can be downloaded again; the
+  local model *records* are in the settings module and restore like the sources, so a restored
+  device lists its models as not downloaded. `local_engine_state.json` describes this device's
+  processors and is meaningless anywhere else.
 
 All of these are excluded structurally: the engines only touch the file names in the registry.
 

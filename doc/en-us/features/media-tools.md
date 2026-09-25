@@ -9,7 +9,8 @@ interface, `MediaToolkit`, describes what the app needs; two implementations pro
 
 - **probe** — duration, bit rate, codec, whether there is video
 - **normalize** — the whole recording to mono 16 kHz 64 kbps MP3, with progress
-- **extract a window** — copy a time range out of the normalized file without re-encoding
+- **extract a window** — copy a time range out of the normalized file without re-encoding; or, for a
+  local model, decode it to 16 kHz mono 16-bit PCM WAV
 - **cut a sample** — a few seconds as 16 kHz mono WAV, for speaker enrollment
 
 Every long operation reports progress and can be cancelled.
@@ -25,6 +26,14 @@ settings either way.
 A recording that is already small enough and in a format the model accepts is uploaded unchanged,
 with no FFmpeg involved at all. That is the common case for a short clip, and it is the fast path
 the scripts had too.
+
+A local model never receives the original file. Each of its windows is decoded from the normalized
+copy to 16 kHz mono 16-bit PCM — one sample format for every engine, so no engine decodes MP3 its own
+way. The PCM form is written bit-exact with no metadata: FFmpeg otherwise puts its own version into a
+`LIST` chunk of the WAV header, and the embedded library and a downloaded executable are different
+versions. Both backends therefore write the same 44-byte header and the same number of samples for
+the same range, which a desktop test and an on-device test each hold them to, and the cutter checks
+the header before any engine sees the window.
 
 ## Two backends
 

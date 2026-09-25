@@ -23,6 +23,10 @@ import 'package:uuid/uuid.dart';
 
 import '../../../shared/services/auto_sync_service.dart';
 import '../../../shared/services/transcribe_storage.dart';
+import '../../media/models/media_info.dart';
+import '../../local/services/local_asr_engine.dart';
+import '../../local/services/local_transcription_backend.dart';
+import '../../local/services/pcm_window_cutter.dart';
 import '../../media/services/media_toolkit.dart';
 import '../../providers/services/dialects.dart';
 import '../../providers/services/provider_dialect.dart';
@@ -75,13 +79,15 @@ class JobRunner {
   /// Side effects: None until [enqueue] or [restore] is called.
   /// Notes: Everything it touches is injected, so the whole state machine can
   /// be exercised with a fake toolkit and a fake server — no FFmpeg, no
-  /// network, no key.
+  /// network, no key. [localBackend] runs jobs whose model is on the device;
+  /// without one, such a job fails saying this build has no on-device engine.
   JobRunner({
     required Future<MediaToolkit> Function() toolkit,
     required SettingsRepository repository,
     TranscriptionClient Function()? clientFactory,
     Future<String?> Function(String providerId)? keyLookup,
     Future<bool> Function()? writeTranscriptFiles,
+    LocalTranscriptionBackend? localBackend,
     Uuid? uuid,
   }) : _toolkit = toolkit,
        _repository = repository,
@@ -89,8 +95,10 @@ class JobRunner {
        _keyLookup = keyLookup ?? SecretsStore.keyFor,
        _writeTranscriptFiles =
            writeTranscriptFiles ?? TranscribeStorage.getAutoSaveTranscriptFiles,
+       _localBackend = localBackend,
        _uuid = uuid ?? const Uuid();
 
+  final LocalTranscriptionBackend? _localBackend;
   final Future<MediaToolkit> Function() _toolkit;
   final SettingsRepository _repository;
   final TranscriptionClient Function() _clientFactory;
@@ -141,6 +149,7 @@ class JobRunner {
 
   MediaCancelToken? _mediaCancel;
   TranscriptionClient? _activeClient;
+  LocalJobSession? _localSession;
   String? _cancelRequested;
 
   /// Purpose: Create a job for a recording.
@@ -224,6 +233,10 @@ class JobRunner {
   /// mid-flight; leaving it in that stage would show a progress bar that never
   /// moves, so it becomes queued and resumes from its finished windows.
   Future<void> restore() async {
+    // A native call that never returned left its marker behind; recording
+    // that route as crashed before anything runs is what stops the job that
+    // was using it from walking into the same crash again (D20).
+    await _localBackend?.registry.state.recoverFromCrash();
     final jobs = await JobStore.loadAll();
     for (final job in jobs) {
       if (!job.stage.isRunning) continue;
@@ -271,6 +284,8 @@ class JobRunner {
       _cancelRequested = jobId;
       _mediaCancel?.cancel();
       _activeClient?.cancel();
+      final local = _localSession;
+      if (local != null) unawaited(local.cancel());
     }
     _publish();
   }
@@ -464,6 +479,7 @@ class JobRunner {
       final last = _latest;
       _mediaCancel = null;
       _activeClient = null;
+      _localSession = null;
       _cancelRequested = null;
       _latest = null;
       state.value = JobQueueState(
@@ -482,6 +498,7 @@ class JobRunner {
   Future<TranscriptionJob> _advance(TranscriptionJob initial) async {
     var job = initial;
     final library = await _repository.load();
+    if (job.isLocal) return _advanceLocal(job, library);
     final provider = library.provider(job.providerId);
     final model = library.model(job.modelId);
     if (provider == null || model == null) {
@@ -520,19 +537,7 @@ class JobRunner {
     // ── Probe ──
     job = await _save(job.copyWith(stage: JobStage.probing, clearError: true));
     _checkCancelled(job);
-    var media = job.media;
-    if (media == null && toolkitReady) {
-      try {
-        media = await toolkit.probe(job.sourcePath);
-      } on MediaException catch (error) {
-        if (error.kind == MediaFailureKind.badInput) {
-          throw _JobFailed(
-            JobError(kind: JobFailureKind.badInput, message: error.message),
-          );
-        }
-        // Anything else leaves the planner to work from the file size alone.
-      }
-    }
+    final media = await _probe(job, toolkit, toolkitReady);
 
     // ── Plan ──
     job = await _save(job.copyWith(stage: JobStage.planning, media: media));
@@ -580,35 +585,9 @@ class JobRunner {
     // ── Convert ──
     File audioSource = source;
     if (!plan.uploadsOriginal) {
-      final normalized = await JobStore.normalizedAudio(job.id);
-      if (!normalized.existsSync()) {
-        job = await _save(job.copyWith(stage: JobStage.normalizing));
-        _checkCancelled(job);
-        final cancel = MediaCancelToken();
-        _mediaCancel = cancel;
-        try {
-          await toolkit.normalize(
-            job.sourcePath,
-            normalized.path,
-            cancel: cancel,
-          );
-        } on MediaException catch (error) {
-          if (error.kind == MediaFailureKind.cancelled) {
-            throw const _JobCancelled();
-          }
-          throw _JobFailed(
-            JobError(kind: JobFailureKind.mediaFailed, message: error.message),
-          );
-        } finally {
-          await cancel.dispose();
-          _mediaCancel = null;
-        }
-        // There is a converted copy again, so the marker left by "remove
-        // converted audio" no longer describes anything true. Left in place it
-        // would stop sync from ever fetching this recording's audio again.
-        await JobStore.clearAudioDiscardedMarker(job.id);
-      }
-      audioSource = normalized;
+      final normalized = await _normalize(job, toolkit);
+      job = normalized.job;
+      audioSource = normalized.file;
     }
 
     // ── Windows ──
@@ -700,22 +679,7 @@ class JobRunner {
 
         // Keep the raw reply. It is small, and it is what lets the speaker
         // matching be re-run later without uploading anything again.
-        await File(
-          (await JobStore.chunkResponseFile(job.id, window.index)).path,
-        ).writeAsString(
-          const JsonEncoder.withIndent('  ').convert({
-            'text': result.text,
-            'segments': [
-              for (final segment in result.segments)
-                {
-                  'start': segment.startSeconds,
-                  'end': segment.endSeconds,
-                  'text': segment.text,
-                  if (segment.speaker != null) 'speaker': segment.speaker,
-                },
-            ],
-          }),
-        );
+        await _writeRawReply(job.id, window.index, result);
 
         chunks = [
           ...chunks,
@@ -746,6 +710,333 @@ class JobRunner {
       _activeClient = null;
     }
 
+    return _finish(job, plan);
+  }
+
+  /// Purpose: Take a job whose model runs on the device through every stage.
+  /// Inputs: [initial], the [library].
+  /// Returns: The finished job.
+  /// Side effects: Everything a job does, with a local engine in place of the
+  /// upload.
+  /// Notes: Internal helper used within this file only. The stage machine is
+  /// the same one (decision D4 of the local-models plan); what differs is that
+  /// the route is chosen before planning — its limits and its package
+  /// revision go into the plan — that the plan is time-only, that each window
+  /// is cut as PCM, and that the model is loaded once for the whole job. Every
+  /// fallback the backend takes is written onto the record.
+  Future<TranscriptionJob> _advanceLocal(
+    TranscriptionJob initial,
+    SettingsLibrary library,
+  ) async {
+    var job = initial;
+    final model = library.localModel(job.modelId);
+    if (model == null) {
+      throw const _JobFailed(
+        JobError(
+          kind: JobFailureKind.configurationMissing,
+          message: 'The local model this job used is no longer in the library.',
+        ),
+      );
+    }
+    final source = File(job.sourcePath);
+    if (!source.existsSync()) {
+      throw _JobFailed(
+        JobError(
+          kind: JobFailureKind.sourceMissing,
+          message: 'The recording is no longer at ${job.sourcePath}.',
+        ),
+      );
+    }
+    final backend = _localBackend;
+    if (backend == null) {
+      throw const _JobFailed(
+        JobError(
+          kind: JobFailureKind.engineUnavailable,
+          message: 'This build has no on-device engine.',
+        ),
+      );
+    }
+
+    final toolkit = await _toolkit();
+    final toolkitReady = (await toolkit.status()).available;
+
+    // ── Probe ──
+    job = await _save(job.copyWith(stage: JobStage.probing, clearError: true));
+    _checkCancelled(job);
+    final media = await _probe(job, toolkit, toolkitReady);
+
+    // ── Route, then plan ──
+    job = await _save(job.copyWith(stage: JobStage.planning, media: media));
+    _checkCancelled(job);
+    final LocalJobSession session;
+    try {
+      session = await backend.open(job: job, model: model);
+    } on LocalAsrException catch (error) {
+      throw _JobFailed(_localFailure(error));
+    }
+    _localSession = session;
+
+    try {
+      job = await _save(
+        job.copyWith(
+          route: JobRoute(
+            requested: job.options.device.value,
+            routeKey: session.route.key,
+            device: session.route.device,
+            evidence: session.route.evidence,
+            testedHere: session.route.testedHere,
+          ),
+          artifactRevision: session.manifest.revision,
+          fallbacks: [...job.fallbacks, ...session.openingFallbacks],
+        ),
+      );
+
+      final planned = ChunkPlanner.planLocal(
+        LocalPlanRequest(
+          media: media,
+          modelId: model.id,
+          engineMaxSeconds: model.maxDurationSeconds,
+          routeMaxSeconds: session.route.maxWindowSeconds,
+          artifactRevision: session.manifest.revision,
+          requestedDevice: job.options.device.value,
+          overlapSeconds: job.options.overlapSeconds,
+          userWindowSeconds: job.options.windowSeconds,
+          toolkitAvailable: toolkitReady,
+          settingsFingerprintParts: [
+            job.options.languages.join(','),
+            job.options.prompt ?? '',
+            job.options.keywords.join(','),
+          ],
+        ),
+      );
+      if (!planned.isSuccess) {
+        throw _JobFailed(_planFailure(planned.failure!));
+      }
+      final plan = planned.plan!;
+      var chunks = job.plan?.fingerprint == plan.fingerprint
+          ? List<ChunkResult>.of(job.chunks)
+          : <ChunkResult>[];
+      job = await _save(job.copyWith(plan: plan, chunks: chunks));
+
+      // ── Convert ──
+      final normalized = await _normalize(job, toolkit);
+      job = normalized.job;
+      final cutter = PcmWindowCutter(toolkit);
+
+      // ── Windows ──
+      for (final window in plan.windows) {
+        _checkCancelled(job);
+        if (chunks.any((c) => c.index == window.index)) continue;
+
+        job = await _save(
+          job.copyWith(stage: JobStage.cutting, currentChunk: window.index),
+        );
+        final chunkFile = await JobStore.chunkFile(
+          job.id,
+          window.index,
+          pcm: true,
+        );
+        final PcmWindow pcm;
+        final cancel = MediaCancelToken();
+        _mediaCancel = cancel;
+        try {
+          pcm = await cutter.cut(
+            normalized.file.path,
+            window.startSeconds,
+            window.lengthSeconds,
+            chunkFile,
+            cancel: cancel,
+          );
+        } on MediaException catch (error) {
+          if (error.kind == MediaFailureKind.cancelled) {
+            throw const _JobCancelled();
+          }
+          throw _JobFailed(
+            JobError(kind: JobFailureKind.mediaFailed, message: error.message),
+          );
+        } finally {
+          await cancel.dispose();
+          _mediaCancel = null;
+        }
+
+        job = await _save(
+          job.copyWith(
+            stage: JobStage.transcribing,
+            currentChunk: window.index,
+          ),
+        );
+        _checkCancelled(job);
+
+        final LocalWindowResult outcome;
+        try {
+          outcome = await session.transcribe(
+            index: window.index,
+            pcm: chunkFile,
+            seconds: pcm.seconds,
+            options: job.options,
+          );
+        } on LocalAsrException catch (error) {
+          if (_cancelRequested == job.id ||
+              error.code == LocalAsrErrorCode.cancelled) {
+            throw const _JobCancelled();
+          }
+          throw _JobFailed(_localFailure(error));
+        }
+        final result = outcome.result;
+
+        await _writeRawReply(job.id, window.index, result);
+        chunks = [
+          ...chunks,
+          ChunkResult(
+            index: window.index,
+            startSeconds: window.startSeconds,
+            lengthSeconds: window.lengthSeconds,
+            chunkBytes: chunkFile.existsSync() ? chunkFile.lengthSync() : 0,
+            text: result.text,
+            segments: [
+              for (final segment in result.segments)
+                ChunkSegment(
+                  startSeconds: segment.startSeconds,
+                  endSeconds: segment.endSeconds,
+                  text: segment.text,
+                ),
+            ],
+            hasRealTimestamps: result.hasRealTimestamps,
+            placement: outcome.placement,
+            routeKey: outcome.routeKey,
+          ),
+        ]..sort((a, b) => a.index.compareTo(b.index));
+        job = await _save(
+          job.copyWith(
+            chunks: chunks,
+            fallbacks: [...job.fallbacks, ?outcome.fallback],
+          ),
+        );
+      }
+
+      // Nothing after the last window needs the model, and a large one holds
+      // gigabytes; let it go before merging rather than after rendering.
+      _localSession = null;
+      await session.close();
+      return await _finish(job, plan);
+    } finally {
+      // A second close is harmless; this one covers every way out above.
+      _localSession = null;
+      await session.close();
+    }
+  }
+
+  /// Purpose: Read the recording's duration and streams, once per job.
+  /// Inputs: The [job], the [toolkit], and whether it is [ready].
+  /// Returns: What probing found, or the job's earlier result, or null.
+  /// Side effects: Runs `ffprobe` when there is no earlier result.
+  /// Notes: Internal helper used within this file only. Only an unreadable
+  /// file fails the job; anything else leaves the planner to work from the
+  /// file size alone.
+  Future<MediaInfo?> _probe(
+    TranscriptionJob job,
+    MediaToolkit toolkit,
+    bool ready,
+  ) async {
+    var media = job.media;
+    if (media == null && ready) {
+      try {
+        media = await toolkit.probe(job.sourcePath);
+      } on MediaException catch (error) {
+        if (error.kind == MediaFailureKind.badInput) {
+          throw _JobFailed(
+            JobError(kind: JobFailureKind.badInput, message: error.message),
+          );
+        }
+      }
+    }
+    return media;
+  }
+
+  /// Purpose: Make sure the job has its converted copy.
+  /// Inputs: The [job], the [toolkit].
+  /// Returns: The job as saved, and the converted file.
+  /// Side effects: Runs the conversion when there is no copy yet.
+  /// Notes: Internal helper used within this file only. A copy already on
+  /// disk is reused, which is what makes a resume skip the conversion.
+  Future<({TranscriptionJob job, File file})> _normalize(
+    TranscriptionJob initial,
+    MediaToolkit toolkit,
+  ) async {
+    var job = initial;
+    final normalized = await JobStore.normalizedAudio(job.id);
+    if (!normalized.existsSync()) {
+      job = await _save(job.copyWith(stage: JobStage.normalizing));
+      _checkCancelled(job);
+      final cancel = MediaCancelToken();
+      _mediaCancel = cancel;
+      try {
+        await toolkit.normalize(
+          job.sourcePath,
+          normalized.path,
+          cancel: cancel,
+        );
+      } on MediaException catch (error) {
+        if (error.kind == MediaFailureKind.cancelled) {
+          throw const _JobCancelled();
+        }
+        throw _JobFailed(
+          JobError(kind: JobFailureKind.mediaFailed, message: error.message),
+        );
+      } finally {
+        await cancel.dispose();
+        _mediaCancel = null;
+      }
+      // There is a converted copy again, so the marker left by "remove
+      // converted audio" no longer describes anything true. Left in place it
+      // would stop sync from ever fetching this recording's audio again.
+      await JobStore.clearAudioDiscardedMarker(job.id);
+    }
+    return (job: job, file: normalized);
+  }
+
+  /// Purpose: Keep one window's raw reply beside its audio.
+  /// Inputs: The [jobId], the window [index], the [result].
+  /// Returns: None.
+  /// Side effects: Writes the reply file.
+  /// Notes: Internal helper used within this file only. Small, and what lets
+  /// the speaker matching be re-run later without transcribing anything again.
+  Future<void> _writeRawReply(
+    String jobId,
+    int index,
+    TranscriptionResult result,
+  ) async {
+    await File(
+      (await JobStore.chunkResponseFile(jobId, index)).path,
+    ).writeAsString(
+      const JsonEncoder.withIndent('  ').convert({
+        'text': result.text,
+        'segments': [
+          for (final segment in result.segments)
+            {
+              'start': segment.startSeconds,
+              'end': segment.endSeconds,
+              'text': segment.text,
+              if (segment.speaker != null) 'speaker': segment.speaker,
+            },
+        ],
+      }),
+    );
+  }
+
+  /// Purpose: Join, name, render and finish a job whose windows are all in.
+  /// Inputs: The [job], its [plan].
+  /// Returns: The finished job.
+  /// Side effects: Writes the transcript and the requested files; deletes the
+  /// window audio unless asked to keep it.
+  /// Notes: Internal helper used within this file only. Shared by uploaded and
+  /// local jobs: the merge reads what the windows returned, not where they
+  /// came from.
+  Future<TranscriptionJob> _finish(
+    TranscriptionJob initial,
+    ChunkPlan plan,
+  ) async {
+    var job = initial;
     // ── Merge ──
     job = await _save(
       job.copyWith(stage: JobStage.merging, clearCurrentChunk: true),
@@ -1097,6 +1388,34 @@ class JobRunner {
       message: 'That file has no audio to transcribe.',
     ),
   };
+
+  /// Purpose: Turn a local engine failure into a job error.
+  /// Inputs: [error].
+  /// Returns: A [JobError].
+  /// Side effects: None.
+  /// Notes: Internal helper used within this file only. Each engine code maps
+  /// to a failure kind of its own rather than to "the source refused", so the
+  /// job can say "not downloaded" or "not enough memory" instead of blaming a
+  /// server that was never contacted.
+  JobError _localFailure(LocalAsrException error) => JobError(
+    kind: switch (error.code) {
+      LocalAsrErrorCode.modelMissing => JobFailureKind.modelNotInstalled,
+      LocalAsrErrorCode.modelCorrupt ||
+      LocalAsrErrorCode.modelFormatMismatch => JobFailureKind.modelDamaged,
+      LocalAsrErrorCode.unsupportedLanguage ||
+      LocalAsrErrorCode.unsupportedFeature ||
+      LocalAsrErrorCode.inputTooLong => JobFailureKind.unsupportedByModel,
+      LocalAsrErrorCode.outOfMemory => JobFailureKind.outOfMemory,
+      LocalAsrErrorCode.routeCrashed => JobFailureKind.routeCrashed,
+      LocalAsrErrorCode.backendNotBuilt ||
+      LocalAsrErrorCode.driverMissing ||
+      LocalAsrErrorCode.deviceUnavailable ||
+      LocalAsrErrorCode.modelCompileFailed ||
+      LocalAsrErrorCode.deviceLost => JobFailureKind.engineUnavailable,
+      LocalAsrErrorCode.cancelled => JobFailureKind.unknown,
+    },
+    message: error.message,
+  );
 
   /// Purpose: Turn a request failure into a job error.
   /// Inputs: [error].

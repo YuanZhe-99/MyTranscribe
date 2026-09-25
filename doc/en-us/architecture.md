@@ -3,7 +3,7 @@
 ## Shape
 
 MyTranscribe is a Flutter app with three tabs and no backend of its own. Everything it does is
-either local file work or a request to a server the user configured.
+either local file work, a model running on the device, or a request to a server the user configured.
 
 ```
 lib/
@@ -18,8 +18,14 @@ packages/myapps_data/       the shared sync, backup and ZIP engines (git submodu
 `features/` is flat by domain, not by layer: there is no data/domain/presentation split. A feature
 owns its models, its services and its pages, and anything two features need moves to `shared/`.
 
-The features are `jobs` (transcribing), `providers` (sources and models), `transcript` (reading the
-result), `media` (FFmpeg), `secrets` (API keys) and `settings`.
+The features are `jobs` (transcribing), `providers` (sources and models), `local` (models that run
+on the device: their records, packages, engines and routes), `transcript` (reading the result),
+`media` (FFmpeg), `secrets` (API keys) and `settings`.
+
+A local model reaches the job runner through `LocalTranscriptionBackend`, which speaks the one engine
+protocol, `LocalAsrEngine`, that every on-device adapter implements. The runner's stage machine,
+resume and merge are shared by uploaded and local jobs; see
+[`features/local-models.md`](features/local-models.md).
 
 ## Core architectural rules
 
@@ -52,7 +58,7 @@ result), `media` (FFmpeg), `secrets` (API keys) and `settings`.
   from Flutter and is therefore testable as pure functions. A numeric width comparison inside a
   widget file is a bug.
 
-## The four kinds of data
+## The five kinds of data
 
 This distinction runs through the whole app and is worth stating once:
 
@@ -62,10 +68,12 @@ This distinction runs through the whole app and is worth stating once:
 | Transcripts | the record and text of a finished transcription | yes, as a data module projected from `jobs/` | yes |
 | Secrets | API keys | only to a secure endpoint, by a separate exchange | no |
 | Recordings and audio | the original file, the chunk audio, the converted copy | no — the converted copy only, only by an opt-in side channel | no |
+| Downloaded models | the packages a local model loads, and this device's engine state | no — the local model *records* sync as configuration | no |
 
 The exclusions are **structural**, not filtered: the sync, backup and ZIP engines only ever touch
-the file names in the registry in `lib/app/data_modules.dart`, and neither the secrets file nor the
-job folders are in it. Adding either to the registry would silently start uploading it.
+the file names in the registry in `lib/app/data_modules.dart`, and neither the secrets file, the job
+folders nor the models folder are in it. Adding any of them to the registry would silently start
+uploading it.
 
 A transcription's *text* still travels, because the small half of each job folder — the record and
 the transcript, never the audio — is projected into a module file of its own before a sync and

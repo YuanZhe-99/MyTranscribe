@@ -14,7 +14,7 @@ Two data modules, in this order:
 
 | File | Module id | Carries |
 |---|---|---|
-| `transcribe_settings.json` | `settings` | Sources, models and defaults |
+| `transcribe_settings.json` | `settings` | Sources, models, local models and defaults |
 | `transcribe_transcripts.json` | `transcripts` | Every finished transcription's record and text |
 
 The remote directory is `/MyTranscribe`. `lib/app/data_modules.dart` is the only place those names
@@ -23,6 +23,18 @@ treats registry order as significant.
 
 Job folders are still not modules. The engines only ever touch the file names above, which is what
 keeps hours of audio out of a backup bundle.
+
+Local models travel as records and nothing else. A `localModel` record — a name, languages,
+capabilities, the ids of its packages — syncs like a source, so a model added on one device appears
+on the other as "not downloaded". The downloaded packages in `models/` and the device's engine state
+in `local_engine_state.json` are not modules: gigabytes of re-downloadable files, and facts about one
+device's processors, have no business on the server.
+
+An older build carries a local model record through, with one blemish this build repairs: 0.2.x
+writes a record kind it does not know back as `unknown`. Every local model id starts with `local:`,
+and a `kind: unknown` record with such an id reads here as a local model again — and is written back
+with its proper kind at the next save. This build itself writes an unknown kind back exactly as it
+found it, so a kind a later build adds survives a round trip through this one.
 
 ## How a sync goes
 

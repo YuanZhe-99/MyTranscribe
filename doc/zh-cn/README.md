@@ -33,7 +33,9 @@ bundle 名称）使用用户自行配置的转写服务把录音转成文字。�
   独的 API 密钥交换。
 - [`backup-restore.md`](backup-restore.md) —— 本地备份与 ZIP 导出导入在这里的配置。
 - [`platform-notes.md`](platform-notes.md) —— 各平台的 FFmpeg 方案、Android 构建状态、Apple 权限、
-  Windows on ARM64。
+  Windows on ARM64、下载的模型放在哪里。
+- [`local-asr-support-matrix.md`](local-asr-support-matrix.md) —— 哪个本地模型在哪种设备的哪个处理器上运
+  行、每条路线的文档依据有多充分，以及本项目测试过什么。
 - [`ci-cd.md`](ci-cd.md) —— 验证命令集、构建命令与全新克隆的步骤。
 - [`version-history.md`](version-history.md) —— 逐版本的摘要。
 
@@ -49,6 +51,8 @@ bundle 名称）使用用户自行配置的转写服务把录音转成文字。�
   种。
 - [`features/diarization-and-speakers.md`](features/diarization-and-speakers.md) —— 谁在说话，以及这个答案
   如何在各窗口之间保持一致。
+- [`features/local-models.md`](features/local-models.md) —— 在设备上运行的模型：记录、下载模型包、路线、
+  每台设备上的检查、回退，以及任务记录些什么。
 - [`features/media-tools.md`](features/media-tools.md) —— 应用如何找到或获取 FFmpeg。
 - [`features/secure-secrets-sync.md`](features/secure-secrets-sync.md) —— API Key 存放在哪里，以及它们何时
   被允许离开本机。
@@ -61,6 +65,8 @@ bundle 名称）使用用户自行配置的转写服务把录音转成文字。�
 - [`algorithms/speaker-unification.md`](algorithms/speaker-unification.md) —— 一位说话人如何在各窗口之间保
   持同一身份。
 - [`algorithms/secure-endpoint.md`](algorithms/secure-endpoint.md) —— 什么算是可以发送 API Key 的安全去处。
+- [`algorithms/engine-routing.md`](algorithms/engine-routing.md) —— 本地模型在哪个处理器上运行，以及无法运
+  行时会发生什么。
 
 ### 参考
 
@@ -75,3 +81,7 @@ bundle 名称）使用用户自行配置的转写服务把录音转成文字。�
 剩下的是发布准备，以及一件没有付费密钥就无法核实的事：一份超过上传上限的真实录音，端到端地对着 OpenAI 与
 OpenRouter 跑通。其余一切都由测试套件验证，而它在没有密钥、没有网络、没有 FFmpeg 的情况下运行。见仓库根目录
 的 `PLAN.md`。
+
+`PLAN.md` 中的本地模型计划正在进行。它的基础（L0）已经就位：本地模型记录、模型包管理器、引擎协议与路由器、
+设备本地的引擎状态，以及任务执行器的本地路径，全部用一个假引擎测试过。目前还没有编译进任何原生引擎；第一个
+是 whisper.cpp，属于 L1。

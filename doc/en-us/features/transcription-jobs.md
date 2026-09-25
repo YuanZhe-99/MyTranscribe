@@ -22,6 +22,10 @@ resuming does not pay for them again.
 - **normalizing** converts the whole recording once; skipped when the file is uploaded unchanged.
 - **cutting, uploading, parsing** run once per window, in order, one at a time. The job record is
   rewritten after each one, and the provider's raw answer is kept.
+- For a **local model** the machine is the same, with three differences (see
+  [`local-models.md`](local-models.md)): the route is chosen at **planning**, before the plan,
+  because its limits and its package revision go into it; each window is cut as PCM; and
+  **transcribing** takes the place of uploading, with the model loaded once for the whole job.
 - **merging** joins the windows back into one transcript. See
   [`../algorithms/overlap-merge.md`](../algorithms/overlap-merge.md).
 - **naming speakers** runs only when the model returned speaker labels. See
@@ -61,6 +65,14 @@ failure and cancellation.
   again without it rather than making the user find the setting.
 - A window that turns out to exceed the upload limit after it is cut re-plans with smaller windows
   instead of failing.
+- A local model that is not downloaded, is damaged, cannot take the language, has no route this
+  build can run, or runs out of memory fails the job with a kind of its own — `modelNotInstalled`,
+  `modelDamaged`, `unsupportedByModel`, `engineUnavailable`, `outOfMemory` — and the engine's own
+  words, rather than blaming a server that was never contacted.
+- A local route that fails partway — a lost GPU, a missing driver — moves to the CPU when the
+  fallback policy allows, runs the same window again there, and writes the move on the job. If the
+  app itself stopped inside a route, the next start finds out, records the route as crashed on this
+  device, and resumes the job on another route with the reason `ROUTE_CRASHED`.
 
 ## What the pages watch
 

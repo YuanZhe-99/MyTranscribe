@@ -84,17 +84,21 @@ class JobStore {
   }
 
   /// Purpose: Locate one window's audio.
-  /// Inputs: [jobId], [index].
+  /// Inputs: [jobId], [index], and [pcm] for a local job's WAV window.
   /// Returns: `Future<File>`.
   /// Side effects: May create the chunks folder.
   /// Notes: Numbered with leading zeros so a folder listing is in order, which
   /// matters when somebody is looking at kept chunks to work out what went
-  /// wrong.
-  static Future<File> chunkFile(String jobId, int index) async {
+  /// wrong. An uploaded window is a stream-copied MP3; a local engine's is
+  /// 16 kHz mono PCM, hence the other extension.
+  static Future<File> chunkFile(
+    String jobId,
+    int index, {
+    bool pcm = false,
+  }) async {
     final dir = await _subdir(jobId, chunksDirName);
-    return File(
-      p.join(dir.path, 'chunk_${index.toString().padLeft(4, '0')}.mp3'),
-    );
+    final stem = 'chunk_${index.toString().padLeft(4, '0')}';
+    return File(p.join(dir.path, pcm ? '$stem.wav' : '$stem.mp3'));
   }
 
   /// Purpose: Locate one window's raw reply.
@@ -257,7 +261,7 @@ class JobStore {
 
     var left = 0;
     await for (final entry in dir.list()) {
-      if (entry is! File || !entry.path.endsWith('.mp3')) continue;
+      if (entry is! File || !_isWindowAudio(entry.path)) continue;
       try {
         await retryingFileOperation(entry.delete, attempts: 10);
       } catch (_) {
@@ -328,7 +332,7 @@ class JobStore {
         final name = p.basename(file.path);
         final inChunks = p.basename(file.parent.path) == chunksDirName;
         if (name != normalizedAudioFileName &&
-            !(inChunks && name.endsWith('.mp3'))) {
+            !(inChunks && _isWindowAudio(name))) {
           continue;
         }
         try {
@@ -450,4 +454,14 @@ class JobStore {
     if (!await dir.exists()) await dir.create(recursive: true);
     return dir;
   }
+
+  /// Purpose: Report whether a file in a chunks folder is window audio.
+  /// Inputs: [path].
+  /// Returns: `bool` — true for an uploaded window's MP3 or a local window's
+  /// WAV.
+  /// Side effects: None.
+  /// Notes: Internal helper used within this file only. The raw replies beside
+  /// them are JSON and are kept.
+  static bool _isWindowAudio(String path) =>
+      path.endsWith('.mp3') || path.endsWith('.wav');
 }

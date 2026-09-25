@@ -123,6 +123,67 @@ class PlanRequest {
   });
 }
 
+/// What a local job asked for, as far as planning is concerned.
+///
+/// A local model has no upload, so there is no byte budget and no fast path:
+/// the planner works in time alone, and every window is decoded to PCM, even
+/// when the whole recording is one window.
+class LocalPlanRequest {
+  /// What probing found, or null when nothing could read it.
+  final MediaInfo? media;
+
+  /// The local model record's id.
+  final String modelId;
+
+  /// The model's own window ceiling, in seconds, or null.
+  final int? engineMaxSeconds;
+
+  /// The route's own window ceiling, in seconds, or null.
+  final int? routeMaxSeconds;
+
+  /// The longest window the route's memory budget allows, in seconds, or null
+  /// when it reported none.
+  final int? memoryMaxSeconds;
+
+  /// The revision of the package that will be loaded.
+  final String artifactRevision;
+
+  /// What the user asked to run on: `auto`, `cpu`, or a route key.
+  final String requestedDevice;
+
+  /// The overlap between windows, in seconds.
+  final double overlapSeconds;
+
+  /// A window length the user set by hand, in seconds, or null.
+  final double? userWindowSeconds;
+
+  /// Whether FFmpeg is available on this device.
+  final bool toolkitAvailable;
+
+  /// Everything else that would invalidate a cached result: language hints,
+  /// the prompt, keywords.
+  final List<String> settingsFingerprintParts;
+
+  /// Purpose: Describe one local planning request.
+  /// Inputs: All fields.
+  /// Returns: A new immutable value.
+  /// Side effects: None.
+  /// Notes: None.
+  const LocalPlanRequest({
+    required this.modelId,
+    required this.artifactRevision,
+    required this.requestedDevice,
+    required this.overlapSeconds,
+    required this.toolkitAvailable,
+    this.media,
+    this.engineMaxSeconds,
+    this.routeMaxSeconds,
+    this.memoryMaxSeconds,
+    this.userWindowSeconds,
+    this.settingsFingerprintParts = const [],
+  });
+}
+
 /// Works out how to divide a recording.
 class ChunkPlanner {
   /// Purpose: Prevent instantiation; the entry point is static.
@@ -249,6 +310,101 @@ class ChunkPlanner {
         fingerprint: _fingerprint(request, stride, overlap),
       ),
     );
+  }
+
+  /// Purpose: Plan a recording for a local model — time-only mode.
+  /// Inputs: [request].
+  /// Returns: A [PlanResult].
+  /// Side effects: None.
+  /// Notes: No fast path: a local engine takes PCM, so even a short clip is
+  /// decoded, as one window, and that needs FFmpeg. The window is the smallest
+  /// of the model's or route's own ceiling (`windowCappedByEngine`), the
+  /// memory budget (`windowCappedByMemory`) and the app's ceiling on one
+  /// request. The fingerprint names the model, the package revision and the
+  /// device asked for, so an updated package or another device discards
+  /// cached windows exactly as a changed prompt does.
+  static PlanResult planLocal(LocalPlanRequest request) {
+    final media = request.media;
+    if (media != null && !media.hasAudio) {
+      return const PlanResult.failed(PlanFailure.noAudio);
+    }
+    if (!request.toolkitAvailable) {
+      return const PlanResult.failed(PlanFailure.mediaToolkitMissing);
+    }
+    final duration = media?.durationSeconds;
+    if (duration == null || duration <= 0) {
+      return const PlanResult.failed(PlanFailure.durationUnknown);
+    }
+
+    var window = maxAutoWindowSeconds.toDouble();
+    var cap = PlanReasonCode.windowCappedByCeiling;
+    for (final limit in [request.engineMaxSeconds, request.routeMaxSeconds]) {
+      if (limit != null && limit < window) {
+        window = limit.toDouble();
+        cap = PlanReasonCode.windowCappedByEngine;
+      }
+    }
+    final memory = request.memoryMaxSeconds;
+    if (memory != null && memory < window) {
+      window = memory.toDouble();
+      cap = PlanReasonCode.windowCappedByMemory;
+    }
+
+    final overlap = request.overlapSeconds.clamp(0.0, window / 2);
+    final reasons = <PlanReason>[];
+    double stride;
+    if (request.userWindowSeconds != null) {
+      stride = request.userWindowSeconds!;
+      reasons.add(PlanReason(PlanReasonCode.windowChosenByUser, stride));
+    } else {
+      stride = window - overlap;
+      reasons.add(PlanReason(cap, window));
+    }
+    stride = stride.clamp(minStrideSeconds.toDouble(), window - overlap);
+    if (stride <= 0) stride = window;
+
+    final windows = _windows(duration, stride, overlap);
+    return PlanResult.success(
+      ChunkPlan(
+        single: windows.length == 1,
+        uploadsOriginal: false,
+        strideSeconds: stride,
+        overlapSeconds: overlap,
+        windows: windows,
+        // Two bytes a sample, one channel, plus the WAV header.
+        predictedChunkBytes: ((stride + overlap) * 32000).round() + 44,
+        reasons: reasons,
+        fingerprint: _localFingerprint(request, stride, overlap),
+      ),
+    );
+  }
+
+  /// Purpose: Identify the settings a local plan was made under.
+  /// Inputs: [request], [stride], [overlap].
+  /// Returns: A short hash.
+  /// Side effects: None.
+  /// Notes: Internal helper used within this file only. The device is the one
+  /// *asked for*, not the one that ran: a fallback to the CPU mid-job keeps
+  /// the windows the GPU already finished, because they came from the same
+  /// model.
+  static String _localFingerprint(
+    LocalPlanRequest request,
+    double stride,
+    double overlap,
+  ) {
+    final parts = [
+      'local',
+      request.modelId,
+      request.artifactRevision,
+      request.requestedDevice,
+      stride.toStringAsFixed(2),
+      overlap.toStringAsFixed(2),
+      ...request.settingsFingerprintParts,
+    ];
+    return sha256
+        .convert(utf8.encode(parts.join(' ')))
+        .toString()
+        .substring(0, 16);
   }
 
   /// Purpose: Re-plan with shorter windows after one came out too large.

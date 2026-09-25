@@ -533,6 +533,21 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String jobStageTranscribing(int index, int total) {
+    return '正在本机转写第 $index 段，共 $total 段';
+  }
+
+  @override
+  String planWindowByEngine(String seconds) {
+    return '分段长度受本地模型 $seconds 秒的限制。';
+  }
+
+  @override
+  String planWindowByMemory(String seconds) {
+    return '分段长度受本设备可供该模型使用的内存限制：$seconds 秒。';
+  }
+
+  @override
   String planWindowByProvider(String seconds) {
     return '分段长度受来源 $seconds 秒的限制。';
   }
@@ -1574,6 +1589,21 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String planWindowByModel(String seconds) {
     return '分段長度受模型 $seconds 秒的限制。';
+  }
+
+  @override
+  String jobStageTranscribing(int index, int total) {
+    return '正在本機轉寫第 $index 段，共 $total 段';
+  }
+
+  @override
+  String planWindowByEngine(String seconds) {
+    return '分段長度受本機模型 $seconds 秒的限制。';
+  }
+
+  @override
+  String planWindowByMemory(String seconds) {
+    return '分段長度受本裝置可供該模型使用的記憶體限制：$seconds 秒。';
   }
 
   @override

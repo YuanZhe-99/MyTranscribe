@@ -9,6 +9,7 @@
 /// `doc/en-us/features/transcription-jobs.md`.
 library;
 
+import '../../local/models/engine_capability.dart';
 import '../../media/models/media_info.dart';
 import 'chunk_plan.dart';
 
@@ -31,6 +32,13 @@ enum JobStage {
 
   /// Sending a window.
   uploading,
+
+  /// Running a window through a model on this device.
+  ///
+  /// Replaces [uploading] for a local model. An older build reads it as
+  /// [queued], which for a record that was mid-run is what it would have made
+  /// of it anyway.
+  transcribing,
 
   /// Joining the windows back together.
   merging,
@@ -104,6 +112,27 @@ enum JobFailureKind {
 
   /// The source or model is no longer in the library.
   configurationMissing,
+
+  /// The local model is not downloaded on this device.
+  modelNotInstalled,
+
+  /// The local model's files are damaged or not the format expected.
+  modelDamaged,
+
+  /// The local model does not do what the job asked — a language, a feature,
+  /// a window that long.
+  unsupportedByModel,
+
+  /// No route on this device can run the local model: a backend not built, a
+  /// driver missing, a processor that will not take work.
+  engineUnavailable,
+
+  /// Not enough memory to load or run the local model.
+  outOfMemory,
+
+  /// The app stopped while the local model was running, and the fallback
+  /// policy allowed nothing else.
+  routeCrashed,
 
   /// Something else.
   unknown;
@@ -194,6 +223,12 @@ class JobOptions {
   /// Whether to keep the split audio after the job finishes.
   final bool keepChunks;
 
+  /// For a local model, what to run it on: Auto, the CPU, or a route.
+  ///
+  /// Part of the plan fingerprint, so asking for another processor discards
+  /// cached windows; a fallback the runner takes does not change it.
+  final RouteRequest device;
+
   /// Purpose: Create the options for a job.
   /// Inputs: All fields.
   /// Returns: A new immutable value.
@@ -208,6 +243,7 @@ class JobOptions {
     this.overlapSeconds = 5,
     this.enrollment = true,
     this.keepChunks = false,
+    this.device = RouteRequest.auto,
   });
 
   /// Purpose: Parse the options.
@@ -224,6 +260,7 @@ class JobOptions {
     overlapSeconds: (json['overlapSeconds'] as num?)?.toDouble() ?? 5,
     enrollment: json['enrollment'] != false,
     keepChunks: json['keepChunks'] == true,
+    device: RouteRequest(json['device'] as String? ?? ''),
   );
 
   /// Purpose: Serialize the options.
@@ -240,6 +277,7 @@ class JobOptions {
     'overlapSeconds': overlapSeconds,
     'enrollment': enrollment,
     'keepChunks': keepChunks,
+    if (!device.isAuto) 'device': device.value,
   };
 
   /// Purpose: Return a copy with some fields replaced.
@@ -260,6 +298,7 @@ class JobOptions {
     overlapSeconds: overlapSeconds,
     enrollment: enrollment,
     keepChunks: keepChunks,
+    device: device,
   );
 }
 
@@ -292,6 +331,13 @@ class ChunkResult {
   /// The speaker ids whose samples this request carried.
   final List<String> knownSpeakerIds;
 
+  /// Where a local window actually ran, as the runtime reported it; null for
+  /// an uploaded window.
+  final PlacementKind? placement;
+
+  /// The local route that ran it, which a fallback can change mid-job.
+  final String? routeKey;
+
   /// Purpose: Create a chunk result.
   /// Inputs: All fields.
   /// Returns: A new immutable value.
@@ -306,6 +352,8 @@ class ChunkResult {
     this.segments = const [],
     this.hasRealTimestamps = false,
     this.knownSpeakerIds = const [],
+    this.placement,
+    this.routeKey,
   });
 
   /// Purpose: Parse a chunk result.
@@ -325,6 +373,10 @@ class ChunkResult {
     ],
     hasRealTimestamps: json['timed'] == true,
     knownSpeakerIds: _strings(json['knownSpeakerIds']),
+    placement: json['placement'] == null
+        ? null
+        : PlacementKind.parse(json['placement']),
+    routeKey: json['routeKey'] as String?,
   );
 
   /// Purpose: Serialize a chunk result.
@@ -342,6 +394,8 @@ class ChunkResult {
       'segments': [for (final segment in segments) segment.toJson()],
     'timed': hasRealTimestamps,
     if (knownSpeakerIds.isNotEmpty) 'knownSpeakerIds': knownSpeakerIds,
+    if (placement != null) 'placement': placement!.name,
+    if (routeKey != null) 'routeKey': routeKey,
   };
 }
 
@@ -460,6 +514,15 @@ class TranscriptionJob {
   /// The files that were written.
   final List<String> outputs;
 
+  /// For a local model, what was asked for and the route chosen for it.
+  final JobRoute? route;
+
+  /// For a local model, the revision of the package that was loaded.
+  final String? artifactRevision;
+
+  /// Every move away from the route asked for, in order. Never silent (D6).
+  final List<JobFallback> fallbacks;
+
   /// Fields written by a build this one does not know about.
   final Map<String, dynamic> extraJson;
 
@@ -488,8 +551,14 @@ class TranscriptionJob {
     this.error,
     this.chunks = const [],
     this.outputs = const [],
+    this.route,
+    this.artifactRevision,
+    this.fallbacks = const [],
     this.extraJson = const {},
   });
+
+  /// Whether this job runs a model on this device.
+  bool get isLocal => providerId == localJobProviderId;
 
   /// What to call this transcription on screen.
   ///
@@ -555,6 +624,14 @@ class TranscriptionJob {
           if (item is Map<String, dynamic>) ChunkResult.fromJson(item),
       ],
       outputs: _strings(json['outputs']),
+      route: json['route'] is Map<String, dynamic>
+          ? JobRoute.fromJson(json['route'] as Map<String, dynamic>)
+          : null,
+      artifactRevision: json['artifactRevision'] as String?,
+      fallbacks: [
+        for (final item in (json['fallbacks'] as List?) ?? const [])
+          if (item is Map<String, dynamic>) JobFallback.fromJson(item),
+      ],
       extraJson: {
         for (final e in json.entries)
           if (!_knownKeys.contains(e.key)) e.key: e.value,
@@ -589,6 +666,10 @@ class TranscriptionJob {
     if (chunks.isNotEmpty)
       'chunks': [for (final chunk in chunks) chunk.toJson()],
     if (outputs.isNotEmpty) 'outputs': outputs,
+    if (route != null) 'route': route!.toJson(),
+    if (artifactRevision != null) 'artifactRevision': artifactRevision,
+    if (fallbacks.isNotEmpty)
+      'fallbacks': [for (final fallback in fallbacks) fallback.toJson()],
   };
 
   /// Purpose: Return a copy with some fields replaced.
@@ -613,6 +694,9 @@ class TranscriptionJob {
     List<ChunkResult>? chunks,
     List<String>? outputs,
     JobOptions? options,
+    JobRoute? route,
+    String? artifactRevision,
+    List<JobFallback>? fallbacks,
   }) => TranscriptionJob(
     id: id,
     createdAt: createdAt,
@@ -635,6 +719,9 @@ class TranscriptionJob {
     error: clearError ? null : (error ?? this.error),
     chunks: chunks ?? this.chunks,
     outputs: outputs ?? this.outputs,
+    route: route ?? this.route,
+    artifactRevision: artifactRevision ?? this.artifactRevision,
+    fallbacks: fallbacks ?? this.fallbacks,
     extraJson: extraJson,
   );
 }
@@ -660,7 +747,134 @@ const _knownKeys = {
   'error',
   'chunks',
   'outputs',
+  'route',
+  'artifactRevision',
+  'fallbacks',
 };
+
+/// The provider id a local job records, matching `localProviderId`.
+///
+/// Repeated here rather than imported so this model file does not depend on
+/// the local feature's records; a test holds the two equal.
+const localJobProviderId = 'local';
+
+/// What a local job asked to run on, and the route chosen for it.
+class JobRoute {
+  /// What was asked for: `auto`, `cpu`, or a route key.
+  final String requested;
+
+  /// The route chosen at the start, or null before routing.
+  final String? routeKey;
+
+  /// Its processor.
+  final ComputeDevice? device;
+
+  /// Its evidence grade.
+  final EvidenceLevel? evidence;
+
+  /// Whether this project tested it on this kind of device (D20).
+  final bool testedHere;
+
+  /// Purpose: Create a route record.
+  /// Inputs: All fields.
+  /// Returns: A new immutable value.
+  /// Side effects: None.
+  /// Notes: None.
+  const JobRoute({
+    required this.requested,
+    this.routeKey,
+    this.device,
+    this.evidence,
+    this.testedHere = false,
+  });
+
+  /// Purpose: Parse a route record.
+  /// Inputs: [json].
+  /// Returns: A [JobRoute].
+  /// Side effects: None.
+  /// Notes: None.
+  factory JobRoute.fromJson(Map<String, dynamic> json) => JobRoute(
+    requested: json['requested'] as String? ?? 'auto',
+    routeKey: json['routeKey'] as String?,
+    device: json['device'] == null ? null : ComputeDevice.parse(json['device']),
+    evidence: json['evidence'] == null
+        ? null
+        : EvidenceLevel.parse(json['evidence']),
+    testedHere: json['testedHere'] == true,
+  );
+
+  /// Purpose: Serialize a route record.
+  /// Inputs: None.
+  /// Returns: A JSON-compatible map.
+  /// Side effects: None.
+  /// Notes: None.
+  Map<String, dynamic> toJson() => {
+    'requested': requested,
+    if (routeKey != null) 'routeKey': routeKey,
+    if (device != null) 'device': device!.name,
+    if (evidence != null) 'evidence': evidence!.name,
+    'testedHere': testedHere,
+  };
+}
+
+/// One move away from the route a job asked for.
+class JobFallback {
+  /// What ran, or was asked for, before: a route key, `auto` or `cpu`.
+  final String from;
+
+  /// The route taken instead.
+  final String to;
+
+  /// Why, as an engine error code such as `DEVICE_LOST`.
+  final String reason;
+
+  /// The window it happened at, or null before the first.
+  final int? atWindow;
+
+  /// When, in UTC.
+  final DateTime at;
+
+  /// Purpose: Create a fallback record.
+  /// Inputs: All fields.
+  /// Returns: A new immutable value.
+  /// Side effects: None.
+  /// Notes: None.
+  const JobFallback({
+    required this.from,
+    required this.to,
+    required this.reason,
+    required this.at,
+    this.atWindow,
+  });
+
+  /// Purpose: Parse a fallback record.
+  /// Inputs: [json].
+  /// Returns: A [JobFallback].
+  /// Side effects: None.
+  /// Notes: None.
+  factory JobFallback.fromJson(Map<String, dynamic> json) => JobFallback(
+    from: json['from'] as String? ?? '',
+    to: json['to'] as String? ?? '',
+    reason: json['reason'] as String? ?? '',
+    atWindow: (json['atWindow'] as num?)?.toInt(),
+    at:
+        DateTime.tryParse('${json['at']}')?.toUtc() ??
+        DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+  );
+
+  /// Purpose: Serialize a fallback record.
+  /// Inputs: None.
+  /// Returns: A JSON-compatible map.
+  /// Side effects: None.
+  /// Notes: None.
+  Map<String, dynamic> toJson() => {
+    'from': from,
+    'to': to,
+    'reason': reason,
+    if (atWindow != null) 'atWindow': atWindow,
+    'at': at.toUtc().toIso8601String(),
+  };
+}
 
 /// Purpose: Parse the probe result.
 /// Inputs: [json].

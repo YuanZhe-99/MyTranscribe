@@ -55,6 +55,15 @@ A source can be asked for its own model list. Imported models arrive with capabi
 matching template where one exists and `unknown` where none does — the app does not guess, because a
 wrong guess turns into a failed job with a confusing message.
 
+## This device
+
+Beside the sources, the library holds **local models**: models that run on the device, with no
+endpoint and no key. Their records sync like a source's; whether each is downloaded, and which
+processor runs it, belongs to the device. The built-in ones — Whisper large-v3 and turbo, Parakeet
+TDT v3, Qwen3-ASR 0.6B — are seeded the same way, with derived ids, and refresh the same way,
+leaving what the user changed. The section that lists, downloads and checks them arrives with the
+first engine; see [`local-models.md`](local-models.md).
+
 ## API keys
 
 Not part of a source record. They live in a separate file that never enters a backup or a ZIP

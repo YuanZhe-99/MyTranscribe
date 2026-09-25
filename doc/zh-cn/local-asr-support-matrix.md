@@ -1,0 +1,56 @@
+# 本地模型支持矩阵
+
+哪个本地模型在哪种设备的哪个处理器上运行、每条路线有多充分的文档说明它能工作，以及本项目是否测试过它。本页
+随路线发布保持更新：每条验证记录、每条以未验证状态发布的路线，以及收到的每份来自别人硬件的诊断报告，都记在
+这里。这些术语对用户意味着什么，见 [`features/local-models.md`](features/local-models.md)；自动如何使用它
+们，见 [`algorithms/engine-routing.md`](algorithms/engine-routing.md)。
+
+## 等级
+
+调研给出的依据等级，在代码中表示为 `EvidenceLevel`：
+
+| 等级 | 代码 | 含义 |
+|---|---|---|
+| **A** | `official` | 运行时或芯片厂商的文档涵盖该模型在这条路线上 |
+| **B** | `community` | 存在可复现的第三方实现 |
+| **E** | `experimental` | 存在通用后端，但这个模型 × 设备的组合没有展示过 |
+| **U** | `none` | 什么也没找到 |
+
+**在此测试过**是一项独立的事实：本项目在该类别的硬件上运行了 `PLAN.md` §7 的验收清单，并记录在下文。没有在
+此测试过的路线照样发布，作为**未验证支持**：已经构建并由 CI 覆盖，在每台设备上的第一个任务之前先检查，在产
+品中标明未测试，并且只有在等级为 A 或 B、且在检查中胜过 CPU 时才被自动使用。
+
+## 按目标平台
+
+调研于 2026-09-24。"计划"指明构建某条路线的里程碑；目前除基础（L0）之外什么都还不存在。
+
+| 目标平台 | Whisper large-v3 / turbo | Parakeet TDT v3 | Qwen3-ASR 0.6B（1.7B） | 在此测试过 |
+|---|---|---|---|---|
+| **Windows x64** —— Intel / AMD / NVIDIA GPU；Intel NPU；AMD NPU | CPU **B**（whisper.cpp，L1）；GPU Vulkan **B**（L3）；Intel NPU **A**（OpenVINO GenAI，L7）；AMD NPU 编码器 **A**（Ryzen AI 300，L7） | CPU **B**（sherpa-onnx，L2）；GPU **B**（transcribe.cpp Vulkan，L3）；NPU **U** | CPU **B**（sherpa-onnx int8，L2；1.7B **E**）；GPU **B**（transcribe.cpp Vulkan，L3）；NPU **U** | **否** —— 未验证支持；CPU 路线也在 ARM64 机器上以仿真方式运行，这能检查代码路径，但检查不了速度 |
+| **Windows ARM64** —— Snapdragon X Elite；X2 Elite | CPU **B**（L1）；GPU OpenCL **E**（L3）；NPU **A**，仅限 turbo（Qualcomm AI Hub 资源，ONNX Runtime QNN，L5a）；large-v3 NPU **U** | CPU **B**（L2）；GPU **U**；NPU **E** | CPU **B**（L2）；GPU **E**（llama.cpp 基于 OpenCL，L3）；NPU **U** | 在 X Elite 上**是**：CPU、OpenCL、QNN；X2 Elite 未验证 |
+| **Android** —— Snapdragon 8 Gen 3 / 8 Elite / 8 Elite Gen 5 | CPU **B**（L1）；GPU OpenCL **E**（L3）；NPU **A**，仅限 turbo（按 SoC 区分的资源，L5b） | CPU **B**（L2）；GPU **E**；NPU **E** | CPU **B**（L2）；GPU **E**；NPU **U** | **否** —— 未验证支持 |
+| **Android** —— Google Tensor G3 / G4 / G5 | CPU **E**（L1）；GPU Vulkan **E**（L3，一项实验）；NPU **U** | CPU **E**（L2）；GPU **E**；NPU 不在计划中（Tensor SDK 已被放弃） | CPU **E**（L2）；GPU **E**；NPU **U** | 在 G5（Pixel 10）上**是**：CPU、Vulkan 实验；G3 与 G4 未验证 |
+| **Android** —— MediaTek Dimensity、Samsung Exynos | CPU **E**（L1）；GPU Vulkan **E**；NPU **U** | CPU **E**（L2）；GPU **E**；NPU **U** | CPU **E**（L2）；GPU **E**；NPU **U** | **否** —— 未验证支持 |
+| **macOS** —— Apple Silicon（Intel：仅 CPU） | CPU 与 Metal **B**（L1）；Core ML 编码器 **B**（L1）；WhisperKit **B**（可选，L4） | CPU **B**（L2）；Neural Engine **B**（FluidAudio，L4） | CPU **B**（L2）；Neural Engine **B/E**（FluidAudio，仅 0.6B，需通过质量门槛，L4） | 在 Apple Silicon（2024 款 Mac mini）上**是**；Intel Mac 未验证 |
+| **iOS** —— A 系列 / M 系列 | CPU 与 Metal **B**（L1）；Core ML 编码器 **B**（L1） | CPU **B**（L2）；Neural Engine **B**（L4） | CPU **B**（L2）；Neural Engine **B/E**（L4） | 有 iPhone 可用时在 iPhone 上；否则由模拟器检查代码路径，设备端路线未验证 |
+| **系统语音识别**（L6） | iOS/macOS 26+ 设备端 `SpeechAnalyzer` **A**；更低版本在区域设置支持时用设备端 `SFSpeechRecognizer` **A**；Android 设备端 **A**，文件输入 **E**；Windows 无 | | | Pixel 10 与 Mac |
+
+## 验证记录
+
+每条在本项目硬件上验证过的路线一条记录：设备、操作系统、驱动、运行时版本、模型包哈希、量化与解码设置、实时
+率、首个结果的延迟、峰值内存，以及日期。
+
+暂无 —— 第一个引擎在 L1 到来。
+
+## 未验证的路线
+
+未在其硬件类别上测试就发布的路线，附上原因以及约束它的条件。
+
+暂无 —— L1 之前没有任何路线发布。
+
+## 来自其他硬件的报告
+
+拥有本项目所没有的硬件的人发来的诊断报告，连同日期记录下来。一份报告可以提高一条路线的依据等级；它永远不会
+让这条路线变成在此测试过。
+
+暂无。

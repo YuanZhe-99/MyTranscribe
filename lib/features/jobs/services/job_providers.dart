@@ -9,6 +9,8 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../local/services/engine_registry.dart';
+import '../../local/services/local_transcription_backend.dart';
 import '../../media/services/media_toolkit_provider.dart';
 import '../../providers/services/settings_repository.dart';
 import '../models/transcription_job.dart';
@@ -22,6 +24,12 @@ final jobRunnerProvider = Provider<JobRunner>((ref) {
     // app is open does not have to restart it before the next job can split.
     toolkit: () => ref.read(mediaToolkitProvider.future),
     repository: ref.read(settingsRepositoryProvider),
+    // Local jobs route through the engine registry. With no engine compiled
+    // in yet it still matters: its state store is what finds a crash marker
+    // at startup.
+    localBackend: LocalTranscriptionBackend(
+      registry: ref.read(engineRegistryProvider),
+    ),
   );
 });
 

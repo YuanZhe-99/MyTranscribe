@@ -38,6 +38,12 @@ enum PlanReasonCode {
 
   /// The user set the window length by hand.
   windowChosenByUser,
+
+  /// Window length limited by the local model's or route's own ceiling.
+  windowCappedByEngine,
+
+  /// Window length limited by the memory the local route has to work in.
+  windowCappedByMemory,
 }
 
 /// One reason, with the numbers that produced it.

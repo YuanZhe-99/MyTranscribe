@@ -102,3 +102,20 @@ runner 的资源与窗口标题都改名为 `MyTranscribe!!!!!`。MSIX 的打包
 因为它的 Windows 后端是从源码编译的 Media Foundation，可以在 ARM64 上构建；另外两个附带只有 x86_64 的
 libmpv，会以与 FFmpeg 插件相同的方式失败。这一点是在 ARM64 机器上真正跑一次 `flutter build windows` 验证
 的，不是从文档里读来的。
+
+## 本地模型
+
+下载的模型放在哪里因平台而异，由 `platform_capabilities.dart` 决定（`modelsLiveInCachesDirectory`）：
+
+| 平台 | `models/` 在哪里 | 原因 |
+|---|---|---|
+| iOS、macOS | 应用的缓存目录 | iCloud 备份和 Time Machine 都不包含它；模型是可以重新下载的缓存，而手机备份里塞进数 GB 模型只会招来一张工单。空间不足时系统可能清掉它，此时模型库会把该模型显示为未下载。把文件夹标记为排除不需要任何原生代码。 |
+| Android、Windows | 应用目录下的 `models/` | 自定义存储路径会把模型一并带走。Android 的自动备份默认开启 —— 清单没有设置任何规则 —— 并会跳过数据超过 25 MB 的应用，而录音早已超过这个大小；一条明确排除 `models/` 的备份规则会随 L1 到来，那时 Android 上才第一次能下载模型。 |
+
+桌面用户可以用 `modelsPath` 把模型挪到任何地方；改动它时不会复制任何东西。
+
+一个平台到底能有哪些引擎适配器，也在那里决定（`localEngineBackends`）：whisper.cpp 与 sherpa-onnx 所有平台
+都有；Swift 插件在 iOS 与 macOS 上；Android 的识别器在 Android 上；带 Qualcomm QNN 提供程序的 ONNX Runtime
+在 Windows 与 Android 上。某个构建是否真的包含其中之一，由引擎注册表回答。L0 阶段没有编译进任何适配器；每个
+适配器需要的工具链会在各里程碑落地时记录在这里。`hasSystemSpeechRecognizer` 在 Windows 上为 false，因为它
+没有文件转写 API，所以回退设置在那里是不出现，而不是被禁用。

@@ -146,6 +146,45 @@ class MediaCancelToken {
   }
 }
 
+/// What a window cut out of the normalized recording is written as.
+enum WindowFormat {
+  /// The normalized MP3's own frames, copied. What an upload wants: fast,
+  /// lossless, and a size the planner predicted exactly.
+  streamCopy,
+
+  /// 16 kHz mono 16-bit PCM in a WAV container. What a local engine wants
+  /// (decision D5 of the local-models plan): one sample format for every
+  /// runtime, so no engine decodes MP3 its own way.
+  pcm16kMono,
+}
+
+/// Purpose: Give the FFmpeg output arguments for a window format.
+/// Inputs: [format].
+/// Returns: The arguments that go between `-vn` and the output path.
+/// Side effects: None.
+/// Notes: Shared by both backends so they cannot drift. The PCM form asks for
+/// a bit-exact file with no metadata: FFmpeg otherwise writes its own version
+/// into a `LIST` chunk of the WAV header, and the embedded library and a
+/// downloaded executable are different versions — the headers would differ,
+/// and a local engine's sample count would be read from a different offset.
+List<String> windowCodecArgs(WindowFormat format) => switch (format) {
+  WindowFormat.streamCopy => const ['-c:a', 'copy'],
+  WindowFormat.pcm16kMono => const [
+    '-ac',
+    '1',
+    '-ar',
+    '16000',
+    '-c:a',
+    'pcm_s16le',
+    '-map_metadata',
+    '-1',
+    '-fflags',
+    '+bitexact',
+    '-flags:a',
+    '+bitexact',
+  ],
+};
+
 /// Purpose: Report how far a long media operation has got.
 /// Inputs: [fraction] from 0 to 1 where it can be known, and [processed], how
 /// much of the input has been handled.
@@ -195,18 +234,22 @@ abstract class MediaToolkit {
 
   /// Purpose: Copy one time range out of a normalized recording.
   /// Inputs: [source] normalized file, [startSeconds], [lengthSeconds],
-  /// [destination], optional [cancel].
+  /// [destination], optional [cancel], and the output [format].
   /// Returns: A future completing when the window is written.
   /// Side effects: Writes [destination].
-  /// Notes: Copies the encoded stream rather than re-encoding it, so this is
-  /// fast and lossless. It also means a cut lands on a frame boundary, which is
-  /// why the caller must not assume the window is exactly the requested length.
+  /// Notes: [WindowFormat.streamCopy] copies the encoded stream rather than
+  /// re-encoding it, so it is fast and lossless — and a cut lands on a frame
+  /// boundary, which is why the caller must not assume the window is exactly
+  /// the requested length. [WindowFormat.pcm16kMono] decodes the range to
+  /// 16 kHz mono 16-bit WAV for a local engine; both backends must produce the
+  /// same header and the same sample count for the same range.
   Future<void> extractWindow(
     String source,
     double startSeconds,
     double lengthSeconds,
     String destination, {
     MediaCancelToken? cancel,
+    WindowFormat format = WindowFormat.streamCopy,
   });
 
   /// Purpose: Cut a short sample for identifying a speaker.
@@ -276,6 +319,7 @@ class UnavailableMediaToolkit implements MediaToolkit {
     double lengthSeconds,
     String destination, {
     MediaCancelToken? cancel,
+    WindowFormat format = WindowFormat.streamCopy,
   }) async => _fail();
 
   @override

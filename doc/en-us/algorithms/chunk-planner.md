@@ -51,6 +51,29 @@ because the file is too large, or because this provider times out; windows cappe
 by the upload size; a longer overlap because speakers were requested. A user who disagrees can
 override the window length, and a user who thinks a limit is wrong can change it on the model.
 
+## A local model: time only
+
+A model on the device has no upload, so there is no byte budget and no fast path. The planner works
+in time alone (`ChunkPlanner.planLocal`), and every window is decoded to 16 kHz mono PCM — even when
+the whole recording is one window, which therefore still needs FFmpeg.
+
+Three limits bound a local window, and the smallest wins:
+
+| Limit | Reason code |
+|---|---|
+| the model's own ceiling (600 s for every built-in model), or the route's, when smaller | `windowCappedByEngine` |
+| the memory budget the route reports | `windowCappedByMemory` |
+| the app's ceiling on one request (1500 s) | `windowCappedByCeiling` |
+
+None of the model ceilings is a promise from the model. Whisper slides its own 30-second frames and
+has no limit of its own; Parakeet is bound by attention memory; one of Qwen's ports fails past two
+minutes. Ten minutes keeps a phone's memory in hand and progress visible.
+
+The overlap, the stride and the folding of a short last window are the same as for an upload. The
+fingerprint names the local model, the package revision and the device asked for — `auto`, `cpu` or
+a route key — so an updated package or a request for another processor discards cached windows, and
+a fallback the app takes on its own does not.
+
 ## When a window still does not fit
 
 Audio is not perfectly uniform, so a window can come out larger than predicted. Rather than failing

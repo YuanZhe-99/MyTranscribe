@@ -46,6 +46,10 @@ The reasons are specific: too large to send whole, longer than the model accepts
 time limit, the app's safety ceiling, or a length the user chose. A user who disagrees with the
 answer can see which limit produced it.
 
+A local model has no upload, so its reasons are about time alone: the model's own window ceiling,
+the memory the route has to work in, or the app's ceiling. Even a short clip is decoded once, to the
+PCM every local engine takes.
+
 The numbers themselves are in [`../algorithms/chunk-planner.md`](../algorithms/chunk-planner.md).
 
 ## Resuming
@@ -62,6 +66,12 @@ the user is now asking for.
 
 A job left mid-run when the app was closed is re-queued at startup rather than left showing a
 progress bar that will never move.
+
+For a local model the fingerprint names the model, the package revision and the device asked for
+instead of the source. Asking for another processor, or an updated package, discards the cached
+windows. A fallback the app takes on its own — the same model on the CPU after a GPU was lost — does
+not: those windows came from the same model, and throwing them away would make the user pay for the
+fallback twice.
 
 ## What this costs
 

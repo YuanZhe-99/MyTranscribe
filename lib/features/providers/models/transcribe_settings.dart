@@ -11,6 +11,8 @@
 /// live in `transcribe_secrets.json`, which is not part of any data module.
 library;
 
+import '../../local/models/local_model_config.dart' show localModelIdPrefix;
+
 /// What a [SettingsRecord] describes.
 ///
 /// The wire value is the enum name, and it is a persisted compatibility
@@ -25,6 +27,10 @@ enum SettingsRecordKind {
 
   /// The single record holding the defaults a new job starts from.
   defaults,
+
+  /// A model that runs on the device. Added in 0.3.0; see
+  /// `doc/en-us/features/local-models.md`.
+  localModel,
 
   /// A kind this build does not know. Preserved, never interpreted.
   unknown;
@@ -51,6 +57,25 @@ const defaultsRecordId = 'defaults';
 /// Anything else found in a record is kept in [SettingsRecord.extraJson] and
 /// written back out, so an older build never deletes a newer build's field.
 const _knownRecordKeys = {'id', 'kind', 'createdAt', 'modifiedAt', 'payload'};
+
+/// Purpose: Decide what kind a persisted record is.
+/// Inputs: The record's [id] and its raw [kind] field.
+/// Returns: The kind.
+/// Side effects: None.
+/// Notes: Internal helper used within this file only. One repair on top of
+/// [SettingsRecordKind.parse]: a 0.2.x build writes a kind it does not know
+/// back as the literal `unknown`, so a local model that passed through one
+/// arrives here as `kind: unknown`. Every local model id starts with
+/// [localModelIdPrefix], which is what lets this build take it back.
+SettingsRecordKind _kindOf(String id, Object? kind) {
+  final parsed = SettingsRecordKind.parse(kind);
+  if (parsed == SettingsRecordKind.unknown &&
+      kind == 'unknown' &&
+      id.startsWith(localModelIdPrefix)) {
+    return SettingsRecordKind.localModel;
+  }
+  return parsed;
+}
 
 /// Keys this build writes at the top level of the settings document.
 const _knownDocumentKeys = {'records'};
@@ -82,8 +107,16 @@ class SettingsRecord {
   /// Top-level fields written by a build this one does not know about.
   final Map<String, dynamic> extraJson;
 
+  /// The kind as it was written, when this build does not know it.
+  ///
+  /// Written back unchanged, so a record kind a later build adds survives a
+  /// round trip through this one. 0.2.x wrote `unknown` in its place, which is
+  /// the bug this field exists not to repeat.
+  final String? unknownKind;
+
   /// Purpose: Create a settings record.
-  /// Inputs: [id], [kind], [createdAt], [modifiedAt], [payload], [extraJson].
+  /// Inputs: [id], [kind], [createdAt], [modifiedAt], [payload], [extraJson],
+  /// and [unknownKind] for a kind this build cannot name.
   /// Returns: A new immutable record.
   /// Side effects: None.
   /// Notes: Callers pass UTC timestamps; [touch] is the normal way to set
@@ -95,7 +128,14 @@ class SettingsRecord {
     required this.modifiedAt,
     this.payload = const {},
     this.extraJson = const {},
+    this.unknownKind,
   });
+
+  /// The kind string this record is written with.
+  String get persistedKind =>
+      kind == SettingsRecordKind.unknown && unknownKind != null
+      ? unknownKind!
+      : kind.name;
 
   /// Purpose: Parse one record from JSON.
   /// Inputs: [json] a record object.
@@ -106,9 +146,14 @@ class SettingsRecord {
   /// than the remote copy on every read and win every merge.
   factory SettingsRecord.fromJson(Map<String, dynamic> json) {
     final created = _parseUtc(json['createdAt']);
+    final id = json['id'] as String? ?? '';
+    final kind = _kindOf(id, json['kind']);
     return SettingsRecord(
-      id: json['id'] as String? ?? '',
-      kind: SettingsRecordKind.parse(json['kind']),
+      id: id,
+      kind: kind,
+      unknownKind: kind == SettingsRecordKind.unknown && json['kind'] is String
+          ? json['kind'] as String
+          : null,
       createdAt: created ?? _epoch,
       modifiedAt: _parseUtc(json['modifiedAt']) ?? created ?? _epoch,
       payload: _asMap(json['payload']),
@@ -128,7 +173,7 @@ class SettingsRecord {
   Map<String, dynamic> toJson() => {
     ...extraJson,
     'id': id,
-    'kind': kind.name,
+    'kind': persistedKind,
     'createdAt': createdAt.toUtc().toIso8601String(),
     'modifiedAt': modifiedAt.toUtc().toIso8601String(),
     'payload': payload,
@@ -148,6 +193,7 @@ class SettingsRecord {
         modifiedAt: (now ?? DateTime.now()).toUtc(),
         payload: payload,
         extraJson: extraJson,
+        unknownKind: unknownKind,
       );
 
   /// Purpose: Merge another record's unknown fields into this one.
@@ -165,6 +211,7 @@ class SettingsRecord {
       modifiedAt: modifiedAt,
       payload: payload,
       extraJson: {...other.extraJson, ...extraJson},
+      unknownKind: unknownKind,
     );
   }
 }

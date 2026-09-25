@@ -151,12 +151,13 @@ class EmbeddedFfmpegMediaToolkit implements MediaToolkit {
 
   /// Purpose: Copy one time range out of a normalized recording.
   /// Inputs: [source], [startSeconds], [lengthSeconds], [destination],
-  /// optional [cancel].
+  /// optional [cancel], and the output [format].
   /// Returns: A future completing when the window is written.
   /// Side effects: Runs FFmpeg; writes the output.
   /// Notes: `-ss` before `-i` so FFmpeg seeks rather than decoding everything
-  /// up to the start. With `-c:a copy` the cut lands on a frame boundary, so
-  /// the window can be a few milliseconds off the requested length.
+  /// up to the start. With a stream copy the cut lands on a frame boundary, so
+  /// the window can be a few milliseconds off the requested length; the PCM
+  /// form is decoded, so it starts where it was asked to.
   @override
   Future<void> extractWindow(
     String source,
@@ -164,6 +165,7 @@ class EmbeddedFfmpegMediaToolkit implements MediaToolkit {
     double lengthSeconds,
     String destination, {
     MediaCancelToken? cancel,
+    WindowFormat format = WindowFormat.streamCopy,
   }) async {
     await _run([
       ..._commonArgs,
@@ -174,8 +176,7 @@ class EmbeddedFfmpegMediaToolkit implements MediaToolkit {
       '-t',
       lengthSeconds.toStringAsFixed(3),
       '-vn',
-      '-c:a',
-      'copy',
+      ...windowCodecArgs(format),
       destination,
     ], cancel: cancel);
   }

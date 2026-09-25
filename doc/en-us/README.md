@@ -39,7 +39,9 @@ The shared WebDAV sync, backup, and ZIP engines are not in this repository. They
   merge, how conflicts reach the user, and the separate API-key exchange.
 - [`backup-restore.md`](backup-restore.md) — local backups and ZIP export/import as configured here.
 - [`platform-notes.md`](platform-notes.md) — FFmpeg per platform, Android build state, Apple
-  entitlements, Windows on ARM64.
+  entitlements, Windows on ARM64, where downloaded models live.
+- [`local-asr-support-matrix.md`](local-asr-support-matrix.md) — which local model runs on which
+  processor of which device, how well each route is documented, and what this project has tested.
 - [`ci-cd.md`](ci-cd.md) — the verification command set, build commands, and fresh-clone steps.
 - [`version-history.md`](version-history.md) — release-by-release summary.
 
@@ -57,6 +59,8 @@ The shared WebDAV sync, backup, and ZIP engines are not in this repository. They
   which ones a given transcript may use.
 - [`features/diarization-and-speakers.md`](features/diarization-and-speakers.md) — who spoke, and
   how the answer is kept consistent across windows.
+- [`features/local-models.md`](features/local-models.md) — models that run on the device: the
+  record, downloading a package, routes, the check on each device, fallbacks, what a job records.
 - [`features/media-tools.md`](features/media-tools.md) — how the app finds or fetches FFmpeg.
 - [`features/secure-secrets-sync.md`](features/secure-secrets-sync.md) — where API keys live and
   when they are allowed to travel.
@@ -70,6 +74,8 @@ The shared WebDAV sync, backup, and ZIP engines are not in this repository. They
   identity across windows.
 - [`algorithms/secure-endpoint.md`](algorithms/secure-endpoint.md) — what counts as a safe place to
   send an API key.
+- [`algorithms/engine-routing.md`](algorithms/engine-routing.md) — which processor a local model
+  runs on, and what happens when it cannot.
 
 ### Reference
 
@@ -87,3 +93,8 @@ What remains is release preparation, and one thing that cannot be checked withou
 recording over the upload limit, transcribed end to end against OpenAI and OpenRouter. Everything
 else is verified by the test suite, which runs with no key, no network and no FFmpeg. See
 `PLAN.md` at the repository root.
+
+The local-models plan in `PLAN.md` is under way. Its foundation (L0) is in place: the local model
+record, the package manager, the engine protocol and router, the device-local engine state and the
+job runner's local path, all tested with a fake engine. No native engine is compiled in yet; the
+first, whisper.cpp, is L1.

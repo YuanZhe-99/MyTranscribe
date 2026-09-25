@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../app/data_modules.dart';
 import '../../features/providers/models/transcribe_settings.dart';
+import '../utils/platform_capabilities.dart';
 import 'auto_sync_service.dart';
 
 /// The app's storage hub: the one place that knows where data lives on disk.
@@ -406,6 +407,68 @@ class TranscribeStorage {
   /// Notes: None.
   static Future<void> setFfprobePath(String? path) =>
       _setString('ffprobePath', path);
+
+  // ── Local models ──
+
+  /// Purpose: Read the user's own location for downloaded models.
+  /// Inputs: None.
+  /// Returns: `Future<String?>` — null for the default location.
+  /// Side effects: Reads `storage_config.json`.
+  /// Notes: Device-local, like the FFmpeg path: a desktop user with a small
+  /// system drive puts gigabytes of models on another one, and that path names
+  /// nothing on their other devices.
+  static Future<String?> getModelsPath() => _getString('modelsPath');
+
+  /// Purpose: Set the user's own location for downloaded models.
+  /// Inputs: `path` — null restores the default.
+  /// Returns: None.
+  /// Side effects: Rewrites `storage_config.json`.
+  /// Notes: Nothing is moved. Models are re-downloadable, and copying several
+  /// gigabytes behind the user's back is worse than showing the models as not
+  /// downloaded at the new place.
+  static Future<void> setModelsPath(String? path) =>
+      _setString('modelsPath', path);
+
+  /// Purpose: Resolve the directory holding the installed model packages.
+  /// Inputs: `create` — whether to create it.
+  /// Returns: `Future<Directory>`.
+  /// Side effects: May create the directory.
+  /// Notes: The user's own location when set; otherwise the caches directory
+  /// on Apple platforms, which backups leave out (see
+  /// [modelsLiveInCachesDirectory]), and `models/` under the app directory
+  /// elsewhere. It is never a data module, so sync, backups and ZIP exports
+  /// never see it.
+  static Future<Directory> modelsDir({bool create = false}) async {
+    final custom = await getModelsPath();
+    Directory dir;
+    if (custom != null) {
+      dir = Directory(custom);
+    } else if (modelsLiveInCachesDirectory) {
+      Directory base;
+      try {
+        base = await getApplicationCacheDirectory();
+      } catch (_) {
+        base = await getAppDir();
+      }
+      dir = Directory(p.join(base.path, modelsDirName));
+    } else {
+      dir = Directory(p.join((await getAppDir()).path, modelsDirName));
+    }
+    if (create && !await dir.exists()) {
+      await dir.create(recursive: true);
+    }
+    return dir;
+  }
+
+  /// Purpose: Locate the device-local state of the local engines.
+  /// Inputs: None.
+  /// Returns: `Future<File>` — `local_engine_state.json` in the app directory.
+  /// Side effects: None beyond [getAppDir].
+  /// Notes: Beside the settings, not beside the models: the smoke-test
+  /// results and the fallback policy are settings of this device, and should
+  /// survive a user clearing a caches directory.
+  static Future<File> localEngineStateFile() =>
+      _getFile(localEngineStateFileName);
 
   /// Purpose: Read whether this device also syncs the converted audio.
   /// Inputs: None.
