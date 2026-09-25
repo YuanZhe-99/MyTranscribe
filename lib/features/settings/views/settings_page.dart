@@ -427,6 +427,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   value: FallbackPolicy.none,
                   child: Text(l10n.settingsFallbackNone),
                 ),
+                // The operating system's recogniser, on the device only (L6):
+                // Apple's, where the bridge exists.
+                if (hasNeuralEngineBridge)
+                  DropdownMenuItem(
+                    value: FallbackPolicy.systemRecognizer,
+                    child: Text(l10n.settingsFallbackSystem),
+                  ),
               ],
               onChanged: (policy) async {
                 if (policy == null) return;

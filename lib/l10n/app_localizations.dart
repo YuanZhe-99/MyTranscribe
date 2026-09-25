@@ -2409,6 +2409,12 @@ abstract class AppLocalizations {
   /// **'Stop the transcription'**
   String get settingsFallbackNone;
 
+  /// No description provided for @settingsFallbackSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the system\'s speech recognition, on this device'**
+  String get settingsFallbackSystem;
+
   /// No description provided for @settingsDiagnostics.
   ///
   /// In en, this message translates to:

@@ -1276,6 +1276,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsFallbackNone => '停止转写';
 
   @override
+  String get settingsFallbackSystem => '使用系统自带的语音识别（在本设备上）';
+
+  @override
   String get settingsDiagnostics => '诊断';
 
   @override
@@ -2570,6 +2573,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get settingsFallbackNone => '停止轉寫';
+
+  @override
+  String get settingsFallbackSystem => '使用系統內建的語音辨識（在本機上）';
 
   @override
   String get settingsDiagnostics => '診斷';

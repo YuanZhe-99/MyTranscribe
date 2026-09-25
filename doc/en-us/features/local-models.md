@@ -149,7 +149,16 @@ When the route a job asked for cannot run, the device-local fallback policy deci
 |---|---|
 | `sameModelOnCpu` (default) | The same model runs on the CPU. |
 | `none` | The job fails and says why. |
-| `systemRecognizer` | The operating system's own recogniser (a later milestone), a different engine announced as such. |
+| `systemRecognizer` | The operating system's own recogniser, a different engine announced as such — on iPhone, iPad and Mac only, and only on the device. |
+
+The system recogniser (L6) is Apple's `SFSpeechRecognizer` with on-device recognition required, in
+the same prebuilt bridge as FluidAudio (adapter `system`). Settings offers it only on Apple
+platforms; Android's recogniser would need Kotlin compiled in the app build, which decision D21
+rules out. Its one route serves no particular model — the router offers it only as the fallback the
+policy names — and it has no package to download, so the backend hands its engine a built-in,
+file-less manifest. It takes the job's first language (or the device's), windows of up to a minute,
+and returns word times, which become sentences the same way Parakeet's do. Permission to recognise
+speech is asked the first time it runs, never before the user chose it.
 
 A fallback is a visible event, never a substitution: the job records what it asked for, what ran,
 from which window, and why. Only a route problem — a missing driver, a lost device, memory on an

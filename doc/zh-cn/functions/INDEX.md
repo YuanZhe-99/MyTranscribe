@@ -122,6 +122,7 @@ find lib -name "*.dart" -not -path "lib/l10n/*" | xargs grep -h '/// Purpose:' |
 | `lib/features/local/services/tested_here.dart` | [algorithms/engine-routing.md](../algorithms/engine-routing.md) |
 | `lib/features/local/engines/fluid_audio_engine.dart` | [features/local-models.md](../features/local-models.md), [platform-notes.md](../platform-notes.md) |
 | `lib/features/local/engines/sherpa_onnx_engine.dart` | [features/local-models.md](../features/local-models.md), [platform-notes.md](../platform-notes.md) |
+| `lib/features/local/engines/system_recognizer_engine.dart` | [features/local-models.md](../features/local-models.md), [platform-notes.md](../platform-notes.md) |
 | `lib/features/local/engines/whisper_cpp_engine.dart` | [features/local-models.md](../features/local-models.md), [platform-notes.md](../platform-notes.md) |
 | `lib/features/local/services/local_models_controller.dart` | [features/local-models.md](../features/local-models.md) |
 | `lib/features/local/views/local_text.dart` | [features/local-models.md](../features/local-models.md) |

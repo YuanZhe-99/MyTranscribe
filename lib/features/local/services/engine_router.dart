@@ -16,6 +16,7 @@
 library;
 
 import '../../providers/models/model_config.dart';
+import '../models/artifact_manifest.dart';
 import '../models/engine_capability.dart';
 import '../models/local_model_config.dart';
 import 'local_asr_engine.dart';
@@ -26,6 +27,21 @@ import 'local_asr_engine.dart';
 /// the router may offer for a model that is not theirs — and only as a
 /// fallback the user's policy names.
 const systemRecognizerAdapterId = 'system';
+
+/// The package the system recogniser's route stands for: none to download.
+///
+/// The recogniser is part of the operating system, so this manifest is never
+/// installed; the backend hands it to the engine wherever another route
+/// would get its installed package.
+const systemRecognizerManifest = ArtifactManifest(
+  artifactId: 'system-recognizer',
+  modelId: 'system',
+  adapterId: systemRecognizerAdapterId,
+  format: ArtifactFormat.unknown,
+  revision: 'os',
+  files: [],
+  licenseId: 'OS',
+);
 
 /// Why a route was not chosen, for the diagnostics page and the new-job page.
 enum RouteRejection {

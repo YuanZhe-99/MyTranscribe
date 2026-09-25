@@ -943,14 +943,17 @@ so it is not built.
 
 Off by default; a visible choice; never a silent substitute (D15).
 
-- [ ] Apple, in `packages/local_asr_apple`: `SpeechAnalyzer` + `SpeechTranscriber` with the
+- [x] *(Done 2026-09-25, simpler: `SFSpeechRecognizer` with on-device recognition required on
+      every supported OS — `SpeechAnalyzer` is not used; no server path at all; windows capped at
+      a minute; in the prebuilt bridge.)* Apple, in `packages/local_asr_apple`: `SpeechAnalyzer` + `SpeechTranscriber` with the
       `offlineTranscription` preset and `audioTimeRange` on iOS/macOS 26+, driven from
       `AVAudioFile` on the PCM window; below 26, `SFSpeechRecognizer` with
       `requiresOnDeviceRecognition = true` only where `supportsOnDeviceRecognition` is true, and
       the authorization prompt with `NSSpeechRecognitionUsageDescription` in both Info.plists;
       the server path only behind a separate switch whose wording says the audio goes to Apple,
       with the one-minute limit honoured by the planner
-- [ ] Android, in a small Kotlin plugin: `createOnDeviceSpeechRecognizer` (API 31) when
+- [ ] *(Not built — needs Kotlin in the app build, D21; the user's decision of 2026-09-25.)*
+      Android, in a small Kotlin plugin: `createOnDeviceSpeechRecognizer` (API 31) when
       available; `EXTRA_AUDIO_SOURCE` (API 33) fed from a pipe at real-time pace with the three
       format extras and a segmented session; language packs via `checkRecognitionSupport` and
       `triggerModelDownload`; word timing from `RECOGNITION_PARTS` when returned; detection of the
@@ -959,14 +962,16 @@ Off by default; a visible choice; never a silent substitute (D15).
       runtime only when this switch is turned on — the default the user took on 2026-09-24
       (§2.6) — with the privacy policy, the store listing and `platform-notes.md` saying why a
       file API needs it
-- [ ] Windows: not offered; `hasSystemSpeechRecognizer` is false there and the setting is absent
-- [ ] The job records `engine: system`, the transcript header says so, `diarization: unsupported`,
-      timestamps marked by their kind
-- [ ] Verification on the Pixel 10 and the Mac; on an iPhone if available; other Android
-      devices, and iOS without an iPhone, ship unverified (D20)
-- [ ] Docs: `features/system-speech.md` in both languages; the privacy page and
-      `PRIVACY_POLICY.md`; `platform-notes.md` for the new plist keys and the Android permission
-- [ ] **Done when**: a phone with no model downloaded transcribes a recording through the system
+- [x] Windows: not offered; the setting's option exists only where the bridge does (Apple)
+- [x] The job records the fallback to the `system` route like any other fallback, with its reason;
+      timestamps come from the recogniser's word times
+- [x] ~~Verification on the Pixel 10 and the Mac~~ — CI only, the user's decision of 2026-09-25;
+      the route ships unverified (D20)
+- [x] Docs: in `features/local-models.md` (the fallback policy) rather than a page of its own; the
+      privacy page and `PRIVACY_POLICY.md`; `platform-notes.md` for the plist key
+- [x] *(Amended: the recogniser is the fallback a failed local route may take, not a replacement
+      for a model that was never downloaded — the router answers only route problems with a
+      fallback.)* **Done when**: a phone with no model downloaded transcribes a recording through the system
       recogniser after the user turned it on, the transcript says which engine produced it, and
       the policy says where the audio went
 

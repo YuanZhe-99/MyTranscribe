@@ -20,6 +20,7 @@ import 'artifact_downloader.dart';
 import 'artifact_manager.dart';
 import 'engine_registry.dart';
 import 'local_model_templates.dart';
+import 'local_transcription_backend.dart' show manifestOf;
 import 'route_smoke_test.dart';
 import 'smoke_clip.dart';
 
@@ -198,7 +199,7 @@ class LocalModelsController
   Future<void> check(LocalModelConfig model, EngineRoute route) async {
     final registry = ref.read(engineRegistryProvider);
     final engine = registry.engine(route.adapterId);
-    final manifest = await registry.artifacts.installed(route.artifactId);
+    final manifest = await manifestOf(registry.artifacts, route);
     final clip = await loadSmokeClip();
     if (engine == null || manifest == null || clip == null) return;
     _set(model.id, const LocalModelActivity(checking: true));

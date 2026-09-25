@@ -17,6 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/utils/platform_capabilities.dart';
 import '../engines/fluid_audio_engine.dart';
 import '../engines/sherpa_onnx_engine.dart';
+import '../engines/system_recognizer_engine.dart';
 import '../engines/whisper_cpp_engine.dart';
 import '../models/artifact_manifest.dart';
 import '../models/engine_capability.dart';
@@ -133,6 +134,12 @@ final fluidAudioEngineProvider = Provider<FluidAudioEngine>(
   (ref) => FluidAudioEngine(),
 );
 
+/// The operating system's on-device recogniser, the fallback the user may
+/// choose (L6; Apple only).
+final systemRecognizerEngineProvider = Provider<SystemRecognizerEngine>(
+  (ref) => SystemRecognizerEngine(),
+);
+
 /// The engine registry: every adapter this build compiles in.
 final engineRegistryProvider = Provider<EngineRegistry>(
   (ref) => EngineRegistry(
@@ -143,6 +150,7 @@ final engineRegistryProvider = Provider<EngineRegistry>(
       // Only where the bridge exists, so no Core ML package is offered
       // elsewhere.
       if (hasNeuralEngineBridge) ref.watch(fluidAudioEngineProvider),
+      if (hasNeuralEngineBridge) ref.watch(systemRecognizerEngineProvider),
     ],
     artifacts: ref.watch(artifactManagerProvider),
     state: ref.watch(localEngineStateStoreProvider),

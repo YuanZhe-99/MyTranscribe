@@ -760,6 +760,7 @@
   "settingsFallbackPolicy": "所选处理器失败时",
   "settingsFallbackCpu": "改用 CPU 运行同一模型",
   "settingsFallbackNone": "停止转写",
+  "settingsFallbackSystem": "使用系统自带的语音识别（在本设备上）",
   "settingsDiagnostics": "诊断",
   "settingsDiagnosticsSubtitle": "每个本地模型在本机可以运行在哪里",
   "diagnosticsDevice": "本机",

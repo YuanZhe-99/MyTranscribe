@@ -134,7 +134,7 @@ class LocalTranscriptionBackend {
       final clip = await clipSource();
       if (clip == null) break;
       final engine = registry.engine(route.adapterId);
-      final manifest = await registry.artifacts.installed(route.artifactId);
+      final manifest = await manifestOf(registry.artifacts, route);
       if (engine == null || manifest == null) break;
       await tester.run(
         engine: engine,
@@ -184,7 +184,7 @@ class LocalTranscriptionBackend {
     }
 
     final engine = registry.engine(route.adapterId);
-    final manifest = await registry.artifacts.installed(route.artifactId);
+    final manifest = await manifestOf(registry.artifacts, route);
     if (engine == null || manifest == null) {
       throw LocalAsrException(
         engine == null
@@ -442,7 +442,7 @@ class LocalJobSession {
   Future<void> _switchTo(EngineRoute next) async {
     final artifacts = _backend.registry.artifacts;
     final engine = _backend.registry.engine(next.adapterId);
-    final manifest = await artifacts.installed(next.artifactId);
+    final manifest = await manifestOf(artifacts, next);
     if (engine == null || manifest == null) {
       throw LocalAsrException(
         LocalAsrErrorCode.deviceUnavailable,
@@ -478,3 +478,17 @@ class LocalJobSession {
     }
   }
 }
+
+/// Purpose: The package a route runs.
+/// Inputs: The [artifacts] manager and the [route].
+/// Returns: The installed manifest, or [systemRecognizerManifest] for the
+/// system recogniser, which has nothing to install; null when a package is
+/// missing.
+/// Side effects: Reads the installed manifest.
+/// Notes: Every place that loads a route asks this rather than the manager.
+Future<ArtifactManifest?> manifestOf(
+  ArtifactManager artifacts,
+  EngineRoute route,
+) async => route.adapterId == systemRecognizerAdapterId
+    ? systemRecognizerManifest
+    : await artifacts.installed(route.artifactId);

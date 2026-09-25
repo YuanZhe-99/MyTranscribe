@@ -76,6 +76,11 @@ Transcription
   With a model on this device, the recording is transcribed on the device and
   the audio is sent nowhere.
 
+  On an iPhone, iPad or Mac you may choose the system's own speech
+  recognition as the fallback when a model on this device fails. The app
+  requires it to run on the device, so the audio is not sent to Apple, and
+  it asks for permission to use speech recognition only after you choose it.
+
 Downloads
   The app downloads something only when you ask it to: a model for
   transcribing on this device, from the address shown on the model's page, or
@@ -104,7 +109,8 @@ WebDAV sync
 Permissions
   The app asks for network access, to reach the transcription service, your
   WebDAV server, and the downloads you ask for. It reads a recording only when
-  you pick one.
+  you pick one. On Apple devices it asks to use speech recognition only if you
+  choose the system's recognition as the fallback.
 
 Questions: yuanzhe1999@outlook.com''';
 }

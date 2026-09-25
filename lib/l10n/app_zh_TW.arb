@@ -760,6 +760,7 @@
   "settingsFallbackPolicy": "所選處理器失敗時",
   "settingsFallbackCpu": "改用 CPU 執行同一模型",
   "settingsFallbackNone": "停止轉寫",
+  "settingsFallbackSystem": "使用系統內建的語音辨識（在本機上）",
   "settingsDiagnostics": "診斷",
   "settingsDiagnosticsSubtitle": "每個本機模型在本機可以執行在哪裡",
   "diagnosticsDevice": "本機",

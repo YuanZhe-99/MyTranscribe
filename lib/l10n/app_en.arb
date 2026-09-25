@@ -760,6 +760,7 @@
   "settingsFallbackPolicy": "If the chosen processor fails",
   "settingsFallbackCpu": "Use the same model on the CPU",
   "settingsFallbackNone": "Stop the transcription",
+  "settingsFallbackSystem": "Use the system's speech recognition, on this device",
   "settingsDiagnostics": "Diagnostics",
   "settingsDiagnosticsSubtitle": "What each local model can run on here",
   "diagnosticsDevice": "This device",

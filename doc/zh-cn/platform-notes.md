@@ -80,7 +80,8 @@ HTTP。即便如此，除非是私有地址，API Key 仍然不会发往明文 H
 - App Transport Security 允许本地网络与任意加载，与 Android 的明文标志相对应，理由相同。这是提交 App Store
   之前需要重新审视的决定：只允许本地网络更容易说明理由，但那会让通过 Tailscale 地址访问的 WebDAV 服务器无法
   使用。
-- 没有麦克风或语音识别的用途说明字符串，因为应用两者都不做。
+- 自 0.3.4 起有一条语音识别用途说明（`NSSpeechRecognitionUsageDescription`）：系统语音识别是用户可以选择的回退
+  （L6），只在那时请求权限。没有麦克风的说明：应用从不录音。
 
 ## macOS
 

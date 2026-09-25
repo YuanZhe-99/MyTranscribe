@@ -1313,6 +1313,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsFallbackNone => 'Stop the transcription';
 
   @override
+  String get settingsFallbackSystem =>
+      'Use the system\'s speech recognition, on this device';
+
+  @override
   String get settingsDiagnostics => 'Diagnostics';
 
   @override

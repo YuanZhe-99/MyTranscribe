@@ -100,7 +100,9 @@ unfolding resizes the window without recreating the activity. See
   flag and for the same reason. This is a decision to revisit before any App Store submission:
   local networking alone would be easier to justify, but it would break a WebDAV server reached over
   a Tailscale address.
-- No microphone or speech-recognition usage strings, because the app does neither.
+- A speech-recognition usage string (`NSSpeechRecognitionUsageDescription`), since 0.3.4: the system
+  recogniser is a fallback the user may choose (L6), and permission is asked only then. No
+  microphone string: the app never records.
 
 ## macOS
 
