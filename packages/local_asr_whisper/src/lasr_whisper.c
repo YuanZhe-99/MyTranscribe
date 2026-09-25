@@ -13,6 +13,12 @@
  * transcription is running. See doc/en-us/features/local-models.md.
  */
 
+/* glibc declares dladdr and Dl_info only with _GNU_SOURCE, which has to come
+ * before the first system header. */
+#if !defined(_WIN32) && !defined(_GNU_SOURCE)
+#define _GNU_SOURCE
+#endif
+
 #include "lasr_whisper.h"
 
 #include <stdint.h>

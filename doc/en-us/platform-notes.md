@@ -166,7 +166,8 @@ x86_64-only Windows binaries or no desktop at all.
 `cl.exe` is not used on Windows: it lacks the FP16 intrinsics ggml's ARM code needs, and the OpenCL
 backend of L3 does not support it at all. On x64 the incompatible-pointer-types diagnostic stays a
 warning: ggml's SSE4.2 variant passes block pointers to `_mm_prefetch`, which a recent clang
-otherwise stops on. 32-bit Android is not built — a large Whisper model does
+otherwise stops on. ggml's own ccache wrapping is off everywhere: ccache fails in the reduced
+environment a build hook runs in, and the hook's build folder is incremental anyway. 32-bit Android is not built — a large Whisper model does
 not fit a 32-bit address space — and the engine reports itself as not built there.
 
 Where the CPU code is chosen at run time, ggml loads its backends as separate libraries, and the

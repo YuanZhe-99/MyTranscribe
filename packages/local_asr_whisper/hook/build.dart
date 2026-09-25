@@ -80,6 +80,10 @@ Future<void> main(List<String> args) async {
       '-DBUILD_SHARED_LIBS=${_dynamicBackends(os, arch) ? 'ON' : 'OFF'}',
       '-DGGML_NATIVE=OFF',
       '-DGGML_OPENMP=OFF',
+      // ggml wraps the compiler in ccache when it finds one, and ccache fails
+      // in the reduced environment a hook runs in (no LOCALAPPDATA on a
+      // Windows runner). The hook's own build folder is already incremental.
+      '-DGGML_CCACHE=OFF',
       ...toolchain.cmakeArgs,
       ..._ggmlArgs(os, arch),
     ], environment: toolchain.environment);
