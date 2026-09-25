@@ -28,17 +28,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Build for macOS
+      # xcodebuild rather than `swift build`: FluidAudio links a prebuilt
+      # static library (NemoTextProcessing's xcframework) that a multi-arch
+      # `swift build` does not find.
+      - name: Build for macOS, iOS and the Simulator
         working-directory: packages/local_asr_apple/bridge
         run: |
-          swift build -c release --arch arm64 --arch x86_64 --product LasrApple
-          find .build -name 'libLasrApple.dylib' -path '*Release*' | head -1 > "$RUNNER_TEMP/macos.txt"
-          cat "$RUNNER_TEMP/macos.txt"
-
-      - name: Build for iOS and the Simulator
-        working-directory: packages/local_asr_apple/bridge
-        run: |
-          for platform in "iOS" "iOS Simulator"; do
+          set -o pipefail
+          for platform in "macOS" "iOS" "iOS Simulator"; do
             xcodebuild -scheme LasrApple -configuration Release \
               -destination "generic/platform=$platform" \
               -derivedDataPath "$RUNNER_TEMP/dd" \
@@ -51,14 +48,15 @@ jobs:
         run: |
           out="$RUNNER_TEMP/lasr-apple"
           mkdir -p "$out/macos" "$out/ios" "$out/ios-simulator"
-          cp "$(cat "$RUNNER_TEMP/macos.txt")" "$out/macos/libLasrApple.dylib"
           P="$RUNNER_TEMP/dd/Build/Products"
-          cp "$(find "$P/Release-iphoneos" -path '*LasrApple.framework/LasrApple' | head -1)" "$out/ios/LasrApple"
-          cp "$(find "$P/Release-iphonesimulator" -path '*LasrApple.framework/LasrApple' | head -1)" "$out/ios-simulator/LasrApple"
+          binary() { find "$P/$1" -type f -name LasrApple -path '*LasrApple.framework*' | head -1; }
+          cp "$(binary Release)" "$out/macos/libLasrApple.dylib"
+          cp "$(binary Release-iphoneos)" "$out/ios/LasrApple"
+          cp "$(binary Release-iphonesimulator)" "$out/ios-simulator/LasrApple"
           for f in "$out"/macos/libLasrApple.dylib "$out"/ios/LasrApple "$out"/ios-simulator/LasrApple; do
             echo "== $f"; lipo -info "$f"; otool -L "$f" | head -20
           done
-          fa=$(find packages/local_asr_apple/bridge/.build/checkouts/FluidAudio -maxdepth 1 -name LICENSE | head -1)
+          fa=$(find "$RUNNER_TEMP/dd/SourcePackages/checkouts/FluidAudio" -maxdepth 1 -name LICENSE | head -1)
           cp "$fa" "$out/LICENSE-FluidAudio"
           {
             echo "LasrApple bridge ($(git rev-parse HEAD)) over FluidAudio 0.17.4"
