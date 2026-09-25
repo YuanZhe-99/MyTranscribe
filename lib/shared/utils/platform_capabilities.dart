@@ -248,13 +248,3 @@ String localDeviceClass({
 int localEngineThreads(int processors) => isMobilePlatform
     ? processors.clamp(1, 4)
     : (processors - (processors > 4 ? 2 : 1)).clamp(1, 8);
-
-/// Purpose: Report whether this platform's whisper.cpp build has Metal.
-/// Inputs: None.
-/// Returns: `bool` — true on iOS and macOS.
-/// Side effects: None.
-/// Notes: Metal is part of the OS there, so the GPU route cannot be missing a
-/// driver; elsewhere GPU backends arrive with L3.
-bool get hasMetalBackend =>
-    defaultTargetPlatform == TargetPlatform.iOS ||
-    defaultTargetPlatform == TargetPlatform.macOS;

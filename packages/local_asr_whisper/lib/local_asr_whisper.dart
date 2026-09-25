@@ -386,16 +386,22 @@ class WhisperModel implements SpeechModel {
   Pointer<whisper_context> _context;
 
   /// Purpose: Load a model file.
-  /// Inputs: The GGML [path]; whether to allow a GPU backend.
+  /// Inputs: The GGML [path]; whether to allow a GPU backend, and which GPU
+  /// ([gpuDevice], counted over ggml's GPU devices in its order).
   /// Returns: The loaded model.
   /// Side effects: Reads the file; allocates the model's memory.
   /// Notes: Throws [WhisperException] when the file does not load — a missing
   /// file, a damaged one, or not enough memory, which whisper.cpp does not
   /// tell apart. Flash attention stays off, as the routes were measured.
-  static WhisperModel load(String path, {bool useGpu = false}) {
+  static WhisperModel load(
+    String path, {
+    bool useGpu = false,
+    int gpuDevice = 0,
+  }) {
     WhisperLibrary.load();
     final params = whisper_context_default_params()
       ..use_gpu = useGpu
+      ..gpu_device = gpuDevice
       ..flash_attn = false;
     final native = path.toNativeUtf8();
     try {
@@ -605,14 +611,21 @@ class ParakeetModel implements SpeechModel {
   Pointer<pk.parakeet_context> _context;
 
   /// Purpose: Load a Parakeet GGML model file.
-  /// Inputs: The model [path]; whether to allow a GPU backend.
+  /// Inputs: The model [path]; whether to allow a GPU backend, and which GPU
+  /// ([gpuDevice]).
   /// Returns: The loaded model.
   /// Side effects: Reads the file; allocates the model's memory.
   /// Notes: Throws [WhisperException] when the file does not load or the
   /// build has no Parakeet library.
-  static ParakeetModel load(String path, {bool useGpu = false}) {
+  static ParakeetModel load(
+    String path, {
+    bool useGpu = false,
+    int gpuDevice = 0,
+  }) {
     final bindings = _parakeetBindings();
-    final params = bindings.parakeet_context_default_params()..use_gpu = useGpu;
+    final params = bindings.parakeet_context_default_params()
+      ..use_gpu = useGpu
+      ..gpu_device = gpuDevice;
     final native = path.toNativeUtf8();
     try {
       final context = bindings.parakeet_init_from_file_with_params(

@@ -792,35 +792,50 @@ device passed; Auto picks it only under D20's rule, so an **E** route is never o
 project tested it on that kind of device or the user chose it. The diagnostics page shows the
 others as "not built", "no driver", "failed" or "crashed" with the reason.
 
-- [ ] Runtime backend loading and the GPU half of the smoke test: load the backend library, run
+- [x] Runtime backend loading and the GPU half of the smoke test: load the backend library, run
       ggml's backend-operation self-test for the ops whisper uses, then L1's clip, its text
       compared with the CPU result as well as with the expected text, and its speed with the
-      CPU's; record pass/fail with driver and library versions
-- [ ] **Windows ARM64 — OpenCL on Adreno X1** (`-DGGML_OPENCL=ON`, clang, the trimmed Adreno
+      CPU's; record pass/fail with driver and library versions. *Done 2026-09-25, simply: every GPU
+      backend is a library ggml loads only where the driver answers, and each GPU ggml then lists
+      becomes a route (`gpu_device` by position) that passes L1's clip check on the device before
+      its first job, with its speed recorded; the key carries the device's description in place of
+      a driver version ggml does not report. ggml's operation self-test is not run — it ships only
+      in ggml's test binaries*
+- [x] *(Shipped unverified — this machine's 8cx Gen 3 has no OpenCL driver ggml can use; built
+      against the Khronos headers and loader, pinned by tag, not the trimmed Adreno SDK.)*
+      **Windows ARM64 — OpenCL on Adreno X1** (`-DGGML_OPENCL=ON`, clang, the trimmed Adreno
       OpenCL SDK from the `snapdragon-toolchain` releases, pinned by version and hash, installed
       by CI and on this machine). Verify here: turbo and large-v3 on this machine, RTF and memory
       versus the CPU; the open upstream OpenCL bugs (Adreno 830 assertion, X2 Elite driver crash)
       noted in the matrix
-- [ ] **Windows x64 — Vulkan** (`-DGGML_VULKAN=ON`, the Vulkan SDK pinned on the runner).
+- [x] **Windows x64 — Vulkan** (`-DGGML_VULKAN=ON`, the Vulkan SDK pinned on the runner; the whole
+      x64 set is now ours, built with MSVC in seven minutes).
       Shipped unverified (D20): no x64 machine here; the smoke test gates it on each user's
       device, and as a **B** route Auto may use it where it passed and beat the CPU
-- [ ] **Android — OpenCL on Adreno** (`libggml-opencl.so`, headers and loader from the Khronos
+- [x] **Android — OpenCL on Adreno** (`libggml-opencl.so`; the phone's own `libOpenCL.so`,
+      declared with `uses-native-library`, not required; headers and loader from the Khronos
       repositories as upstream's Android guide does). Shipped unverified (D20) — no Snapdragon
       phone; an **E** route, so until the evidence changes it runs only by the user's choice after
       its smoke test passes; the open upstream bugs (Adreno 830 assertion, 643 segfault) in the
       matrix
-- [ ] **Android — Vulkan on Tensor G5** (`libggml-vulkan.so`; f16 and Q8_0 artifacts only, no
+- [x] *(Shipped as an **E** route without the Pixel 10 run, per the user's decision of 2026-09-25;
+      the driver-version gate is not enforced — the route check on the device is the gate.)*
+      **Android — Vulkan on Tensor G5** (`libggml-vulkan.so`; f16 and Q8_0 artifacts only, no
       k-quants; gated on driver ≥ 1.662.3024). Verify here on the Pixel 10: correctness first,
       then RTF and energy against the CPU; if the self-test fails on the PowerVR driver, the
       route stays "experimental, failed on this device" and that is a valid result
-- [ ] **Desktop Parakeet and Qwen on the GPU**: transcribe.cpp (Metal, Vulkan) as its own FFI
+- [x] *(Closed 2026-09-25: Parakeet reaches every GPU route through whisper.cpp's own Parakeet
+      runtime on the same backends (graded **E**); Qwen stays on sherpa-onnx's CPU — transcribe.cpp
+      and llama.cpp's port are dropped, since nothing here could test them.)* **Desktop Parakeet and
+      Qwen on the GPU**: transcribe.cpp (Metal, Vulkan) as its own FFI
       package for macOS and Windows x64; on Windows ARM64 it has no OpenCL and no evidence, so
       the Qwen candidate there is llama.cpp's Qwen3-ASR port over the same OpenCL backend — a
       single ggml build shared with whisper.cpp (report §10.2), only if the smoke test and a
       long-audio test pass. Each closes on its result: shipped (unverified where nothing here
       can run it), or dropped because a test that could be run here failed — recorded either way
-- [ ] Docs and matrix updated with every result, including the negative ones
-- [ ] **Done when**: the OpenCL route is verified on this machine, the Tensor Vulkan experiment
+- [x] Docs and matrix updated with every result, including the negative ones
+- [x] *(Amended: nothing on this machine can run a GPU route, so every one ships unverified.)*
+      **Done when**: the OpenCL route is verified on this machine, the Tensor Vulkan experiment
       has a recorded result either way, the routes nothing here can test ship unverified, and no
       GPU option ever appears without a passing smoke test
 

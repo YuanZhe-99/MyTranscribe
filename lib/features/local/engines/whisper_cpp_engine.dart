@@ -32,7 +32,7 @@ import '../services/tested_here.dart';
 /// Which binary set and bindings the engine runs, part of every check key: a
 /// rebuilt set (`native/binaries.json`) or regenerated bindings can change what
 /// a route produces as surely as a new whisper.cpp can, so they bump this.
-const _bindingsVersion = 'prebuilt2';
+const _bindingsVersion = 'prebuilt3';
 
 /// The model families whisper.cpp's libraries run.
 enum GgmlFamily {
@@ -88,15 +88,30 @@ class WhisperRuntimeInfo {
     return 'CPU';
   }
 
-  /// Whether ggml found a GPU.
-  bool get hasGpu => devices.any((d) => d.type == 1 || d.type == 2);
+  /// The GPUs ggml found — discrete and integrated — in the order whisper.cpp
+  /// counts them for `gpu_device`.
+  List<WhisperDevice> get gpus => [
+    for (final device in devices)
+      if (device.type == 1 || device.type == 2) device,
+  ];
 
-  /// The GPU's name, or empty.
-  String get gpuName {
-    for (final device in devices) {
-      if (device.type == 1 || device.type == 2) return device.description;
-    }
-    return '';
+  /// Purpose: Name each GPU's route backend.
+  /// Inputs: None.
+  /// Returns: One backend per entry of [gpus], in the same order.
+  /// Side effects: None.
+  /// Notes: The first device of a backend keeps its plain name (`vulkan`);
+  /// a second of the same kind gets its position (`vulkan1`), so every route
+  /// key stays unique.
+  List<String> gpuBackends() {
+    final seen = <String, int>{};
+    return [
+      for (final device in gpus)
+        if (gpuBackendName(device.name) case final name)
+          switch (seen.update(name, (n) => n + 1, ifAbsent: () => 0)) {
+            0 => name,
+            final n => '$name$n',
+          },
+    ];
   }
 }
 
@@ -174,10 +189,17 @@ class WhisperCppEngine implements LocalAsrEngine {
         maxWindowSeconds: _isParakeet ? parakeetMaxWindowSeconds : null,
         memoryBytes: manifest.minimumRamBytes,
         memorySource: manifest.ramEstimateSource,
-        smokeKey: _key(info, manifest, model, gpu: false),
+        smokeKey: _key(info, manifest, model),
       );
       routes.add(_withTested(base));
-      if (built && info.hasGpu && hasMetalBackend) {
+      if (!built) continue;
+      // One route per GPU ggml found: Metal on Apple, and wherever a GPU
+      // backend library loaded — Vulkan, OpenCL — the device's driver
+      // answered. Graded per backend (decision D20); an E route runs only
+      // when the user chooses it, after its check here passed.
+      final backends = info.gpuBackends();
+      for (var i = 0; i < backends.length; i++) {
+        final gpu = info.gpus[i];
         routes.add(
           _withTested(
             EngineRoute(
@@ -185,20 +207,18 @@ class WhisperCppEngine implements LocalAsrEngine {
               modelId: manifest.modelId,
               artifactId: manifest.artifactId,
               device: ComputeDevice.gpu,
-              backend: 'metal',
-              // Whisper on Metal is upstream's own documented route; its
-              // Parakeet runtime is three months old and shows no Metal
-              // evidence yet.
-              evidence: _isParakeet
-                  ? EvidenceLevel.experimental
-                  : EvidenceLevel.community,
+              backend: backends[i],
+              evidence: gpuEvidence(
+                gpuBackendName(gpu.name),
+                parakeet: _isParakeet,
+              ),
               available: model != null,
               segmentTimestamps: Capability.supported,
               wordTimestamps: Capability.unknown,
               maxWindowSeconds: _isParakeet ? parakeetMaxWindowSeconds : null,
               memoryBytes: manifest.minimumRamBytes,
               memorySource: manifest.ramEstimateSource,
-              smokeKey: _key(info, manifest, model, gpu: true),
+              smokeKey: _key(info, manifest, model, gpu: gpu),
             ),
           ),
         );
@@ -271,11 +291,20 @@ class WhisperCppEngine implements LocalAsrEngine {
       }
     }
     final useGpu = !request.route.isCpu;
+    final gpuDevice = useGpu
+        ? info.gpuBackends().indexOf(request.route.backend)
+        : 0;
+    if (useGpu && gpuDevice < 0) {
+      throw LocalAsrException(
+        LocalAsrErrorCode.deviceUnavailable,
+        'The ${request.route.backend} device is no longer there.',
+      );
+    }
     final encoder = Directory(
       '${path.substring(0, path.length - 4)}-encoder.mlmodelc',
     );
     final watch = Stopwatch()..start();
-    final id = await _worker!.call(_Load(path, useGpu, _isParakeet));
+    final id = await _worker!.call(_Load(path, useGpu, gpuDevice, _isParakeet));
     watch.stop();
     if (id is! int) {
       throw LocalAsrException(
@@ -286,7 +315,9 @@ class WhisperCppEngine implements LocalAsrEngine {
     final sessionId = '${family.name}-$id';
     final placement = !useGpu
         ? PlacementKind.cpu
-        : !_isParakeet && encoder.existsSync()
+        : !_isParakeet &&
+              request.route.backend == 'metal' &&
+              encoder.existsSync()
         ? PlacementKind.mixed
         : PlacementKind.gpu;
     _sessions[sessionId] = _Session(id, placement);
@@ -419,8 +450,8 @@ class WhisperCppEngine implements LocalAsrEngine {
   }
 
   /// Purpose: Build a route's check key.
-  /// Inputs: The runtime [info], the [manifest], its [model] file, and
-  /// whether the route uses the GPU.
+  /// Inputs: The runtime [info], the [manifest], its [model] file, and the
+  /// [gpu] the route runs on, or null for the CPU.
   /// Returns: The encoded key.
   /// Side effects: None.
   /// Notes: Internal helper used within this file only.
@@ -428,15 +459,17 @@ class WhisperCppEngine implements LocalAsrEngine {
     WhisperRuntimeInfo info,
     ArtifactManifest manifest,
     ArtifactFile? model, {
-    required bool gpu,
+    WhisperDevice? gpu,
   }) => SmokeTestKey(
     adapterVersion:
         '${_isParakeet ? 'parakeet ' : ''}whisper.cpp ${info.version} '
         '$_bindingsVersion',
     modelHash: model?.sha256 ?? '',
     osVersion: Platform.operatingSystemVersion,
-    driverVersion: gpu ? info.gpuName : '',
-    deviceId: gpu ? info.gpuName : info.cpuName,
+    // ggml gives no driver version; the device's description is the closest
+    // it reports, and a new driver that renames the device asks for a check.
+    driverVersion: gpu?.description ?? '',
+    deviceId: gpu?.description ?? info.cpuName,
     precision: manifest.quantization,
   ).encode();
 }
@@ -485,9 +518,10 @@ class _Info extends _Request {
 }
 
 class _Load extends _Request {
-  const _Load(this.path, this.useGpu, this.parakeet);
+  const _Load(this.path, this.useGpu, this.gpuDevice, this.parakeet);
   final String path;
   final bool useGpu;
+  final int gpuDevice;
   final bool parakeet;
 }
 
@@ -604,13 +638,14 @@ void _workerMain((SendPort, SendPort) ports) {
     try {
       answer = switch (request) {
         _Info() => _info(),
-        _Load(:final path, :final useGpu, :final parakeet) => () {
-          final key = next++;
-          models[key] = parakeet
-              ? ParakeetModel.load(path, useGpu: useGpu)
-              : WhisperModel.load(path, useGpu: useGpu);
-          return key;
-        }(),
+        _Load(:final path, :final useGpu, :final gpuDevice, :final parakeet) =>
+          () {
+            final key = next++;
+            models[key] = parakeet
+                ? ParakeetModel.load(path, useGpu: useGpu, gpuDevice: gpuDevice)
+                : WhisperModel.load(path, useGpu: useGpu, gpuDevice: gpuDevice);
+            return key;
+          }(),
         _Transcribe() => await _run(models[request.session], request),
         _Memory() => WhisperLibrary.availableMemory(),
         _Release(:final session) => () {

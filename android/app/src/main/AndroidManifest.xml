@@ -41,6 +41,13 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- The phone's own OpenCL library, for whisper.cpp's OpenCL backend
+             on Adreno GPUs. From Android 12 an app may open a vendor library
+             only when it declares it; optional, so phones without one install
+             and run on the CPU. See doc/en-us/platform-notes.md. -->
+        <uses-native-library
+            android:name="libOpenCL.so"
+            android:required="false" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

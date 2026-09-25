@@ -74,3 +74,49 @@ bool isTestedHere(EngineRoute route, {String? deviceClass}) {
 EvidenceLevel get cpuEvidence => currentDeviceClass() == 'android'
     ? EvidenceLevel.experimental
     : EvidenceLevel.community;
+
+/// Purpose: Name a GPU route's backend from the device name ggml reports.
+/// Inputs: The device [name], e.g. `Vulkan0`, `GPUOpenCL` or `MTL0`.
+/// Returns: `vulkan`, `opencl`, `metal`, or the name in lower case with only
+/// letters and digits kept.
+/// Side effects: None.
+/// Notes: The backend is part of the route key the smoke results and the
+/// tested-here table use, so it must not depend on how a device happens to be
+/// numbered.
+String gpuBackendName(String name) {
+  final lower = name.toLowerCase();
+  if (lower.contains('vulkan')) return 'vulkan';
+  if (lower.contains('opencl')) return 'opencl';
+  if (lower.startsWith('mtl') || lower.contains('metal')) return 'metal';
+  return lower.replaceAll(RegExp('[^a-z0-9]'), '');
+}
+
+/// Purpose: The evidence grade of a whisper.cpp GPU route on this device.
+/// Inputs: The [backend], as [gpuBackendName] spells it; whether the route
+/// runs [parakeet] rather than Whisper; the [deviceClass], this device's by
+/// default.
+/// Returns: The grade the support matrix gives it.
+/// Side effects: None.
+/// Notes: Metal is upstream's own documented Whisper route (**B**); its
+/// Parakeet runtime shows no GPU evidence yet (**E**). Vulkan on a Windows x64
+/// GPU is **B**; everywhere else — Android's Adreno and Tensor GPUs, OpenCL on
+/// any Adreno — it is **E**, which Auto never picks untested (decision D20).
+/// A backend the survey did not grade is **U**.
+EvidenceLevel gpuEvidence(
+  String backend, {
+  bool parakeet = false,
+  String? deviceClass,
+}) {
+  if (parakeet) {
+    return backend == 'metal' || backend == 'vulkan' || backend == 'opencl'
+        ? EvidenceLevel.experimental
+        : EvidenceLevel.none;
+  }
+  return switch (backend) {
+    'metal' => EvidenceLevel.community,
+    'vulkan' when (deviceClass ?? currentDeviceClass()) == 'windows-x64' =>
+      EvidenceLevel.community,
+    'vulkan' || 'opencl' => EvidenceLevel.experimental,
+    _ => EvidenceLevel.none,
+  };
+}

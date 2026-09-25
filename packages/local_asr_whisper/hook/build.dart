@@ -8,11 +8,12 @@
 /// SHA-256, and unpacks the listed files into the hook's shared output.
 /// Notes: Nothing is compiled (decision D21 of the local-models plan). Which
 /// archive serves which target, and where each comes from, is
-/// `native/binaries.json`: upstream's own release assets for Windows x64, the
-/// Apple platforms and the Linux test host, and this project's
-/// `whisper-bin-…` release, built by `.github/workflows/native-prebuild.yml`,
-/// for Windows ARM64 and Android. A target without an entry — 32-bit Android,
-/// say — gets no assets, and the engine reports itself as not built there.
+/// `native/binaries.json`: upstream's own release assets for the Apple
+/// platforms and the Linux test host, and this project's `whisper-bin-…`
+/// release, built by `.github/workflows/native-prebuild.yml`, for Windows and
+/// Android — whose sets carry the GPU backends (L3) upstream's do not. A
+/// target without an entry — 32-bit Android, say — gets no assets, and the
+/// engine reports itself as not built there.
 /// See `doc/en-us/platform-notes.md`.
 library;
 

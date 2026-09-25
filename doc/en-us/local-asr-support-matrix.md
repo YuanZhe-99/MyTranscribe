@@ -75,7 +75,20 @@ line-by-line comparison of a real recording, which needs the user.
 
 Routes that ship without a test on their class of hardware, with the reason and what gates them.
 
-None yet — no route ships before L1.
+Every route that ships is here, since none has a verification record yet (the user decided on
+2026-09-25 that no device sessions are held). Each is gated the same way: its check on the device
+before its first job, the in-flight marker, and the fallback policy (decision D20).
+
+| Route | Since | Grade | Why unverified | What was run here |
+|---|---|---|---|---|
+| whisper.cpp CPU — Whisper, Parakeet | 0.3.0, 0.3.1 | **B** (**E** on Android) | no verification record on any class | the 8cx Gen 3: the JFK clip end to end; the 81-minute lecture through turbo, measured above |
+| sherpa-onnx CPU — Qwen3-ASR | 0.3.1 | **B** (**E** on Android) | as above; not on iOS | the 8cx Gen 3: the JFK clip end to end |
+| Metal — Whisper (Parakeet **E**) | 0.3.0 | **B** | no Mac or iPhone sessions | nothing |
+| Vulkan — Windows x64 | 0.3.2 | **B** | no x64 machine | nothing |
+| Vulkan — Android arm64 | 0.3.2 | **E** | no phone sessions; needs Android 9 | nothing |
+| OpenCL — Adreno on Windows ARM64 and Android arm64 | 0.3.2 | **E** | the 8cx Gen 3 has no OpenCL driver ggml can use (Microsoft's OpenCLOn12 lacks FP16, so the device is dropped) | the backend loads and drops the device, as it should |
+
+An **E** route runs only when the user chooses it, after its check on that device passed.
 
 ## Reports from other hardware
 

@@ -126,21 +126,30 @@ Windows 上为 false，因为它没有文件转写 API，所以回退设置在�
 压缩包，核对哈希，把列出的库解压到 `.dart_tool/` 下它的共享缓存中，再作为代码资源交给 Flutter 工具。哈希不
 符时构建失败，而不是打包一个不同的二进制文件。所有压缩包都来自 whisper.cpp v1.9.4（提交 `927cfce3`），并且每个都在
 Whisper 的库旁边带着 whisper.cpp 自带的 Parakeet 运行时（`parakeet`；在 Apple 上位于框架二进制文件内），Parakeet
-引擎用它自己生成的绑定（`parakeet_bindings.g.dart`，决定 D22）来调用它。我们自己的压缩包是 `whisper-bin-v1.9.4-2`
-这个发布，它是第一个包含 Parakeet 的。
+引擎用它自己生成的绑定（`parakeet_bindings.g.dart`，决定 D22）来调用它。我们自己的压缩包是 `whisper-bin-v1.9.4-3`
+这个发布，它是第一个带有 GPU 后端的。
 
 | 目标 | 压缩包 | CPU 代码 | 其他后端 |
 |---|---|---|---|
-| Windows x64 | 上游的 `whisper-bin-x64.zip`（发布资源 `b5130`） | 所有 x86 变体，运行时加载最好的那个 | —（Vulkan 在 L3） |
-| Windows ARM64 | 我们的：`whisper-bin-v1.9.4-1` 发布中的 `whisper-win-arm64.zip` | 一个 ARMv8.2 的库，带点积和 FP16，不用 OpenMP | —（OpenCL 在 L3） |
-| Android arm64-v8a、x86_64 | 我们的：同一发布中的 `whisper-android-<abi>.zip` | 所有 Android 变体，运行时加载最好的那个 | —（OpenCL 在 L3） |
+| Windows x64 | 我们的：`whisper-bin-v1.9.4-3` 发布中的 `whisper-win-x64.zip`（MSVC） | 所有 x86 变体，运行时加载最好的那个 | Vulkan |
+| Windows ARM64 | 我们的：同一发布中的 `whisper-win-arm64.zip` | 一个 ARMv8.2 的库，带点积和 FP16，不用 OpenMP | OpenCL（Adreno） |
+| Android arm64-v8a、x86_64 | 我们的：同一发布中的 `whisper-android-<abi>.zip` | 所有 Android 变体，运行时加载最好的那个 | arm64：OpenCL（Adreno）与 Vulkan；x86_64：无 |
 | macOS、iOS 及其模拟器 | 上游的 `whisper-b5130-xcframework.zip`：取匹配切片的框架二进制，若是通用二进制则只取正在构建的那个架构 | 链接在内 | Metal；Core ML 编码器放在模型旁边时会使用它 |
 | Linux x64 | 上游的 `whisper-bin-ubuntu-x64.tar.gz`，各库以其 soname 命名 | 所有 x86 变体 | —（仅是 CI 中运行主机 `flutter test` 的环境） |
 
-其中两个是我们自己的，因为上游的不合格：它的 Windows ARM64 压缩包需要 Visual Studio `debug_nonredist` 文件夹
-里的 `libomp140.aarch64.dll`，而那是不能分发的，并且它以 ARMv8.7 为目标，较旧的骁龙笔记本跑不了；它也没有为
-Android 发布任何东西。`.github/workflows/native-prebuild.yml` 从同一个上游提交构建这两者，每个版本一次
-（见 `ci-cd.md`）。32 位 Android 没有条目 —— 大的 Whisper 模型装不进 32 位地址空间 —— 引擎在那里报告自己未构建。
+其中三个是我们自己的，因为上游的不合格：它的 Windows ARM64 压缩包需要 Visual Studio `debug_nonredist` 文件夹
+里的 `libomp140.aarch64.dll`，而那是不能分发的，并且以 ARMv8.7 为目标，较旧的骁龙笔记本跑不了；它没有为
+Android 发布任何东西；它的 Windows x64 压缩包没有 GPU 后端，而在这里单独构建一个后端又无法与它其余的库在 ABI 上
+对齐。`.github/workflows/native-prebuild.yml` 从同一个上游提交构建这三者，每个版本一次（见 `ci-cd.md`）。32 位
+Android 没有条目 —— 大的 Whisper 模型装不进 32 位地址空间 —— 引擎在那里报告自己未构建。
+
+GPU 后端（L3）是各自独立的库，ggml 把它们和 CPU 后端一起加载，而每个只在设备自己的运行库存在时才能加载：
+`ggml-vulkan` 需要驱动的 `vulkan-1.dll` 或 `libvulkan.so`，`ggml-opencl` 需要驱动的 `OpenCL.dll` 或手机的
+`libOpenCL.so`。两种运行库都不随应用分发。加载不了的后端不会产生路线，应用就在 CPU 上运行。在 Android 12 及
+以后，应用只有声明了厂商库才能打开它，所以清单用 `uses-native-library` 声明了 `libOpenCL.so`，且不是必需。
+引擎为 ggml 报告的每个 GPU 设备提供一条路线，并把它的位置传给 `gpu_device`；等级见
+`local-asr-support-matrix.md`。开发机上一条也运行不了：它的 8cx Gen 3 没有原生的 OpenCL 或 Vulkan 驱动，而
+微软的 OpenCLOn12 层缺少 ggml 要求的 FP16 支持，设备会被丢弃。
 
 Dart 一侧直接绑定这些库，不再有 C 垫片。`third_party/whisper.cpp/include/` 存放固定版本的头文件和许可证，
 `dart run tool/ffigen.dart` 生成 `lib/src/whisper_bindings.g.dart`（绑定到 `whisper` 代码资源）和

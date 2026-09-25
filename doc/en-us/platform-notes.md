@@ -155,22 +155,34 @@ assets. A hash that does not match fails the build rather than bundle a differen
 archive is built from whisper.cpp v1.9.4 (commit `927cfce3`), and each carries whisper.cpp's own
 Parakeet runtime beside Whisper's (`parakeet`; inside the framework binary on Apple), which the
 Parakeet engine binds with its own generated bindings (`parakeet_bindings.g.dart`, decision D22).
-Our own archives are the `whisper-bin-v1.9.4-2` release, the first to include it.
+Our own archives are the `whisper-bin-v1.9.4-3` release, the first with the GPU backends.
 
 | Target | Archive | CPU code | Other backends |
 |---|---|---|---|
-| Windows x64 | upstream's `whisper-bin-x64.zip` (release assets `b5130`) | every x86 variant, the best loaded at run time | — (Vulkan in L3) |
-| Windows ARM64 | ours: `whisper-win-arm64.zip` in the `whisper-bin-v1.9.4-1` release | one library at ARMv8.2 with dot-product and FP16, no OpenMP | — (OpenCL in L3) |
-| Android arm64-v8a, x86_64 | ours: `whisper-android-<abi>.zip` in the same release | every Android variant, the best loaded at run time | — (OpenCL in L3) |
+| Windows x64 | ours: `whisper-win-x64.zip` in the `whisper-bin-v1.9.4-3` release (MSVC) | every x86 variant, the best loaded at run time | Vulkan |
+| Windows ARM64 | ours: `whisper-win-arm64.zip` in the same release | one library at ARMv8.2 with dot-product and FP16, no OpenMP | OpenCL (Adreno) |
+| Android arm64-v8a, x86_64 | ours: `whisper-android-<abi>.zip` in the same release | every Android variant, the best loaded at run time | arm64: OpenCL (Adreno) and Vulkan; x86_64: none |
 | macOS, iOS and its simulator | upstream's `whisper-b5130-xcframework.zip`: the framework binary of the matching slice, and of a universal binary the one architecture being built | linked in | Metal, and the Core ML encoder when it is beside the model |
 | Linux x64 | upstream's `whisper-bin-ubuntu-x64.tar.gz`, the libraries under their sonames | every x86 variant | — (only the host `flutter test` runs on in CI) |
 
-Two of them are ours because upstream's do not qualify: its Windows ARM64 zip needs
+Three of them are ours because upstream's do not qualify: its Windows ARM64 zips need
 `libomp140.aarch64.dll` from Visual Studio's `debug_nonredist` folder, which may not be shipped, and
-targets ARMv8.7, which older Snapdragon laptops cannot run; and it publishes nothing for Android.
-`.github/workflows/native-prebuild.yml` builds both from the same upstream commit, once per version
-(`ci-cd.md`). 32-bit Android has no entry — a large Whisper model does not fit a 32-bit address
-space — and the engine reports itself as not built there.
+target ARMv8.7, which older Snapdragon laptops cannot run; it publishes nothing for Android; and its
+Windows x64 zip has no GPU backend, while one built here would not be ABI-matched to its other
+libraries. `.github/workflows/native-prebuild.yml` builds all three from the same upstream commit,
+once per version (`ci-cd.md`). 32-bit Android has no entry — a large Whisper model does not fit a
+32-bit address space — and the engine reports itself as not built there.
+
+The GPU backends (L3) are libraries of their own that ggml loads beside the CPU one, and each loads
+only where the device's own runtime is there: `ggml-vulkan` needs the driver's `vulkan-1.dll` or
+`libvulkan.so`, `ggml-opencl` the driver's `OpenCL.dll` or the phone's `libOpenCL.so`. Neither
+runtime is bundled. A backend that does not load leaves no route, and the app runs on the CPU. On
+Android 12 and later an app may open a vendor library only when it declares it, so the manifest
+declares `libOpenCL.so` with `uses-native-library`, not required. The engine offers one route per
+GPU device ggml reports and passes its position to `gpu_device`; the grades are in
+`local-asr-support-matrix.md`. Nothing on the development machine can run them: its 8cx Gen 3 has
+no native OpenCL or Vulkan driver, and Microsoft's OpenCLOn12 layer lacks the FP16 support ggml
+requires, so the device is dropped.
 
 The Dart side binds the libraries directly; there is no C shim. `third_party/whisper.cpp/include/`
 holds the pinned version's headers and licence, and `dart run tool/ffigen.dart` generates
