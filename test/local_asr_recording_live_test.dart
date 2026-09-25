@@ -10,8 +10,9 @@
 /// Side effects: Downloads a model; runs FFmpeg and the model; writes into a
 /// temporary directory.
 /// Notes: **Opt-in, and slow**: an hour of audio takes a large model most of
-/// an hour on a laptop CPU. This is the acceptance run of `PLAN.md` §7 for a
-/// route on this project's own hardware; its numbers go into
+/// an hour on a laptop CPU. This is the acceptance run (the acceptance list
+/// in `doc/en-us/local-asr-support-matrix.md`) for a route on this project's
+/// own hardware; its numbers go into
 /// `doc/en-us/local-asr-support-matrix.md`. Run:
 /// `flutter test test/local_asr_recording_live_test.dart
 /// --dart-define=live_recording=AUDIO --dart-define=live_reference=JSON`

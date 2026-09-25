@@ -103,8 +103,9 @@ version, processor, precision), so any of those changing asks for a new check.
 
 ## Tested on this kind of device
 
-Routes this project has verified on real hardware of a device class, with the acceptance list of
-`PLAN.md` §7 and a record in [`local-asr-support-matrix.md`](../local-asr-support-matrix.md). An
+Routes this project has verified on real hardware of a device class, with the
+[acceptance list](../local-asr-support-matrix.md#the-acceptance-list) and a record in
+[`local-asr-support-matrix.md`](../local-asr-support-matrix.md). An
 adapter sets `testedHere` on a route from this table and from nothing else.
 
 | Device class | Adapter | Backend | Verified |

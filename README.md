@@ -59,7 +59,7 @@ iOS and macOS have the libraries built in.
 
 Concept documentation is in [`doc/en-us/`](doc/en-us/) with a Chinese mirror in
 [`doc/zh-cn/`](doc/zh-cn/). [`AGENTS.md`](AGENTS.md) is the working guide for agents;
-[`PLAN.md`](PLAN.md) is the roadmap.
+[`doc/en-us/decisions.md`](doc/en-us/decisions.md) records why the app is the way it is.
 
 ## Licence
 

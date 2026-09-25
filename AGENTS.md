@@ -2,7 +2,7 @@
 
 Operating guide for agents working on **MyTranscribe!!!!!**. This file holds **only** rules about
 how to work here. Everything describing what the code *is* or *does* lives in `doc/en-us/` — see
-[Where to read what](#where-to-read-what). The phased roadmap lives in `PLAN.md`.
+[Where to read what](#where-to-read-what).
 
 MyTranscribe!!!!! turns a recording into text (Flutter; Android, Windows, iOS and macOS). It sends
 audio to a transcription service the user configures — OpenAI, OpenRouter, or any OpenAI-compatible
@@ -29,7 +29,8 @@ about to change, verify against the code, then fix the docs in the same commit.
 
 | Question | Read |
 |---|---|
-| What is planned, in what order, and what is done | `PLAN.md` |
+| What is done, release by release | `doc/en-us/version-history.md` |
+| Why a choice was made, and what not to reverse quietly | `doc/en-us/decisions.md` |
 | App shell, repository layout, core rules, shared package | `doc/en-us/architecture.md` |
 | What a file or function does | `doc/en-us/functions/<mirrored path>.md` |
 | Which page covers which source file | `doc/en-us/functions/INDEX.md` |
@@ -55,8 +56,7 @@ at `packages/myapps_data`. Their documentation is at `packages/myapps_data/doc/e
 2. Before editing, fetch the remote and check whether the local branch is behind. Resolve any
    divergence before starting.
 3. Read per [Reading order](#reading-order).
-4. Plan when the work is non-trivial, then implement it in this workspace. When a `PLAN.md`
-   milestone is affected, update its checklist in the same change.
+4. Plan when the work is non-trivial, then implement it in this workspace.
 5. Keep changes scoped. Do not revert unrelated work in the tree.
 6. Update documentation in the same change set — see [Documentation maintenance](#documentation-maintenance).
 7. Verify with the narrowest meaningful checks, usually `flutter analyze` plus the relevant
@@ -67,9 +67,9 @@ at `packages/myapps_data`. Their documentation is at `packages/myapps_data/doc/e
    release push.
 
 **If the request does not fit this app, say so instead of implementing it.** On-device
-transcription with a downloaded model is this app's own feature (`PLAN.md`); any other on-device
-AI, learning content, and media playback beyond a transcript's own audio are not, and a request
-that assumes one of those was probably meant for a sibling app. Ask before building it.
+transcription with a downloaded model is this app's own feature (`features/local-models.md`); any
+other on-device AI, learning content, and media playback beyond a transcript's own audio are not,
+and a request that assumes one of those was probably meant for a sibling app. Ask before building it.
 
 ## Documentation maintenance
 
@@ -219,8 +219,8 @@ To change shared code: the submodule checks out detached, so `git switch main` i
 commit and **push before** committing the pointer bump here. A pointer to an unpushed commit breaks
 every other clone. Pin to a **tagged** package commit before any app release.
 
-**Native code is embedded as prebuilt binaries, never compiled in the app build** (decision D21 of
-`PLAN.md`). whisper.cpp arrives through `packages/local_asr_whisper/native/binaries.json`,
+**Native code is embedded as prebuilt binaries, never compiled in the app build** (decision D21 in
+`doc/en-us/decisions.md`). whisper.cpp arrives through `packages/local_asr_whisper/native/binaries.json`,
 sherpa-onnx through `packages/local_asr_sherpa/native/binaries.json`, and the FluidAudio bridge
 through `packages/local_asr_apple/native/binaries.json` (its Swift is compiled only by
 `apple-prebuild.yml`), which pin

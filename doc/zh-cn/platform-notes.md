@@ -127,7 +127,7 @@ Windows 上为 false，因为它没有文件转写 API，所以回退设置在�
 
 ### whisper.cpp
 
-应用构建不编译任何原生代码（`PLAN.md` 的决定 D21）。`packages/local_asr_whisper` 里有一份清单
+应用构建不编译任何原生代码（[`decisions.md`](decisions.md) 中的决定 D21）。`packages/local_asr_whisper` 里有一份清单
 `native/binaries.json`，按 URL 和 SHA-256 为每个目标固定一个压缩包。它的构建钩子下载正在构建的目标所对应的
 压缩包，核对哈希，把列出的库解压到 `.dart_tool/` 下它的共享缓存中，再作为代码资源交给 Flutter 工具。哈希不
 符时构建失败，而不是打包一个不同的二进制文件。所有压缩包都来自 whisper.cpp v1.9.4（提交 `927cfce3`），并且每个都在

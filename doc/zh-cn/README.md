@@ -72,16 +72,17 @@ bundle 名称）使用用户自行配置的转写服务把录音转成文字。�
 
 - [`functions/INDEX.md`](functions/INDEX.md) —— 每个源文件一页。
 - [`translation-guide.md`](translation-guide.md) —— 英译中术语。
+- [`decisions.md`](decisions.md) —— 以后的工作不应悄悄推翻的选择，以及理由。
 
 ## 状态
 
 里程碑 M0 到 M6 已完成：外壳与约定、两种后端的媒体工具、来源与模型库、带规划器与续传的转写引擎、带导出的转写
 稿查看器、跨窗口的说话人匹配，以及带端点规则的 API 密钥交换。
 
-剩下的是发布准备，以及一件没有付费密钥就无法核实的事：一份超过上传上限的真实录音，端到端地对着 OpenAI 与
-OpenRouter 跑通。其余一切都由测试套件验证，而它在没有密钥、没有网络、没有 FFmpeg 的情况下运行。见仓库根目录
-的 `PLAN.md`。
+本地模型计划已经结束（0.3.0 到 0.3.5）：Whisper、Parakeet 和 Qwen3-ASR 通过 whisper.cpp 和 sherpa-onnx 在设
+备上运行，另有 GPU 路线、在 Apple 神经网络引擎上运行的 Parakeet、在 Apple 设备上作为回退的系统自带识别，以及
+说话人标签。每条本地路线都作为未验证支持发布；见 [`local-asr-support-matrix.md`](local-asr-support-matrix.md)。
+每个版本改了什么见 [`version-history.md`](version-history.md)，为什么见 [`decisions.md`](decisions.md)。
 
-`PLAN.md` 中的本地模型计划正在进行。它的基础（L0）已经就位：本地模型记录、模型包管理器、引擎协议与路由器、
-设备本地的引擎状态，以及任务执行器的本地路径，全部用一个假引擎测试过。目前还没有编译进任何原生引擎；第一个
-是 whisper.cpp，属于 L1。
+有一件事没有付费密钥就无法核实：一份超过上传上限的真实录音，端到端地对着 OpenAI 与 OpenRouter 跑通。其余一
+切都由测试套件验证，而它在没有密钥、没有网络、没有 FFmpeg 的情况下运行。

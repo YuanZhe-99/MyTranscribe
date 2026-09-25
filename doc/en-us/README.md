@@ -81,6 +81,7 @@ The shared WebDAV sync, backup, and ZIP engines are not in this repository. They
 
 - [`functions/INDEX.md`](functions/INDEX.md) — one page per source file.
 - [`translation-guide.md`](translation-guide.md) — English to Chinese terminology.
+- [`decisions.md`](decisions.md) — the choices later work should not quietly reverse, and why.
 
 ## Status
 
@@ -89,12 +90,13 @@ source and model library, the transcription engine with its planner and resume, 
 viewer with its exports, speaker matching across windows, and the API-key exchange with its
 endpoint rule.
 
-What remains is release preparation, and one thing that cannot be checked without a paid key: a real
-recording over the upload limit, transcribed end to end against OpenAI and OpenRouter. Everything
-else is verified by the test suite, which runs with no key, no network and no FFmpeg. See
-`PLAN.md` at the repository root.
+The local-models plan is closed (0.3.0 to 0.3.5): Whisper, Parakeet and Qwen3-ASR run on the
+device through whisper.cpp and sherpa-onnx, with GPU routes, Parakeet on the Apple Neural Engine,
+the system's own recognition as a fallback on Apple devices, and speaker labels. Every local route
+ships as unverified support; see [`local-asr-support-matrix.md`](local-asr-support-matrix.md).
+What each release changed is in [`version-history.md`](version-history.md), and why in
+[`decisions.md`](decisions.md).
 
-The local-models plan in `PLAN.md` is under way. Its foundation (L0) is in place: the local model
-record, the package manager, the engine protocol and router, the device-local engine state and the
-job runner's local path, all tested with a fake engine. No native engine is compiled in yet; the
-first, whisper.cpp, is L1.
+One thing cannot be checked without a paid key: a real recording over the upload limit,
+transcribed end to end against OpenAI and OpenRouter. Everything else is verified by the test
+suite, which runs with no key, no network and no FFmpeg.

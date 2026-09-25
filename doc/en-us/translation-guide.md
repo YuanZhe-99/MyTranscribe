@@ -94,3 +94,6 @@ sibling repository's Section 5.1 in the same change.
 | system recogniser | 系统语音识别 | 系統語音辨識 | The operating system's own recogniser. Taiwan says 辨識 for speech recognition. |
 | artifact (the downloaded package) | 模型包 | 模型套件 | The files one local model downloads. |
 | diagnostics report | 诊断报告 | 診斷報告 | Text the user copies; the app sends it nowhere. |
+| speaker labels (the package) | 说话人标签 | 說話人標籤 | The shared package that labels who spoke in local jobs. |
+| acceptance list | 验收清单 | 驗收清單 | What a route must pass to be marked tested here. |
+| decisions (the log) | 决定 | 決定 | `decisions.md`; an entry is 条目. |

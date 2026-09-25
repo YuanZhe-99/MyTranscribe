@@ -18,15 +18,16 @@ The survey's evidence grades, carried in the code as `EvidenceLevel`:
 | **E** | `experimental` | a generic backend exists, but this model × device is unshown |
 | **U** | `none` | nothing found |
 
-**Tested here** is a separate fact: this project ran the acceptance list of `PLAN.md` §7 on hardware
-of that class and recorded it below. A route that is not tested here still ships, as **unverified
+**Tested here** is a separate fact: this project ran [the acceptance list](#the-acceptance-list) on
+hardware of that class and recorded it below. A route that is not tested here still ships, as **unverified
 support**: built and covered by CI, checked on each device before its first job, marked as untested
 in the product, and used by Auto only when its grade is A or B and it beat the CPU in its check.
 
 ## Per target
 
-As surveyed on 2026-09-24. "Planned" names the milestone that builds a route; nothing but the
-foundation (L0) exists yet.
+As surveyed on 2026-09-24, before anything was built; the milestone in each cell is the one that
+was to build the route. What shipped is in [Unverified routes](#unverified-routes): L5 and L7 were
+not built, and L6 came to Apple only (see [`decisions.md`](decisions.md)).
 
 | Target | Whisper large-v3 / turbo | Parakeet TDT v3 | Qwen3-ASR 0.6B (1.7B) | Tested here |
 |---|---|---|---|---|
@@ -45,8 +46,8 @@ One entry per route verified on this project's hardware: device, OS, driver, run
 package hash, quantization and decoding settings, real-time factor, first-result latency, peak
 memory, and the date.
 
-None yet. A route is recorded here only once §7's acceptance list holds for it, including the
-line-by-line comparison of a real recording, which needs the user.
+None yet. A route is recorded here only once [the acceptance list](#the-acceptance-list) holds for
+it, including the line-by-line comparison of a real recording, which needs the user.
 
 ### Measured, not yet verified: Windows ARM64, whisper.cpp CPU, large-v3-turbo (2026-09-25)
 
@@ -88,8 +89,24 @@ before its first job, the in-flight marker, and the fallback policy (decision D2
 | Vulkan — Windows x64 | 0.3.2 | **B** | no x64 machine | nothing |
 | Vulkan — Android arm64 | 0.3.2 | **E** | no phone sessions; needs Android 9 | nothing |
 | OpenCL — Adreno on Windows ARM64 and Android arm64 | 0.3.2 | **E** | the 8cx Gen 3 has no OpenCL driver ggml can use (Microsoft's OpenCLOn12 lacks FP16, so the device is dropped) | the backend loads and drops the device, as it should |
+| System recogniser — iOS, macOS (fallback only) | 0.3.4 | **A** | no Mac or iPhone sessions | nothing; the bridge is built in CI only |
+| Speaker labels — sherpa-onnx diarization (not iOS) | 0.3.5 | **B** | not compared with a remote model's labels on a long meeting | the 8cx Gen 3: a two-speaker English clip, both speakers found |
 
 An **E** route runs only when the user chooses it, after its check on that device passed.
+
+## The acceptance list
+
+What a route must pass on a device of its class before it is marked tested here: the package
+verified against its hashes, a cold load, the first compile where there is one, a short clip, a
+long recording split into windows, two jobs back to back, cancel, switching models, low memory,
+background and foreground on mobile, and offline with the network switched off. The record names
+the SoC, OS, driver, runtime versions, package hash, quantization and decoding settings, and gives
+the real-time factor, first-result latency and peak memory.
+
+A route with no device here to run this list on gets no record: it ships as unverified support
+(decision D20), and a diagnostics report from somebody else's hardware is recorded under
+[Reports from other hardware](#reports-from-other-hardware), with its date, never as this
+project's verification.
 
 ## Reports from other hardware
 

@@ -88,7 +88,7 @@ CPU 路线 —— 每台设备上的底线，无论在此测试过与否。连�
 
 ## 已在此类设备上测试
 
-本项目在某一设备类别的真实硬件上、按 `PLAN.md` §7 的验收清单验证过的路线，并在
+本项目在某一设备类别的真实硬件上、按[验收清单](../local-asr-support-matrix.md#验收清单)验证过的路线，并在
 [`local-asr-support-matrix.md`](../local-asr-support-matrix.md) 中有记录。适配器只依据这张表为路线设置
 `testedHere`，不依据任何别的东西。
 

@@ -1,9 +1,9 @@
 # Local models
 
 A local model transcribes the recording on the device: no key, no network once the model is on
-disk, and the audio never leaves the device. This page describes what is built so far — the record,
-the packages, the routes, the checks and the job — and says where a piece arrives in a later
-milestone of `PLAN.md`.
+disk, and the audio never leaves the device. This page describes the record, the packages, the
+routes, the checks, the job and the speaker labels; why each is the way it is is in
+[`decisions.md`](../decisions.md).
 
 **State at L4:** four engines, all bundled as pinned prebuilt libraries (see
 [`platform-notes.md`](../platform-notes.md)). whisper.cpp runs the Whisper models (adapter

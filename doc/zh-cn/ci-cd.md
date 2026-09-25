@@ -44,7 +44,7 @@
 
 CI 不构建 MSIX：打包它需要签名证书，而本仓库没有。要产出它，仍然是在本地运行 `dart run msix:create`。
 
-没有任何作业编译原生代码（`PLAN.md` 的决定 D21）。`packages/local_asr_whisper` 的构建钩子下载目标所对应的预编译
+没有任何作业编译原生代码（[`decisions.md`](decisions.md) 中的决定 D21）。`packages/local_asr_whisper` 的构建钩子下载目标所对应的预编译
 whisper.cpp 压缩包，按 `native/binaries.json` 核对其 SHA-256，再打包其中的库 —— 作为 `flutter build` 的一部分，
 在 Ubuntu 作业中则作为 `flutter test` 的一部分，为主机准备。每个作业都缓存钩子的共享文件夹，以清单和钩子为键，
 因此普通的推送什么也不用下载。

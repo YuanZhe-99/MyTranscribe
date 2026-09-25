@@ -90,3 +90,6 @@
 | system recogniser | 系统语音识别 | 系統語音辨識 | 操作系统自带的识别器。台湾把语音识别说成"辨識"。 |
 | artifact (the downloaded package) | 模型包 | 模型套件 | 一个本地模型要下载的文件。 |
 | diagnostics report | 诊断报告 | 診斷報告 | 用户复制的文本；应用不会把它发送到任何地方。 |
+| speaker labels (the package) | 说话人标签 | 說話人標籤 | 为本地任务标注谁在说话的共用包。 |
+| acceptance list | 验收清单 | 驗收清單 | 一条路线被标为在此测试过之前必须通过的项目。 |
+| decisions (the log) | 决定 | 決定 | 即 `decisions.md`；其中一项称为条目。 |

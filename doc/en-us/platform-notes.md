@@ -156,7 +156,7 @@ which has no file-transcription API, so the fallback setting is absent there rat
 
 ### whisper.cpp
 
-The app build compiles nothing native (decision D21 of `PLAN.md`). `packages/local_asr_whisper`
+The app build compiles nothing native (decision D21 in [`decisions.md`](decisions.md)). `packages/local_asr_whisper`
 keeps a manifest, `native/binaries.json`, that pins one archive per target by URL and SHA-256. Its
 build hook downloads the archive for the target being built, checks the hash, unpacks the listed
 libraries into its shared cache under `.dart_tool/`, and hands them to the Flutter tool as code

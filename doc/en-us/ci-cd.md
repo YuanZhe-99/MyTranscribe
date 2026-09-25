@@ -51,7 +51,7 @@ Three things about the jobs are worth knowing:
 MSIX is not built in CI: packaging one needs a signing certificate, and this repository carries
 none. `dart run msix:create` locally is still the way to produce it.
 
-No job compiles native code (decision D21 of `PLAN.md`). The build hook of
+No job compiles native code (decision D21 in [`decisions.md`](decisions.md)). The build hook of
 `packages/local_asr_whisper` downloads the prebuilt whisper.cpp archive for the target, checks its
 SHA-256 against `native/binaries.json` and bundles the libraries — as part of `flutter build`, and
 in the Ubuntu job as part of `flutter test`, for the host. Each job caches the hook's shared folder,
