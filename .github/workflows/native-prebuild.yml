@@ -75,10 +75,13 @@ jobs:
       - name: GPU headers and tools
         if: matrix.gpu
         run: |
-          sudo apt-get install -y glslc spirv-headers
+          sudo apt-get install -y glslc
           git clone --depth 1 -b "$OPENCL_TAG" https://github.com/KhronosGroup/OpenCL-Headers "$RUNNER_TEMP/ocl-headers"
           git clone --depth 1 -b "$OPENCL_TAG" https://github.com/KhronosGroup/OpenCL-ICD-Loader "$RUNNER_TEMP/ocl-loader"
           git clone --depth 1 -b "$VULKAN_HEADERS_TAG" https://github.com/KhronosGroup/Vulkan-Headers "$RUNNER_TEMP/vk-headers"
+          git clone --depth 1 -b "$VULKAN_HEADERS_TAG" https://github.com/KhronosGroup/SPIRV-Headers "$RUNNER_TEMP/spirv-headers"
+          cmake -S "$RUNNER_TEMP/spirv-headers" -B "$RUNNER_TEMP/spirv-headers/build" -DSPIRV_HEADERS_ENABLE_TESTS=OFF -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/spirv"
+          cmake --build "$RUNNER_TEMP/spirv-headers/build" --target install
           P="$RUNNER_TEMP/ocl"
           cmake -S "$RUNNER_TEMP/ocl-headers" -B "$RUNNER_TEMP/ocl-headers/build" -DBUILD_TESTING=OFF -DOPENCL_HEADERS_BUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX="$P"
           cmake --build "$RUNNER_TEMP/ocl-headers/build" --target install
@@ -88,10 +91,10 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
             -DOPENCL_ICD_LOADER_HEADERS_DIR="$P/include" -DCMAKE_INSTALL_PREFIX="$P"
           cmake --build "$RUNNER_TEMP/ocl-loader/build" --target install
-          spirv=$(dirname "$(dpkg -L spirv-headers | grep -m1 'SPIRV-HeadersConfig.cmake')")
+          spirv=$(dirname "$(find "$RUNNER_TEMP/spirv" -name SPIRV-HeadersConfig.cmake | head -1)")
           sysroot="$NDK/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
           {
-            echo "GPU_FLAGS=-DGGML_OPENCL=ON -DOpenCL_INCLUDE_DIR=$P/include -DOpenCL_LIBRARY=$P/lib/libOpenCL.so -DGGML_VULKAN=ON -DVulkan_INCLUDE_DIR=$RUNNER_TEMP/vk-headers/include -DVulkan_LIBRARY=$sysroot/usr/lib/aarch64-linux-android/$ANDROID_API/libvulkan.so -DVulkan_GLSLC_EXECUTABLE=/usr/bin/glslc -DSPIRV-Headers_DIR=$spirv"
+            echo "GPU_FLAGS=-DGGML_OPENCL=ON -DOpenCL_INCLUDE_DIR=$P/include -DOpenCL_LIBRARY=$P/lib/libOpenCL.so -DGGML_VULKAN=ON -DVulkan_INCLUDE_DIR=$RUNNER_TEMP/vk-headers/include -DVulkan_LIBRARY=$sysroot/usr/lib/aarch64-linux-android/$ANDROID_API/libvulkan.so -DVulkan_GLSLC_EXECUTABLE=/usr/bin/glslc -DSPIRV-Headers_DIR=$spirv -DCMAKE_CXX_FLAGS=-I$RUNNER_TEMP/spirv/include"
           } >> "$GITHUB_ENV"
 
       # Every CPU variant is built and ggml loads the best one at run time,
