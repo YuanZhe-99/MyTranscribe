@@ -196,6 +196,16 @@ Set<LocalEngineBackend> get localEngineBackends =>
       TargetPlatform.fuchsia => const {},
     };
 
+/// Purpose: Report whether this platform has the Neural Engine bridge.
+/// Inputs: None.
+/// Returns: `bool` — true on iOS and macOS.
+/// Side effects: None.
+/// Notes: FluidAudio runs Parakeet on the Neural Engine there (L4); elsewhere
+/// the engine is not registered at all, so no Core ML package is offered.
+bool get hasNeuralEngineBridge =>
+    defaultTargetPlatform == TargetPlatform.iOS ||
+    defaultTargetPlatform == TargetPlatform.macOS;
+
 /// Purpose: Report whether the operating system has a speech recogniser the
 /// app could offer as a fallback.
 /// Inputs: None.

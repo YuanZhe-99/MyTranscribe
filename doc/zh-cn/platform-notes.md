@@ -72,7 +72,9 @@ HTTP。即便如此，除非是私有地址，API Key 仍然不会发往明文 H
 
 ## iOS
 
-- 部署目标 **14.0**，从 Flutter 默认值上调，因为 FFmpeg 库有此要求。
+- 自 0.3.3 起部署目标为 **17.0**（此前为 14.0，出于 FFmpeg 库的要求）：L4 的神经网络引擎路线所用的 FluidAudio
+  声明了 iOS 17，而 Swift 包无法链接到低于其最低版本的目标（决定 D12，用户于 2026-09-24 批准）。这会放弃
+  iPhone 8、8 Plus 和 X，它们停留在 iOS 16。
 - `UIFileSharingEnabled` 与 `LSSupportsOpeningDocumentsInPlace` 均为真，这使应用的目录在"文件"中可见。没有
   它们，一份完成的转写稿就只能通过分享面板取到。
 - App Transport Security 允许本地网络与任意加载，与 Android 的明文标志相对应，理由相同。这是提交 App Store
@@ -81,6 +83,9 @@ HTTP。即便如此，除非是私有地址，API Key 仍然不会发往明文 H
 - 没有麦克风或语音识别的用途说明字符串，因为应用两者都不做。
 
 ## macOS
+
+自 0.3.3 起部署目标为 **14.0**（Sonoma），原因与 iOS 相同；此前为 10.15。Sonoma 支持 2018 年及以后的 Mac（iMac 为
+2019 年起，另有 2017 年的 iMac Pro），更早的 Mac 停留在 0.3.2。
 
 沙盒运行，debug 与 release 两套配置各有三项权限：
 
@@ -196,3 +201,18 @@ Qwen3-ASR 运行在 sherpa-onnx 上（决定 D22），通过 `packages/local_asr
 C API 按指针接收配置，没有能读回默认值的函数，因此防止布局不匹配的手段是版本：库报告的版本必须恰好是
 `1.13.8`，否则不使用它。`onnxruntime.dll` 还链接 `MSVCP140_1.dll`，它属于同一个 Visual C++ 可再发行组件包。
 Android 的压缩包是所有目标里最大的下载（48 MiB），由钩子下载一次。
+
+### 神经网络引擎桥接层
+
+在 iOS 和 macOS 上，Parakeet 还能通过 FluidAudio 0.17.4 在神经网络引擎上运行（L4）。FluidAudio 要编译 C、C++
+和 Swift，所以按决定 D21，它只被封装一次，而不在应用构建中编译：`packages/local_asr_apple/bridge` 是一个小
+Swift 包，它的五个 `@_cdecl` 函数（`lasr_apple.h`）在关闭 FluidAudio 自带下载器（`ModelHub.offlineMode`）的
+情况下加载已就位的 Core ML 文件夹，把样本转写成带 token 时间的 JSON，释放字符串与模型。
+`.github/workflows/apple-prebuild.yml` 在 macOS 运行器上用 `xcodebuild` 为 macOS、iOS 和 iOS 模拟器构建它，
+并把这三个二进制作为一个发布放出；包的钩子按哈希下载该压缩包，交出正在构建的那个切片，`tool/ffigen.dart`
+从头文件生成绑定。每个函数都会在一个分离的任务上阻塞它的调用方 —— 引擎的工作 isolate。
+
+模型是 FluidInference 对 Parakeet v3 的 Core ML 转换，按 Hugging Face 修订固定，逐个文件做哈希：四个已编译
+的模型（`Preprocessor`、int8 的 `Encoder`、`Decoder`、`JointDecisionv3`）和 `parakeet_vocab.json`，共 483 MB。
+这些文件只标给 iOS 和 macOS，引擎也只在那里注册，因此其他平台不会提供这个模型包。Core ML 不报告每个运算
+在哪里执行，所以这条路线记录为 `mixed`（配置为 CPU 加神经网络引擎）。

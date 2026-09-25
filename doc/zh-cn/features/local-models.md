@@ -3,13 +3,14 @@
 本地模型在设备上转写录音：不需要密钥，模型一旦在磁盘上就不需要网络，音频也从不离开设备。本页描述目前已经
 建成的部分 —— 记录、模型包、路线、检查和任务 —— 并说明哪一块会在 `PLAN.md` 的后续里程碑中到来。
 
-**L3 阶段的状态：** 三个引擎，都以固定的预编译库打包（见 [`platform-notes.md`](../platform-notes.md)）。
+**L4 阶段的状态：** 四个引擎，都以固定的预编译库打包（见 [`platform-notes.md`](../platform-notes.md)）。
 whisper.cpp 运行 Whisper 模型（适配器 `whisper_cpp`），并通过它自带的 Parakeet 运行时运行 Parakeet（适配器
 `parakeet_cpp`）—— 在所有平台上用 CPU，在 Apple 平台上还可用 Metal。sherpa-onnx 在 CPU 上运行 Qwen3-ASR
 （适配器 `sherpa_onnx`），iOS 除外，因为 sherpa-onnx 还没有为它发布库。whisper.cpp 的引擎还会为
 ggml 找到的每个 GPU 提供一条 GPU 路线 —— Apple 上的 Metal，Windows x64 与 Android 上的 Vulkan，Windows ARM64
 与 Android 上 Adreno 的 OpenCL —— 前提是设备自己的驱动能加载该后端；这里一条都运行不了，所以它们全都作为未验证
-的支持发布。
+的支持发布。在 iOS 和 macOS 上，第四个引擎 —— FluidAudio 桥接层 —— 用它自己的 Core ML 模型包，在神经网络引擎上
+运行 Parakeet（适配器 `fluidaudio`）。
 
 ## 记录与模型包
 

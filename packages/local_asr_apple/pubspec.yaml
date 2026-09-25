@@ -1,0 +1,20 @@
+name: local_asr_apple
+description: >-
+  The Neural Engine bridge for MyTranscribe!!!!!: FluidAudio behind a C API,
+  prebuilt and fetched by hash in a build hook, bound from Dart.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.11.3
+
+dependencies:
+  archive: ^4.0.0
+  code_assets: '>=1.0.0 <3.0.0'
+  crypto: ^3.0.6
+  ffi: ^2.1.0
+  hooks: '>=1.0.0 <3.0.0'
+
+dev_dependencies:
+  ffigen: ^22.0.0
+  test: ^1.25.0

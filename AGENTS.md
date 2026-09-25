@@ -220,8 +220,10 @@ commit and **push before** committing the pointer bump here. A pointer to an unp
 every other clone. Pin to a **tagged** package commit before any app release.
 
 **Native code is embedded as prebuilt binaries, never compiled in the app build** (decision D21 of
-`PLAN.md`). whisper.cpp arrives through `packages/local_asr_whisper/native/binaries.json` and
-sherpa-onnx through `packages/local_asr_sherpa/native/binaries.json`, which pin
+`PLAN.md`). whisper.cpp arrives through `packages/local_asr_whisper/native/binaries.json`,
+sherpa-onnx through `packages/local_asr_sherpa/native/binaries.json`, and the FluidAudio bridge
+through `packages/local_asr_apple/native/binaries.json` (its Swift is compiled only by
+`apple-prebuild.yml`), which pin
 every archive by URL and SHA-256; never add a CMake step, a C file or a compiler to the app build or
 to `build.yml`. Where upstream publishes no usable binary, add the target to
 `.github/workflows/native-prebuild.yml`, run it, and pin its release asset. Never edit the generated

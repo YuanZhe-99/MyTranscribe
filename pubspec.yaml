@@ -69,6 +69,8 @@ dependencies:
   # whisper.cpp, compiled from the pinned submodule at packages/whisper.cpp by
   # a build hook, behind a small C ABI. See packages/local_asr_whisper and
   # doc/en-us/platform-notes.md.
+  local_asr_apple:
+    path: packages/local_asr_apple
   local_asr_sherpa:
     path: packages/local_asr_sherpa
   local_asr_whisper:

@@ -14,6 +14,8 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/utils/platform_capabilities.dart';
+import '../engines/fluid_audio_engine.dart';
 import '../engines/sherpa_onnx_engine.dart';
 import '../engines/whisper_cpp_engine.dart';
 import '../models/artifact_manifest.dart';
@@ -126,6 +128,11 @@ final sherpaOnnxEngineProvider = Provider<SherpaOnnxEngine>(
   (ref) => SherpaOnnxEngine(),
 );
 
+/// The FluidAudio engine, one per app: Parakeet on the Neural Engine (L4).
+final fluidAudioEngineProvider = Provider<FluidAudioEngine>(
+  (ref) => FluidAudioEngine(),
+);
+
 /// The engine registry: every adapter this build compiles in.
 final engineRegistryProvider = Provider<EngineRegistry>(
   (ref) => EngineRegistry(
@@ -133,6 +140,9 @@ final engineRegistryProvider = Provider<EngineRegistry>(
       ref.watch(whisperCppEngineProvider),
       ref.watch(parakeetCppEngineProvider),
       ref.watch(sherpaOnnxEngineProvider),
+      // Only where the bridge exists, so no Core ML package is offered
+      // elsewhere.
+      if (hasNeuralEngineBridge) ref.watch(fluidAudioEngineProvider),
     ],
     artifacts: ref.watch(artifactManagerProvider),
     state: ref.watch(localEngineStateStoreProvider),

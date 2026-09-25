@@ -66,6 +66,11 @@ upstream tag and the release tag as inputs; its toolchains — the NDK, clang on
 MSVC and the pinned Vulkan SDK on the x64 runner, the Khronos headers and loaders — are needed
 nowhere else. `platform-notes.md` says which archive serves which target and why.
 
+`.github/workflows/apple-prebuild.yml`, also manual, builds the Neural Engine bridge
+(`packages/local_asr_apple/bridge`, FluidAudio behind a C API) with `xcodebuild` for macOS, iOS and
+the Simulator, and publishes it as a release tagged `apple-bin-<bridge revision>`. It runs when the
+bridge or FluidAudio's pinned version changes.
+
 ## Fresh clone
 
 ```bash
@@ -75,6 +80,7 @@ git submodule update --init          # myapps_data is a submodule
 flutter pub get
 dart pub get -C packages/local_asr_whisper   # its own tests, which flutter analyze reads
 dart pub get -C packages/local_asr_sherpa
+dart pub get -C packages/local_asr_apple
 flutter gen-l10n
 ```
 

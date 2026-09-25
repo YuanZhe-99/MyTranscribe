@@ -56,6 +56,10 @@ x86_64、ARMv8.2 且不带 OpenMP 的 Windows ARM64，以及 Windows x64 —— 
 的头文件与加载器 —— 在别处都不需要。哪个压缩包服务哪个目标、
 原因为何，见 `platform-notes.md`。
 
+`.github/workflows/apple-prebuild.yml` 同样手动运行，用 `xcodebuild` 为 macOS、iOS 和模拟器构建神经网络引擎
+桥接层（`packages/local_asr_apple/bridge`，FluidAudio 外面包一层 C API），并以 `apple-bin-<桥接层修订>` 为标签
+发布。桥接层或 FluidAudio 的固定版本变化时才运行它。
+
 ## 全新克隆
 
 ```bash
@@ -65,6 +69,7 @@ git submodule update --init          # myapps_data 是子模块
 flutter pub get
 dart pub get -C packages/local_asr_whisper   # 它自己的测试，flutter analyze 会读到
 dart pub get -C packages/local_asr_sherpa
+dart pub get -C packages/local_asr_apple
 flutter gen-l10n
 ```
 

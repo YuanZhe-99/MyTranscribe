@@ -71,6 +71,7 @@
 | whisper.cpp CPU —— Whisper、Parakeet | 0.3.0、0.3.1 | **B**（Android 上为 **E**） | 任何类别上都没有验证记录 | 8cx Gen 3：JFK 片段端到端；81 分钟讲座的 turbo 转写，数据见上 |
 | sherpa-onnx CPU —— Qwen3-ASR | 0.3.1 | **B**（Android 上为 **E**） | 同上；不支持 iOS | 8cx Gen 3：JFK 片段端到端 |
 | Metal —— Whisper（Parakeet 为 **E**） | 0.3.0 | **B** | 没有 Mac 或 iPhone 上的测试 | 无 |
+| 神经网络引擎 —— Parakeet（FluidAudio） | 0.3.3 | **B** | 没有 Mac 或 iPhone 上的测试 | 无；桥接层只在 CI 中构建 |
 | Vulkan —— Windows x64 | 0.3.2 | **B** | 没有 x64 机器 | 无 |
 | Vulkan —— Android arm64 | 0.3.2 | **E** | 没有手机上的测试；需要 Android 9 | 无 |
 | OpenCL —— Windows ARM64 与 Android arm64 上的 Adreno | 0.3.2 | **E** | 8cx Gen 3 没有 ggml 能用的 OpenCL 驱动（微软的 OpenCLOn12 缺少 FP16，设备被丢弃） | 后端能加载并丢弃该设备，符合预期 |

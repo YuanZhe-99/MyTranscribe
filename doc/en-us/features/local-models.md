@@ -5,14 +5,16 @@ disk, and the audio never leaves the device. This page describes what is built s
 the packages, the routes, the checks and the job — and says where a piece arrives in a later
 milestone of `PLAN.md`.
 
-**State at L3:** three engines, all bundled as pinned prebuilt libraries (see
+**State at L4:** four engines, all bundled as pinned prebuilt libraries (see
 [`platform-notes.md`](../platform-notes.md)). whisper.cpp runs the Whisper models (adapter
 `whisper_cpp`) and, through its own Parakeet runtime, Parakeet (adapter `parakeet_cpp`) — on the CPU
 everywhere and on Metal on Apple platforms. sherpa-onnx runs Qwen3-ASR (adapter `sherpa_onnx`) on
 the CPU everywhere except iOS, for which sherpa-onnx publishes no library yet. The whisper.cpp
 engines also offer a GPU route for each GPU ggml finds — Metal on Apple, Vulkan on Windows x64 and
 Android, OpenCL on Adreno under Windows ARM64 and Android — where the device's own driver loads
-the backend; none of them could be run here, so all of them ship as unverified support.
+the backend; none of them could be run here, so all of them ship as unverified support. On iOS
+and macOS a fourth, the FluidAudio bridge, runs Parakeet on the Neural Engine (adapter `fluidaudio`),
+from a Core ML package of its own.
 
 ## The record and the packages
 

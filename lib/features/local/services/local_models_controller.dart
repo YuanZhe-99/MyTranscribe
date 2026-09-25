@@ -91,7 +91,11 @@ class LocalModelsController
     return [
       for (final entry in model.artifacts.entries)
         if (registry.engine(entry.key) != null)
-          for (final id in entry.value) ?templateArtifact(id),
+          for (final id in entry.value)
+            if (templateArtifact(id) case final manifest?)
+              // A package with nothing for this platform — the Core ML one
+              // off Apple — is not offered.
+              if (manifest.filesFor().isNotEmpty) manifest,
     ];
   }
 

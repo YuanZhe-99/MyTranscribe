@@ -89,7 +89,10 @@ unfolding resizes the window without recreating the activity. See
 
 ## iOS
 
-- Deployment target **14.0**, raised from Flutter's default because the FFmpeg libraries require it.
+- Deployment target **17.0** since 0.3.3 (14.0 before, for the FFmpeg libraries): FluidAudio, the
+  Neural Engine route of L4, declares iOS 17, and a Swift package cannot be linked below its floor
+  (decision D12, approved by the user on 2026-09-24). It drops the iPhone 8, 8 Plus and X, which
+  stop at iOS 16.
 - `UIFileSharingEnabled` and `LSSupportsOpeningDocumentsInPlace` are both true, which makes the
   app's folder visible in Files. Without them a finished transcript would be reachable only through
   a share sheet.
@@ -100,6 +103,10 @@ unfolding resizes the window without recreating the activity. See
 - No microphone or speech-recognition usage strings, because the app does neither.
 
 ## macOS
+
+Deployment target **14.0** (Sonoma) since 0.3.3, for the same reason as iOS; 10.15 before. Sonoma
+runs on Macs from 2018 on (the iMac from 2019, and the 2017 iMac Pro), so earlier Macs stop at
+0.3.2.
 
 Sandboxed, with three entitlements in both the debug and the release profile:
 
@@ -240,3 +247,23 @@ The C API takes its config by pointer, with no function that reads defaults back
 against a layout mismatch is the version: the library must report exactly `1.13.8`, or it is not
 used. `onnxruntime.dll` also links `MSVCP140_1.dll`, part of the same Visual C++ Redistributable.
 The Android archive is the largest download of any target (48 MiB), fetched once by the hook.
+
+### The Neural Engine bridge
+
+On iOS and macOS, Parakeet also runs on the Neural Engine through FluidAudio 0.17.4 (L4).
+FluidAudio compiles C, C++ and Swift, so under decision D21 it is wrapped once, not in the app
+build: `packages/local_asr_apple/bridge` is a small Swift package whose five `@_cdecl` functions
+(`lasr_apple.h`) load a staged Core ML folder with FluidAudio's own downloader switched off
+(`ModelHub.offlineMode`), transcribe samples to JSON with token times, free and release.
+`.github/workflows/apple-prebuild.yml` builds it with `xcodebuild` on a macOS runner for macOS,
+iOS and the iOS Simulator and publishes the three binaries as a release; the package's hook
+downloads that archive by hash and hands over the slice being built, and `tool/ffigen.dart`
+generates the bindings from the header. Every function blocks its caller — the engine's worker
+isolate — on a detached task.
+
+The model is FluidInference's Core ML conversion of Parakeet v3, pinned by Hugging Face revision
+and hashed file by file: four compiled models (`Preprocessor`, `Encoder` at int8, `Decoder`,
+`JointDecisionv3`) and `parakeet_vocab.json`, 483 MB. Its files are marked for iOS and macOS only,
+and the engine is registered only there, so no other platform offers the package. Core ML reports
+no per-operation placement, so the route records `mixed` (configured for the CPU and the Neural
+Engine).

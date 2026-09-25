@@ -852,33 +852,41 @@ Raises the deployment targets to iOS 17 / macOS 14, which the user approved on 2
 nothing here waits for another confirmation. If L1 already had to raise them, this milestone
 uses them as they are.
 
-- [ ] Deployment targets raised to iOS 17 / macOS 14 in the Xcode projects, the Podfiles and
+- [x] *(Done 2026-09-25: the app uses Swift Package Manager, so the two Xcode projects are the
+      only place; the README names no OS version. The dropped devices are from Apple's lists as
+      known to this project — not re-checked against Apple's pages.)* Deployment targets raised to
+      iOS 17 / macOS 14 in the Xcode projects, the Podfiles and
       package manifests, and anything in CI that names them; `platform-notes.md`, the README's
       requirements and the release notes say which devices that drops — on Apple's lists at the
       time of writing, the iPhone 8, 8 Plus and X and the iPads of that generation, and Macs from
       before 2018 other than the 2017 iMac Pro; confirm both against Apple's pages when it is done
-- [ ] `packages/local_asr_apple`: a SwiftPM plugin (Flutter 3.44 default) depending on
-      FluidAudio pinned by exact version; a Pigeon API with `probe`, `prepare`, `transcribe`
-      (events through a Flutter API callback), `cancel`, `release`; inference on a native queue
-- [ ] Models through **our** artifact manager: FluidAudio's `ModelHub.offlineMode` on and the
+- [x] ~~`packages/local_asr_apple`: a SwiftPM plugin … a Pigeon API~~ — under D21, a prebuilt
+      bridge instead: `bridge/` is a Swift package over FluidAudio 0.17.4 (exact) with five C
+      functions, built by `apple-prebuild.yml`, fetched by hash and bound with ffigen like the
+      other engines; `FluidAudioEngine` runs it on a worker isolate
+- [x] Models through **our** artifact manager: FluidAudio's `ModelHub.offlineMode` on and the
       directory pointed at `models/<artifactId>/`, so no download ever happens outside the
       manifest (D17); manifests for `FluidInference/parakeet-tdt-0.6b-v3-coreml` and
-      `FluidInference/qwen3-asr-0.6b-coreml` (int8), file by file
-- [ ] Placement: Core ML does not report per-operation placement without profiling, so the
+      ~~`FluidInference/qwen3-asr-0.6b-coreml`~~ (int8), file by file — Parakeet only, 21 files,
+      483 MB; FluidAudio no longer loads Qwen
+- [x] Placement: Core ML does not report per-operation placement without profiling, so the
       route records `mixed` (configured for CPU + Neural Engine) or `unknown`, never "100 % ANE"
       (report §5.4)
-- [ ] The Qwen quality gate: the same PCM through the Core ML route and the sherpa-onnx CPU route
+- [x] *(Moot: FluidAudio removed Qwen3-ASR in v0.15.3.)* The Qwen quality gate: the same PCM through the Core ML route and the sherpa-onnx CPU route
       on a fixed set (Chinese, English, Japanese, mixed; the M9 meeting), with a WER/CER threshold
       chosen **before** the run; a route that fails the gate ships as "experimental" with the
       numbers on the diagnostics page
-- [ ] Optional: WhisperKit through the same plugin for Whisper on the Neural Engine, only if the
+- [ ] *(Not pursued: it would need a comparison on a Mac.)* Optional: WhisperKit through the same plugin for Whisper on the Neural Engine, only if the
       whisper.cpp Core ML encoder from L1 is measurably worse on the Mac
-- [ ] Verification on the Mac mini (macOS) — memory under pressure (an 8 GB machine as well if
+- [x] *(Replaced by the user's decision of 2026-09-25: CI green is the bar; the bridge builds
+      for all three Apple targets and the app bundles it; nothing is run on a Mac.)* Verification
+      on the Mac mini (macOS) — memory under pressure (an 8 GB machine as well if
       one exists), background/foreground during a job; iOS on an iPhone if one is available,
       otherwise the Simulator for the code path and the iOS route shipped unverified (D20) — the
       Simulator runs neither the Neural Engine nor a phone's memory limit
-- [ ] **Done when**: Parakeet and Qwen transcribe through FluidAudio on the Mac with the
-      placement recorded, the Qwen gate has a number, and the docs say what the target bump cost
+- [x] *(Amended: Parakeet only, and CI rather than a Mac.)* **Done when**: Parakeet and Qwen
+      transcribe through FluidAudio on the Mac with the placement recorded, the Qwen gate has a
+      number, and the docs say what the target bump cost
 
 ### L5 — Qualcomm NPU: two adapters
 
@@ -1210,6 +1218,14 @@ Recorded when a choice is made that later work should not quietly reverse. Newes
 each date. This log outlives this file: the closing step in §10 moves it, verbatim, to
 `doc/en-us/decisions.md`.
 
+- **2026-09-25** — L4: **A prebuilt bridge, not a Swift plugin.** The plan had a SwiftPM plugin
+  with a Pigeon API; under D21 no Swift may compile in the app build, and FluidAudio compiles C, C++
+  and Swift. So `packages/local_asr_apple/bridge` wraps it in five `@_cdecl` functions,
+  `apple-prebuild.yml` builds it once with `xcodebuild` (a multi-arch `swift build` could not find
+  FluidAudio's prebuilt text-processing library), and the app binds it with ffigen like the other
+  engines. The Core ML package is Parakeet v3 only — FluidAudio dropped Qwen3-ASR — pinned file by
+  file. The first release packed the frameworks' dSYMs by mistake and was deleted; the workflow now
+  refuses anything but a dynamic library.
 - **2026-09-25** — **What this machine can run, and L2's runtimes (D22).** Research the same day,
   partly run on this machine: the CPU is 4× Cortex-X1C + 4× Cortex-A78C, ARMv8.2 with dot-product
   and FP16, no i8mm, BF16 or SVE — our ARMv8.2 build was the right baseline; the GPU has no native
