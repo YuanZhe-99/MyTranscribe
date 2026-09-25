@@ -598,40 +598,48 @@ the engine isolate, the protocol, the smoke test, the UI, the Android backup rul
 around them. What goes: the submodule, the C shim, the CMake project and the toolchain code in
 the hook, the LLVM and Ninja steps in CI.
 
-- [ ] `native-prebuild.yml` (manual, input: the upstream version): checks upstream out at that
+- [x] `native-prebuild.yml` (manual, input: the upstream version): checks upstream out at that
       version's commit and builds **Android arm64-v8a and x86_64** (NDK, `GGML_BACKEND_DL` with
       every CPU variant) and **Windows ARM64** (clang, ARMv8.2 + dot-product + FP16,
       `GGML_OPENMP=OFF`, shared libraries); packs one archive per target with a `SHA256SUMS`
       and the upstream licence; publishes them to the release `whisper-bin-v1.9.4-1`. Run once;
-      re-run only for a new upstream version or a new backend (L3)
-- [ ] `native/binaries.json`: per target, the archive URL, its SHA-256 measured at download, the
+      re-run only for a new upstream version or a new backend (L3). *Done 2026-09-25: the first
+      run took four minutes; Windows ARM64 links no OpenMP runtime*
+- [x] `native/binaries.json`: per target, the archive URL, its SHA-256 measured at download, the
       files to bundle and which one is the entry library; upstream `b5130` assets for Windows
       x64, macOS, iOS and Linux x64, ours for Windows ARM64 and Android
-- [ ] The hook rewritten: download into the hook's shared cache (resumable, by hash), unpack,
+- [x] The hook rewritten: download into the hook's shared cache (resumable, by hash), unpack,
       declare the libraries as `DynamicLoadingBundled` code assets; on Apple, the framework binary
       of the right `xcframework` slice; `.exe`, `SDL2.dll`, `llama.dll` and the tvOS/visionOS
       slices left out. An unsupported target declares nothing and the engine reports "not built"
-- [ ] Headers of v1.9.4 vendored in `third_party/` with the licence; `ffigen` config and the
+- [x] Headers of v1.9.4 vendored in `third_party/` with the licence; `ffigen` config and the
       generated bindings committed; `WhisperLibrary` rewritten on them — `ggml_backend_load_all_from_path`
       for the CPU variants, `whisper_init_from_file_with_params`, `whisper_full` with the params
       by value, the segment getters, `ggml_backend_dev_*` for placement, `whisper_print_system_info`;
       the defaults read-back check at load; the abort and progress callbacks as `isolateLocal`
       native callables; available memory from the OS by FFI (`GlobalMemoryStatusEx`,
-      `/proc/meminfo`, `os_proc_available_memory` / `host_statistics64`)
-- [ ] The C shim, `src/CMakeLists.txt`, the toolchain code and the `packages/whisper.cpp`
+      `/proc/meminfo`, `os_proc_available_memory` / `host_statistics64`). *Logging: whisper.cpp's
+      own stderr output is left as it is — a log callback can be called from ggml's threads,
+      where no Dart callable may run, and silencing it would need native code*
+- [x] The C shim, `src/CMakeLists.txt`, the toolchain code and the `packages/whisper.cpp`
       submodule removed; `AGENTS.md`'s whisper.cpp rule replaced by the manifest rule
-- [ ] Windows: the VC++ runtime (`MSVCP140`, `VCRUNTIME140`, `VCRUNTIME140_1`, and `VCOMP140` for
+- [x] Windows: the VC++ runtime (`MSVCP140`, `VCRUNTIME140`, `VCRUNTIME140_1`, and `VCOMP140` for
       x64) made present — app-local copies from Visual Studio's redistributable folder in the
       build output and the installer, unless the Flutter runner already guarantees them; checked
-      on a clean Windows install or sandbox
+      on a clean Windows install or sandbox. *Settled 2026-09-25 without copies: the app's own
+      executable and plugins already link `MSVCP140` and `VCRUNTIME140` and the installer ships
+      no runtime, so the app has always required the Visual C++ Redistributable; whisper.cpp adds
+      only `VCOMP140` on x64, which that same package installs*
 - [ ] CI: the LLVM and Ninja steps and the whisper.cpp source cache removed; the binary cache keyed
       by the manifest's hash; the Linux test host uses the upstream Ubuntu build. **Done when all
       five jobs are green**, and each job's build time is back within a few minutes of 0.2.1's
-- [ ] Verified again on this machine with our Windows ARM64 set: the package test, the tiny-model
-      live test, the integration test in the app bundle; the route check passes
-- [ ] Docs: `platform-notes.md` (the binary set per target and where each comes from, the VC++
+- [x] Verified again on this machine with our Windows ARM64 set: the package test, the tiny-model
+      live test, the integration test in the app bundle; the route check passes. *2026-09-25: all
+      three green; the Debug app bundle built in 36 s*
+- [x] Docs: `platform-notes.md` (the binary set per target and where each comes from, the VC++
       runtime, the licences), `ci-cd.md`, `features/local-models.md`, the function pages; the
-      app's licence page lists whisper.cpp and ggml (MIT)
+      app's licence page lists whisper.cpp and ggml (MIT) — through the package's own `LICENSE`,
+      which the open-source licences page collects
 
 - [x] *(Superseded by the rework above.)* `packages/whisper.cpp` submodule at a release tag (v1.9.4 at writing; re-check);
       `packages/local_asr_whisper` FFI package with `hook/build.dart` driving CMake:

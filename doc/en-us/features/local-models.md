@@ -5,8 +5,8 @@ disk, and the audio never leaves the device. This page describes what is built s
 the packages, the routes, the checks and the job — and says where a piece arrives in a later
 milestone of `PLAN.md`.
 
-**State at L1:** the first engine, whisper.cpp, is compiled into every build from the pinned
-submodule and runs the Whisper models on the CPU everywhere, and on Metal on Apple platforms (see
+**State at L1:** the first engine, whisper.cpp, is bundled into every build as pinned prebuilt
+libraries and runs the Whisper models on the CPU everywhere, and on Metal on Apple platforms (see
 [`platform-notes.md`](../platform-notes.md)). Parakeet and Qwen are listed in the library but have
 no engine in this build until L2, so their page says the build cannot run them here. GPU routes
 other than Metal arrive in L3.

@@ -1,200 +1,240 @@
-/// Purpose: Build whisper.cpp from the pinned submodule for the target the
-/// Flutter tool is building, and hand the libraries to it as code assets.
-/// Inputs: The hook input: target OS and architecture, the C toolchain Flutter
-/// found, and a shared output directory for incremental builds.
-/// Returns: Code assets — the `lasr_whisper` shim the Dart bindings name, and
+/// Purpose: Hand the Flutter tool the prebuilt whisper.cpp libraries for the
+/// target it is building, as code assets.
+/// Inputs: The hook input: target OS, architecture and (on iOS) SDK, and a
+/// shared output directory that caches the downloads between builds.
+/// Returns: Code assets — `whisper`, the library the Dart bindings name, and
 /// every library it needs beside it.
-/// Side effects: Runs CMake and Ninja; writes into the hook's output folders.
-/// Notes: One CMake project (`src/CMakeLists.txt`) for every target; what
-/// differs is the compiler and the ggml options:
-///
-/// - **Windows** is compiled with clang from the Visual Studio LLVM component,
-///   not `cl.exe`, which lacks the FP16 intrinsics ggml uses on ARM64 (decision
-///   D9 of the local-models plan). x64 builds every CPU variant and loads the
-///   best at run time; ARM64 cannot (the pinned ggml has no Windows ARM64
-///   variant list), so it is one library at a baseline every Windows 11 ARM
-///   processor has: ARMv8.2 with dot-product and FP16.
-/// - **Android** builds every CPU variant for arm64 and x86_64 and loads the
-///   best at run time. 32-bit targets are not built: a large Whisper model does
-///   not fit a 32-bit address space, and the adapter reports the engine as not
-///   built there.
-/// - **Apple** links Metal and the CPU backend into one library; Metal is part
-///   of the OS, so there is no missing driver to guard against.
-/// - **Linux** is the host `flutter test` runs on in CI: one library at the
-///   default baseline.
-///
-/// Tools are found on PATH, then in Visual Studio's bundled CMake and Ninja on
-/// Windows, then in the Android SDK's CMake for Android. See
-/// `doc/en-us/platform-notes.md`.
+/// Side effects: Downloads one archive per target the first time, checks its
+/// SHA-256, and unpacks the listed files into the hook's shared output.
+/// Notes: Nothing is compiled (decision D21 of the local-models plan). Which
+/// archive serves which target, and where each comes from, is
+/// `native/binaries.json`: upstream's own release assets for Windows x64, the
+/// Apple platforms and the Linux test host, and this project's
+/// `whisper-bin-…` release, built by `.github/workflows/native-prebuild.yml`,
+/// for Windows ARM64 and Android. A target without an entry — 32-bit Android,
+/// say — gets no assets, and the engine reports itself as not built there.
+/// See `doc/en-us/platform-notes.md`.
 library;
 
-import 'dart:ffi' show Abi;
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:archive/archive_io.dart';
 import 'package:code_assets/code_assets.dart';
+import 'package:crypto/crypto.dart';
 import 'package:hooks/hooks.dart';
 
 /// Purpose: Run the hook.
 /// Inputs: The arguments the Flutter tool passes.
 /// Returns: None.
-/// Side effects: Builds and reports the libraries.
-/// Notes: A target this package cannot build for — 32-bit, or an OS without a
-/// toolchain — reports no assets rather than failing the app's build: the app
-/// still runs there, without this engine.
+/// Side effects: Downloads, verifies and unpacks; reports the libraries.
+/// Notes: None.
 Future<void> main(List<String> args) async {
   await build(args, (input, output) async {
     if (!input.config.buildCodeAssets) return;
-    final code = input.config.code;
-    final os = code.targetOS;
-    final arch = code.targetArchitecture;
-    if (!_supported(os, arch)) return;
-
-    final packageRoot = Directory.fromUri(input.packageRoot);
-    final source = Directory('${packageRoot.path}src');
-    final whisper = Directory('${packageRoot.path}../whisper.cpp');
-    if (!File('${whisper.path}/CMakeLists.txt').existsSync()) {
-      throw StateError(
-        'packages/whisper.cpp is empty; run `git submodule update --init`.',
-      );
-    }
-
-    final buildDir = Directory.fromUri(
-      input.outputDirectoryShared.resolve('cmake-${os.name}-${arch.name}/'),
+    final manifestFile = File.fromUri(
+      input.packageRoot.resolve('native/binaries.json'),
     );
-    await buildDir.create(recursive: true);
+    output.dependencies.add(manifestFile.uri);
+    final manifest =
+        jsonDecode(manifestFile.readAsStringSync()) as Map<String, dynamic>;
+    final key = _targetKey(input.config.code);
+    final target =
+        (manifest['targets'] as Map<String, dynamic>)[key]
+            as Map<String, dynamic>?;
+    if (target == null) return;
 
-    final toolchain = await _Toolchain.resolve(code);
-    await _run(toolchain.cmake, [
-      '-S',
-      source.path,
-      '-B',
-      buildDir.path,
-      '-G',
-      if (toolchain.ninja case final ninja?) ...[
-        'Ninja',
-        '-DCMAKE_MAKE_PROGRAM=$ninja',
-      ] else
-        'Unix Makefiles',
-      '-DCMAKE_BUILD_TYPE=Release',
-      '-DWHISPER_SOURCE_DIR=${whisper.absolute.path.replaceAll(r'\', '/')}',
-      '-DBUILD_SHARED_LIBS=${_dynamicBackends(os, arch) ? 'ON' : 'OFF'}',
-      '-DGGML_NATIVE=OFF',
-      '-DGGML_OPENMP=OFF',
-      // ggml wraps the compiler in ccache when it finds one, and ccache fails
-      // in the reduced environment a hook runs in (no LOCALAPPDATA on a
-      // Windows runner). The hook's own build folder is already incremental.
-      '-DGGML_CCACHE=OFF',
-      // Where ggml and whisper are static libraries, they are linked into the
-      // shared shim, which on Linux needs them compiled position-independent.
-      '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
-      ...toolchain.cmakeArgs,
-      ..._ggmlArgs(os, arch),
-    ], environment: toolchain.environment);
-    await _run(toolchain.cmake, [
-      '--build',
-      buildDir.path,
-      '--config',
-      'Release',
-    ], environment: toolchain.environment);
-
-    final bin = Directory('${buildDir.path}/bin');
-    final libraries = [
-      for (final entry in bin.listSync())
-        if (entry is File && _isLibrary(entry.path, os)) entry,
-    ];
-    final shim = libraries.firstWhere(
-      (file) => _baseName(file.path).contains('lasr_whisper'),
-      orElse: () => throw StateError('The build produced no lasr_whisper.'),
+    final shared = Directory.fromUri(input.outputDirectoryShared);
+    final archive = await _fetch(target, Directory('${shared.path}/archives'));
+    final files = await _unpack(
+      archive,
+      target,
+      Directory('${shared.path}/lib/$key'),
     );
 
-    output.assets.code.add(
-      CodeAsset(
-        package: input.packageName,
-        name: 'src/bindings.dart',
-        linkMode: DynamicLoadingBundled(),
-        file: shim.uri,
-      ),
-    );
-    for (final library in libraries) {
-      if (library.path == shim.path) continue;
-      // Parakeet ships in the same tree but nothing here uses it yet.
-      if (_baseName(library.path).contains('parakeet')) continue;
+    final entry = target['entry'] as String;
+    for (final file in files) {
+      final name = _baseName(file.path);
       output.assets.code.add(
         CodeAsset(
           package: input.packageName,
-          name: 'lib/${_baseName(library.path)}',
+          // The bindings are generated against this id; the other libraries
+          // are bundled beside it and never named from Dart.
+          name: name == entry ? 'whisper' : 'lib/$name',
           linkMode: DynamicLoadingBundled(),
-          file: library.uri,
+          file: file.uri,
         ),
       );
     }
-
-    output.dependencies.addAll([
-      for (final entry in source.listSync())
-        if (entry is File) entry.uri,
-      File('${whisper.path}/CMakeLists.txt').uri,
-      File('${whisper.path}/include/whisper.h').uri,
-      File('${whisper.path}/ggml/CMakeLists.txt').uri,
-    ]);
   });
 }
 
-/// Purpose: Say whether this package builds for a target at all.
-/// Inputs: [os], [arch].
+/// Purpose: Name the manifest entry for a build target.
+/// Inputs: The [code] config.
+/// Returns: e.g. `windows_arm64`, `ios_simulator_x64`.
+/// Side effects: None.
+/// Notes: Internal helper used within this file only.
+String _targetKey(CodeConfig code) {
+  final arch = switch (code.targetArchitecture) {
+    Architecture.arm64 => 'arm64',
+    Architecture.x64 => 'x64',
+    final other => other.name,
+  };
+  final os = code.targetOS;
+  if (os == OS.iOS && code.iOS.targetSdk == IOSSdk.iPhoneSimulator) {
+    return 'ios_simulator_$arch';
+  }
+  return '${os.name.toLowerCase()}_$arch';
+}
+
+/// Purpose: Make sure the target's archive is in the cache, with the right
+/// hash.
+/// Inputs: The manifest [target]; the cache [dir].
+/// Returns: The archive file.
+/// Side effects: Downloads when the cached copy is missing or wrong.
+/// Notes: The file is named by its hash, so a changed manifest downloads anew
+/// and never reuses the old bytes. A mismatch fails the build: a replaced
+/// upstream asset must never become a different binary in the app.
+Future<File> _fetch(Map<String, dynamic> target, Directory dir) async {
+  final sha = target['sha256'] as String;
+  final url = Uri.parse(target['url'] as String);
+  final file = File('${dir.path}/$sha-${url.pathSegments.last}');
+  if (file.existsSync() && await _sha256(file) == sha) return file;
+
+  await dir.create(recursive: true);
+  final part = File('${file.path}.part');
+  final client = HttpClient();
+  try {
+    final request = await client.getUrl(url);
+    final response = await request.close();
+    if (response.statusCode != HttpStatus.ok) {
+      throw HttpException('HTTP ${response.statusCode} for $url');
+    }
+    await response.pipe(part.openWrite());
+  } finally {
+    client.close();
+  }
+  final got = await _sha256(part);
+  if (got != sha) {
+    await part.delete();
+    throw StateError(
+      '$url has SHA-256 $got, but native/binaries.json pins $sha.',
+    );
+  }
+  return part.rename(file.path);
+}
+
+/// Purpose: Unpack the files a target lists, once per archive.
+/// Inputs: The [archive], the manifest [target], the output [dir].
+/// Returns: The unpacked libraries.
+/// Side effects: Replaces [dir]'s contents when its stamp does not match.
+/// Notes: `from` may end in `*` to take every member with that prefix and
+/// suffix; `as` renames (the Linux libraries are found by their sonames);
+/// `slice` takes one architecture out of a universal Mach-O binary.
+Future<List<File>> _unpack(
+  File archive,
+  Map<String, dynamic> target,
+  Directory dir,
+) async {
+  final specs = [
+    for (final spec in target['files'] as List) spec as Map<String, dynamic>,
+  ];
+  final stamp = File('${dir.path}/.stamp');
+  final expected = '${target['sha256']} ${jsonEncode(specs)}';
+  if (stamp.existsSync() && stamp.readAsStringSync() == expected) {
+    return [
+      for (final entry in dir.listSync())
+        if (entry is File && !entry.path.endsWith('.stamp')) entry,
+    ];
+  }
+  if (dir.existsSync()) await dir.delete(recursive: true);
+  await dir.create(recursive: true);
+
+  final members = _open(archive);
+  final written = <File>[];
+  for (final spec in specs) {
+    final from = spec['from'] as String;
+    final matches = members.files.where(
+      (m) => m.isFile && _matches(m.name, from),
+    );
+    if (matches.isEmpty) {
+      throw StateError('${archive.path} has no member matching $from.');
+    }
+    for (final member in matches) {
+      var bytes = member.readBytes()!;
+      if (spec['slice'] case final String arch) bytes = _thin(bytes, arch);
+      final file = File('${dir.path}/${spec['as'] ?? _baseName(member.name)}');
+      await file.writeAsBytes(bytes, flush: true);
+      written.add(file);
+    }
+  }
+  await stamp.writeAsString(expected);
+  return written;
+}
+
+/// Purpose: Read an archive's member list.
+/// Inputs: The [file]: a `.zip` or a `.tar.gz`.
+/// Returns: The archive.
+/// Side effects: Reads the file.
+/// Notes: Internal helper used within this file only.
+Archive _open(File file) {
+  if (file.path.endsWith('.tar.gz')) {
+    return TarDecoder().decodeBytes(
+      GZipDecoder().decodeBytes(file.readAsBytesSync()),
+    );
+  }
+  return ZipDecoder().decodeStream(InputFileStream(file.path));
+}
+
+/// Purpose: Match a member name against a pattern with at most one `*`.
+/// Inputs: The member [name] and the [pattern].
 /// Returns: `bool`.
 /// Side effects: None.
 /// Notes: Internal helper used within this file only.
-bool _supported(OS os, Architecture arch) => switch (os) {
-  OS.android => arch == Architecture.arm64 || arch == Architecture.x64,
-  OS.windows => arch == Architecture.arm64 || arch == Architecture.x64,
-  OS.macOS || OS.iOS => arch == Architecture.arm64 || arch == Architecture.x64,
-  OS.linux => arch == Architecture.x64 || arch == Architecture.arm64,
-  _ => false,
-};
+bool _matches(String name, String pattern) {
+  final star = pattern.indexOf('*');
+  if (star < 0) return name == pattern;
+  final prefix = pattern.substring(0, star);
+  final suffix = pattern.substring(star + 1);
+  return name.length >= prefix.length + suffix.length &&
+      name.startsWith(prefix) &&
+      name.endsWith(suffix);
+}
 
-/// Purpose: Say whether ggml's backends are separate libraries on a target.
-/// Inputs: [os], [arch].
-/// Returns: `bool`.
+/// Purpose: Take one architecture out of a universal (fat) Mach-O binary.
+/// Inputs: The binary's [bytes] and the [arch] wanted (`arm64`, `x86_64`).
+/// Returns: The thin binary; [bytes] unchanged when it is already thin.
 /// Side effects: None.
-/// Notes: Internal helper used within this file only. Only where the pinned
-/// ggml can build several CPU variants and pick one at run time; everywhere
-/// else one library is simpler to bundle and to load.
-bool _dynamicBackends(OS os, Architecture arch) =>
-    os == OS.android || (os == OS.windows && arch == Architecture.x64);
+/// Notes: The Flutter tool combines the per-architecture assets itself, so it
+/// must be given one slice each. The fat header is big-endian: a count, then
+/// per slice its CPU type, subtype, offset, size and alignment.
+Uint8List _thin(Uint8List bytes, String arch) {
+  final data = ByteData.sublistView(bytes);
+  if (data.getUint32(0) != 0xcafebabe) return bytes;
+  final wanted = switch (arch) {
+    'arm64' => 0x0100000c,
+    'x86_64' => 0x01000007,
+    _ => throw ArgumentError('No Mach-O CPU type for $arch.'),
+  };
+  final count = data.getUint32(4);
+  for (var i = 0; i < count; i++) {
+    final at = 8 + i * 20;
+    if (data.getUint32(at) != wanted) continue;
+    final offset = data.getUint32(at + 8);
+    final size = data.getUint32(at + 12);
+    return Uint8List.sublistView(bytes, offset, offset + size);
+  }
+  throw StateError('The universal binary has no $arch slice.');
+}
 
-/// Purpose: The ggml and whisper options for a target.
-/// Inputs: [os], [arch].
-/// Returns: CMake `-D` arguments.
-/// Side effects: None.
+/// Purpose: Hash a file.
+/// Inputs: [file].
+/// Returns: Its SHA-256 as lowercase hex.
+/// Side effects: Reads the file.
 /// Notes: Internal helper used within this file only.
-List<String> _ggmlArgs(OS os, Architecture arch) => [
-  if (_dynamicBackends(os, arch)) ...[
-    '-DGGML_BACKEND_DL=ON',
-    '-DGGML_CPU_ALL_VARIANTS=ON',
-  ],
-  if (os == OS.windows && arch == Architecture.arm64)
-    '-DGGML_CPU_ARM_ARCH=armv8.2-a+dotprod+fp16',
-  if (os == OS.macOS || os == OS.iOS) ...[
-    '-DGGML_METAL=ON',
-    '-DGGML_METAL_EMBED_LIBRARY=ON',
-    // The Core ML encoder beside a model is used when it is there, and its
-    // absence falls back to Metal rather than failing the load.
-    '-DWHISPER_COREML=ON',
-    '-DWHISPER_COREML_ALLOW_FALLBACK=ON',
-    '-DGGML_BLAS=OFF',
-  ],
-];
-
-/// Purpose: Say whether a build output is a shared library for [os].
-/// Inputs: The file [path] and [os].
-/// Returns: `bool`.
-/// Side effects: None.
-/// Notes: Internal helper used within this file only.
-bool _isLibrary(String path, OS os) => switch (os) {
-  OS.windows => path.endsWith('.dll'),
-  OS.macOS || OS.iOS => path.endsWith('.dylib'),
-  _ => path.endsWith('.so'),
-};
+Future<String> _sha256(File file) async =>
+    (await sha256.bind(file.openRead()).first).toString();
 
 /// Purpose: The last path segment.
 /// Inputs: [path].
@@ -202,300 +242,3 @@ bool _isLibrary(String path, OS os) => switch (os) {
 /// Side effects: None.
 /// Notes: Internal helper used within this file only.
 String _baseName(String path) => path.split(RegExp(r'[\\/]')).last;
-
-/// Purpose: Run a tool and fail the hook with its output when it fails.
-/// Inputs: The [executable], its [arguments], and the [environment].
-/// Returns: None.
-/// Side effects: Runs a process.
-/// Notes: Internal helper used within this file only.
-Future<void> _run(
-  String executable,
-  List<String> arguments, {
-  Map<String, String>? environment,
-}) async {
-  final result = await Process.run(
-    executable,
-    arguments,
-    environment: environment,
-    includeParentEnvironment: environment == null,
-  );
-  if (result.exitCode != 0) {
-    throw ProcessException(
-      executable,
-      arguments,
-      '${result.stdout}\n${result.stderr}',
-      result.exitCode,
-    );
-  }
-}
-
-/// The tools and settings for one target.
-class _Toolchain {
-  _Toolchain({
-    required this.cmake,
-    required this.ninja,
-    required this.cmakeArgs,
-    this.environment,
-  });
-
-  /// The CMake executable.
-  final String cmake;
-
-  /// The Ninja executable, or null to use Makefiles.
-  ///
-  /// Only off Windows: a macOS runner may have CMake and not Ninja, and
-  /// Xcode's make serves as well there.
-  final String? ninja;
-
-  /// The compiler and platform arguments.
-  final List<String> cmakeArgs;
-
-  /// The whole environment to run in, or null for the hook's own.
-  final Map<String, String>? environment;
-
-  /// Purpose: Find the tools for the target in [code].
-  /// Inputs: [code], the hook's code config.
-  /// Returns: A [_Toolchain].
-  /// Side effects: May run Visual Studio's environment script.
-  /// Notes: None.
-  static Future<_Toolchain> resolve(CodeConfig code) async =>
-      switch (code.targetOS) {
-        OS.windows => _windows(code),
-        OS.android => _android(code),
-        OS.macOS || OS.iOS => _apple(code),
-        _ => _Toolchain(
-          cmake: _onPath('cmake') ?? 'cmake',
-          ninja: _onPath('ninja'),
-          cmakeArgs: const [],
-        ),
-      };
-
-  /// Purpose: Windows: clang from Visual Studio, in its developer environment.
-  /// Inputs: [code].
-  /// Returns: A [_Toolchain].
-  /// Side effects: Runs the developer command prompt script once.
-  /// Notes: The Flutter tool hands over `cl.exe` and the environment script;
-  /// the LLVM component lives beside `cl.exe` in the same Visual Studio.
-  static Future<_Toolchain> _windows(CodeConfig code) async {
-    final compiler = code.cCompiler;
-    final hostArm = Abi.current() == Abi.windowsArm64;
-    final Directory vc;
-    final String script;
-    final List<String> scriptArguments;
-    if (compiler != null) {
-      // …\VC\Tools\MSVC\<version>\bin\Host<h>\<t>\cl.exe → …\VC
-      var dir = File.fromUri(compiler.compiler).parent;
-      for (var i = 0; i < 6; i++) {
-        dir = dir.parent;
-      }
-      vc = dir;
-      final prompt = compiler.windows.developerCommandPrompt;
-      script = prompt == null ? '' : File.fromUri(prompt.script).path;
-      scriptArguments = prompt?.arguments ?? const [];
-    } else {
-      // `dart test` hands over no toolchain on Windows; the Flutter tool does.
-      vc = Directory('${_visualStudio().path}\\VC');
-      script = '${vc.path}\\Auxiliary\\Build\\vcvarsall.bat';
-      final host = hostArm ? 'arm64' : 'x64';
-      final target = code.targetArchitecture == Architecture.arm64
-          ? 'arm64'
-          : 'x64';
-      scriptArguments = [host == target ? target : '${host}_$target'];
-    }
-    final llvm =
-        [
-          if (hostArm) '${vc.path}\\Tools\\Llvm\\ARM64\\bin',
-          '${vc.path}\\Tools\\Llvm\\x64\\bin',
-          '${vc.path}\\Tools\\Llvm\\bin',
-          // A standalone LLVM, as CI installs where Visual Studio lacks the
-          // Clang component.
-          if (Platform.environment['LLVM_ROOT'] case final root?) '$root\\bin',
-          r'C:\Program Files\LLVM\bin',
-        ].firstWhere(
-          (dir) => File('$dir\\clang.exe').existsSync(),
-          orElse: () => throw StateError(
-            'Clang is not installed with Visual Studio. Add the "C++ Clang '
-            'Compiler for Windows" component, or install LLVM.',
-          ),
-        );
-    final ide = '${vc.parent.path}\\Common7\\IDE\\CommonExtensions\\Microsoft';
-
-    final environment = <String, String>{...Platform.environment};
-    if (script.isNotEmpty) {
-      final result = await Process.run('cmd', [
-        '/c',
-        'call',
-        script,
-        ...scriptArguments,
-        '>nul',
-        '&&',
-        'set',
-      ]);
-      for (final line in '${result.stdout}'.split(RegExp(r'\r?\n'))) {
-        final at = line.indexOf('=');
-        if (at > 0) environment[line.substring(0, at)] = line.substring(at + 1);
-      }
-    }
-
-    final target = code.targetArchitecture == Architecture.arm64
-        ? 'arm64-pc-windows-msvc'
-        : 'x86_64-pc-windows-msvc';
-    final clang = '$llvm\\clang.exe'.replaceAll(r'\', '/');
-    final clangxx = '$llvm\\clang++.exe'.replaceAll(r'\', '/');
-    // On x64, ggml's SSE4.2 variant passes block pointers to `_mm_prefetch`,
-    // which the MSVC-compatible headers declare as taking `const char *`; a
-    // clang recent enough to make that an error stops the build over a
-    // prefetch hint. It stays a warning.
-    final flags = code.targetArchitecture == Architecture.arm64
-        ? '-march=armv8.2-a+dotprod+fp16 -fvectorize -ffp-model=fast'
-        : '-fvectorize -ffp-model=fast '
-              '-Wno-error=incompatible-pointer-types';
-    return _Toolchain(
-      cmake:
-          _onPath('cmake', environment) ?? '$ide\\CMake\\CMake\\bin\\cmake.exe',
-      ninja: (_onPath('ninja', environment) ?? '$ide\\CMake\\Ninja\\ninja.exe')
-          .replaceAll(r'\', '/'),
-      cmakeArgs: [
-        '-DCMAKE_SYSTEM_NAME=Windows',
-        '-DCMAKE_SYSTEM_PROCESSOR=${code.targetArchitecture == Architecture.arm64 ? 'ARM64' : 'AMD64'}',
-        '-DCMAKE_C_COMPILER=$clang',
-        '-DCMAKE_CXX_COMPILER=$clangxx',
-        '-DCMAKE_C_COMPILER_TARGET=$target',
-        '-DCMAKE_CXX_COMPILER_TARGET=$target',
-        '-DCMAKE_C_FLAGS=$flags',
-        '-DCMAKE_CXX_FLAGS=$flags',
-      ],
-      environment: environment,
-    );
-  }
-
-  /// Purpose: Android: the NDK's own CMake toolchain file.
-  /// Inputs: [code].
-  /// Returns: A [_Toolchain].
-  /// Side effects: None.
-  /// Notes: The NDK root is found from the clang the Flutter tool hands over;
-  /// CMake and Ninja come from the Android SDK when they are not on PATH.
-  static Future<_Toolchain> _android(CodeConfig code) async {
-    final compiler = code.cCompiler;
-    if (compiler == null) {
-      throw StateError('No NDK toolchain was found for Android.');
-    }
-    // <ndk>/toolchains/llvm/prebuilt/<host>/bin/clang → <ndk>
-    var ndk = File.fromUri(compiler.compiler).parent;
-    for (var i = 0; i < 5; i++) {
-      ndk = ndk.parent;
-    }
-    final sdk = ndk.parent.parent;
-    String? sdkTool(String name) {
-      final cmakeDir = Directory('${sdk.path}/cmake');
-      if (!cmakeDir.existsSync()) return null;
-      final versions = cmakeDir.listSync().whereType<Directory>().toList()
-        ..sort((a, b) => b.path.compareTo(a.path));
-      for (final version in versions) {
-        for (final candidate in [
-          '${version.path}/bin/$name',
-          '${version.path}/bin/$name.exe',
-        ]) {
-          if (File(candidate).existsSync()) return candidate;
-        }
-      }
-      return null;
-    }
-
-    final abi = switch (code.targetArchitecture) {
-      Architecture.arm64 => 'arm64-v8a',
-      Architecture.x64 => 'x86_64',
-      final other => throw StateError('Unsupported Android ABI: $other'),
-    };
-    return _Toolchain(
-      cmake: _onPath('cmake') ?? sdkTool('cmake') ?? 'cmake',
-      ninja: (_onPath('ninja') ?? sdkTool('ninja'))?.replaceAll(r'\', '/'),
-      cmakeArgs: [
-        '-DCMAKE_TOOLCHAIN_FILE=${ndk.path.replaceAll(r'\', '/')}/build/cmake/android.toolchain.cmake',
-        '-DANDROID_ABI=$abi',
-        '-DANDROID_PLATFORM=android-${code.android.targetNdkApi}',
-        '-DANDROID_STL=c++_static',
-      ],
-    );
-  }
-
-  /// Purpose: macOS and iOS: Xcode's clang, one architecture per call.
-  /// Inputs: [code].
-  /// Returns: A [_Toolchain].
-  /// Side effects: None.
-  /// Notes: The Flutter tool calls the hook once per architecture and joins
-  /// the results itself.
-  static Future<_Toolchain> _apple(CodeConfig code) async {
-    final arch = code.targetArchitecture == Architecture.arm64
-        ? 'arm64'
-        : 'x86_64';
-    final ios = code.targetOS == OS.iOS;
-    return _Toolchain(
-      cmake: _onPath('cmake') ?? 'cmake',
-      ninja: _onPath('ninja'),
-      cmakeArgs: [
-        '-DCMAKE_OSX_ARCHITECTURES=$arch',
-        if (ios) ...[
-          '-DCMAKE_SYSTEM_NAME=iOS',
-          '-DCMAKE_OSX_SYSROOT=${code.iOS.targetSdk == IOSSdk.iPhoneSimulator ? 'iphonesimulator' : 'iphoneos'}',
-          '-DCMAKE_OSX_DEPLOYMENT_TARGET=${code.iOS.targetVersion}',
-        ] else
-          '-DCMAKE_OSX_DEPLOYMENT_TARGET=${code.macOS.targetVersion}',
-      ],
-    );
-  }
-}
-
-/// Purpose: Find the newest Visual Studio installation.
-/// Inputs: None.
-/// Returns: Its root directory.
-/// Side effects: Reads the file system.
-/// Notes: Internal helper used within this file only. Looks in the default
-/// install locations, newest version first, for one with the C++ tools.
-Directory _visualStudio() {
-  for (final base in [
-    r'C:\Program Files\Microsoft Visual Studio',
-    r'C:\Program Files (x86)\Microsoft Visual Studio',
-  ]) {
-    final root = Directory(base);
-    if (!root.existsSync()) continue;
-    final versions = root.listSync().whereType<Directory>().toList()
-      ..sort((a, b) => b.path.compareTo(a.path));
-    for (final version in versions) {
-      final editions = version.listSync().whereType<Directory>();
-      for (final edition in editions) {
-        if (File(
-          '${edition.path}\\VC\\Auxiliary\\Build\\vcvarsall.bat',
-        ).existsSync()) {
-          return edition;
-        }
-      }
-    }
-  }
-  throw StateError(
-    'Visual Studio with the C++ tools was not found; install it with the '
-    '"Desktop development with C++" workload and the Clang component.',
-  );
-}
-
-/// Purpose: Find an executable on PATH.
-/// Inputs: The tool's [name], and optionally the [environment] to search.
-/// Returns: Its path, or null.
-/// Side effects: Reads the file system.
-/// Notes: Internal helper used within this file only.
-String? _onPath(String name, [Map<String, String>? environment]) {
-  final path =
-      (environment ?? Platform.environment)['PATH'] ??
-      (environment ?? Platform.environment)['Path'] ??
-      '';
-  final separator = Platform.isWindows ? ';' : ':';
-  final suffixes = Platform.isWindows ? ['.exe', '.cmd', ''] : [''];
-  for (final dir in path.split(separator)) {
-    if (dir.isEmpty) continue;
-    for (final suffix in suffixes) {
-      final candidate = File('$dir${Platform.pathSeparator}$name$suffix');
-      if (candidate.existsSync()) return candidate.path;
-    }
-  }
-  return null;
-}

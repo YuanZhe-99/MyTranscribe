@@ -44,35 +44,33 @@
 
 CI 不构建 MSIX：打包它需要签名证书，而本仓库没有。要产出它，仍然是在本地运行 `dart run msix:create`。
 
-现在每个作业还会通过 `packages/local_asr_whisper` 的构建钩子编译 whisper.cpp，作为 `flutter build` 的一部分
-—— Ubuntu 作业则作为 `flutter test` 的一部分，为主机编译。每个作业都缓存钩子的 CMake 构建目录，以 whisper.cpp
-子模块的提交和钩子自身的源码为键，因此两者都没改的推送不会重新构建它。两个 Windows 作业都会确保装有 clang：
-镜像带有该组件时用 Visual Studio 自己的，否则用一个固定的 LLVM 发行版，并按其公布的 SHA-256 核对。Ubuntu 作
-业安装 Ninja；在其他地方缺少 Ninja 时，钩子回退到 Makefiles。
+没有任何作业编译原生代码（`PLAN.md` 的决定 D21）。`packages/local_asr_whisper` 的构建钩子下载目标所对应的预编译
+whisper.cpp 压缩包，按 `native/binaries.json` 核对其 SHA-256，再打包其中的库 —— 作为 `flutter build` 的一部分，
+在 Ubuntu 作业中则作为 `flutter test` 的一部分，为主机准备。每个作业都缓存钩子的共享文件夹，以清单和钩子为键，
+因此普通的推送什么也不用下载。
 
-这是本项目正在放弃的源码构建（`PLAN.md` 的决定 D21）：应用构建将只下载预编译的库。
-`.github/workflows/native-prebuild.yml` 负责构建上游没有以可用形式发布的那些 —— Android arm64-v8a 与 x86_64，
-以及 ARMv8.2、不带 OpenMP 的 Windows ARM64 —— 并把它们作为一个 GitHub Release 的附件发布，标签为
+`.github/workflows/native-prebuild.yml` 负责构建上游没有以可用形式发布的那些压缩包 —— Android arm64-v8a 与
+x86_64，以及 ARMv8.2、不带 OpenMP 的 Windows ARM64 —— 并把它们作为一个 GitHub Release 的附件发布，标签为
 `whisper-bin-<上游版本>-<n>`，`v*` 发布触发器会忽略它。它从 Actions 页手动运行，每个上游版本一次，输入是上游
-标签和发布标签。
+标签和发布标签；它用到的工具链 —— NDK、ARM64 运行器上的 clang —— 在别处都不需要。哪个压缩包服务哪个目标、
+原因为何，见 `platform-notes.md`。
 
 ## 全新克隆
 
 ```bash
 git clone git@github.com:YuanZhe-99/MyTranscribe.git     # 或使用 Gitea 远端
 cd MyTranscribe
-git submodule update --init          # myapps_data 与 whisper.cpp 都是子模块
+git submodule update --init          # myapps_data 是子模块
 flutter pub get
 dart pub get -C packages/local_asr_whisper   # 它自己的测试，flutter analyze 会读到
 flutter gen-l10n
 ```
 
 跳过子模块那一步会让 `flutter pub get` 失败：`myapps_data` 是从 `packages/myapps_data` 解析的，而在子模块
-检出之前那里是空的；第一次构建也会在 whisper.cpp 钩子里失败，钩子会提示运行同一条命令。
+检出之前那里是空的。
 
-构建需要一套钩子能驱动的 C 工具链：Windows 上是带 C++ 工作负载及其 Clang 组件的 Visual Studio（或独立的
-LLVM），Android 上是 Flutter 安装的 NDK，Mac 上是 Xcode，另外还需要 CMake —— 在 Windows 上 Visual Studio
-自带的那个就够用。
+构建只需要 Flutter 在各平台本身需要的东西：whisper.cpp 的库由构建钩子下载，在第一次构建某个目标时下载一次
+（每个目标约 1–60 MB，Apple 的最大），之后从 `.dart_tool/` 取用。
 
 子模块的 URL 是**相对**的 —— `../MyApps-DATA.git` —— 因此它按你克隆自哪个远端来解析。从 GitHub 克隆会指向
 `github.com/YuanZhe-99/MyApps-DATA`，从 Gitea 克隆会指向 Gitea 上的副本，两者都不必知道对方存在。两边都必

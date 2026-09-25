@@ -121,34 +121,45 @@ Windows 上为 false，因为它没有文件转写 API，所以回退设置在�
 
 ### whisper.cpp
 
-whisper.cpp 是位于 `packages/whisper.cpp` 的 git 子模块，固定在一个发布标签（v1.9.4）上，使用公开的上游 URL
-—— 与 `myapps_data` 不同，这里用绝对 URL 是对的，因为上游不在本项目的任何一个远端里。`packages/local_asr_whisper`
-对它做了封装：一个构建钩子（`hook/build.dart`）针对 Flutter 工具正在构建的目标在子模块上运行 CMake，一个小
-小的 C 垫片（`src/lasr_whisper.c`）为 Dart 一侧提供只用普通类型的稳定 ABI，因此没有任何 Dart 代码去镜像
-whisper.cpp 的结构体。没有可用的 pub 包：现有的两个要么只附带 x86_64 的 Windows 二进制文件，要么根本不支持
-桌面。
+应用构建不编译任何原生代码（`PLAN.md` 的决定 D21）。`packages/local_asr_whisper` 里有一份清单
+`native/binaries.json`，按 URL 和 SHA-256 为每个目标固定一个压缩包。它的构建钩子下载正在构建的目标所对应的
+压缩包，核对哈希，把列出的库解压到 `.dart_tool/` 下它的共享缓存中，再作为代码资源交给 Flutter 工具。哈希不
+符时构建失败，而不是打包一个不同的二进制文件。所有压缩包都来自 whisper.cpp v1.9.4（提交 `927cfce3`）。
 
-| 目标 | 编译器 | CPU 代码 | 其他后端 |
+| 目标 | 压缩包 | CPU 代码 | 其他后端 |
 |---|---|---|---|
-| Windows ARM64 | 来自 Visual Studio LLVM 组件的 clang（或独立的 LLVM），在 Visual Studio 的开发者环境中 | 一个 ARMv8.2 的库，带点积和 FP16，每款 Windows 11 ARM 处理器都具备 —— 固定的 ggml 没有可在运行时挑选的 Windows ARM64 变体列表 | —（OpenCL 在 L3） |
-| Windows x64 | 同一个 clang | 构建所有 x86 变体，运行时加载最好的那个 | —（Vulkan 在 L3） |
-| Android arm64、x86_64 | NDK 的 clang 与 CMake 工具链文件 | 构建所有 Android 变体，运行时加载最好的那个 | —（OpenCL 在 L3） |
-| macOS、iOS | Xcode 的 clang | 该架构的默认设置 | Metal；Core ML 编码器放在模型旁边时会使用它 |
-| Linux x64 | 主机编译器 | 默认设置 | —（CI 中运行主机 `flutter test` 的环境） |
+| Windows x64 | 上游的 `whisper-bin-x64.zip`（发布资源 `b5130`） | 所有 x86 变体，运行时加载最好的那个 | —（Vulkan 在 L3） |
+| Windows ARM64 | 我们的：`whisper-bin-v1.9.4-1` 发布中的 `whisper-win-arm64.zip` | 一个 ARMv8.2 的库，带点积和 FP16，不用 OpenMP | —（OpenCL 在 L3） |
+| Android arm64-v8a、x86_64 | 我们的：同一发布中的 `whisper-android-<abi>.zip` | 所有 Android 变体，运行时加载最好的那个 | —（OpenCL 在 L3） |
+| macOS、iOS 及其模拟器 | 上游的 `whisper-b5130-xcframework.zip`：取匹配切片的框架二进制，若是通用二进制则只取正在构建的那个架构 | 链接在内 | Metal；Core ML 编码器放在模型旁边时会使用它 |
+| Linux x64 | 上游的 `whisper-bin-ubuntu-x64.tar.gz`，各库以其 soname 命名 | 所有 x86 变体 | —（仅是 CI 中运行主机 `flutter test` 的环境） |
 
-Windows 上不使用 `cl.exe`：它缺少 ggml 的 ARM 代码所需的 FP16 内建函数，而 L3 的 OpenCL 后端根本不支持它。x64 上
-不兼容指针类型的诊断保持为警告：ggml 的 SSE4.2 变体把块指针传给 `_mm_prefetch`，否则较新的 clang 会因此中止。ggml 自带的 ccache 包装在所有平台都关闭：
-ccache 在构建钩子那种精简的环境里会失败，而钩子的构建目录本来就是增量的。所有代码都按位置无关方式编译，
-因为 ggml 与 whisper 为静态库时，它们最终会被链接进共享的接口层。
-32 位 Android 不构建 —— 大的 Whisper 模型装不进 32 位地址空间 —— 引擎在那里报告自己未构建。
+其中两个是我们自己的，因为上游的不合格：它的 Windows ARM64 压缩包需要 Visual Studio `debug_nonredist` 文件夹
+里的 `libomp140.aarch64.dll`，而那是不能分发的，并且它以 ARMv8.7 为目标，较旧的骁龙笔记本跑不了；它也没有为
+Android 发布任何东西。`.github/workflows/native-prebuild.yml` 从同一个上游提交构建这两者，每个版本一次
+（见 `ci-cd.md`）。32 位 Android 没有条目 —— 大的 Whisper 模型装不进 32 位地址空间 —— 引擎在那里报告自己未构建。
 
-在运行时挑选 CPU 代码的地方，ggml 把它的各个后端作为单独的库加载，而垫片从它自己被加载的那个文件夹加载它
-们：在 Android 上那个文件夹不是可执行文件所在的文件夹，而在 `flutter test` 运行中其他文件夹也都不是。这就是
-Android 应用用**旧式打包**（`android/app/build.gradle.kts` 中的 `useLegacyPackaging`）构建的原因：原生库被
-解压到应用的库文件夹，而不是从 APK 内部读取 —— 在那里无法列出文件夹内容。Android 的备份规则
-（`res/xml/backup_rules.xml` 与 `res/xml/data_extraction_rules.xml`）把 `models/` 排除在自动备份和设备迁移
-之外。
+Dart 一侧直接绑定这些库，不再有 C 垫片。`third_party/whisper.cpp/include/` 存放固定版本的头文件和许可证，
+`dart run tool/ffigen.dart` 生成 `lib/src/whisper_bindings.g.dart`（绑定到 `whisper` 代码资源）和
+`lib/src/ggml_bindings.g.dart`（在它旁边的 ggml 库中查找符号；在 Apple 上 ggml 链接在 whisper 自己的二进制
+文件里，就在那里查找）。参数结构体按值传递，因此引擎在加载时会通过生成的结构体读回 whisper.cpp 的默认参数，
+并与其源码记载的值比较；不一致说明库与绑定对不上，引擎就拒绝这个库，而不是去调用它。取消与进度是在引擎
+isolate 中创建的回调，这是允许的，因为 whisper.cpp 在调用 `whisper_full` 的那个线程上调用它们。ggml 的两个
+枚举被绑定为 32 位整数，这些目标所用的每个编译器都给它们这个大小。内存保护所用的可用内存数值通过 FFI 从操作
+系统读取。
 
-工具：先用 PATH 中的 CMake 和 Ninja，然后在 Windows 上用 Visual Studio 自带的副本，在 Android 上用 Android
-SDK 的副本；在 macOS 或 Linux 上没有 Ninja 时，钩子回退到 Makefiles。CMake 构建目录位于 `.dart_tool/` 下钩
-子的共享输出中，因此第二次构建是增量的。
+在运行时挑选 CPU 代码的地方，ggml 把各个变体作为单独的库，从 whisper 库被加载的那个文件夹加载，而这个文件夹
+由 Dart 一侧向操作系统询问得到：在 Android 上那个文件夹不是可执行文件所在的文件夹，而在 `flutter test` 运行中
+其他文件夹也都不是。这就是 Android 应用用**旧式打包**（`android/app/build.gradle.kts` 中的
+`useLegacyPackaging`）构建的原因：原生库被解压到应用的库文件夹，而不是从 APK 内部读取 —— 在那里无法列出文件夹
+内容。Android 的备份规则（`res/xml/backup_rules.xml` 与 `res/xml/data_extraction_rules.xml`）把 `models/`
+排除在自动备份和设备迁移之外。
+
+Windows 上的库链接 Visual C++ 运行库（`MSVCP140.dll`、`VCRUNTIME140.dll`，x64 上还有 `VCRUNTIME140_1.dll` 和
+OpenMP 运行库 `VCOMP140.DLL`）。本应用本来就依赖这个运行库 —— 它自己的可执行文件和各插件都链接
+`MSVCP140.dll` 与 `VCRUNTIME140.dll`，安装程序也不附带任何运行库 —— 因此 whisper.cpp 只在 x64 上多出一个
+`VCOMP140.DLL`，而它由同一个 Visual C++ 可再发行组件包安装。
+
+升级到更新的上游版本会一次涉及以上全部：用新标签运行 `native-prebuild.yml`，把 `native/binaries.json` 指向新的
+压缩包及其哈希，把新的头文件复制到 `third_party/`，重新生成绑定，默认值有变时更新布局检查，并提高
+`whisper_cpp_engine.dart` 中的 `_bindingsVersion`，让每台设备重新检查它的路线。

@@ -147,38 +147,56 @@ which has no file-transcription API, so the fallback setting is absent there rat
 
 ### whisper.cpp
 
-whisper.cpp is a git submodule at `packages/whisper.cpp`, pinned to a release tag (v1.9.4), with the
-public upstream URL — an absolute URL is right here, unlike `myapps_data`, because upstream lives
-in neither of this project's remotes. `packages/local_asr_whisper` wraps it: a build hook
-(`hook/build.dart`) runs CMake on the submodule for whatever target the Flutter tool is building,
-and a small C shim (`src/lasr_whisper.c`) gives the Dart side a stable ABI of plain types, so no
-Dart code mirrors a whisper.cpp struct. No pub package was usable: the two that exist ship
-x86_64-only Windows binaries or no desktop at all.
+The app build compiles nothing native (decision D21 of `PLAN.md`). `packages/local_asr_whisper`
+keeps a manifest, `native/binaries.json`, that pins one archive per target by URL and SHA-256. Its
+build hook downloads the archive for the target being built, checks the hash, unpacks the listed
+libraries into its shared cache under `.dart_tool/`, and hands them to the Flutter tool as code
+assets. A hash that does not match fails the build rather than bundle a different binary. Every
+archive is built from whisper.cpp v1.9.4 (commit `927cfce3`).
 
-| Target | Compiler | CPU code | Other backends |
+| Target | Archive | CPU code | Other backends |
 |---|---|---|---|
-| Windows ARM64 | clang from Visual Studio's LLVM component (or a standalone LLVM), in Visual Studio's developer environment | one library at ARMv8.2 with dot-product and FP16, which every Windows 11 ARM processor has — the pinned ggml has no Windows ARM64 variant list to choose from at run time | — (OpenCL in L3) |
-| Windows x64 | the same clang | every x86 variant built, the best loaded at run time | — (Vulkan in L3) |
-| Android arm64, x86_64 | the NDK's clang and CMake toolchain file | every Android variant built, the best loaded at run time | — (OpenCL in L3) |
-| macOS, iOS | Xcode's clang | the default for the architecture | Metal, with the Core ML encoder used when it is beside the model |
-| Linux x64 | the host compiler | the default | — (the host `flutter test` runs on in CI) |
+| Windows x64 | upstream's `whisper-bin-x64.zip` (release assets `b5130`) | every x86 variant, the best loaded at run time | — (Vulkan in L3) |
+| Windows ARM64 | ours: `whisper-win-arm64.zip` in the `whisper-bin-v1.9.4-1` release | one library at ARMv8.2 with dot-product and FP16, no OpenMP | — (OpenCL in L3) |
+| Android arm64-v8a, x86_64 | ours: `whisper-android-<abi>.zip` in the same release | every Android variant, the best loaded at run time | — (OpenCL in L3) |
+| macOS, iOS and its simulator | upstream's `whisper-b5130-xcframework.zip`: the framework binary of the matching slice, and of a universal binary the one architecture being built | linked in | Metal, and the Core ML encoder when it is beside the model |
+| Linux x64 | upstream's `whisper-bin-ubuntu-x64.tar.gz`, the libraries under their sonames | every x86 variant | — (only the host `flutter test` runs on in CI) |
 
-`cl.exe` is not used on Windows: it lacks the FP16 intrinsics ggml's ARM code needs, and the OpenCL
-backend of L3 does not support it at all. On x64 the incompatible-pointer-types diagnostic stays a
-warning: ggml's SSE4.2 variant passes block pointers to `_mm_prefetch`, which a recent clang
-otherwise stops on. ggml's own ccache wrapping is off everywhere: ccache fails in the reduced
-environment a build hook runs in, and the hook's build folder is incremental anyway. Everything is compiled position-independent,
-because where ggml and whisper are static libraries they end up inside the shared shim. 32-bit Android is not built — a large Whisper model does
-not fit a 32-bit address space — and the engine reports itself as not built there.
+Two of them are ours because upstream's do not qualify: its Windows ARM64 zip needs
+`libomp140.aarch64.dll` from Visual Studio's `debug_nonredist` folder, which may not be shipped, and
+targets ARMv8.7, which older Snapdragon laptops cannot run; and it publishes nothing for Android.
+`.github/workflows/native-prebuild.yml` builds both from the same upstream commit, once per version
+(`ci-cd.md`). 32-bit Android has no entry — a large Whisper model does not fit a 32-bit address
+space — and the engine reports itself as not built there.
 
-Where the CPU code is chosen at run time, ggml loads its backends as separate libraries, and the
-shim loads them from the folder it was itself loaded from: on Android that folder is not the
-executable's, and in a `flutter test` run neither is anything else. That is why the Android app is
-built with **legacy packaging** (`useLegacyPackaging` in `android/app/build.gradle.kts`): the
-native libraries are extracted to the app's library folder instead of being read from inside the
-APK, where a folder cannot be listed. Android's backup rules (`res/xml/backup_rules.xml` and
-`res/xml/data_extraction_rules.xml`) keep `models/` out of Auto Backup and device transfer.
+The Dart side binds the libraries directly; there is no C shim. `third_party/whisper.cpp/include/`
+holds the pinned version's headers and licence, and `dart run tool/ffigen.dart` generates
+`lib/src/whisper_bindings.g.dart`, bound to the `whisper` code asset, and
+`lib/src/ggml_bindings.g.dart`, looked up in the ggml libraries beside it — or inside whisper's own
+binary on Apple, where ggml is linked in. The parameter structs travel by value, so at load the
+engine reads whisper.cpp's default parameters back through the generated structs and compares them
+with the values its source documents; a mismatch means the library and the bindings disagree, and
+the engine refuses the library rather than call into it. Cancel and progress are callbacks created
+in the engine isolate, which is allowed because whisper.cpp calls both on the thread that called
+`whisper_full`. ggml's two enums are bound as 32-bit integers, the size every compiler these targets
+use gives them. The memory guard's figure for available memory comes from the OS through FFI.
 
-Tools: CMake and Ninja from PATH, then Visual Studio's own copies on Windows, then the Android SDK's
-for Android; without Ninja on macOS or Linux the hook falls back to Makefiles. The CMake build
-directory lives in the hook's shared output under `.dart_tool/`, so a second build is incremental.
+Where the CPU code is chosen at run time, ggml loads its variants as separate libraries from the
+folder the whisper library was loaded from, which the Dart side asks the OS for: on Android that
+folder is not the executable's, and in a `flutter test` run neither is anything else. That is why
+the Android app is built with **legacy packaging** (`useLegacyPackaging` in
+`android/app/build.gradle.kts`): the native libraries are extracted to the app's library folder
+instead of being read from inside the APK, where a folder cannot be listed. Android's backup rules
+(`res/xml/backup_rules.xml` and `res/xml/data_extraction_rules.xml`) keep `models/` out of Auto
+Backup and device transfer.
+
+The Windows libraries link the Visual C++ runtime (`MSVCP140.dll`, `VCRUNTIME140.dll`, and on x64
+also `VCRUNTIME140_1.dll` and the OpenMP runtime `VCOMP140.DLL`). The app already depends on that
+runtime — its own executable and its plugins link `MSVCP140.dll` and `VCRUNTIME140.dll`, and the
+installer copies none of it — so whisper.cpp adds only `VCOMP140.DLL` on x64, which the same Visual
+C++ Redistributable installs.
+
+Moving to a newer upstream version touches all of it at once: run `native-prebuild.yml` for the new
+tag, point `native/binaries.json` at the new archives with their hashes, copy the new headers into
+`third_party/`, regenerate the bindings, update the layout check if the defaults moved, and bump
+`_bindingsVersion` in `whisper_cpp_engine.dart` so every device checks its routes again.

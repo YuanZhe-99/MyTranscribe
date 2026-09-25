@@ -51,39 +51,36 @@ Three things about the jobs are worth knowing:
 MSIX is not built in CI: packaging one needs a signing certificate, and this repository carries
 none. `dart run msix:create` locally is still the way to produce it.
 
-Every job now also compiles whisper.cpp, through the build hook of `packages/local_asr_whisper`, as
-part of `flutter build` — and the Ubuntu job as part of `flutter test`, for the host. Each job
-caches the hook's CMake build directory, keyed by the whisper.cpp submodule commit and the hook's
-own sources, so a push that changes neither does not rebuild it. Both Windows jobs make sure clang
-is installed: Visual Studio's own when the image has the component, otherwise a pinned LLVM release
-checked against its published SHA-256. The Ubuntu job installs Ninja; elsewhere the hook falls back
-to Makefiles when Ninja is missing.
+No job compiles native code (decision D21 of `PLAN.md`). The build hook of
+`packages/local_asr_whisper` downloads the prebuilt whisper.cpp archive for the target, checks its
+SHA-256 against `native/binaries.json` and bundles the libraries — as part of `flutter build`, and
+in the Ubuntu job as part of `flutter test`, for the host. Each job caches the hook's shared folder,
+keyed by the manifest and the hook, so an ordinary push downloads nothing.
 
-That is the source build this project is leaving (decision D21 of `PLAN.md`): the app build will
-only download prebuilt libraries. `.github/workflows/native-prebuild.yml` builds the ones upstream
-does not publish in a usable form — Android arm64-v8a and x86_64, and Windows ARM64 at ARMv8.2
-without OpenMP — and publishes them as the assets of a GitHub Release tagged
-`whisper-bin-<upstream version>-<n>`, which the `v*` release trigger ignores. It runs by hand from
-the Actions tab, once per upstream version, with the upstream tag and the release tag as inputs.
+`.github/workflows/native-prebuild.yml` builds the archives upstream does not publish in a usable
+form — Android arm64-v8a and x86_64, and Windows ARM64 at ARMv8.2 without OpenMP — and publishes
+them as the assets of a GitHub Release tagged `whisper-bin-<upstream version>-<n>`, which the `v*`
+release trigger ignores. It runs by hand from the Actions tab, once per upstream version, with the
+upstream tag and the release tag as inputs; its toolchains — the NDK, clang on the ARM64 runner —
+are needed nowhere else. `platform-notes.md` says which archive serves which target and why.
 
 ## Fresh clone
 
 ```bash
 git clone git@github.com:YuanZhe-99/MyTranscribe.git     # or the Gitea remote
 cd MyTranscribe
-git submodule update --init          # myapps_data and whisper.cpp are submodules
+git submodule update --init          # myapps_data is a submodule
 flutter pub get
 dart pub get -C packages/local_asr_whisper   # its own tests, which flutter analyze reads
 flutter gen-l10n
 ```
 
 Skipping the submodule step makes `flutter pub get` fail: `myapps_data` is resolved from
-`packages/myapps_data`, which is empty until the submodule is checked out; and the first build
-fails in the whisper.cpp hook, which says to run the same command.
+`packages/myapps_data`, which is empty until the submodule is checked out.
 
-Building needs a C toolchain the hook can drive: Visual Studio with the C++ workload and its Clang
-component on Windows (or a standalone LLVM), the NDK that Flutter installs for Android, Xcode on a
-Mac, and CMake — Visual Studio's bundled one serves on Windows.
+Building needs what Flutter needs on each platform and nothing more: the whisper.cpp libraries are
+downloaded by the build hook, once, the first time a target is built (about 1–60 MB per target, the
+Apple one being the largest), and served from `.dart_tool/` after that.
 
 The submodule URL is **relative** — `../MyApps-DATA.git` — so it resolves against whichever remote
 you cloned from. A GitHub clone reaches `github.com/YuanZhe-99/MyApps-DATA`, a Gitea clone reaches

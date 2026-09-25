@@ -91,7 +91,9 @@ void main() {
       state: state,
     );
     final routes = await registry.routes();
-    final cpu = routes.singleWhere((r) => r.isCpu);
+    final cpu = routes.singleWhere(
+      (r) => r.isCpu && r.artifactId == _tiny.artifactId,
+    );
     expect(cpu.available, isTrue, reason: cpu.unavailableReason);
     expect(cpu.smokeKey, contains(_tiny.files.single.sha256));
     expect(cpu.smokeTest.outcome, SmokeTestOutcome.notRun);

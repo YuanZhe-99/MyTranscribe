@@ -28,9 +28,10 @@ import '../services/local_model_templates.dart';
 import '../services/pcm_window_cutter.dart';
 import '../services/tested_here.dart';
 
-/// The shim's own version, part of every check key: a change to the shim can
-/// change what a route produces as surely as a new whisper.cpp can.
-const _shimVersion = 'lasr1';
+/// Which binary set and bindings the engine runs, part of every check key: a
+/// rebuilt set (`native/binaries.json`) or regenerated bindings can change what
+/// a route produces as surely as a new whisper.cpp can, so they bump this.
+const _bindingsVersion = 'prebuilt1';
 
 /// What the worker learned about the native library.
 class WhisperRuntimeInfo {
@@ -387,7 +388,7 @@ class WhisperCppEngine implements LocalAsrEngine {
     ArtifactFile? model, {
     required bool gpu,
   }) => SmokeTestKey(
-    adapterVersion: 'whisper.cpp ${info.version} $_shimVersion',
+    adapterVersion: 'whisper.cpp ${info.version} $_bindingsVersion',
     modelHash: model?.sha256 ?? '',
     osVersion: Platform.operatingSystemVersion,
     driverVersion: gpu ? info.gpuName : '',

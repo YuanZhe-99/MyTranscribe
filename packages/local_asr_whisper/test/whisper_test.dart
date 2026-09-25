@@ -3,7 +3,7 @@
 /// Inputs: The `LASR_TEST_MODEL` environment variable: a GGML model path
 /// (`ggml-tiny.bin` is enough). Without it the transcription test skips.
 /// Returns: None.
-/// Side effects: Builds the native library through the hook on first run.
+/// Side effects: The hook downloads the prebuilt libraries on first run.
 /// Notes: Run with `dart test` in this package. The app's own tests use a
 /// fake engine and never need this library.
 library;

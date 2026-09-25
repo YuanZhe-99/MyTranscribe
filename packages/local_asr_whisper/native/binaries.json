@@ -1,0 +1,114 @@
+{
+  "upstream": {
+    "version": "v1.9.4",
+    "commit": "927cfce34f31707e17f2bff35c349632fb9e2c3a",
+    "releaseAssets": "b5130"
+  },
+  "targets": {
+    "windows_x64": {
+      "url": "https://github.com/ggml-org/whisper.cpp/releases/download/b5130/whisper-bin-x64.zip",
+      "sha256": "f9ec6c52a2e949b62ab51fa21d0d497958f9e41c3010c157c4e42932d5316f3c",
+      "bytes": 8573270,
+      "entry": "whisper.dll",
+      "files": [
+        { "from": "Release/whisper.dll" },
+        { "from": "Release/ggml.dll" },
+        { "from": "Release/ggml-base.dll" },
+        { "from": "Release/ggml-cpu-*.dll" }
+      ]
+    },
+    "windows_arm64": {
+      "url": "https://github.com/YuanZhe-99/MyTranscribe/releases/download/whisper-bin-v1.9.4-1/whisper-win-arm64.zip",
+      "sha256": "c4be80ab4b1e947f10fce90bf012469fdf730eaf76bb096f49361b1263102fdd",
+      "bytes": 921591,
+      "entry": "whisper.dll",
+      "files": [
+        { "from": "whisper.dll" },
+        { "from": "ggml.dll" },
+        { "from": "ggml-base.dll" },
+        { "from": "ggml-cpu.dll" }
+      ]
+    },
+    "android_arm64": {
+      "url": "https://github.com/YuanZhe-99/MyTranscribe/releases/download/whisper-bin-v1.9.4-1/whisper-android-arm64-v8a.zip",
+      "sha256": "ba35d475b483d85c6ed5e6ebec8817089a06ecac86cb62737988f1c70b5cb5cc",
+      "bytes": 3564310,
+      "entry": "libwhisper.so",
+      "files": [
+        { "from": "libwhisper.so" },
+        { "from": "libggml.so" },
+        { "from": "libggml-base.so" },
+        { "from": "libggml-cpu-*.so" }
+      ]
+    },
+    "android_x64": {
+      "url": "https://github.com/YuanZhe-99/MyTranscribe/releases/download/whisper-bin-v1.9.4-1/whisper-android-x86_64.zip",
+      "sha256": "c0a2ab85f9a5ce448cd90276fd313986cc648723c9e6efeaa560a611d9db3203",
+      "bytes": 7687327,
+      "entry": "libwhisper.so",
+      "files": [
+        { "from": "libwhisper.so" },
+        { "from": "libggml.so" },
+        { "from": "libggml-base.so" },
+        { "from": "libggml-cpu-*.so" }
+      ]
+    },
+    "linux_x64": {
+      "url": "https://github.com/ggml-org/whisper.cpp/releases/download/b5130/whisper-bin-ubuntu-x64.tar.gz",
+      "sha256": "53e7fd8b5764edad916b8848dd0af6abb1ff1d3b86c899e79c78652412536c32",
+      "bytes": 9793438,
+      "entry": "libwhisper.so.1",
+      "files": [
+        { "from": "whisper-bin-ubuntu-x64/libwhisper.so.1.9.4", "as": "libwhisper.so.1" },
+        { "from": "whisper-bin-ubuntu-x64/libggml.so.0.23.0", "as": "libggml.so.0" },
+        { "from": "whisper-bin-ubuntu-x64/libggml-base.so.0.23.0", "as": "libggml-base.so.0" },
+        { "from": "whisper-bin-ubuntu-x64/libggml-cpu-*.so" }
+      ]
+    },
+    "macos_arm64": {
+      "url": "https://github.com/ggml-org/whisper.cpp/releases/download/b5130/whisper-b5130-xcframework.zip",
+      "sha256": "033a43b0174e8cf9b366f72e4a428cdcf126f93ad1c87d3fa119a96bed6f231a",
+      "bytes": 57180543,
+      "entry": "libwhisper.dylib",
+      "files": [
+        { "from": "build-apple/whisper.xcframework/macos-arm64_x86_64/whisper.framework/Versions/A/whisper", "as": "libwhisper.dylib", "slice": "arm64" }
+      ]
+    },
+    "macos_x64": {
+      "url": "https://github.com/ggml-org/whisper.cpp/releases/download/b5130/whisper-b5130-xcframework.zip",
+      "sha256": "033a43b0174e8cf9b366f72e4a428cdcf126f93ad1c87d3fa119a96bed6f231a",
+      "bytes": 57180543,
+      "entry": "libwhisper.dylib",
+      "files": [
+        { "from": "build-apple/whisper.xcframework/macos-arm64_x86_64/whisper.framework/Versions/A/whisper", "as": "libwhisper.dylib", "slice": "x86_64" }
+      ]
+    },
+    "ios_arm64": {
+      "url": "https://github.com/ggml-org/whisper.cpp/releases/download/b5130/whisper-b5130-xcframework.zip",
+      "sha256": "033a43b0174e8cf9b366f72e4a428cdcf126f93ad1c87d3fa119a96bed6f231a",
+      "bytes": 57180543,
+      "entry": "libwhisper.dylib",
+      "files": [
+        { "from": "build-apple/whisper.xcframework/ios-arm64/whisper.framework/whisper", "as": "libwhisper.dylib", "slice": "arm64" }
+      ]
+    },
+    "ios_simulator_arm64": {
+      "url": "https://github.com/ggml-org/whisper.cpp/releases/download/b5130/whisper-b5130-xcframework.zip",
+      "sha256": "033a43b0174e8cf9b366f72e4a428cdcf126f93ad1c87d3fa119a96bed6f231a",
+      "bytes": 57180543,
+      "entry": "libwhisper.dylib",
+      "files": [
+        { "from": "build-apple/whisper.xcframework/ios-arm64_x86_64-simulator/whisper.framework/whisper", "as": "libwhisper.dylib", "slice": "arm64" }
+      ]
+    },
+    "ios_simulator_x64": {
+      "url": "https://github.com/ggml-org/whisper.cpp/releases/download/b5130/whisper-b5130-xcframework.zip",
+      "sha256": "033a43b0174e8cf9b366f72e4a428cdcf126f93ad1c87d3fa119a96bed6f231a",
+      "bytes": 57180543,
+      "entry": "libwhisper.dylib",
+      "files": [
+        { "from": "build-apple/whisper.xcframework/ios-arm64_x86_64-simulator/whisper.framework/whisper", "as": "libwhisper.dylib", "slice": "x86_64" }
+      ]
+    }
+  }
+}
