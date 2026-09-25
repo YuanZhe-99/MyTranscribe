@@ -2,6 +2,18 @@
 
 新的在前。每条记录说明改了什么，以及在重要之处说明为什么 —— 事后最难还原的正是理由。
 
+## 0.3.2 —— 2026-09-25
+
+本地模型可以用 GPU 了，前提是设备自己的驱动能接住它（本地模型计划的 L3）。
+
+- Whisper 和 Parakeet 现在会为设备上的每个 GPU 提供一条路线：Windows x64 电脑和 Android 9 及以上手机上的
+  Vulkan，Windows on ARM 与 Android 上高通 Adreno GPU 的 OpenCL，以及和以前一样的 Apple 设备上的 Metal。只有
+  设备自己的驱动能加载时，GPU 路线才会出现；并且只有在它于该设备上通过十秒检查后才会运行。
+- 这些路线都没有在这里的真实硬件上测试过 —— 开发机的骁龙 8cx Gen 3 没有 GPU 后端能用的驱动 —— 所以每一条都
+  标明未经测试。在 Windows x64 电脑上，Vulkan GPU 通过检查并且比 CPU 快时，自动选择会用它；Adreno 和 Android
+  上的路线只在你选择时运行。
+- GPU 后端让应用变大了：Windows x64 上多约 55 MB，Android 上多约 45 MB。
+
 ## 0.3.1 —— 2026-09-25
 
 设备上又多了两个模型系列：Parakeet TDT 0.6B v3 和 Qwen3-ASR 0.6B（本地模型计划的 L2）。

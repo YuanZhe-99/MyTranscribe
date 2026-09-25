@@ -834,7 +834,8 @@ others as "not built", "no driver", "failed" or "crashed" with the reason.
       long-audio test pass. Each closes on its result: shipped (unverified where nothing here
       can run it), or dropped because a test that could be run here failed — recorded either way
 - [x] Docs and matrix updated with every result, including the negative ones
-- [x] *(Amended: nothing on this machine can run a GPU route, so every one ships unverified.)*
+- [x] *(Amended: nothing on this machine can run a GPU route, so every one ships unverified.)* *Released as
+      0.3.2 on 2026-09-25.*
       **Done when**: the OpenCL route is verified on this machine, the Tensor Vulkan experiment
       has a recorded result either way, the routes nothing here can test ship unverified, and no
       GPU option ever appears without a passing smoke test

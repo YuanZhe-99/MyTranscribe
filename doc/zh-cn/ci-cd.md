@@ -50,9 +50,10 @@ whisper.cpp 压缩包，按 `native/binaries.json` 核对其 SHA-256，再打包
 因此普通的推送什么也不用下载。
 
 `.github/workflows/native-prebuild.yml` 负责构建上游没有以可用形式发布的那些压缩包 —— Android arm64-v8a 与
-x86_64，以及 ARMv8.2、不带 OpenMP 的 Windows ARM64 —— 并把它们作为一个 GitHub Release 的附件发布，标签为
+x86_64、ARMv8.2 且不带 OpenMP 的 Windows ARM64，以及 Windows x64 —— 连同它们的 GPU 后端（OpenCL、Vulkan），并把它们作为一个 GitHub Release 的附件发布，标签为
 `whisper-bin-<上游版本>-<n>`，`v*` 发布触发器会忽略它。它从 Actions 页手动运行，每个上游版本一次，输入是上游
-标签和发布标签；它用到的工具链 —— NDK、ARM64 运行器上的 clang —— 在别处都不需要。哪个压缩包服务哪个目标、
+标签和发布标签；它用到的工具链 —— NDK、ARM64 运行器上的 clang、x64 运行器上的 MSVC 与固定版本的 Vulkan SDK、Khronos
+的头文件与加载器 —— 在别处都不需要。哪个压缩包服务哪个目标、
 原因为何，见 `platform-notes.md`。
 
 ## 全新克隆

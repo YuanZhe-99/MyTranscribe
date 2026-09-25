@@ -3,6 +3,20 @@
 Newest first. Each entry says what changed and, where it matters, why — the reasoning is the part
 that is hard to recover later.
 
+## 0.3.2 — 2026-09-25
+
+Local models on the GPU, where the device's own driver can take them (L3 of the local-models plan).
+
+- Whisper and Parakeet now offer a route for each GPU the device has: Vulkan on Windows x64 PCs and
+  on Android phones from Android 9, OpenCL on Qualcomm Adreno GPUs under Windows on ARM and Android,
+  and Metal on Apple devices as before. A GPU route appears only when the device's own driver loads
+  it, and runs only after its ten-second check on that device passed.
+- None of these routes has been tested on real hardware here — the development machine's
+  Snapdragon 8cx Gen 3 has no driver the GPU backends can use — so every one is marked as untested.
+  Auto uses a Vulkan GPU on a Windows x64 PC when it passed its check and beat the CPU in it; the
+  Adreno and Android routes run only when you choose them.
+- The GPU backends make the app larger: about 55 MB more on Windows x64 and 45 MB on Android.
+
 ## 0.3.1 — 2026-09-25
 
 Two more model families on the device: Parakeet TDT 0.6B v3 and Qwen3-ASR 0.6B (L2 of the

@@ -58,11 +58,13 @@ in the Ubuntu job as part of `flutter test`, for the host. Each job caches the h
 keyed by the manifest and the hook, so an ordinary push downloads nothing.
 
 `.github/workflows/native-prebuild.yml` builds the archives upstream does not publish in a usable
-form — Android arm64-v8a and x86_64, and Windows ARM64 at ARMv8.2 without OpenMP — and publishes
+form — Android arm64-v8a and x86_64, Windows ARM64 at ARMv8.2 without OpenMP, and Windows x64 —
+with their GPU backends (OpenCL, Vulkan), and publishes
 them as the assets of a GitHub Release tagged `whisper-bin-<upstream version>-<n>`, which the `v*`
 release trigger ignores. It runs by hand from the Actions tab, once per upstream version, with the
-upstream tag and the release tag as inputs; its toolchains — the NDK, clang on the ARM64 runner —
-are needed nowhere else. `platform-notes.md` says which archive serves which target and why.
+upstream tag and the release tag as inputs; its toolchains — the NDK, clang on the ARM64 runner,
+MSVC and the pinned Vulkan SDK on the x64 runner, the Khronos headers and loaders — are needed
+nowhere else. `platform-notes.md` says which archive serves which target and why.
 
 ## Fresh clone
 
