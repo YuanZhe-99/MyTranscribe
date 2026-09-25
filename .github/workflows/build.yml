@@ -74,6 +74,11 @@ jobs:
       - name: Install Ninja
         run: sudo apt-get update && sudo apt-get install -y ninja-build
 
+      # packages/local_asr_whisper has tests of its own, which flutter analyze
+      # reads; without that package's own dependencies it reports every
+      # `test` and `expect` in them as undefined.
+      - run: dart pub get -C packages/local_asr_whisper
+
       - run: flutter analyze
 
       # Ubuntu runners ship FFmpeg, so test/media_toolkit_live_test.dart stops

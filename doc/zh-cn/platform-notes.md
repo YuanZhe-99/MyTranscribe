@@ -136,7 +136,8 @@ whisper.cpp 的结构体。没有可用的 pub 包：现有的两个要么只附
 | macOS、iOS | Xcode 的 clang | 该架构的默认设置 | Metal；Core ML 编码器放在模型旁边时会使用它 |
 | Linux x64 | 主机编译器 | 默认设置 | —（CI 中运行主机 `flutter test` 的环境） |
 
-Windows 上不使用 `cl.exe`：它缺少 ggml 的 ARM 代码所需的 FP16 内建函数，而 L3 的 OpenCL 后端根本不支持它。
+Windows 上不使用 `cl.exe`：它缺少 ggml 的 ARM 代码所需的 FP16 内建函数，而 L3 的 OpenCL 后端根本不支持它。x64 上
+不兼容指针类型的诊断保持为警告：ggml 的 SSE4.2 变体把块指针传给 `_mm_prefetch`，否则较新的 clang 会因此中止。
 32 位 Android 不构建 —— 大的 Whisper 模型装不进 32 位地址空间 —— 引擎在那里报告自己未构建。
 
 在运行时挑选 CPU 代码的地方，ggml 把它的各个后端作为单独的库加载，而垫片从它自己被加载的那个文件夹加载它

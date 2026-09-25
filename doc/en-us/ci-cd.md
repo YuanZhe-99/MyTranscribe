@@ -66,6 +66,7 @@ git clone git@github.com:YuanZhe-99/MyTranscribe.git     # or the Gitea remote
 cd MyTranscribe
 git submodule update --init          # myapps_data and whisper.cpp are submodules
 flutter pub get
+dart pub get -C packages/local_asr_whisper   # its own tests, which flutter analyze reads
 flutter gen-l10n
 ```
 

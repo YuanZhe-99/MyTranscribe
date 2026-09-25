@@ -1084,7 +1084,7 @@ void main() {
     /// Side effects: Polls the record.
     /// Notes: Internal helper used within this file only.
     Future<void> waitFor(String jobId, JobStage stage, int index) async {
-      for (var i = 0; i < 500; i++) {
+      for (var i = 0; i < 2000; i++) {
         final job = await JobStore.load(jobId);
         if (job?.stage == stage && job?.currentChunk == index) return;
         await Future<void>.delayed(const Duration(milliseconds: 5));
@@ -1156,11 +1156,16 @@ void main() {
       final created = await createLocal(run);
       run.enqueue(created.id);
       await waitFor(created.id, JobStage.transcribing, 1);
-      await Future<void>.delayed(const Duration(milliseconds: 20));
+      // Cancel only once the engine really has the long window: a fixed delay
+      // loses that race when the whole suite is running.
+      for (var i = 0; i < 2000 && fake.windows.length < 2; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+      expect(fake.windows, hasLength(2));
       run.cancel(created.id);
 
       TranscriptionJob? job;
-      for (var i = 0; i < 400; i++) {
+      for (var i = 0; i < 2000; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 10));
         job = await JobStore.load(created.id);
         if (job!.stage.isFinished) break;

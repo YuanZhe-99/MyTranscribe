@@ -335,9 +335,14 @@ class _Toolchain {
         : 'x86_64-pc-windows-msvc';
     final clang = '$llvm\\clang.exe'.replaceAll(r'\', '/');
     final clangxx = '$llvm\\clang++.exe'.replaceAll(r'\', '/');
+    // On x64, ggml's SSE4.2 variant passes block pointers to `_mm_prefetch`,
+    // which the MSVC-compatible headers declare as taking `const char *`; a
+    // clang recent enough to make that an error stops the build over a
+    // prefetch hint. It stays a warning.
     final flags = code.targetArchitecture == Architecture.arm64
         ? '-march=armv8.2-a+dotprod+fp16 -fvectorize -ffp-model=fast'
-        : '-fvectorize -ffp-model=fast';
+        : '-fvectorize -ffp-model=fast '
+              '-Wno-error=incompatible-pointer-types';
     return _Toolchain(
       cmake:
           _onPath('cmake', environment) ?? '$ide\\CMake\\CMake\\bin\\cmake.exe',

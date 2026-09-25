@@ -57,6 +57,7 @@ git clone git@github.com:YuanZhe-99/MyTranscribe.git     # 或使用 Gitea 远�
 cd MyTranscribe
 git submodule update --init          # myapps_data 与 whisper.cpp 都是子模块
 flutter pub get
+dart pub get -C packages/local_asr_whisper   # 它自己的测试，flutter analyze 会读到
 flutter gen-l10n
 ```
 
