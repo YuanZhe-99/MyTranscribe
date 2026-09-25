@@ -701,11 +701,14 @@ the hook, the LLVM and Ninja steps in CI.
       machine; every other Android device shipped unverified (D20)
 - [x] Docs *(rewritten by the rework)*: `platform-notes.md` (the toolchain per platform, clang on Windows, the submodule),
       `ci-cd.md` (new steps and caches, the tiny-model tests), `features/local-models.md`
-- [ ] **Release 0.3.0** when the rework is green on all five CI jobs and the Windows ARM64
+- [x] **Release 0.3.0** when the rework is green on all five CI jobs and the Windows ARM64
       verification is in the matrix — the Pixel 10, Mac and iPhone runs need a device session with
       the user and may land in 0.3.1 instead (D20: no release waits for them): `pubspec.yaml` `0.3.0+4` and `msix_version`
       `0.3.0.0`, the three `installer.iss` fields, the `version-history.md` entry, the annotated
-      tag `v0.3.0`, pushed commit first, then the tag (the user approved the tags on 2026-09-24)
+      tag `v0.3.0`, pushed commit first, then the tag (the user approved the tags on 2026-09-24).
+      *Released 2026-09-25 on the user's go-ahead, with the Windows ARM64 run recorded as measured
+      rather than verified (the line-by-line comparison moves to 0.3.1); the privacy policy gained
+      its Downloads section first*
 - [ ] **Done when**: a real recording is transcribed on Windows ARM64 and on the Pixel 10 with
       the placement it actually ran on, the targets nothing here can test ship unverified with
       their smoke test passing wherever anything can run it, the tests above are green, and both

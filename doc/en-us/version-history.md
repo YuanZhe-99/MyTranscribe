@@ -3,6 +3,45 @@
 Newest first. Each entry says what changed and, where it matters, why — the reasoning is the part
 that is hard to recover later.
 
+## 0.3.0 — 2026-09-25
+
+The first release that can transcribe without a transcription service: Whisper large-v3 and
+large-v3-turbo run on the device itself, with whisper.cpp, on every platform the app ships to. It is
+the first two milestones of the local-models plan (`PLAN.md`, L0 and L1).
+
+**This device**
+
+- Library › This device lists the models the app can run locally. A download is fetched only when
+  you tap it, resumes where it stopped, is checked file by file against its published hash and is
+  installed in one step, so a half-downloaded model never appears as installed. Models stay on the
+  device: they are never synced, backed up or exported, and on Android they are kept out of Auto
+  Backup.
+- After an install the app checks the model on this device with a ten-second public-domain clip
+  before its first job, and records how fast it ran. A route that fails the check, or that crashed
+  the app mid-run, is not used again automatically; the job carries on under the fallback policy in
+  Settings, which by default is the same model on the CPU.
+- A new job can choose "This device" as its source. It is cut into windows like any other job, the
+  audio never leaves the device, and the job page says where each window actually ran.
+- Settings › Local models › Diagnostics shows what the engine found — its version, the CPU
+  features, the devices — and can copy a report without file names or text.
+
+**Honest about what has been tested**
+
+- Most devices this app runs on are not ones this project can test. A model on such a device is
+  offered as untested and says so; Auto uses an accelerator there only under the rules in
+  `engine-routing.md`, and the CPU is always the floor.
+- On the Snapdragon development machine, turbo in full precision transcribed an 81-minute lecture
+  on the CPU at 1.8 × real time — slower than real time. It is usable for a recording that can wait;
+  a quantized package and the GPU routes of the next milestones are what make it fast.
+
+**How it is built**
+
+- whisper.cpp arrives as prebuilt libraries, pinned by hash: upstream's own for Windows x64 and the
+  Apple platforms, and this project's build of the same version for Windows ARM64 and Android. The
+  app build compiles no native code, which is what keeps every platform's build to a few minutes.
+- The privacy policy gains a Downloads section: the app contacts a model host only for a download
+  you asked for.
+
 ## 0.2.1 — 2026-09-09
 
 What the first recording somebody actually kept found. A Microsoft meeting, three speakers, three

@@ -14,7 +14,18 @@ To transcribe a recording, the app sends the audio to the transcription service 
 configured — for example OpenAI or OpenRouter — using the API key you entered. That service receives
 the audio and returns the text. What it does with the audio is governed by that service's own
 policy, not this one. If you configure a service running on your own machine, the audio never leaves
-it. The app contacts no other network service.
+it.
+
+With a model on this device, the recording is transcribed on the device and the audio is sent
+nowhere.
+
+## Downloads
+
+The app downloads something only when you ask it to: a model for transcribing on this device, from
+the address shown on the model's page, or on Windows the FFmpeg tool it needs. It checks each file
+it downloads and sends nothing about you or your recordings with the request. Downloaded models stay
+on the device; they are not included in backups, ZIP exports or WebDAV sync. The app contacts no
+other network service.
 
 ## Your API keys
 
@@ -33,8 +44,8 @@ sources, models and preferences, and — subject to the rule above — your API 
 
 ## Permissions
 
-The app asks for network access, to reach the transcription service and your WebDAV server. It reads
-a recording only when you pick one.
+The app asks for network access, to reach the transcription service, your WebDAV server, and the
+downloads you ask for. It reads a recording only when you pick one.
 
 ## Questions
 
