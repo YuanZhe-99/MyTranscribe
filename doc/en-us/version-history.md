@@ -3,6 +3,18 @@
 Newest first. Each entry says what changed and, where it matters, why — the reasoning is the part
 that is hard to recover later.
 
+## 0.3.5 — 2026-09-25
+
+Speaker labels on the device (L8 of the local-models plan).
+
+- Settings › Local models › Speaker labels downloads one 35 MB package, after naming its size and
+  where it comes from. With it, **Speakers** works for jobs on this device too, with any local
+  model: each window is labelled after it is transcribed, and the same speaker matching as a
+  remote job keeps one person one speaker across windows.
+- Not on iPhone and iPad, where the app has no runtime for it.
+- It was checked here on a short two-speaker clip, not on a long meeting against a service's labels,
+  so it is marked as untested like every other route on this device.
+
 ## 0.3.4 — 2026-09-25
 
 The system's own speech recognition as a fallback, on Apple devices (L6 of the local-models plan).
@@ -74,7 +86,7 @@ local-models plan).
 
 The first release that can transcribe without a transcription service: Whisper large-v3 and
 large-v3-turbo run on the device itself, with whisper.cpp, on every platform the app ships to. It is
-the first two milestones of the local-models plan (`PLAN.md`, L0 and L1).
+the first two milestones of the local-models plan (L0 and L1; see [`decisions.md`](decisions.md)).
 
 **This device**
 
