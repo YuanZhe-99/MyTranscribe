@@ -3,6 +3,34 @@
 Newest first. Each entry says what changed and, where it matters, why — the reasoning is the part
 that is hard to recover later.
 
+## 0.3.1 — 2026-09-25
+
+Two more model families on the device: Parakeet TDT 0.6B v3 and Qwen3-ASR 0.6B (L2 of the
+local-models plan).
+
+**Parakeet, on the libraries already there**
+
+- Parakeet runs on whisper.cpp's own Parakeet runtime, which ships beside Whisper in the same
+  prebuilt libraries, so it adds no second runtime to the app — only a 638 MiB model when you
+  download it. On the development machine it checks in at a third of real time on the CPU, where
+  Whisper turbo took two and a half times real time. It writes 25 European languages and none of
+  Chinese, Japanese or Korean, and a job in one of those is never sent to it.
+- Its windows are two minutes long: the runtime reads a whole window at once, and shorter windows
+  keep a phone's memory in hand. Sentences are cut from the times it gives every word.
+
+**Qwen3-ASR, for everything Parakeet does not cover**
+
+- Qwen3-ASR runs on sherpa-onnx, from sherpa-onnx's own prebuilt libraries, pinned by hash like
+  whisper.cpp's. It takes a job's keywords as words to prefer. It gives no timestamps, so each
+  30-second window becomes one line spanning it, marked as not really timed.
+- Not on iOS yet: sherpa-onnx publishes no library for it, and the model says it cannot run there.
+- A cancelled Qwen window finishes before the job stops: sherpa-onnx cannot stop one midway.
+
+**Also**
+
+- On a desktop, a local model now leaves two processor cores free: on the development machine, using
+  every core made the model 60 % slower.
+
 ## 0.3.0 — 2026-09-25
 
 The first release that can transcribe without a transcription service: Whisper large-v3 and

@@ -15,7 +15,7 @@
 [Setup]
 AppId={{3F6C0B7A-9D41-4E52-B18A-7C5E2D904A63}
 AppName=MyTranscribe!!!!!
-AppVersion=0.3.0
+AppVersion=0.3.1
 AppPublisher=yuanzhe
 DefaultDirName={autopf}\MyTranscribe!!!!!
 DefaultGroupName=MyTranscribe!!!!!
@@ -26,11 +26,11 @@ OutputBaseFilename=MyTranscribe_{#SetupSetting("AppVersion")}_arm64_Setup
 #else
 OutputBaseFilename=MyTranscribe_{#SetupSetting("AppVersion")}_Setup
 #endif
-VersionInfoVersion=0.3.0.0
+VersionInfoVersion=0.3.1.0
 VersionInfoCompany=yuanzhe
 VersionInfoDescription=MyTranscribe!!!!! Installer
 VersionInfoProductName=MyTranscribe!!!!!
-VersionInfoProductVersion=0.3.0
+VersionInfoProductVersion=0.3.1
 Compression=lzma2
 SolidCompression=yes
 #ifdef ARM64

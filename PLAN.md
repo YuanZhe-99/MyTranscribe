@@ -749,24 +749,26 @@ API; both as prebuilt libraries pinned by hash (D21). Tested simply, per the use
       nothing here can test — Qwen reports "not built" on iOS. Windows are capped at 30 s: the
       exported decoder holds 512 tokens (55 s came back as one word). The C API has no abort, so a
       cancel waits for the window; hotwords reload the model when a job's keywords differ*
-- [ ] The router's language rule proven with real audio: Chinese and Japanese never reach
+- [x] *(By the router's own tests, not real audio — simple tests, per the user's decision of
+      2026-09-25.)* The router's language rule proven with real audio: Chinese and Japanese never reach
       Parakeet; the new-job page says why a model is not offered for the chosen language rather
       than hiding it
-- [ ] Optional inside this milestone: a Qwen3-ASR 1.7B int8 export by the documented sherpa-onnx
+- [ ] *(Not pursued in 0.3.1: it needs a quality comparison on a real recording, which the user's
+      decision of 2026-09-25 leaves out.)* Optional inside this milestone: a Qwen3-ASR 1.7B int8 export by the documented sherpa-onnx
       script, as a `custom`-family template with our own hash — only if the 0.6B quality on the
       M9 meeting recording is not enough
-- [ ] `coreml` and `directml` providers are **not** switched on: they are strings the binary may
+- [x] `coreml` and `directml` providers are **not** switched on (the engine asks for `cpu`): they are strings the binary may
       not honour (report §4.1). If tried later, as a route with `unknown` placement
 - [x] ~~Verification as in L1 on the same devices and recordings~~ — simple tests only (the
       user's decision of 2026-09-25): the package tests and the whole job pipeline on the JFK clip
       for Parakeet and Qwen on this machine
-- [ ] Docs, glossary, `version-history.md` entry for 0.3.1; `AGENTS.md` behaviour contract
+- [x] Docs, glossary, `version-history.md` entry for 0.3.1; `AGENTS.md` behaviour contract
       gains the model-download endpoint and the "audio never leaves the device with a local model"
       promise; ~~`PRIVACY_POLICY.md` and the privacy page gain the local-model paragraph~~ (done
       in 0.3.0)
-- [ ] **Release 0.3.1** (D19 as amended): `0.3.1+5`, `msix_version` `0.3.1.0`, the three
+- [x] **Release 0.3.1** (D19 as amended): `0.3.1+5`, `msix_version` `0.3.1.0`, the three
       `installer.iss` fields, the `version-history.md` entry, the annotated tag `v0.3.1`
-- [ ] **Done when**: all three model families transcribe a short clip on the CPU on this machine,
+- [x] **Done when**: all three model families transcribe a short clip on the CPU on this machine,
       the language rule holds, every other target ships unverified per D20 with CI green, and
       0.3.1 is tagged
 
