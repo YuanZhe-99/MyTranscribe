@@ -17,7 +17,7 @@ on:
       release_tag:
         description: Release to publish the archive to
         required: true
-        default: apple-bin-fluidaudio-0.17.4-1
+        default: apple-bin-fluidaudio-0.17.4-2
 
 permissions:
   contents: write
@@ -49,12 +49,15 @@ jobs:
           out="$RUNNER_TEMP/lasr-apple"
           mkdir -p "$out/macos" "$out/ios" "$out/ios-simulator"
           P="$RUNNER_TEMP/dd/Build/Products"
-          binary() { find "$P/$1" -type f -name LasrApple -path '*LasrApple.framework*' | head -1; }
+          # The framework's binary, not the debug symbols beside it (.dSYM).
+          binary() { find "$P/$1" -type f -name LasrApple -path '*LasrApple.framework/*' -not -path '*.dSYM/*' | head -1; }
           cp "$(binary Release)" "$out/macos/libLasrApple.dylib"
           cp "$(binary Release-iphoneos)" "$out/ios/LasrApple"
           cp "$(binary Release-iphonesimulator)" "$out/ios-simulator/LasrApple"
           for f in "$out"/macos/libLasrApple.dylib "$out"/ios/LasrApple "$out"/ios-simulator/LasrApple; do
             echo "== $f"; lipo -info "$f"; otool -L "$f" | head -20
+            # Fail rather than publish anything but a dynamic library.
+            otool -hv "$f" | grep -q DYLIB
           done
           fa=$(find "$RUNNER_TEMP/dd/SourcePackages/checkouts/FluidAudio" -maxdepth 1 -name LICENSE | head -1)
           cp "$fa" "$out/LICENSE-FluidAudio"
