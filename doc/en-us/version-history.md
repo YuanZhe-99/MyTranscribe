@@ -3,6 +3,18 @@
 Newest first. Each entry says what changed and, where it matters, why — the reasoning is the part
 that is hard to recover later.
 
+## 0.3.4 — 2026-09-25
+
+The system's own speech recognition as a fallback, on Apple devices (L6 of the local-models plan).
+
+- Settings › Local models › "If the chosen processor fails" gains a third choice on iPhone, iPad and
+  Mac: the system's speech recognition. When a model on this device cannot run, the job carries on
+  with it, and says so.
+- It runs on the device only — the app requires on-device recognition, so the audio is not sent to
+  Apple — and the app asks for permission to use speech recognition the first time it runs, never
+  before you chose it. The privacy policy says the same.
+- Not on Android: its recogniser would need code compiled into the app that this project keeps out.
+
 ## 0.3.3 — 2026-09-25
 
 Parakeet on the Apple Neural Engine (L4 of the local-models plan).
