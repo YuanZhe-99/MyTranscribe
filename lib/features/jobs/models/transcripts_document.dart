@@ -247,13 +247,7 @@ class TranscriptsDocument {
 }
 
 /// Fields [TranscriptSyncRecord] writes itself, so the rest are unknown.
-const _knownRecordKeys = {
-  'id',
-  'createdAt',
-  'modifiedAt',
-  'job',
-  'transcript',
-};
+const _knownRecordKeys = {'id', 'createdAt', 'modifiedAt', 'job', 'transcript'};
 
 /// Purpose: Read a timestamp that may be missing or malformed.
 /// Inputs: [value].

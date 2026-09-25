@@ -86,8 +86,8 @@ String renderJobMarkdown(TranscriptionJob job, Transcript transcript) {
 String renderJobPlainText(Transcript transcript) => renderTxt(
   transcript,
   (id) => transcript.nameFor(
-      id,
-      fallback: defaultSpeakerName,
-      unknown: defaultUnknownSpeakerName,
-    ),
+    id,
+    fallback: defaultSpeakerName,
+    unknown: defaultUnknownSpeakerName,
+  ),
 );

@@ -154,8 +154,10 @@ class AudioSyncService {
           await client.uploadBytes(name, await local.readAsBytes());
           uploaded++;
         } catch (error) {
-          warnings.add('Could not upload the audio for ${record.displayName}: '
-              '$error');
+          warnings.add(
+            'Could not upload the audio for ${record.displayName}: '
+            '$error',
+          );
         }
         continue;
       }
