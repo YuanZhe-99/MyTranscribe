@@ -84,6 +84,9 @@ Future<void> main(List<String> args) async {
       // in the reduced environment a hook runs in (no LOCALAPPDATA on a
       // Windows runner). The hook's own build folder is already incremental.
       '-DGGML_CCACHE=OFF',
+      // Where ggml and whisper are static libraries, they are linked into the
+      // shared shim, which on Linux needs them compiled position-independent.
+      '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
       ...toolchain.cmakeArgs,
       ..._ggmlArgs(os, arch),
     ], environment: toolchain.environment);
