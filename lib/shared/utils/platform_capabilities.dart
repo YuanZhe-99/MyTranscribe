@@ -207,3 +207,50 @@ bool get hasSystemSpeechRecognizer =>
     defaultTargetPlatform == TargetPlatform.android ||
     defaultTargetPlatform == TargetPlatform.iOS ||
     defaultTargetPlatform == TargetPlatform.macOS;
+
+/// Purpose: Name this device's class the way the local-model support matrix
+/// does.
+/// Inputs: The CPU's [architecture] (`arm64`, `x64`, …) and, on Windows, the
+/// [processor] identifier the OS reports.
+/// Returns: A class such as `windows-arm64-qualcomm`, `windows-x64`,
+/// `macos-arm64`, `ios`, `android` or `linux-x64`.
+/// Side effects: None.
+/// Notes: "Tested here" is recorded per class, never per device. Only what the
+/// OS says for certain goes into it: a Qualcomm Windows ARM64 machine is the
+/// class this project's own machine belongs to; an Android phone's SoC needs a
+/// platform channel to read, so every Android device is one class for now.
+String localDeviceClass({
+  required String architecture,
+  String processor = '',
+}) => switch (defaultTargetPlatform) {
+  TargetPlatform.windows =>
+    architecture == 'arm64' && processor.contains('Qualcomm')
+        ? 'windows-arm64-qualcomm'
+        : 'windows-$architecture',
+  TargetPlatform.macOS => 'macos-$architecture',
+  TargetPlatform.iOS => 'ios',
+  TargetPlatform.android => 'android',
+  TargetPlatform.linux => 'linux-$architecture',
+  TargetPlatform.fuchsia => 'fuchsia',
+};
+
+/// Purpose: Choose how many CPU threads a local model uses.
+/// Inputs: The number of [processors] the OS reports.
+/// Returns: A thread count of at least one.
+/// Side effects: None.
+/// Notes: Phones get at most four: their big cores are few, and a thread on
+/// an efficiency core holds the others back at every synchronisation. A
+/// desktop gets up to eight, past which whisper.cpp's CPU path stops getting
+/// faster and the rest of the machine starts getting slower.
+int localEngineThreads(int processors) =>
+    isMobilePlatform ? processors.clamp(1, 4) : processors.clamp(1, 8);
+
+/// Purpose: Report whether this platform's whisper.cpp build has Metal.
+/// Inputs: None.
+/// Returns: `bool` — true on iOS and macOS.
+/// Side effects: None.
+/// Notes: Metal is part of the OS there, so the GPU route cannot be missing a
+/// driver; elsewhere GPU backends arrive with L3.
+bool get hasMetalBackend =>
+    defaultTargetPlatform == TargetPlatform.iOS ||
+    defaultTargetPlatform == TargetPlatform.macOS;

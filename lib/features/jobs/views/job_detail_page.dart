@@ -14,6 +14,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/utils/adaptive_layout.dart';
 import '../../../shared/utils/byte_format.dart';
+import '../../local/models/engine_capability.dart';
+import '../../local/views/local_text.dart';
 import '../models/transcription_job.dart';
 import '../services/job_providers.dart';
 import '../services/job_runner.dart';
@@ -301,6 +303,22 @@ class _Body extends ConsumerWidget {
         if (job.media case final media?)
           _Field(l10n.jobFieldLength, media.formattedDuration),
         _Field(l10n.jobFieldModel, job.modelName),
+        if (job.isLocal && job.chunks.isNotEmpty)
+          _Field(l10n.jobFieldRanOn, _placementSummary(l10n, job)),
+        for (final fallback in job.fallbacks)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              l10n.jobFallback(
+                routeKeyLabel(l10n, fallback.from),
+                routeKeyLabel(l10n, fallback.to),
+                fallback.reason,
+              ),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.tertiary,
+              ),
+            ),
+          ),
         _Field(
           l10n.jobFieldStarted,
           job.createdAt.toLocal().toString().split('.').first,
@@ -329,6 +347,40 @@ class _Body extends ConsumerWidget {
       ],
     );
   }
+}
+
+/// Purpose: Say where a local job's windows ran.
+/// Inputs: [l10n], the [job].
+/// Returns: One placement when every window ran in the same place, otherwise
+/// the runs of windows that shared one.
+/// Side effects: None.
+/// Notes: From what the runtime reported for each window, never inferred
+/// from the route that was asked for.
+String _placementSummary(AppLocalizations l10n, TranscriptionJob job) {
+  final chunks = List.of(job.chunks)
+    ..sort((a, b) => a.index.compareTo(b.index));
+  final runs = <({int first, int last, PlacementKind placement})>[];
+  for (final chunk in chunks) {
+    final placement = chunk.placement ?? PlacementKind.unknown;
+    if (runs.isNotEmpty && runs.last.placement == placement) {
+      runs.last = (
+        first: runs.last.first,
+        last: chunk.index,
+        placement: placement,
+      );
+    } else {
+      runs.add((first: chunk.index, last: chunk.index, placement: placement));
+    }
+  }
+  if (runs.length == 1) return placementLabel(l10n, runs.single.placement);
+  return [
+    for (final run in runs)
+      l10n.jobPlacementWindows(
+        '${run.first + 1}',
+        '${run.last + 1}',
+        placementLabel(l10n, run.placement),
+      ),
+  ].join('\n');
 }
 
 /// What the job is doing, with a bar when that means something.

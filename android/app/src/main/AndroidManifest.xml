@@ -7,7 +7,9 @@
         android:usesCleartextTraffic="true"
         android:label="MyTranscribe!!!!!"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules">
         <!-- configChanges carries screenLayout|screenSize|smallestScreenSize|density so
              folding or unfolding resizes the window without recreating the activity;
              every MediaQuery.sizeOf reader re-evaluates on the next frame. See

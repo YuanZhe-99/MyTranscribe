@@ -121,6 +121,13 @@ is covered by a concept page, and a table of one-line stubs would say less than 
 | `lib/features/local/services/local_transcription_backend.dart` | [features/local-models.md](../features/local-models.md) |
 | `lib/features/local/services/pcm_window_cutter.dart` | [features/media-tools.md](../features/media-tools.md) |
 | `lib/features/local/services/route_smoke_test.dart` | [algorithms/engine-routing.md](../algorithms/engine-routing.md) |
+| `lib/features/local/services/smoke_clip.dart` | [algorithms/engine-routing.md](../algorithms/engine-routing.md) |
+| `lib/features/local/services/tested_here.dart` | [algorithms/engine-routing.md](../algorithms/engine-routing.md) |
+| `lib/features/local/engines/whisper_cpp_engine.dart` | [features/local-models.md](../features/local-models.md), [platform-notes.md](../platform-notes.md) |
+| `lib/features/local/services/local_models_controller.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/views/local_text.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/views/local_model_page.dart` | [features/local-models.md](../features/local-models.md) |
+| `lib/features/local/views/engine_diagnostics_page.dart` | [features/local-models.md](../features/local-models.md) |
 
 ## shared/
 

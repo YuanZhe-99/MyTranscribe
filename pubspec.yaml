@@ -66,6 +66,12 @@ dependencies:
   ffmpeg_kit_flutter_new_audio:
     path: packages/ffmpeg_kit_flutter_new_audio
 
+  # whisper.cpp, compiled from the pinned submodule at packages/whisper.cpp by
+  # a build hook, behind a small C ABI. See packages/local_asr_whisper and
+  # doc/en-us/platform-notes.md.
+  local_asr_whisper:
+    path: packages/local_asr_whisper
+
   # Playing the converted audio beside the transcript. Chosen over just_audio
   # and media_kit because its Windows backend is Media Foundation compiled from
   # source, so it builds on ARM64; the others ship an x86_64-only libmpv.
@@ -107,6 +113,11 @@ flutter:
 
   assets:
     - assets/icon/
+    # The ten-second clip every local route transcribes on a device before its
+    # first job: whisper.cpp's own sample, the opening of President Kennedy's
+    # 1961 inaugural address, a public-domain recording. See
+    # doc/en-us/features/local-models.md.
+    - assets/local_asr/
 
 # Windows MSIX packaging. `msix_version` is one of the version locations listed
 # in AGENTS.md and moves with `version:` above.

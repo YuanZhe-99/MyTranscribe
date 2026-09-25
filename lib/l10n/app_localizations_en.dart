@@ -1095,4 +1095,246 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewerSpeakers => 'Speakers';
+
+  @override
+  String get libraryThisDevice => 'This device';
+
+  @override
+  String get libraryThisDeviceSubtitle => 'Models that run without a network';
+
+  @override
+  String get localStateNotDownloaded => 'Not downloaded';
+
+  @override
+  String localStateDownloading(String percent) {
+    return 'Downloading $percent%';
+  }
+
+  @override
+  String get localStateUnpacking => 'Unpacking';
+
+  @override
+  String get localStateChecking => 'Checking this device';
+
+  @override
+  String get localStateReady => 'Ready';
+
+  @override
+  String localStateFailed(String reason) {
+    return 'Failed: $reason';
+  }
+
+  @override
+  String get localStateNoEngine => 'This build cannot run it on this device';
+
+  @override
+  String get localModelDownload => 'Download';
+
+  @override
+  String localModelDownloadTitle(String name) {
+    return 'Download $name?';
+  }
+
+  @override
+  String localModelDownloadBody(String size, String host) {
+    return '$size from $host. It stays on this device: it is not synced and not backed up.';
+  }
+
+  @override
+  String get localModelCancel => 'Cancel download';
+
+  @override
+  String get localModelRemove => 'Remove from this device';
+
+  @override
+  String localModelRemoveBody(String name) {
+    return 'Remove $name from this device? You can download it again.';
+  }
+
+  @override
+  String get localModelVerify => 'Verify files';
+
+  @override
+  String get localModelVerifyOk => 'The files are intact.';
+
+  @override
+  String get localModelVerifyBad =>
+      'The files are damaged. Remove the model and download it again.';
+
+  @override
+  String get localModelSize => 'Download size';
+
+  @override
+  String get localModelLanguages => 'Languages';
+
+  @override
+  String get localModelLanguagesAny => 'Detects the language';
+
+  @override
+  String get localModelTimestamps => 'Timestamps';
+
+  @override
+  String get localModelLicence => 'Licence';
+
+  @override
+  String get localModelRoutes => 'Where it can run';
+
+  @override
+  String get localModelRoutesNone =>
+      'Download the model to see where it can run on this device.';
+
+  @override
+  String get localRouteCpu => 'CPU';
+
+  @override
+  String localRouteGpu(String backend) {
+    return 'GPU ($backend)';
+  }
+
+  @override
+  String localRouteNpu(String backend) {
+    return 'NPU ($backend)';
+  }
+
+  @override
+  String get localRouteTested => 'Tested on this kind of device';
+
+  @override
+  String get localRouteUntested => 'Not yet tested on this kind of device';
+
+  @override
+  String get localEvidenceOfficial => 'Documented by the vendor';
+
+  @override
+  String get localEvidenceCommunity => 'Community results';
+
+  @override
+  String get localEvidenceExperimental => 'Experimental';
+
+  @override
+  String get localEvidenceNone => 'No published results';
+
+  @override
+  String get localCheckPassed => 'Passed its check here';
+
+  @override
+  String localCheckFailed(String reason) {
+    return 'Failed its check here: $reason';
+  }
+
+  @override
+  String get localCheckNotRun => 'Not checked yet';
+
+  @override
+  String get localCheckCrashed =>
+      'The app stopped while using it here, so it is not used automatically';
+
+  @override
+  String get localCheckNow => 'Check now';
+
+  @override
+  String localCheckSpeed(String factor) {
+    return '$factor× real time';
+  }
+
+  @override
+  String localRouteUnavailable(String reason) {
+    return 'Not available: $reason';
+  }
+
+  @override
+  String get newJobThisDevice => 'This device';
+
+  @override
+  String get newJobDevice => 'Run on';
+
+  @override
+  String get newJobDeviceAuto => 'Automatic';
+
+  @override
+  String get newJobDeviceCpu => 'CPU (most compatible)';
+
+  @override
+  String newJobDeviceUntested(String route) {
+    return '$route — not tested on this kind of device';
+  }
+
+  @override
+  String get newJobLocalPrivacy => 'The audio stays on this device.';
+
+  @override
+  String newJobLocalNotDownloaded(String name) {
+    return '$name is not downloaded. Download it in Library first.';
+  }
+
+  @override
+  String newJobLocalLanguage(String name) {
+    return '$name does not transcribe the languages entered here.';
+  }
+
+  @override
+  String get jobFieldRanOn => 'Ran on';
+
+  @override
+  String jobFallback(String from, String to, String reason) {
+    return 'Moved from $from to $to: $reason';
+  }
+
+  @override
+  String jobPlacementWindows(String first, String last, String placement) {
+    return 'Segments $first–$last: $placement';
+  }
+
+  @override
+  String get placementCpu => 'CPU';
+
+  @override
+  String get placementGpu => 'GPU';
+
+  @override
+  String get placementNpu => 'NPU';
+
+  @override
+  String get placementMixed => 'CPU and accelerator';
+
+  @override
+  String get placementUnknown => 'Not reported';
+
+  @override
+  String get settingsLocalModels => 'Local models';
+
+  @override
+  String get settingsFallbackPolicy => 'If the chosen processor fails';
+
+  @override
+  String get settingsFallbackCpu => 'Use the same model on the CPU';
+
+  @override
+  String get settingsFallbackNone => 'Stop the transcription';
+
+  @override
+  String get settingsDiagnostics => 'Diagnostics';
+
+  @override
+  String get settingsDiagnosticsSubtitle =>
+      'What each local model can run on here';
+
+  @override
+  String get diagnosticsDevice => 'This device';
+
+  @override
+  String get diagnosticsEngine => 'Engine';
+
+  @override
+  String get diagnosticsEngineMissing => 'Not built for this device';
+
+  @override
+  String get diagnosticsRoutes => 'Routes';
+
+  @override
+  String get diagnosticsCopyReport => 'Copy report';
+
+  @override
+  String get diagnosticsCopied =>
+      'Report copied. It holds no file names and no transcript text, and the app sends it nowhere.';
 }

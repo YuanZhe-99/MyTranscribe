@@ -24,6 +24,7 @@ tests that happen to execute on the device.
 | File | Answers |
 |---|---|
 | `media_toolkit_test.dart` | Do the linked-in FFmpeg libraries load, probe, convert, split and cancel on this device? |
+| `local_asr_test.dart` | Does the whisper.cpp engine built into this app load, pass its check, transcribe and cancel on this device? It fetches the tiny model (75 MiB) once. |
 
 Its assertions deliberately mirror `test/media_toolkit_live_test.dart`, which
 covers the external-executable backend on Windows. The two backends are held to

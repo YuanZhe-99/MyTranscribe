@@ -578,5 +578,194 @@
   "viewerSpeakerUnassign": "Mark as unknown",
   "viewerSpeakerUncertain": "Some of this speaker's lines were an uncertain match across a segment boundary.",
   "viewerSpeakerUnknown": "Unknown",
-  "viewerSpeakers": "Speakers"
+  "viewerSpeakers": "Speakers",
+  "libraryThisDevice": "This device",
+  "libraryThisDeviceSubtitle": "Models that run without a network",
+  "localStateNotDownloaded": "Not downloaded",
+  "localStateDownloading": "Downloading {percent}%",
+  "@localStateDownloading": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "localStateUnpacking": "Unpacking",
+  "localStateChecking": "Checking this device",
+  "localStateReady": "Ready",
+  "localStateFailed": "Failed: {reason}",
+  "@localStateFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "localStateNoEngine": "This build cannot run it on this device",
+  "localModelDownload": "Download",
+  "localModelDownloadTitle": "Download {name}?",
+  "@localModelDownloadTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "localModelDownloadBody": "{size} from {host}. It stays on this device: it is not synced and not backed up.",
+  "@localModelDownloadBody": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "localModelCancel": "Cancel download",
+  "localModelRemove": "Remove from this device",
+  "localModelRemoveBody": "Remove {name} from this device? You can download it again.",
+  "@localModelRemoveBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "localModelVerify": "Verify files",
+  "localModelVerifyOk": "The files are intact.",
+  "localModelVerifyBad": "The files are damaged. Remove the model and download it again.",
+  "localModelSize": "Download size",
+  "localModelLanguages": "Languages",
+  "localModelLanguagesAny": "Detects the language",
+  "localModelTimestamps": "Timestamps",
+  "localModelLicence": "Licence",
+  "localModelRoutes": "Where it can run",
+  "localModelRoutesNone": "Download the model to see where it can run on this device.",
+  "localRouteCpu": "CPU",
+  "localRouteGpu": "GPU ({backend})",
+  "@localRouteGpu": {
+    "placeholders": {
+      "backend": {
+        "type": "String"
+      }
+    }
+  },
+  "localRouteNpu": "NPU ({backend})",
+  "@localRouteNpu": {
+    "placeholders": {
+      "backend": {
+        "type": "String"
+      }
+    }
+  },
+  "localRouteTested": "Tested on this kind of device",
+  "localRouteUntested": "Not yet tested on this kind of device",
+  "localEvidenceOfficial": "Documented by the vendor",
+  "localEvidenceCommunity": "Community results",
+  "localEvidenceExperimental": "Experimental",
+  "localEvidenceNone": "No published results",
+  "localCheckPassed": "Passed its check here",
+  "localCheckFailed": "Failed its check here: {reason}",
+  "@localCheckFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "localCheckNotRun": "Not checked yet",
+  "localCheckCrashed": "The app stopped while using it here, so it is not used automatically",
+  "localCheckNow": "Check now",
+  "localCheckSpeed": "{factor}× real time",
+  "@localCheckSpeed": {
+    "placeholders": {
+      "factor": {
+        "type": "String"
+      }
+    }
+  },
+  "localRouteUnavailable": "Not available: {reason}",
+  "@localRouteUnavailable": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "newJobThisDevice": "This device",
+  "newJobDevice": "Run on",
+  "newJobDeviceAuto": "Automatic",
+  "newJobDeviceCpu": "CPU (most compatible)",
+  "newJobDeviceUntested": "{route} — not tested on this kind of device",
+  "@newJobDeviceUntested": {
+    "placeholders": {
+      "route": {
+        "type": "String"
+      }
+    }
+  },
+  "newJobLocalPrivacy": "The audio stays on this device.",
+  "newJobLocalNotDownloaded": "{name} is not downloaded. Download it in Library first.",
+  "@newJobLocalNotDownloaded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "newJobLocalLanguage": "{name} does not transcribe the languages entered here.",
+  "@newJobLocalLanguage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "jobFieldRanOn": "Ran on",
+  "jobFallback": "Moved from {from} to {to}: {reason}",
+  "@jobFallback": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "jobPlacementWindows": "Segments {first}–{last}: {placement}",
+  "@jobPlacementWindows": {
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "last": {
+        "type": "String"
+      },
+      "placement": {
+        "type": "String"
+      }
+    }
+  },
+  "placementCpu": "CPU",
+  "placementGpu": "GPU",
+  "placementNpu": "NPU",
+  "placementMixed": "CPU and accelerator",
+  "placementUnknown": "Not reported",
+  "settingsLocalModels": "Local models",
+  "settingsFallbackPolicy": "If the chosen processor fails",
+  "settingsFallbackCpu": "Use the same model on the CPU",
+  "settingsFallbackNone": "Stop the transcription",
+  "settingsDiagnostics": "Diagnostics",
+  "settingsDiagnosticsSubtitle": "What each local model can run on here",
+  "diagnosticsDevice": "This device",
+  "diagnosticsEngine": "Engine",
+  "diagnosticsEngineMissing": "Not built for this device",
+  "diagnosticsRoutes": "Routes",
+  "diagnosticsCopyReport": "Copy report",
+  "diagnosticsCopied": "Report copied. It holds no file names and no transcript text, and the app sends it nowhere."
 }

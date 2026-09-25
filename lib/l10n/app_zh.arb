@@ -578,5 +578,194 @@
   "viewerSpeakerUnassign": "归为未知",
   "viewerSpeakerUncertain": "该说话人有部分语句在分段边界上的匹配并不确定。",
   "viewerSpeakerUnknown": "未知",
-  "viewerSpeakers": "说话人"
+  "viewerSpeakers": "说话人",
+  "libraryThisDevice": "本机",
+  "libraryThisDeviceSubtitle": "无需网络即可运行的模型",
+  "localStateNotDownloaded": "未下载",
+  "localStateDownloading": "正在下载 {percent}%",
+  "@localStateDownloading": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "localStateUnpacking": "正在解压",
+  "localStateChecking": "正在检查本机",
+  "localStateReady": "可以使用",
+  "localStateFailed": "失败：{reason}",
+  "@localStateFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "localStateNoEngine": "此版本无法在本机上运行它",
+  "localModelDownload": "下载",
+  "localModelDownloadTitle": "下载 {name}？",
+  "@localModelDownloadTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "localModelDownloadBody": "从 {host} 下载 {size}。它只保存在本机，不会同步，也不会备份。",
+  "@localModelDownloadBody": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "localModelCancel": "取消下载",
+  "localModelRemove": "从本机移除",
+  "localModelRemoveBody": "要从本机移除 {name} 吗？之后可以重新下载。",
+  "@localModelRemoveBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "localModelVerify": "校验文件",
+  "localModelVerifyOk": "文件完好。",
+  "localModelVerifyBad": "文件已损坏。请移除该模型并重新下载。",
+  "localModelSize": "下载大小",
+  "localModelLanguages": "语言",
+  "localModelLanguagesAny": "自动识别语言",
+  "localModelTimestamps": "时间戳",
+  "localModelLicence": "许可证",
+  "localModelRoutes": "可以在哪里运行",
+  "localModelRoutesNone": "下载模型后，可以看到它能在本机的哪些处理器上运行。",
+  "localRouteCpu": "CPU",
+  "localRouteGpu": "GPU（{backend}）",
+  "@localRouteGpu": {
+    "placeholders": {
+      "backend": {
+        "type": "String"
+      }
+    }
+  },
+  "localRouteNpu": "NPU（{backend}）",
+  "@localRouteNpu": {
+    "placeholders": {
+      "backend": {
+        "type": "String"
+      }
+    }
+  },
+  "localRouteTested": "已在此类设备上测试",
+  "localRouteUntested": "尚未在此类设备上测试",
+  "localEvidenceOfficial": "厂商有文档说明",
+  "localEvidenceCommunity": "有社区测试结果",
+  "localEvidenceExperimental": "实验性",
+  "localEvidenceNone": "没有公开结果",
+  "localCheckPassed": "已通过本机检查",
+  "localCheckFailed": "未通过本机检查：{reason}",
+  "@localCheckFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "localCheckNotRun": "尚未检查",
+  "localCheckCrashed": "在本机使用时应用曾意外退出，因此不会被自动选用",
+  "localCheckNow": "立即检查",
+  "localCheckSpeed": "实时速度的 {factor} 倍",
+  "@localCheckSpeed": {
+    "placeholders": {
+      "factor": {
+        "type": "String"
+      }
+    }
+  },
+  "localRouteUnavailable": "不可用：{reason}",
+  "@localRouteUnavailable": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "newJobThisDevice": "本机",
+  "newJobDevice": "运行于",
+  "newJobDeviceAuto": "自动",
+  "newJobDeviceCpu": "CPU（兼容性最好）",
+  "newJobDeviceUntested": "{route} —— 尚未在此类设备上测试",
+  "@newJobDeviceUntested": {
+    "placeholders": {
+      "route": {
+        "type": "String"
+      }
+    }
+  },
+  "newJobLocalPrivacy": "音频不会离开本机。",
+  "newJobLocalNotDownloaded": "{name} 尚未下载。请先在模型库中下载。",
+  "@newJobLocalNotDownloaded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "newJobLocalLanguage": "{name} 不支持这里填写的语言。",
+  "@newJobLocalLanguage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "jobFieldRanOn": "运行于",
+  "jobFallback": "已从 {from} 改用 {to}：{reason}",
+  "@jobFallback": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "jobPlacementWindows": "第 {first}–{last} 段：{placement}",
+  "@jobPlacementWindows": {
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "last": {
+        "type": "String"
+      },
+      "placement": {
+        "type": "String"
+      }
+    }
+  },
+  "placementCpu": "CPU",
+  "placementGpu": "GPU",
+  "placementNpu": "NPU",
+  "placementMixed": "CPU 与加速器",
+  "placementUnknown": "未报告",
+  "settingsLocalModels": "本地模型",
+  "settingsFallbackPolicy": "所选处理器失败时",
+  "settingsFallbackCpu": "改用 CPU 运行同一模型",
+  "settingsFallbackNone": "停止转写",
+  "settingsDiagnostics": "诊断",
+  "settingsDiagnosticsSubtitle": "每个本地模型在本机可以运行在哪里",
+  "diagnosticsDevice": "本机",
+  "diagnosticsEngine": "引擎",
+  "diagnosticsEngineMissing": "此设备上未构建",
+  "diagnosticsRoutes": "路线",
+  "diagnosticsCopyReport": "复制报告",
+  "diagnosticsCopied": "报告已复制。其中不含文件名和转写文本，应用也不会把它发送到任何地方。"
 }

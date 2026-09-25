@@ -44,18 +44,28 @@
 
 CI 不构建 MSIX：打包它需要签名证书，而本仓库没有。要产出它，仍然是在本地运行 `dart run msix:create`。
 
+现在每个作业还会通过 `packages/local_asr_whisper` 的构建钩子编译 whisper.cpp，作为 `flutter build` 的一部分
+—— Ubuntu 作业则作为 `flutter test` 的一部分，为主机编译。每个作业都缓存钩子的 CMake 构建目录，以 whisper.cpp
+子模块的提交和钩子自身的源码为键，因此两者都没改的推送不会重新构建它。两个 Windows 作业都会确保装有 clang：
+镜像带有该组件时用 Visual Studio 自己的，否则用一个固定的 LLVM 发行版，并按其公布的 SHA-256 核对。Ubuntu 作
+业安装 Ninja；在其他地方缺少 Ninja 时，钩子回退到 Makefiles。
+
 ## 全新克隆
 
 ```bash
 git clone git@github.com:YuanZhe-99/MyTranscribe.git     # 或使用 Gitea 远端
 cd MyTranscribe
-git submodule update --init          # myapps_data 是子模块内的 path 依赖
+git submodule update --init          # myapps_data 与 whisper.cpp 都是子模块
 flutter pub get
 flutter gen-l10n
 ```
 
 跳过子模块那一步会让 `flutter pub get` 失败：`myapps_data` 是从 `packages/myapps_data` 解析的，而在子模块
-检出之前那里是空的。
+检出之前那里是空的；第一次构建也会在 whisper.cpp 钩子里失败，钩子会提示运行同一条命令。
+
+构建需要一套钩子能驱动的 C 工具链：Windows 上是带 C++ 工作负载及其 Clang 组件的 Visual Studio（或独立的
+LLVM），Android 上是 Flutter 安装的 NDK，Mac 上是 Xcode，另外还需要 CMake —— 在 Windows 上 Visual Studio
+自带的那个就够用。
 
 子模块的 URL 是**相对**的 —— `../MyApps-DATA.git` —— 因此它按你克隆自哪个远端来解析。从 GitHub 克隆会指向
 `github.com/YuanZhe-99/MyApps-DATA`，从 Gitea 克隆会指向 Gitea 上的副本，两者都不必知道对方存在。两边都必
@@ -98,6 +108,15 @@ flutter test integration_test/media_toolkit_test.dart -d <device id>
 ```bash
 flutter test test/media_toolkit_live_test.dart
 flutter test test/media_toolkit_live_test.dart --dart-define=live_download=true
+```
+
+真正的 whisper.cpp 引擎由 `test/local_asr_live_test.dart` 在主机上检验，放在一个开关之后，因为它要取得
+`ggml-tiny.bin`（75 MiB，只取一次，按哈希核对并缓存在临时目录中）：它通过模型包管理器安装模型，用内置片段通
+过路线检查，转写一个窗口并取消一个窗口。这个包有自己的测试，需要一个模型路径：
+
+```bash
+flutter test test/local_asr_live_test.dart --dart-define=live_model=true
+cd packages/local_asr_whisper && LASR_TEST_MODEL=/path/to/ggml-tiny.bin dart test
 ```
 
 ## 运行

@@ -135,13 +135,46 @@ Where downloaded models live differs by platform, and `platform_capabilities.dar
 | Platform | Where `models/` is | Why |
 |---|---|---|
 | iOS, macOS | the app's caches directory | iCloud backup and Time Machine leave it out; a model is a re-downloadable cache, and gigabytes of it in a phone backup is a support ticket. The system may purge it when space runs short, and the library then shows the model as not downloaded. No native code is needed to mark a folder as excluded. |
-| Android, Windows | `models/` under the app directory | A custom storage path carries the models along. Android's Auto Backup is on by default — the manifest sets no rule — and skips an app whose data passes 25 MB, which recordings already do; a backup rule that excludes `models/` explicitly lands with L1, when a model can first be downloaded on Android. |
+| Android, Windows | `models/` under the app directory | A custom storage path carries the models along. On Android the backup rules below exclude `models/` from Auto Backup and from device transfer. |
 
 A desktop user may move models anywhere with `modelsPath`; nothing is copied when it changes.
 
 Which engine adapters a platform may have at all is also decided there (`localEngineBackends`):
 whisper.cpp and sherpa-onnx everywhere; the Swift plugin on iOS and macOS; Android's recogniser on
 Android; ONNX Runtime with Qualcomm's QNN provider on Windows and Android. Whether a build actually
-contains one is the engine registry's answer. At L0 no adapter is compiled in; the toolchain each
-needs is recorded here as each milestone lands. `hasSystemSpeechRecognizer` is false on Windows,
+contains one is the engine registry's answer. `hasSystemSpeechRecognizer` is false on Windows,
 which has no file-transcription API, so the fallback setting is absent there rather than disabled.
+
+### whisper.cpp
+
+whisper.cpp is a git submodule at `packages/whisper.cpp`, pinned to a release tag (v1.9.4), with the
+public upstream URL — an absolute URL is right here, unlike `myapps_data`, because upstream lives
+in neither of this project's remotes. `packages/local_asr_whisper` wraps it: a build hook
+(`hook/build.dart`) runs CMake on the submodule for whatever target the Flutter tool is building,
+and a small C shim (`src/lasr_whisper.c`) gives the Dart side a stable ABI of plain types, so no
+Dart code mirrors a whisper.cpp struct. No pub package was usable: the two that exist ship
+x86_64-only Windows binaries or no desktop at all.
+
+| Target | Compiler | CPU code | Other backends |
+|---|---|---|---|
+| Windows ARM64 | clang from Visual Studio's LLVM component (or a standalone LLVM), in Visual Studio's developer environment | one library at ARMv8.2 with dot-product and FP16, which every Windows 11 ARM processor has — the pinned ggml has no Windows ARM64 variant list to choose from at run time | — (OpenCL in L3) |
+| Windows x64 | the same clang | every x86 variant built, the best loaded at run time | — (Vulkan in L3) |
+| Android arm64, x86_64 | the NDK's clang and CMake toolchain file | every Android variant built, the best loaded at run time | — (OpenCL in L3) |
+| macOS, iOS | Xcode's clang | the default for the architecture | Metal, with the Core ML encoder used when it is beside the model |
+| Linux x64 | the host compiler | the default | — (the host `flutter test` runs on in CI) |
+
+`cl.exe` is not used on Windows: it lacks the FP16 intrinsics ggml's ARM code needs, and the OpenCL
+backend of L3 does not support it at all. 32-bit Android is not built — a large Whisper model does
+not fit a 32-bit address space — and the engine reports itself as not built there.
+
+Where the CPU code is chosen at run time, ggml loads its backends as separate libraries, and the
+shim loads them from the folder it was itself loaded from: on Android that folder is not the
+executable's, and in a `flutter test` run neither is anything else. That is why the Android app is
+built with **legacy packaging** (`useLegacyPackaging` in `android/app/build.gradle.kts`): the
+native libraries are extracted to the app's library folder instead of being read from inside the
+APK, where a folder cannot be listed. Android's backup rules (`res/xml/backup_rules.xml` and
+`res/xml/data_extraction_rules.xml`) keep `models/` out of Auto Backup and device transfer.
+
+Tools: CMake and Ninja from PATH, then Visual Studio's own copies on Windows, then the Android SDK's
+for Android; without Ninja on macOS or Linux the hook falls back to Makefiles. The CMake build
+directory lives in the hook's shared output under `.dart_tool/`, so a second build is incremental.

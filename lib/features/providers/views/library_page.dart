@@ -15,6 +15,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/utils/adaptive_layout.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../local/services/local_models_controller.dart';
+import '../../local/views/local_model_page.dart';
+import '../../local/views/local_text.dart';
 import '../../secrets/services/secrets_store.dart';
 import '../models/model_config.dart';
 import '../models/provider_config.dart';
@@ -58,6 +61,19 @@ class ModelSelection extends LibrarySelection {
   /// Side effects: None.
   /// Notes: See [ProviderSelection].
   const ModelSelection(this.modelId);
+}
+
+/// A local model is open.
+class LocalModelSelection extends LibrarySelection {
+  /// The local model's id.
+  final String modelId;
+
+  /// Purpose: Create the selection.
+  /// Inputs: [modelId].
+  /// Returns: A new immutable value.
+  /// Side effects: None.
+  /// Notes: None.
+  const LocalModelSelection(this.modelId);
 }
 
 class LibraryPage extends ConsumerStatefulWidget {
@@ -111,6 +127,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       providerId: providerId,
     ),
     ModelSelection(:final modelId) => ModelEditorPage(modelId: modelId),
+    LocalModelSelection(:final modelId) => LocalModelPage(modelId: modelId),
   };
 
   /// Purpose: Build the library tab.
@@ -222,7 +239,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         body: '$error',
       ),
       data: (data) {
-        if (data.isEmpty) {
+        if (data.isEmpty && data.localModels.isEmpty) {
           return EmptyState(
             icon: Icons.library_books_outlined,
             title: l10n.libraryEmptyTitle,
@@ -234,6 +251,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
             bottom: shellListBottomInset(MediaQuery.sizeOf(context).width) + 72,
           ),
           children: [
+            if (data.localModels.isNotEmpty) ..._thisDeviceSection(l10n, data),
             for (final provider in data.providers)
               ..._sourceSection(
                 l10n,
@@ -245,6 +263,60 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         );
       },
     );
+  }
+
+  /// Purpose: Build the section of models that run on this device.
+  /// Inputs: [l10n], the library [data].
+  /// Returns: The rows.
+  /// Side effects: Watches the installed packages and the download state.
+  /// Notes: Internal helper used within this file only. Above the sources,
+  /// because a model already on the device is the one that needs no key and no
+  /// network. Each row says its state here — downloaded or not, downloading,
+  /// checking — which is a fact about this device, not about the library.
+  List<Widget> _thisDeviceSection(AppLocalizations l10n, SettingsLibrary data) {
+    final installed = ref.watch(installedArtifactsProvider).value ?? const {};
+    final activity = ref.watch(localModelsControllerProvider);
+    final controller = ref.read(localModelsControllerProvider.notifier);
+    return [
+      ListTile(
+        leading: const Icon(Icons.memory_outlined),
+        title: Text(l10n.libraryThisDevice),
+        subtitle: Text(l10n.libraryThisDeviceSubtitle),
+      ),
+      for (final model in data.localModels)
+        Padding(
+          padding: const EdgeInsets.only(left: 24),
+          child: ListTile(
+            dense: true,
+            leading: Icon(
+              model.artifactIds.any(installed.containsKey)
+                  ? Icons.download_done_outlined
+                  : Icons.cloud_download_outlined,
+              size: 20,
+            ),
+            title: Text(model.displayName),
+            subtitle: Text(
+              localModelStateLabel(
+                l10n,
+                model,
+                installed: model.artifactIds.any(installed.containsKey),
+                canRun:
+                    controller.downloadableFor(model).isNotEmpty ||
+                    model.artifactIds.any(installed.containsKey),
+                activity: activity[model.id],
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            selected:
+                _twoPane &&
+                _selection is LocalModelSelection &&
+                (_selection! as LocalModelSelection).modelId == model.id,
+            onTap: () => _open(LocalModelSelection(model.id)),
+          ),
+        ),
+      const Divider(height: 1),
+    ];
   }
 
   /// Purpose: Build one source header and its models.
@@ -366,6 +438,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       key: ValueKey(switch (selection) {
         ProviderSelection(:final providerId) => providerId,
         ModelSelection(:final modelId) => modelId,
+        LocalModelSelection(:final modelId) => modelId,
       }),
       onGenerateRoute: (_) =>
           MaterialPageRoute(builder: (_) => _editor(selection)),

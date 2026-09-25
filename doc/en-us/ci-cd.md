@@ -51,18 +51,31 @@ Three things about the jobs are worth knowing:
 MSIX is not built in CI: packaging one needs a signing certificate, and this repository carries
 none. `dart run msix:create` locally is still the way to produce it.
 
+Every job now also compiles whisper.cpp, through the build hook of `packages/local_asr_whisper`, as
+part of `flutter build` — and the Ubuntu job as part of `flutter test`, for the host. Each job
+caches the hook's CMake build directory, keyed by the whisper.cpp submodule commit and the hook's
+own sources, so a push that changes neither does not rebuild it. Both Windows jobs make sure clang
+is installed: Visual Studio's own when the image has the component, otherwise a pinned LLVM release
+checked against its published SHA-256. The Ubuntu job installs Ninja; elsewhere the hook falls back
+to Makefiles when Ninja is missing.
+
 ## Fresh clone
 
 ```bash
 git clone git@github.com:YuanZhe-99/MyTranscribe.git     # or the Gitea remote
 cd MyTranscribe
-git submodule update --init          # myapps_data is a path dependency inside a submodule
+git submodule update --init          # myapps_data and whisper.cpp are submodules
 flutter pub get
 flutter gen-l10n
 ```
 
 Skipping the submodule step makes `flutter pub get` fail: `myapps_data` is resolved from
-`packages/myapps_data`, which is empty until the submodule is checked out.
+`packages/myapps_data`, which is empty until the submodule is checked out; and the first build
+fails in the whisper.cpp hook, which says to run the same command.
+
+Building needs a C toolchain the hook can drive: Visual Studio with the C++ workload and its Clang
+component on Windows (or a standalone LLVM), the NDK that Flutter installs for Android, Xcode on a
+Mac, and CMake — Visual Studio's bundled one serves on Windows.
 
 The submodule URL is **relative** — `../MyApps-DATA.git` — so it resolves against whichever remote
 you cloned from. A GitHub clone reaches `github.com/YuanZhe-99/MyApps-DATA`, a Gitea clone reaches
@@ -108,6 +121,17 @@ FFmpeg is installed and keeps its large download behind a flag:
 ```bash
 flutter test test/media_toolkit_live_test.dart
 flutter test test/media_toolkit_live_test.dart --dart-define=live_download=true
+```
+
+The real whisper.cpp engine is exercised on the host by `test/local_asr_live_test.dart`, behind a
+flag because it fetches `ggml-tiny.bin` (75 MiB, once, checked by hash and cached in the temporary
+directory): it installs the model through the artifact manager, passes the route check on the
+bundled clip, transcribes a window and cancels one. The package has its own test, which needs a
+model path:
+
+```bash
+flutter test test/local_asr_live_test.dart --dart-define=live_model=true
+cd packages/local_asr_whisper && LASR_TEST_MODEL=/path/to/ggml-tiny.bin dart test
 ```
 
 ## Run

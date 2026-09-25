@@ -49,6 +49,16 @@ android {
         }
     }
 
+    // Native libraries are extracted to the app's native library directory
+    // rather than read from inside the APK: whisper.cpp's ggml lists that
+    // directory to find the CPU variant that suits this phone, and a folder
+    // inside an APK cannot be listed. See doc/en-us/platform-notes.md.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
     buildTypes {
         release {
             signingConfig = if (keystorePropertiesFile.exists()) {

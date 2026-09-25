@@ -1,0 +1,5 @@
+# This package stands alone: it does not depend on flutter_lints, so it does
+# not inherit the app's analysis options.
+analyzer:
+  language:
+    strict-casts: true

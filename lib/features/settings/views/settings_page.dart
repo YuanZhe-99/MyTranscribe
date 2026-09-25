@@ -24,6 +24,10 @@ import '../../../shared/utils/byte_format.dart';
 import '../../../shared/utils/platform_capabilities.dart';
 import '../../../shared/views/webdav_config_page.dart';
 import '../../jobs/services/job_providers.dart';
+import '../../local/models/engine_capability.dart';
+import '../../local/services/engine_registry.dart';
+import '../../local/services/local_models_controller.dart';
+import '../../local/views/engine_diagnostics_page.dart';
 import '../../media/widgets/media_tools_tile.dart';
 import 'backup_page.dart';
 import 'license_page.dart';
@@ -36,6 +40,7 @@ enum _SettingsDetail {
   backup,
   mediaTools,
   speakerNames,
+  diagnostics,
   privacy,
   license,
 }
@@ -127,6 +132,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     _SettingsDetail.backup => const BackupPage(),
     _SettingsDetail.mediaTools => const MediaToolsPage(),
     _SettingsDetail.speakerNames => const SpeakerNamesPage(),
+    _SettingsDetail.diagnostics => const EngineDiagnosticsPage(),
     _SettingsDetail.privacy => const PrivacyPolicyPage(),
     _SettingsDetail.license => const AppLicensePage(),
   };
@@ -403,6 +409,43 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             onChanged: notifier.setAutoSaveTranscriptFiles,
           ),
         ]),
+        _section(l10n.settingsLocalModels, [
+          ListTile(
+            leading: const Icon(Icons.swap_horiz_outlined),
+            title: Text(l10n.settingsFallbackPolicy),
+            subtitle: DropdownButton<FallbackPolicy>(
+              isExpanded: true,
+              value:
+                  ref.watch(localEngineStateProvider).value?.fallbackPolicy ??
+                  FallbackPolicy.sameModelOnCpu,
+              items: [
+                DropdownMenuItem(
+                  value: FallbackPolicy.sameModelOnCpu,
+                  child: Text(l10n.settingsFallbackCpu),
+                ),
+                DropdownMenuItem(
+                  value: FallbackPolicy.none,
+                  child: Text(l10n.settingsFallbackNone),
+                ),
+              ],
+              onChanged: (policy) async {
+                if (policy == null) return;
+                await ref
+                    .read(localEngineStateStoreProvider)
+                    .update((state) => state.copyWith(fallbackPolicy: policy));
+                ref.refresh(localEngineStateProvider);
+              },
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.memory_outlined),
+            title: Text(l10n.settingsDiagnostics),
+            subtitle: Text(l10n.settingsDiagnosticsSubtitle),
+            trailing: const Icon(Icons.chevron_right),
+            selected: _twoPane && _detail == _SettingsDetail.diagnostics,
+            onTap: () => _open(_SettingsDetail.diagnostics),
+          ),
+        ]),
         _section(l10n.settingsData, [
           ListTile(
             leading: const Icon(Icons.cloud_sync_outlined),
@@ -441,9 +484,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 subtitle: Text(
                   total == 0
                       ? l10n.settingsRemoveAllAudioNothing
-                      : l10n.settingsRemoveAllAudioSubtitle(
-                          formatBytes(total),
-                        ),
+                      : l10n.settingsRemoveAllAudioSubtitle(formatBytes(total)),
                 ),
                 enabled: total > 0,
                 onTap: total > 0 ? _removeAllAudio : null,

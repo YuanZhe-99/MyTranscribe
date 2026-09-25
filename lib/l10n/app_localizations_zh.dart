@@ -1061,6 +1061,243 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get viewerSpeakers => '说话人';
+
+  @override
+  String get libraryThisDevice => '本机';
+
+  @override
+  String get libraryThisDeviceSubtitle => '无需网络即可运行的模型';
+
+  @override
+  String get localStateNotDownloaded => '未下载';
+
+  @override
+  String localStateDownloading(String percent) {
+    return '正在下载 $percent%';
+  }
+
+  @override
+  String get localStateUnpacking => '正在解压';
+
+  @override
+  String get localStateChecking => '正在检查本机';
+
+  @override
+  String get localStateReady => '可以使用';
+
+  @override
+  String localStateFailed(String reason) {
+    return '失败：$reason';
+  }
+
+  @override
+  String get localStateNoEngine => '此版本无法在本机上运行它';
+
+  @override
+  String get localModelDownload => '下载';
+
+  @override
+  String localModelDownloadTitle(String name) {
+    return '下载 $name？';
+  }
+
+  @override
+  String localModelDownloadBody(String size, String host) {
+    return '从 $host 下载 $size。它只保存在本机，不会同步，也不会备份。';
+  }
+
+  @override
+  String get localModelCancel => '取消下载';
+
+  @override
+  String get localModelRemove => '从本机移除';
+
+  @override
+  String localModelRemoveBody(String name) {
+    return '要从本机移除 $name 吗？之后可以重新下载。';
+  }
+
+  @override
+  String get localModelVerify => '校验文件';
+
+  @override
+  String get localModelVerifyOk => '文件完好。';
+
+  @override
+  String get localModelVerifyBad => '文件已损坏。请移除该模型并重新下载。';
+
+  @override
+  String get localModelSize => '下载大小';
+
+  @override
+  String get localModelLanguages => '语言';
+
+  @override
+  String get localModelLanguagesAny => '自动识别语言';
+
+  @override
+  String get localModelTimestamps => '时间戳';
+
+  @override
+  String get localModelLicence => '许可证';
+
+  @override
+  String get localModelRoutes => '可以在哪里运行';
+
+  @override
+  String get localModelRoutesNone => '下载模型后，可以看到它能在本机的哪些处理器上运行。';
+
+  @override
+  String get localRouteCpu => 'CPU';
+
+  @override
+  String localRouteGpu(String backend) {
+    return 'GPU（$backend）';
+  }
+
+  @override
+  String localRouteNpu(String backend) {
+    return 'NPU（$backend）';
+  }
+
+  @override
+  String get localRouteTested => '已在此类设备上测试';
+
+  @override
+  String get localRouteUntested => '尚未在此类设备上测试';
+
+  @override
+  String get localEvidenceOfficial => '厂商有文档说明';
+
+  @override
+  String get localEvidenceCommunity => '有社区测试结果';
+
+  @override
+  String get localEvidenceExperimental => '实验性';
+
+  @override
+  String get localEvidenceNone => '没有公开结果';
+
+  @override
+  String get localCheckPassed => '已通过本机检查';
+
+  @override
+  String localCheckFailed(String reason) {
+    return '未通过本机检查：$reason';
+  }
+
+  @override
+  String get localCheckNotRun => '尚未检查';
+
+  @override
+  String get localCheckCrashed => '在本机使用时应用曾意外退出，因此不会被自动选用';
+
+  @override
+  String get localCheckNow => '立即检查';
+
+  @override
+  String localCheckSpeed(String factor) {
+    return '实时速度的 $factor 倍';
+  }
+
+  @override
+  String localRouteUnavailable(String reason) {
+    return '不可用：$reason';
+  }
+
+  @override
+  String get newJobThisDevice => '本机';
+
+  @override
+  String get newJobDevice => '运行于';
+
+  @override
+  String get newJobDeviceAuto => '自动';
+
+  @override
+  String get newJobDeviceCpu => 'CPU（兼容性最好）';
+
+  @override
+  String newJobDeviceUntested(String route) {
+    return '$route —— 尚未在此类设备上测试';
+  }
+
+  @override
+  String get newJobLocalPrivacy => '音频不会离开本机。';
+
+  @override
+  String newJobLocalNotDownloaded(String name) {
+    return '$name 尚未下载。请先在模型库中下载。';
+  }
+
+  @override
+  String newJobLocalLanguage(String name) {
+    return '$name 不支持这里填写的语言。';
+  }
+
+  @override
+  String get jobFieldRanOn => '运行于';
+
+  @override
+  String jobFallback(String from, String to, String reason) {
+    return '已从 $from 改用 $to：$reason';
+  }
+
+  @override
+  String jobPlacementWindows(String first, String last, String placement) {
+    return '第 $first–$last 段：$placement';
+  }
+
+  @override
+  String get placementCpu => 'CPU';
+
+  @override
+  String get placementGpu => 'GPU';
+
+  @override
+  String get placementNpu => 'NPU';
+
+  @override
+  String get placementMixed => 'CPU 与加速器';
+
+  @override
+  String get placementUnknown => '未报告';
+
+  @override
+  String get settingsLocalModels => '本地模型';
+
+  @override
+  String get settingsFallbackPolicy => '所选处理器失败时';
+
+  @override
+  String get settingsFallbackCpu => '改用 CPU 运行同一模型';
+
+  @override
+  String get settingsFallbackNone => '停止转写';
+
+  @override
+  String get settingsDiagnostics => '诊断';
+
+  @override
+  String get settingsDiagnosticsSubtitle => '每个本地模型在本机可以运行在哪里';
+
+  @override
+  String get diagnosticsDevice => '本机';
+
+  @override
+  String get diagnosticsEngine => '引擎';
+
+  @override
+  String get diagnosticsEngineMissing => '此设备上未构建';
+
+  @override
+  String get diagnosticsRoutes => '路线';
+
+  @override
+  String get diagnosticsCopyReport => '复制报告';
+
+  @override
+  String get diagnosticsCopied => '报告已复制。其中不含文件名和转写文本，应用也不会把它发送到任何地方。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -2120,4 +2357,241 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get viewerSpeakers => '說話人';
+
+  @override
+  String get libraryThisDevice => '本機';
+
+  @override
+  String get libraryThisDeviceSubtitle => '不需網路即可執行的模型';
+
+  @override
+  String get localStateNotDownloaded => '未下載';
+
+  @override
+  String localStateDownloading(String percent) {
+    return '正在下載 $percent%';
+  }
+
+  @override
+  String get localStateUnpacking => '正在解壓縮';
+
+  @override
+  String get localStateChecking => '正在檢查本機';
+
+  @override
+  String get localStateReady => '可以使用';
+
+  @override
+  String localStateFailed(String reason) {
+    return '失敗：$reason';
+  }
+
+  @override
+  String get localStateNoEngine => '此版本無法在本機上執行它';
+
+  @override
+  String get localModelDownload => '下載';
+
+  @override
+  String localModelDownloadTitle(String name) {
+    return '下載 $name？';
+  }
+
+  @override
+  String localModelDownloadBody(String size, String host) {
+    return '從 $host 下載 $size。它只儲存在本機，不會同步，也不會備份。';
+  }
+
+  @override
+  String get localModelCancel => '取消下載';
+
+  @override
+  String get localModelRemove => '從本機移除';
+
+  @override
+  String localModelRemoveBody(String name) {
+    return '要從本機移除 $name 嗎？之後可以重新下載。';
+  }
+
+  @override
+  String get localModelVerify => '驗證檔案';
+
+  @override
+  String get localModelVerifyOk => '檔案完好。';
+
+  @override
+  String get localModelVerifyBad => '檔案已損毀。請移除此模型並重新下載。';
+
+  @override
+  String get localModelSize => '下載大小';
+
+  @override
+  String get localModelLanguages => '語言';
+
+  @override
+  String get localModelLanguagesAny => '自動辨識語言';
+
+  @override
+  String get localModelTimestamps => '時間戳';
+
+  @override
+  String get localModelLicence => '授權條款';
+
+  @override
+  String get localModelRoutes => '可以在哪裡執行';
+
+  @override
+  String get localModelRoutesNone => '下載模型後，可以看到它能在本機的哪些處理器上執行。';
+
+  @override
+  String get localRouteCpu => 'CPU';
+
+  @override
+  String localRouteGpu(String backend) {
+    return 'GPU（$backend）';
+  }
+
+  @override
+  String localRouteNpu(String backend) {
+    return 'NPU（$backend）';
+  }
+
+  @override
+  String get localRouteTested => '已在此類裝置上測試';
+
+  @override
+  String get localRouteUntested => '尚未在此類裝置上測試';
+
+  @override
+  String get localEvidenceOfficial => '廠商有文件說明';
+
+  @override
+  String get localEvidenceCommunity => '有社群測試結果';
+
+  @override
+  String get localEvidenceExperimental => '實驗性';
+
+  @override
+  String get localEvidenceNone => '沒有公開結果';
+
+  @override
+  String get localCheckPassed => '已通過本機檢查';
+
+  @override
+  String localCheckFailed(String reason) {
+    return '未通過本機檢查：$reason';
+  }
+
+  @override
+  String get localCheckNotRun => '尚未檢查';
+
+  @override
+  String get localCheckCrashed => '在本機使用時應用程式曾意外結束，因此不會被自動選用';
+
+  @override
+  String get localCheckNow => '立即檢查';
+
+  @override
+  String localCheckSpeed(String factor) {
+    return '即時速度的 $factor 倍';
+  }
+
+  @override
+  String localRouteUnavailable(String reason) {
+    return '無法使用：$reason';
+  }
+
+  @override
+  String get newJobThisDevice => '本機';
+
+  @override
+  String get newJobDevice => '執行於';
+
+  @override
+  String get newJobDeviceAuto => '自動';
+
+  @override
+  String get newJobDeviceCpu => 'CPU（相容性最佳）';
+
+  @override
+  String newJobDeviceUntested(String route) {
+    return '$route —— 尚未在此類裝置上測試';
+  }
+
+  @override
+  String get newJobLocalPrivacy => '音訊不會離開本機。';
+
+  @override
+  String newJobLocalNotDownloaded(String name) {
+    return '$name 尚未下載。請先在模型庫中下載。';
+  }
+
+  @override
+  String newJobLocalLanguage(String name) {
+    return '$name 不支援這裡填寫的語言。';
+  }
+
+  @override
+  String get jobFieldRanOn => '執行於';
+
+  @override
+  String jobFallback(String from, String to, String reason) {
+    return '已從 $from 改用 $to：$reason';
+  }
+
+  @override
+  String jobPlacementWindows(String first, String last, String placement) {
+    return '第 $first–$last 段：$placement';
+  }
+
+  @override
+  String get placementCpu => 'CPU';
+
+  @override
+  String get placementGpu => 'GPU';
+
+  @override
+  String get placementNpu => 'NPU';
+
+  @override
+  String get placementMixed => 'CPU 與加速器';
+
+  @override
+  String get placementUnknown => '未回報';
+
+  @override
+  String get settingsLocalModels => '本機模型';
+
+  @override
+  String get settingsFallbackPolicy => '所選處理器失敗時';
+
+  @override
+  String get settingsFallbackCpu => '改用 CPU 執行同一模型';
+
+  @override
+  String get settingsFallbackNone => '停止轉寫';
+
+  @override
+  String get settingsDiagnostics => '診斷';
+
+  @override
+  String get settingsDiagnosticsSubtitle => '每個本機模型在本機可以執行在哪裡';
+
+  @override
+  String get diagnosticsDevice => '本機';
+
+  @override
+  String get diagnosticsEngine => '引擎';
+
+  @override
+  String get diagnosticsEngineMissing => '此裝置上未建置';
+
+  @override
+  String get diagnosticsRoutes => '路線';
+
+  @override
+  String get diagnosticsCopyReport => '複製報告';
+
+  @override
+  String get diagnosticsCopied => '報告已複製。其中不含檔名和轉寫文字，應用程式也不會把它傳送到任何地方。';
 }

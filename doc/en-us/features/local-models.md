@@ -5,11 +5,11 @@ disk, and the audio never leaves the device. This page describes what is built s
 the packages, the routes, the checks and the job — and says where a piece arrives in a later
 milestone of `PLAN.md`.
 
-**State at L0:** the protocol, the record, the package manager, the router, the device-local state
-and the job runner's local path are in place and tested with a fake engine. No native engine is
-compiled in yet (whisper.cpp arrives in L1), so the engine registry is empty and a local job fails
-with "This build has no on-device engine". The pages for choosing and downloading a model arrive
-with L1.
+**State at L1:** the first engine, whisper.cpp, is compiled into every build from the pinned
+submodule and runs the Whisper models on the CPU everywhere, and on Metal on Apple platforms (see
+[`platform-notes.md`](../platform-notes.md)). Parakeet and Qwen are listed in the library but have
+no engine in this build until L2, so their page says the build cannot run them here. GPU routes
+other than Metal arrive in L3.
 
 ## The record and the packages
 
@@ -111,8 +111,11 @@ a key of six parts — the adapter version, the model file's hash, the OS versio
 the processor and the precision — so an update to any of them asks for a new check. A route whose
 check failed is not used here, and the reason is kept for the diagnostics page.
 
-The check clip ships with the first real engine (L1). Until then a route that has not been checked
-runs unchecked — which, with no engine compiled in, never happens.
+The check clip is bundled with the app: the opening of President Kennedy's 1961 inaugural address,
+eleven seconds of public-domain speech, as whisper.cpp ships it for the same purpose. A route is
+checked right after its package is installed ("checking this device"), again whenever its key
+changes, and whenever the user asks from the model's page or the diagnostics page. The speed the
+check measures is what Auto compares an untested accelerator against the CPU with.
 
 ## When the app stops inside a route
 
@@ -159,6 +162,31 @@ GPU finished before a fallback came from the same model and are kept. See
 The failure kinds a local job adds are `modelNotInstalled`, `modelDamaged`, `unsupportedByModel`,
 `engineUnavailable`, `outOfMemory` and `routeCrashed`, each with the engine's own words.
 
+## The pages
+
+- **Library › This device** lists the local models above the sources, each with its state here:
+  not downloaded, downloading with its progress, checking this device, ready, or failed with the
+  reason. A model's page shows its download size, languages, timestamps and licence; its
+  **download** asks first, naming the size and the host it comes from; once installed it offers to
+  **verify** the files against their hashes and to **remove** them. Below that, every route: what
+  it runs on, whether it was tested on this kind of device, its evidence in words, and its check
+  here with its speed, and a **check now** button.
+- **New job** gains "This device" as a source. Choosing a local model shows a **Run on** chooser —
+  Automatic, the CPU, and every accelerator route of this model that passed its check here, the
+  untested ones saying so in their own label — the local plan preview, and the line "The audio
+  stays on this device." A model that is not downloaded, or that does not transcribe the languages
+  typed in, says so under the picker rather than disappearing.
+- **Job detail** says where a local job's windows ran, as the runtime reported it — one placement,
+  or the runs of windows that shared one — and shows every fallback as its own line.
+- **Settings › Local models** holds the fallback policy and the **Diagnostics** page: this device's
+  class, OS and processors; the engine's version, build flags and compute devices; every route
+  with its grade, whether it was tested here, and its check; and **Copy report**.
+
+The copied report names the device, the engine, and each route's model id, adapter, backend, grade,
+tested-here flag, availability, check outcome and speed. It holds no file names, no paths and no
+transcript text — a failed check contributes its outcome and not its reason, because a reason can
+quote a path — and the app sends it nowhere.
+
 ## What unverified means to the user
 
 A route this project has not tested on this kind of device is labelled as such wherever routes are
@@ -166,5 +194,5 @@ shown. It is built and covered by the tests, it passed its check on this device 
 and it is used automatically only as [`engine-routing.md`](../algorithms/engine-routing.md) allows; an
 experimental one runs only when the user chooses it. If it misbehaves on a long recording, the
 in-flight marker, the fallback policy and the per-window record bound the damage to one window. The
-diagnostics page (L1) copies a report of the device, the route, its check and its speed — no file
+diagnostics page copies a report of the device, the route, its check and its speed — no file
 names and no text — that the user may send by hand; the app sends it nowhere.

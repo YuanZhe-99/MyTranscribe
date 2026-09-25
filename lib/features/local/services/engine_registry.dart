@@ -14,6 +14,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../engines/whisper_cpp_engine.dart';
 import '../models/artifact_manifest.dart';
 import '../models/engine_capability.dart';
 import 'artifact_manager.dart';
@@ -107,13 +108,16 @@ final localEngineStateStoreProvider = Provider<LocalEngineStateStore>(
   (ref) => LocalEngineStateStore(),
 );
 
-/// The engine registry.
-///
-/// Empty until the first adapter is compiled in: this build carries the
-/// protocol, the router and the package manager, and no native engine yet.
+/// The whisper.cpp engine, one per app: its worker isolate owns every loaded
+/// Whisper model.
+final whisperCppEngineProvider = Provider<WhisperCppEngine>(
+  (ref) => WhisperCppEngine(),
+);
+
+/// The engine registry: every adapter this build compiles in.
 final engineRegistryProvider = Provider<EngineRegistry>(
   (ref) => EngineRegistry(
-    engines: const [],
+    engines: [ref.watch(whisperCppEngineProvider)],
     artifacts: ref.watch(artifactManagerProvider),
     state: ref.watch(localEngineStateStoreProvider),
   ),

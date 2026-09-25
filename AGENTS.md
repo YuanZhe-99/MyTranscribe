@@ -217,6 +217,13 @@ To change shared code: the submodule checks out detached, so `git switch main` i
 commit and **push before** committing the pointer bump here. A pointer to an unpushed commit breaks
 every other clone. Pin to a **tagged** package commit before any app release.
 
+**whisper.cpp** (`packages/whisper.cpp`) is the other submodule. It is pinned to an upstream
+**release tag** and keeps its absolute public URL — upstream lives in neither of this project's
+remotes. Never commit a change inside it: anything this app needs goes into the shim or the hook of
+`packages/local_asr_whisper`. To move to a newer tag, check it out, run the package test and
+`test/local_asr_live_test.dart --dart-define=live_model=true`, pass the route check on this machine
+again, and record the new tag in `doc/en-us/platform-notes.md` in the same commit.
+
 ## Release, version, commit, tag, push
 
 For ordinary feature/fix work, do not bump versions or tag until the user confirms the release

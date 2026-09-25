@@ -110,12 +110,42 @@ libmpv，会以与 FFmpeg 插件相同的方式失败。这一点是在 ARM64 �
 | 平台 | `models/` 在哪里 | 原因 |
 |---|---|---|
 | iOS、macOS | 应用的缓存目录 | iCloud 备份和 Time Machine 都不包含它；模型是可以重新下载的缓存，而手机备份里塞进数 GB 模型只会招来一张工单。空间不足时系统可能清掉它，此时模型库会把该模型显示为未下载。把文件夹标记为排除不需要任何原生代码。 |
-| Android、Windows | 应用目录下的 `models/` | 自定义存储路径会把模型一并带走。Android 的自动备份默认开启 —— 清单没有设置任何规则 —— 并会跳过数据超过 25 MB 的应用，而录音早已超过这个大小；一条明确排除 `models/` 的备份规则会随 L1 到来，那时 Android 上才第一次能下载模型。 |
+| Android、Windows | 应用目录下的 `models/` | 自定义存储路径会把模型一并带走。在 Android 上，下面的备份规则把 `models/` 排除在自动备份和设备迁移之外。 |
 
 桌面用户可以用 `modelsPath` 把模型挪到任何地方；改动它时不会复制任何东西。
 
 一个平台到底能有哪些引擎适配器，也在那里决定（`localEngineBackends`）：whisper.cpp 与 sherpa-onnx 所有平台
 都有；Swift 插件在 iOS 与 macOS 上；Android 的识别器在 Android 上；带 Qualcomm QNN 提供程序的 ONNX Runtime
-在 Windows 与 Android 上。某个构建是否真的包含其中之一，由引擎注册表回答。L0 阶段没有编译进任何适配器；每个
-适配器需要的工具链会在各里程碑落地时记录在这里。`hasSystemSpeechRecognizer` 在 Windows 上为 false，因为它
-没有文件转写 API，所以回退设置在那里是不出现，而不是被禁用。
+在 Windows 与 Android 上。某个构建是否真的包含其中之一，由引擎注册表回答。`hasSystemSpeechRecognizer` 在
+Windows 上为 false，因为它没有文件转写 API，所以回退设置在那里是不出现，而不是被禁用。
+
+### whisper.cpp
+
+whisper.cpp 是位于 `packages/whisper.cpp` 的 git 子模块，固定在一个发布标签（v1.9.4）上，使用公开的上游 URL
+—— 与 `myapps_data` 不同，这里用绝对 URL 是对的，因为上游不在本项目的任何一个远端里。`packages/local_asr_whisper`
+对它做了封装：一个构建钩子（`hook/build.dart`）针对 Flutter 工具正在构建的目标在子模块上运行 CMake，一个小
+小的 C 垫片（`src/lasr_whisper.c`）为 Dart 一侧提供只用普通类型的稳定 ABI，因此没有任何 Dart 代码去镜像
+whisper.cpp 的结构体。没有可用的 pub 包：现有的两个要么只附带 x86_64 的 Windows 二进制文件，要么根本不支持
+桌面。
+
+| 目标 | 编译器 | CPU 代码 | 其他后端 |
+|---|---|---|---|
+| Windows ARM64 | 来自 Visual Studio LLVM 组件的 clang（或独立的 LLVM），在 Visual Studio 的开发者环境中 | 一个 ARMv8.2 的库，带点积和 FP16，每款 Windows 11 ARM 处理器都具备 —— 固定的 ggml 没有可在运行时挑选的 Windows ARM64 变体列表 | —（OpenCL 在 L3） |
+| Windows x64 | 同一个 clang | 构建所有 x86 变体，运行时加载最好的那个 | —（Vulkan 在 L3） |
+| Android arm64、x86_64 | NDK 的 clang 与 CMake 工具链文件 | 构建所有 Android 变体，运行时加载最好的那个 | —（OpenCL 在 L3） |
+| macOS、iOS | Xcode 的 clang | 该架构的默认设置 | Metal；Core ML 编码器放在模型旁边时会使用它 |
+| Linux x64 | 主机编译器 | 默认设置 | —（CI 中运行主机 `flutter test` 的环境） |
+
+Windows 上不使用 `cl.exe`：它缺少 ggml 的 ARM 代码所需的 FP16 内建函数，而 L3 的 OpenCL 后端根本不支持它。
+32 位 Android 不构建 —— 大的 Whisper 模型装不进 32 位地址空间 —— 引擎在那里报告自己未构建。
+
+在运行时挑选 CPU 代码的地方，ggml 把它的各个后端作为单独的库加载，而垫片从它自己被加载的那个文件夹加载它
+们：在 Android 上那个文件夹不是可执行文件所在的文件夹，而在 `flutter test` 运行中其他文件夹也都不是。这就是
+Android 应用用**旧式打包**（`android/app/build.gradle.kts` 中的 `useLegacyPackaging`）构建的原因：原生库被
+解压到应用的库文件夹，而不是从 APK 内部读取 —— 在那里无法列出文件夹内容。Android 的备份规则
+（`res/xml/backup_rules.xml` 与 `res/xml/data_extraction_rules.xml`）把 `models/` 排除在自动备份和设备迁移
+之外。
+
+工具：先用 PATH 中的 CMake 和 Ninja，然后在 Windows 上用 Visual Studio 自带的副本，在 Android 上用 Android
+SDK 的副本；在 macOS 或 Linux 上没有 Ninja 时，钩子回退到 Makefiles。CMake 构建目录位于 `.dart_tool/` 下钩
+子的共享输出中，因此第二次构建是增量的。

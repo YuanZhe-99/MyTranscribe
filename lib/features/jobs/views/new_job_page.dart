@@ -19,6 +19,11 @@ import 'package:path/path.dart' as p;
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/utils/adaptive_layout.dart';
 import '../../../shared/utils/byte_format.dart';
+import '../../local/models/artifact_manifest.dart';
+import '../../local/models/engine_capability.dart';
+import '../../local/models/local_model_config.dart';
+import '../../local/services/local_models_controller.dart';
+import '../../local/views/local_text.dart';
 import '../../media/models/media_info.dart';
 import '../../media/services/media_toolkit.dart';
 import '../../media/services/media_toolkit_provider.dart';
@@ -65,6 +70,12 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
 
   /// Whether to keep the split audio afterwards.
   bool _keepChunks = false;
+
+  /// For a local model, what to run it on.
+  RouteRequest _device = RouteRequest.auto;
+
+  /// Whether "This device" is the chosen source.
+  bool get _isLocal => _providerId == localProviderId;
 
   /// Whether the defaults have been applied yet.
   bool _seeded = false;
@@ -120,8 +131,28 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
   /// Notes: Internal helper used within this file only. This is the same
   /// planner the runner uses, given the same inputs, so the preview is the
   /// decision rather than a description of it.
-  PlanResult? _preview(SettingsLibrary library, bool toolkitReady) {
+  PlanResult? _preview(
+    SettingsLibrary library,
+    bool toolkitReady,
+    Map<String, ArtifactManifest> installed,
+  ) {
     final file = _file;
+    if (_isLocal) {
+      final local = library.localModel(_modelId);
+      final manifest = local == null ? null : _installedFor(local, installed);
+      if (file == null || local == null || manifest == null) return null;
+      return ChunkPlanner.planLocal(
+        LocalPlanRequest(
+          media: _media,
+          modelId: local.id,
+          engineMaxSeconds: local.maxDurationSeconds,
+          artifactRevision: manifest.revision,
+          requestedDevice: _device.value,
+          overlapSeconds: library.defaults.plainOverlapSeconds.toDouble(),
+          toolkitAvailable: toolkitReady,
+        ),
+      );
+    }
     final provider = library.provider(_providerId);
     final model = library.model(_modelId);
     if (file == null || provider == null || model == null) return null;
@@ -150,10 +181,33 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
   /// Notes: Internal helper used within this file only.
   Future<void> _start(SettingsLibrary library) async {
     final file = _file;
+    final runner = ref.read(jobRunnerProvider);
+    if (_isLocal) {
+      final local = library.localModel(_modelId);
+      if (file == null || local == null) return;
+      final job = await runner.create(
+        sourcePath: file.path,
+        providerId: localProviderId,
+        modelId: local.id,
+        modelName: local.id.substring(localModelIdPrefix.length),
+        options: JobOptions(
+          languages: _split(_languages.text),
+          prompt: _prompt.text.trim().isEmpty || !local.supportsPrompt
+              ? null
+              : _prompt.text.trim(),
+          keywords: local.supportsKeywords ? _split(_keywords.text) : const [],
+          overlapSeconds: library.defaults.plainOverlapSeconds.toDouble(),
+          keepChunks: _keepChunks,
+          device: _device,
+        ),
+      );
+      runner.enqueue(job.id);
+      if (mounted) Navigator.of(context).pop(job.id);
+      return;
+    }
+
     final model = library.model(_modelId);
     if (file == null || model == null) return;
-
-    final runner = ref.read(jobRunnerProvider);
     final job = await runner.create(
       sourcePath: file.path,
       providerId: model.providerId,
@@ -187,6 +241,21 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
       if (part.trim().isNotEmpty) part.trim(),
   ];
 
+  /// Purpose: Find the installed package a local model would load.
+  /// Inputs: The [model] and the [installed] packages.
+  /// Returns: Its manifest, or null when none of its packages is here.
+  /// Side effects: None.
+  /// Notes: Internal helper used within this file only.
+  ArtifactManifest? _installedFor(
+    LocalModelConfig model,
+    Map<String, ArtifactManifest> installed,
+  ) {
+    for (final id in model.artifactIds) {
+      if (installed[id] case final manifest?) return manifest;
+    }
+    return null;
+  }
+
   /// Purpose: Build the page.
   /// Inputs: `context`.
   /// Returns: The widget tree for the current state.
@@ -218,10 +287,17 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
       _keywords.text = library.defaults.keywords.join(', ');
     }
 
+    final installed = ref.watch(installedArtifactsProvider).value ?? const {};
     final model = library.model(_modelId);
+    final local = _isLocal ? library.localModel(_modelId) : null;
     final provider = library.provider(_providerId);
-    final plan = _preview(library, toolkitReady ?? false);
+    final plan = _preview(library, toolkitReady ?? false, installed);
+    final localReady =
+        local != null &&
+        _installedFor(local, installed) != null &&
+        local.acceptsLanguages(_split(_languages.text));
     final missingKey =
+        !_isLocal &&
         provider != null &&
         provider.needsApiKey &&
         configured != null &&
@@ -242,6 +318,7 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
               _recordingCard(l10n),
               const SizedBox(height: 16),
               _sourceAndModel(l10n, library),
+              if (local != null) ..._localNotes(l10n, local, installed),
               if (missingKey)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
@@ -258,9 +335,23 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 8),
-              _optionFields(l10n, model, contentWidth),
+              _optionFields(
+                l10n,
+                contentWidth,
+                supportsKeywords: _isLocal
+                    ? (local?.supportsKeywords ?? false)
+                    : (model?.supportsKeywords ?? true),
+                supportsPrompt: _isLocal
+                    ? (local?.supportsPrompt ?? false)
+                    : (model?.supportsPrompt ?? true),
+              ),
               const SizedBox(height: 16),
-              _switches(l10n, model),
+              _switches(
+                l10n,
+                _isLocal
+                    ? (local?.diarization ?? Capability.unsupported)
+                    : (model?.diarization ?? Capability.unknown),
+              ),
               const SizedBox(height: 24),
               _planCard(l10n, plan),
             ],
@@ -268,7 +359,10 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _file != null && model != null && plan?.isSuccess == true
+        onPressed:
+            _file != null &&
+                (_isLocal ? localReady : model != null) &&
+                plan?.isSuccess == true
             ? () => _start(library)
             : null,
         icon: const Icon(Icons.play_arrow),
@@ -312,40 +406,165 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
   /// resets the model, because a model belongs to exactly one source and a
   /// stale pairing would be rejected by the server rather than by this page.
   Widget _sourceAndModel(AppLocalizations l10n, SettingsLibrary library) {
-    if (library.providers.isEmpty) {
+    if (library.providers.isEmpty && library.localModels.isEmpty) {
       return Text(l10n.newJobNoModels);
     }
     final models = library.modelsOf(_providerId ?? '');
+    final modelItems = _isLocal
+        ? [
+            for (final LocalModelConfig model in library.localModels)
+              DropdownMenuItem(value: model.id, child: Text(model.displayName)),
+          ]
+        : [
+            for (final ModelConfig model in models)
+              DropdownMenuItem(value: model.id, child: Text(model.displayName)),
+          ];
     return Column(
       children: [
         DropdownButtonFormField<String>(
           initialValue: _providerId,
           decoration: InputDecoration(labelText: l10n.jobFieldSource),
           items: [
+            if (library.localModels.isNotEmpty)
+              DropdownMenuItem(
+                value: localProviderId,
+                child: Text(l10n.newJobThisDevice),
+              ),
             for (final ProviderConfig provider in library.providers)
               DropdownMenuItem(value: provider.id, child: Text(provider.name)),
           ],
           onChanged: (value) => setState(() {
             _providerId = value;
-            _modelId = library.modelsOf(value ?? '').firstOrNull?.id;
+            _modelId = value == localProviderId
+                ? library.localModels.firstOrNull?.id
+                : library.modelsOf(value ?? '').firstOrNull?.id;
+            _device = RouteRequest.auto;
             _diarize = false;
           }),
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
-          initialValue: models.any((m) => m.id == _modelId) ? _modelId : null,
+          key: ValueKey(_providerId),
+          initialValue: modelItems.any((m) => m.value == _modelId)
+              ? _modelId
+              : null,
           decoration: InputDecoration(labelText: l10n.jobFieldModel),
-          items: [
-            for (final ModelConfig model in models)
-              DropdownMenuItem(value: model.id, child: Text(model.displayName)),
-          ],
+          items: modelItems,
           onChanged: (value) => setState(() {
             _modelId = value;
+            _device = RouteRequest.auto;
             _diarize = false;
           }),
         ),
+        if (_isLocal) ...[const SizedBox(height: 12), _deviceChooser(l10n)],
       ],
     );
+  }
+
+  /// Purpose: Build the chooser of what a local model runs on.
+  /// Inputs: [l10n].
+  /// Returns: `Widget`.
+  /// Side effects: Watches the routes.
+  /// Notes: Internal helper used within this file only. Automatic, the CPU,
+  /// and every route of this model that passed its check here; a route not
+  /// tested on this kind of device says so in its own label (decision D20).
+  Widget _deviceChooser(AppLocalizations l10n) {
+    final routes = [
+      for (final route
+          in ref.watch(localRoutesProvider).value ?? const <EngineRoute>[])
+        if (route.modelId == _modelId &&
+            !route.isCpu &&
+            route.available &&
+            route.smokeTest.outcome == SmokeTestOutcome.passed)
+          route,
+    ];
+    final items = [
+      DropdownMenuItem(
+        value: RouteRequest.auto.value,
+        child: Text(l10n.newJobDeviceAuto),
+      ),
+      DropdownMenuItem(
+        value: RouteRequest.cpu.value,
+        child: Text(l10n.newJobDeviceCpu),
+      ),
+      for (final route in routes)
+        DropdownMenuItem(
+          value: route.key,
+          child: Text(
+            route.testedHere
+                ? routeLabel(l10n, route)
+                : l10n.newJobDeviceUntested(routeLabel(l10n, route)),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+    ];
+    return DropdownButtonFormField<String>(
+      key: ValueKey('device:$_modelId'),
+      isExpanded: true,
+      initialValue: items.any((i) => i.value == _device.value)
+          ? _device.value
+          : RouteRequest.auto.value,
+      decoration: InputDecoration(labelText: l10n.newJobDevice),
+      items: items,
+      onChanged: (value) =>
+          setState(() => _device = RouteRequest(value ?? 'auto')),
+    );
+  }
+
+  /// Purpose: Say what a local model needs before it can run, and where the
+  /// audio goes.
+  /// Inputs: [l10n], the local [model], the [installed] packages.
+  /// Returns: The lines to show under the pickers.
+  /// Side effects: None.
+  /// Notes: Internal helper used within this file only. A model the chosen
+  /// languages rule out is said to be so, not hidden: a user who typed
+  /// Chinese and does not see Parakeet should know why.
+  List<Widget> _localNotes(
+    AppLocalizations l10n,
+    LocalModelConfig model,
+    Map<String, ArtifactManifest> installed,
+  ) {
+    final theme = Theme.of(context);
+    final error = TextStyle(color: theme.colorScheme.error);
+    return [
+      if (_installedFor(model, installed) == null)
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(
+            l10n.newJobLocalNotDownloaded(model.displayName),
+            style: error,
+          ),
+        ),
+      if (!model.acceptsLanguages(_split(_languages.text)))
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(
+            l10n.newJobLocalLanguage(model.displayName),
+            style: error,
+          ),
+        ),
+      Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Row(
+          children: [
+            Icon(
+              Icons.lock_outline,
+              size: 16,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                l10n.newJobLocalPrivacy,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ];
   }
 
   /// Purpose: Build the language, context and keyword fields.
@@ -357,11 +576,16 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
   /// decision on this page and it comes from `adaptive_layout.dart`.
   Widget _optionFields(
     AppLocalizations l10n,
-    ModelConfig? model,
-    double contentWidth,
-  ) {
+    double contentWidth, {
+    required bool supportsKeywords,
+    required bool supportsPrompt,
+  }) {
     final languages = TextField(
       controller: _languages,
+      // A local model's language rule is shown as it is typed.
+      onChanged: (_) {
+        if (_isLocal) setState(() {});
+      },
       decoration: InputDecoration(
         labelText: l10n.newJobLanguages,
         helperText: l10n.newJobLanguagesHint,
@@ -370,7 +594,7 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
     );
     final keywords = TextField(
       controller: _keywords,
-      enabled: model?.supportsKeywords ?? true,
+      enabled: supportsKeywords,
       decoration: InputDecoration(
         labelText: l10n.newJobKeywords,
         helperText: l10n.newJobKeywordsHint,
@@ -398,7 +622,7 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
         TextField(
           controller: _prompt,
           maxLines: 3,
-          enabled: model?.supportsPrompt ?? true,
+          enabled: supportsPrompt,
           decoration: InputDecoration(
             labelText: l10n.newJobPrompt,
             helperText: l10n.newJobPromptHint,
@@ -417,8 +641,7 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
   /// not to label speakers gets a disabled switch with the reason, rather than
   /// a hidden one: hiding it would leave the user wondering where the feature
   /// went after they changed models.
-  Widget _switches(AppLocalizations l10n, ModelConfig? model) {
-    final capability = model?.diarization ?? Capability.unknown;
+  Widget _switches(AppLocalizations l10n, Capability capability) {
     return Column(
       children: [
         SwitchListTile(

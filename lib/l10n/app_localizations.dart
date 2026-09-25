@@ -2042,6 +2042,420 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Speakers'**
   String get viewerSpeakers;
+
+  /// No description provided for @libraryThisDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'This device'**
+  String get libraryThisDevice;
+
+  /// No description provided for @libraryThisDeviceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Models that run without a network'**
+  String get libraryThisDeviceSubtitle;
+
+  /// No description provided for @localStateNotDownloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Not downloaded'**
+  String get localStateNotDownloaded;
+
+  /// No description provided for @localStateDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading {percent}%'**
+  String localStateDownloading(String percent);
+
+  /// No description provided for @localStateUnpacking.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpacking'**
+  String get localStateUnpacking;
+
+  /// No description provided for @localStateChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking this device'**
+  String get localStateChecking;
+
+  /// No description provided for @localStateReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get localStateReady;
+
+  /// No description provided for @localStateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed: {reason}'**
+  String localStateFailed(String reason);
+
+  /// No description provided for @localStateNoEngine.
+  ///
+  /// In en, this message translates to:
+  /// **'This build cannot run it on this device'**
+  String get localStateNoEngine;
+
+  /// No description provided for @localModelDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get localModelDownload;
+
+  /// No description provided for @localModelDownloadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Download {name}?'**
+  String localModelDownloadTitle(String name);
+
+  /// No description provided for @localModelDownloadBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} from {host}. It stays on this device: it is not synced and not backed up.'**
+  String localModelDownloadBody(String size, String host);
+
+  /// No description provided for @localModelCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel download'**
+  String get localModelCancel;
+
+  /// No description provided for @localModelRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from this device'**
+  String get localModelRemove;
+
+  /// No description provided for @localModelRemoveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name} from this device? You can download it again.'**
+  String localModelRemoveBody(String name);
+
+  /// No description provided for @localModelVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify files'**
+  String get localModelVerify;
+
+  /// No description provided for @localModelVerifyOk.
+  ///
+  /// In en, this message translates to:
+  /// **'The files are intact.'**
+  String get localModelVerifyOk;
+
+  /// No description provided for @localModelVerifyBad.
+  ///
+  /// In en, this message translates to:
+  /// **'The files are damaged. Remove the model and download it again.'**
+  String get localModelVerifyBad;
+
+  /// No description provided for @localModelSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Download size'**
+  String get localModelSize;
+
+  /// No description provided for @localModelLanguages.
+  ///
+  /// In en, this message translates to:
+  /// **'Languages'**
+  String get localModelLanguages;
+
+  /// No description provided for @localModelLanguagesAny.
+  ///
+  /// In en, this message translates to:
+  /// **'Detects the language'**
+  String get localModelLanguagesAny;
+
+  /// No description provided for @localModelTimestamps.
+  ///
+  /// In en, this message translates to:
+  /// **'Timestamps'**
+  String get localModelTimestamps;
+
+  /// No description provided for @localModelLicence.
+  ///
+  /// In en, this message translates to:
+  /// **'Licence'**
+  String get localModelLicence;
+
+  /// No description provided for @localModelRoutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Where it can run'**
+  String get localModelRoutes;
+
+  /// No description provided for @localModelRoutesNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Download the model to see where it can run on this device.'**
+  String get localModelRoutesNone;
+
+  /// No description provided for @localRouteCpu.
+  ///
+  /// In en, this message translates to:
+  /// **'CPU'**
+  String get localRouteCpu;
+
+  /// No description provided for @localRouteGpu.
+  ///
+  /// In en, this message translates to:
+  /// **'GPU ({backend})'**
+  String localRouteGpu(String backend);
+
+  /// No description provided for @localRouteNpu.
+  ///
+  /// In en, this message translates to:
+  /// **'NPU ({backend})'**
+  String localRouteNpu(String backend);
+
+  /// No description provided for @localRouteTested.
+  ///
+  /// In en, this message translates to:
+  /// **'Tested on this kind of device'**
+  String get localRouteTested;
+
+  /// No description provided for @localRouteUntested.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yet tested on this kind of device'**
+  String get localRouteUntested;
+
+  /// No description provided for @localEvidenceOfficial.
+  ///
+  /// In en, this message translates to:
+  /// **'Documented by the vendor'**
+  String get localEvidenceOfficial;
+
+  /// No description provided for @localEvidenceCommunity.
+  ///
+  /// In en, this message translates to:
+  /// **'Community results'**
+  String get localEvidenceCommunity;
+
+  /// No description provided for @localEvidenceExperimental.
+  ///
+  /// In en, this message translates to:
+  /// **'Experimental'**
+  String get localEvidenceExperimental;
+
+  /// No description provided for @localEvidenceNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No published results'**
+  String get localEvidenceNone;
+
+  /// No description provided for @localCheckPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'Passed its check here'**
+  String get localCheckPassed;
+
+  /// No description provided for @localCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed its check here: {reason}'**
+  String localCheckFailed(String reason);
+
+  /// No description provided for @localCheckNotRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Not checked yet'**
+  String get localCheckNotRun;
+
+  /// No description provided for @localCheckCrashed.
+  ///
+  /// In en, this message translates to:
+  /// **'The app stopped while using it here, so it is not used automatically'**
+  String get localCheckCrashed;
+
+  /// No description provided for @localCheckNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Check now'**
+  String get localCheckNow;
+
+  /// No description provided for @localCheckSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'{factor}× real time'**
+  String localCheckSpeed(String factor);
+
+  /// No description provided for @localRouteUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available: {reason}'**
+  String localRouteUnavailable(String reason);
+
+  /// No description provided for @newJobThisDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'This device'**
+  String get newJobThisDevice;
+
+  /// No description provided for @newJobDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Run on'**
+  String get newJobDevice;
+
+  /// No description provided for @newJobDeviceAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get newJobDeviceAuto;
+
+  /// No description provided for @newJobDeviceCpu.
+  ///
+  /// In en, this message translates to:
+  /// **'CPU (most compatible)'**
+  String get newJobDeviceCpu;
+
+  /// No description provided for @newJobDeviceUntested.
+  ///
+  /// In en, this message translates to:
+  /// **'{route} — not tested on this kind of device'**
+  String newJobDeviceUntested(String route);
+
+  /// No description provided for @newJobLocalPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'The audio stays on this device.'**
+  String get newJobLocalPrivacy;
+
+  /// No description provided for @newJobLocalNotDownloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is not downloaded. Download it in Library first.'**
+  String newJobLocalNotDownloaded(String name);
+
+  /// No description provided for @newJobLocalLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} does not transcribe the languages entered here.'**
+  String newJobLocalLanguage(String name);
+
+  /// No description provided for @jobFieldRanOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Ran on'**
+  String get jobFieldRanOn;
+
+  /// No description provided for @jobFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Moved from {from} to {to}: {reason}'**
+  String jobFallback(String from, String to, String reason);
+
+  /// No description provided for @jobPlacementWindows.
+  ///
+  /// In en, this message translates to:
+  /// **'Segments {first}–{last}: {placement}'**
+  String jobPlacementWindows(String first, String last, String placement);
+
+  /// No description provided for @placementCpu.
+  ///
+  /// In en, this message translates to:
+  /// **'CPU'**
+  String get placementCpu;
+
+  /// No description provided for @placementGpu.
+  ///
+  /// In en, this message translates to:
+  /// **'GPU'**
+  String get placementGpu;
+
+  /// No description provided for @placementNpu.
+  ///
+  /// In en, this message translates to:
+  /// **'NPU'**
+  String get placementNpu;
+
+  /// No description provided for @placementMixed.
+  ///
+  /// In en, this message translates to:
+  /// **'CPU and accelerator'**
+  String get placementMixed;
+
+  /// No description provided for @placementUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Not reported'**
+  String get placementUnknown;
+
+  /// No description provided for @settingsLocalModels.
+  ///
+  /// In en, this message translates to:
+  /// **'Local models'**
+  String get settingsLocalModels;
+
+  /// No description provided for @settingsFallbackPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'If the chosen processor fails'**
+  String get settingsFallbackPolicy;
+
+  /// No description provided for @settingsFallbackCpu.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the same model on the CPU'**
+  String get settingsFallbackCpu;
+
+  /// No description provided for @settingsFallbackNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop the transcription'**
+  String get settingsFallbackNone;
+
+  /// No description provided for @settingsDiagnostics.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostics'**
+  String get settingsDiagnostics;
+
+  /// No description provided for @settingsDiagnosticsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What each local model can run on here'**
+  String get settingsDiagnosticsSubtitle;
+
+  /// No description provided for @diagnosticsDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'This device'**
+  String get diagnosticsDevice;
+
+  /// No description provided for @diagnosticsEngine.
+  ///
+  /// In en, this message translates to:
+  /// **'Engine'**
+  String get diagnosticsEngine;
+
+  /// No description provided for @diagnosticsEngineMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Not built for this device'**
+  String get diagnosticsEngineMissing;
+
+  /// No description provided for @diagnosticsRoutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Routes'**
+  String get diagnosticsRoutes;
+
+  /// No description provided for @diagnosticsCopyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy report'**
+  String get diagnosticsCopyReport;
+
+  /// No description provided for @diagnosticsCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Report copied. It holds no file names and no transcript text, and the app sends it nowhere.'**
+  String get diagnosticsCopied;
 }
 
 class _AppLocalizationsDelegate

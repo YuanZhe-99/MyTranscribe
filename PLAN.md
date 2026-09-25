@@ -583,7 +583,7 @@ into something already proven with a fake.
 The first real engine, and the first time the native build has to work on Windows ARM64, Android,
 iOS and macOS at once. Metal comes with the Apple build and is reported honestly as `gpu`.
 
-- [ ] `packages/whisper.cpp` submodule at a release tag (v1.9.4 at writing; re-check);
+- [x] `packages/whisper.cpp` submodule at a release tag (v1.9.4 at writing; re-check);
       `packages/local_asr_whisper` FFI package with `hook/build.dart` driving CMake:
       `GGML_BACKEND_DL=ON`, CPU backend always, with runtime feature dispatch
       (`GGML_CPU_ALL_VARIANTS` where the pinned ggml supports it on that target — check at lock
@@ -592,35 +592,40 @@ iOS and macOS at once. Metal comes with the Apple build and is reported honestly
       (L3). On Windows the hook uses **clang/LLVM** (what upstream builds its own Windows ARM64
       binaries with; MSVC's `cl.exe` lacks the FP16 intrinsics and is unsupported by the OpenCL
       backend). A Linux host build is included because `flutter test` on the Ubuntu runner runs
-      the Dart VM there
-- [ ] `ffigen` bindings for `whisper.h`; `WhisperCppEngine` in its own isolate (D16): load,
-      `whisper_full` with `abort_callback`, `progress_callback`, `new_segment_callback`; language
-      from the job's first language or auto-detect; threads from the core count; DTW word
-      timestamps through the `dtw_aot_preset` for large-v3 and large-v3-turbo; token and segment
-      timestamps into `ChunkSegment`s with `hasRealTimestamps: true`
-- [ ] Placement from `whisper_print_system_info` and the backend registry: `cpu` on CPU-only
+      the Dart VM there. *Done 2026-09-24: re-checked v1.9.4 is the newest tag; runtime dispatch
+      on Windows x64 and Android; Windows ARM64, Apple and Linux as one library — see the
+      decisions log*
+- [x] ~~`ffigen` bindings for `whisper.h`~~ a C shim with a plain-types ABI (decisions log);
+      `WhisperCppEngine` in its own isolate (D16): load, `whisper_full` with `abort_callback` and
+      `progress_callback`; language from the job's first language or auto-detect; threads from
+      the core count; segment timestamps into `ChunkSegment`s with `hasRealTimestamps: true`
+- [ ] DTW word timestamps through the `dtw_aot_preset` for large-v3 and large-v3-turbo — not
+      wired yet: nothing in the app reads word times, so they wait for a consumer (the exports'
+      word-level subtitles would be the first)
+- [x] Placement from `whisper_print_system_info` and the backend registry: `cpu` on CPU-only
       builds, `gpu` when the Metal backend took the graph, `mixed` when the Core ML encoder ran
       with a CPU decoder, `unknown` otherwise
-- [ ] Android: a backup rule (`android:dataExtractionRules` and `android:fullBackupContent`) that
+- [x] Android: a backup rule (`android:dataExtractionRules` and `android:fullBackupContent`) that
       excludes `models/` from Auto Backup and device transfer, before the first model can be
       downloaded there; `platform-notes.md` updated (L0 left it, recorded in the decisions log)
 - [ ] Memory guard: refuse to load an artifact whose `minimumRamBytes` exceeds available memory,
       with `OUT_OF_MEMORY` and the numbers; measure the real peak on each verifying device and
       write it into the verification record
-- [ ] The smoke test (D20): a bundled English clip of about ten seconds whose licence allows
+- [x] The smoke test (D20): a bundled English clip of about ten seconds whose licence allows
       shipping it (whisper.cpp's `samples/jfk.wav`, a public-domain speech, is the usual one)
       through the route on this device; its text compared with the clip's expected text within
       a threshold fixed in `engine-routing.md`, its speed measured; run automatically after an
       install ("checking this device") and before a route's first job whenever its key has no
       `passed` result; the in-flight marker written around every native call from here on
-- [ ] Library › This device, the new-job changes, the job-detail placement line, the
+- [x] Library › This device, the new-job changes, the job-detail placement line, the
       diagnostics page with "Run smoke test" and "Copy report" (§4.5); ARB strings in all three
       catalogs; `flutter gen-l10n` committed; widget tests at the six geometries in Simplified
       Chinese
-- [ ] `integration_test/local_asr_test.dart`: loads `ggml-tiny` (75 MB, fetched once and cached
+- [x] `integration_test/local_asr_test.dart`: loads `ggml-tiny` (75 MB, fetched once and cached
       by the test), transcribes a bundled ten-second fixture, cancels a run, releases; on-device
       only. `test/local_asr_live_test.dart` does the same on the host behind
-      `--dart-define=live_model=true`
+      `--dart-define=live_model=true`. *Passed 2026-09-24 in the Windows ARM64 app bundle and on
+      the host; Android, iOS and macOS run it at the next device session*
 - [ ] CI: every job builds the hook; LLVM installed on both Windows jobs; the whisper.cpp build
       output cached by submodule commit, OS, architecture and toolchain
 - [ ] Verification on real hardware, each written into `local-asr-support-matrix.md` with the
@@ -632,7 +637,7 @@ iOS and macOS at once. Metal comes with the Apple build and is reported honestly
       available, otherwise the Simulator on the Mac for the code path and the device shipped
       unverified; **Windows x64** shipped unverified, its CPU route run under emulation on this
       machine; every other Android device shipped unverified (D20)
-- [ ] Docs: `platform-notes.md` (the toolchain per platform, clang on Windows, the submodule),
+- [x] Docs: `platform-notes.md` (the toolchain per platform, clang on Windows, the submodule),
       `ci-cd.md` (new steps and caches, the tiny-model tests), `features/local-models.md`
 - [ ] **Done when**: a real recording is transcribed on Windows ARM64 and on the Pixel 10 with
       the placement it actually ran on, the targets nothing here can test ship unverified with
@@ -1054,6 +1059,34 @@ Recorded when a choice is made that later work should not quietly reverse. Newes
 each date. This log outlives this file: the closing step in §10 moves it, verbatim, to
 `doc/en-us/decisions.md`.
 
+- **2026-09-24** — L1: **Where the CPU code is chosen at run time, and where it is not.** The
+  pinned ggml builds every CPU variant and loads the best at run time on x86 and on Android, but
+  its variant list has no Windows ARM64 entry (configuring with `GGML_CPU_ALL_VARIANTS` stops with
+  "Unsupported ARM target OS"). Windows ARM64 is therefore one library at ARMv8.2 with dot-product
+  and FP16 — upstream's own release uses ARMv8.7, which would stop older Snapdragon laptops with an
+  illegal instruction — at the cost of the i8mm kernels an X Elite could use; a second, i8mm
+  variant scored by ggml's own Windows feature detection is the way back if the lecture numbers
+  call for it. Apple and Linux are one library as well: on Apple, Metal is part of the OS and
+  nothing needs guarding; Linux is only the CI test host. 32-bit Android is not built. Android is
+  packaged with legacy (extracted) native libraries, because ggml finds its CPU variants by
+  listing the folder its libraries are in, and a folder inside an APK cannot be listed.
+- **2026-09-24** — L1: **A C shim instead of `ffigen` bindings.** whisper.cpp's API passes its
+  large parameter struct by value, and that struct changes between releases; bindings to it would
+  turn every submodule bump into a silent memory-corruption risk. `lasr_whisper.c` exposes about
+  twenty functions of plain types — load, transcribe, segments, devices, available memory — and
+  loads ggml's backends from its own folder. Cancelling and progress are two integers in native
+  memory the main isolate writes and reads while the worker isolate is blocked in the call;
+  segments are returned when the window ends rather than streamed, which costs nothing at the
+  window's granularity. DTW word timestamps are not wired: nothing reads word times yet.
+- **2026-09-24** — L1: **whisper.cpp v1.9.4 ships a native Parakeet library** (`parakeet.h`,
+  `parakeet-cli`), which the survey of this plan did not know. L2 stays on sherpa-onnx as D11
+  says, but compares the two before locking: one ggml build for both families would be simpler to
+  ship than a second runtime.
+- **2026-09-24** — L1: **The hook uses `hooks` and `code_assets` 1.x**, not 2.x: Flutter 3.44 pins
+  `meta` below what `hooks` 2.2 needs. The constraints accept both, so a later Flutter moves up
+  without an edit. The Flutter tool hands the hook Visual Studio's `cl.exe` and its environment
+  script, and the hook takes clang from the same Visual Studio; `dart test` hands it nothing on
+  Windows, so the hook then finds Visual Studio itself.
 - **2026-09-24** — L0: **0.2.x does not carry an unknown record kind "untouched".** It parses the
   kind to `unknown` and writes the literal `unknown` back, so a `localModel` record that passes
   through a 0.2.x device comes back without its kind — D1's premise was wrong on this one point.
