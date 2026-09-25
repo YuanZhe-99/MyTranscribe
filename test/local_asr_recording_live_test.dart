@@ -81,8 +81,8 @@ String _textOf(String path) {
 }
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
+  // No TestWidgetsFlutterBinding: it answers every HTTP request with a 400,
+  // and this test downloads its model for real.
   test(
     'transcribes a real recording on this device',
     () async {
