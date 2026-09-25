@@ -62,6 +62,91 @@ class AppleAsrLibrary {
   }
 }
 
+/// Purpose: Read a result the bridge returned, and free it.
+/// Inputs: The bridge's JSON [result].
+/// Returns: The text and its timed tokens.
+/// Side effects: Frees the string.
+/// Notes: Internal helper used within this file only. Throws
+/// [AppleAsrException] for `{"error"}` or no result.
+({String text, List<AppleToken> tokens}) _result(Pointer<Char> result) {
+  if (result == nullptr) {
+    throw const AppleAsrException('The bridge returned nothing.');
+  }
+  final String json;
+  try {
+    json = result.cast<Utf8>().toDartString();
+  } finally {
+    lasr_apple_free(result);
+  }
+  final map = jsonDecode(json) as Map<String, dynamic>;
+  if (map['error'] case final String error) {
+    throw AppleAsrException(error);
+  }
+  return (
+    text: '${map['text'] ?? ''}',
+    tokens: [
+      for (final token in (map['tokens'] as List? ?? const []))
+        if (token case {
+          't': final String t,
+          's': final num s,
+          'e': final num e,
+        })
+          (piece: t, start: s.toDouble(), end: e.toDouble()),
+    ],
+  );
+}
+
+/// The operating system's on-device speech recogniser (L6 of the local-models
+/// plan): `SFSpeechRecognizer` with on-device recognition required.
+class AppleSpeech {
+  /// Purpose: Prevent instantiation; every entry point is static.
+  /// Inputs: None.
+  /// Returns: Nothing.
+  /// Side effects: None.
+  /// Notes: None.
+  const AppleSpeech._();
+
+  /// Purpose: Say whether the device's own language has an on-device
+  /// recogniser.
+  /// Inputs: None.
+  /// Returns: `bool`; false where the bridge is absent.
+  /// Side effects: Loads the bridge.
+  /// Notes: Asks for no permission.
+  static bool available() {
+    try {
+      return lasr_apple_speech_available() == 1;
+    } on ArgumentError {
+      return false;
+    }
+  }
+
+  /// Purpose: Transcribe samples on the device.
+  /// Inputs: 16 kHz mono [samples]; the [language] code, or null for the
+  /// device's own.
+  /// Returns: The text and its words with times.
+  /// Side effects: Asks for speech-recognition permission the first time;
+  /// runs the recogniser.
+  /// Notes: Blocks. Throws [AppleAsrException] when permission is denied or
+  /// no on-device recogniser exists for the language; audio never goes to a
+  /// server.
+  static ({String text, List<AppleToken> tokens}) transcribe(
+    Float32List samples, {
+    String? language,
+  }) {
+    final buffer = calloc<Float>(samples.length);
+    final code = (language ?? '').toNativeUtf8();
+    try {
+      buffer.asTypedList(samples.length).setAll(0, samples);
+      return _result(
+        lasr_apple_speech_transcribe(buffer, samples.length, code.cast()),
+      );
+    } finally {
+      calloc.free(buffer);
+      calloc.free(code);
+    }
+  }
+}
+
 /// One token of a result: its text and times, in seconds.
 typedef AppleToken = ({String piece, double start, double end});
 
@@ -100,32 +185,7 @@ class AppleParakeetModel {
     final buffer = calloc<Float>(samples.length);
     try {
       buffer.asTypedList(samples.length).setAll(0, samples);
-      final result = lasr_apple_transcribe(_handle, buffer, samples.length);
-      if (result == nullptr) {
-        throw const AppleAsrException('The bridge returned nothing.');
-      }
-      final String json;
-      try {
-        json = result.cast<Utf8>().toDartString();
-      } finally {
-        lasr_apple_free(result);
-      }
-      final map = jsonDecode(json) as Map<String, dynamic>;
-      if (map['error'] case final String error) {
-        throw AppleAsrException(error);
-      }
-      return (
-        text: '${map['text'] ?? ''}',
-        tokens: [
-          for (final token in (map['tokens'] as List? ?? const []))
-            if (token case {
-              't': final String t,
-              's': final num s,
-              'e': final num e,
-            })
-              (piece: t, start: s.toDouble(), end: e.toDouble()),
-        ],
-      );
+      return _result(lasr_apple_transcribe(_handle, buffer, samples.length));
     } finally {
       calloc.free(buffer);
     }

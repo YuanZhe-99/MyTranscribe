@@ -31,4 +31,13 @@ void lasr_apple_free(char * text);
 /* Release a loaded model. */
 void lasr_apple_release(int64_t handle);
 
+/* The operating system's on-device recogniser (L6): 1 when the device's own
+ * language has one. */
+int32_t lasr_apple_speech_available(void);
+
+/* Transcribe with the on-device recogniser; `language` empty for the device's
+ * own. Asks for permission the first time. Returns JSON as
+ * lasr_apple_transcribe does, word times as tokens; free with lasr_apple_free. */
+char * lasr_apple_speech_transcribe(const float * samples, int32_t count, const char * language);
+
 #endif

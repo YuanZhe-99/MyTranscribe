@@ -10,11 +10,13 @@
 // switched off (`ModelHub.offlineMode`), so nothing is fetched outside the
 // package manifest (decision D17).
 
+import AVFoundation
 import Foundation
 import FluidAudio
+import Speech
 
 /// The bridge's own version: FluidAudio's, and this file's revision.
-private let bridgeVersion = strdup("fluidaudio 0.17.4 lasr-apple 1")!
+private let bridgeVersion = strdup("fluidaudio 0.17.4 lasr-apple 2")!
 
 /// Loaded models, by handle.
 private final class Sessions: @unchecked Sendable {
@@ -147,4 +149,107 @@ public func lasrAppleRelease(_ handle: Int64) {
     if let manager = sessions.remove(handle) {
         _ = blocking { await manager.cleanup() }
     }
+}
+
+// MARK: - The operating system's recogniser (L6)
+
+/// Purpose: The on-device recogniser for a language, or nil.
+/// Notes: An empty code means the device's own language. Only a recogniser
+/// that can run on the device is returned: the app never sends audio to
+/// Apple's servers.
+private func onDeviceRecognizer(_ code: String) -> SFSpeechRecognizer? {
+    var candidates: [SFSpeechRecognizer?] = []
+    if code.isEmpty {
+        candidates.append(SFSpeechRecognizer())
+    } else {
+        candidates.append(SFSpeechRecognizer(locale: Locale(identifier: code)))
+        let matching = SFSpeechRecognizer.supportedLocales()
+            .filter { $0.language.languageCode?.identifier == code }
+            .sorted { $0.identifier < $1.identifier }
+        candidates.append(contentsOf: matching.map { SFSpeechRecognizer(locale: $0) })
+    }
+    for case let recognizer? in candidates where recognizer.supportsOnDeviceRecognition {
+        // Results on a queue of its own: the caller is blocked waiting.
+        recognizer.queue = OperationQueue()
+        return recognizer
+    }
+    return nil
+}
+
+/// Purpose: Say whether the on-device recogniser can run here.
+/// Returns: 1 when the device's own language has an on-device recogniser.
+@_cdecl("lasr_apple_speech_available")
+public func lasrAppleSpeechAvailable() -> Int32 {
+    onDeviceRecognizer("") != nil ? 1 : 0
+}
+
+/// Purpose: Transcribe samples with the operating system's on-device
+/// recogniser.
+/// Inputs: 16 kHz mono samples, their count, and a language code (empty for
+/// the device's own).
+/// Returns: JSON as `lasr_apple_transcribe` returns it, word times as
+/// tokens; `{"error"}` when permission is denied or no on-device recogniser
+/// exists for the language. Free with `lasr_apple_free`.
+/// Notes: Asks for speech-recognition permission the first time, which is
+/// only when the user chose this fallback.
+@_cdecl("lasr_apple_speech_transcribe")
+public func lasrAppleSpeechTranscribe(
+    _ samples: UnsafePointer<Float>,
+    _ count: Int32,
+    _ language: UnsafePointer<CChar>?
+) -> UnsafeMutablePointer<CChar>? {
+    nonisolated(unsafe) var status = SFSpeechRecognizer.authorizationStatus()
+    if status == .notDetermined {
+        let asked = DispatchSemaphore(value: 0)
+        SFSpeechRecognizer.requestAuthorization { answer in
+            status = answer
+            asked.signal()
+        }
+        asked.wait()
+    }
+    guard status == .authorized else {
+        return json(["error": "Speech recognition is not allowed for this app."])
+    }
+    let code = language.map { String(cString: $0) } ?? ""
+    guard let recognizer = onDeviceRecognizer(code) else {
+        return json(["error": "No on-device recogniser for '\(code)'."])
+    }
+    guard let format = AVAudioFormat(
+        commonFormat: .pcmFormatFloat32, sampleRate: 16000, channels: 1, interleaved: false),
+          let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(count)),
+          let channel = buffer.floatChannelData?[0] else {
+        return json(["error": "Could not hold the samples."])
+    }
+    buffer.frameLength = AVAudioFrameCount(count)
+    channel.update(from: samples, count: Int(count))
+
+    let request = SFSpeechAudioBufferRecognitionRequest()
+    request.requiresOnDeviceRecognition = true
+    request.shouldReportPartialResults = false
+    request.append(buffer)
+    request.endAudio()
+
+    let finished = DispatchSemaphore(value: 0)
+    let lock = NSLock()
+    nonisolated(unsafe) var output: [String: Any]? = nil
+    let task = recognizer.recognitionTask(with: request) { result, error in
+        lock.lock()
+        defer { lock.unlock() }
+        guard output == nil else { return }
+        if let result, result.isFinal {
+            output = [
+                "text": result.bestTranscription.formattedString,
+                "tokens": result.bestTranscription.segments.map {
+                    ["t": "\u{2581}" + $0.substring, "s": $0.timestamp, "e": $0.timestamp + $0.duration]
+                },
+            ]
+            finished.signal()
+        } else if let error {
+            output = ["error": "\(error.localizedDescription)"]
+            finished.signal()
+        }
+    }
+    finished.wait()
+    task.cancel()
+    return json(output ?? ["error": "No result."])
 }

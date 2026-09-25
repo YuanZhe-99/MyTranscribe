@@ -890,6 +890,9 @@ uses them as they are.
 
 ### L5 — Qualcomm NPU: two adapters
 
+**Not built** — the user's decision of 2026-09-25 (decisions log). The boxes below stay open as the
+record of what it would take; nothing in them ships.
+
 *Found 2026-09-25:* the development machine's NPU is Hexagon **v68**. ONNX Runtime QNN dropped
 the v68 libraries after 1.21.0 (2025-03-07), Qualcomm's own QNN package ships v73 and v81 only,
 Windows ML offers the QNN provider only on the X series, and AI Hub removed the 8cx Gen 3 target
@@ -934,6 +937,10 @@ record is the **turbo** record; large-v3 is not offered on this route.
 
 ### L6 — The operating system's recogniser (optional fallback)
 
+**Apple only** — the user's decision of 2026-09-25: on-device `SFSpeechRecognizer` inside the
+prebuilt FluidAudio bridge. Android's recogniser would need Kotlin compiled in the app build (D21),
+so it is not built.
+
 Off by default; a visible choice; never a silent substitute (D15).
 
 - [ ] Apple, in `packages/local_asr_apple`: `SpeechAnalyzer` + `SpeechTranscriber` with the
@@ -964,6 +971,9 @@ Off by default; a visible choice; never a silent substitute (D15).
       the policy says where the audio went
 
 ### L7 — Windows x64 NPUs (unverified support)
+
+**Not built** — the user's decision of 2026-09-25 (decisions log). The boxes below stay open as the
+record of what it would take; nothing in them ships.
 
 No Core Ultra or Ryzen AI machine exists here, so both routes ship as unverified support (D20)
 rather than being skipped for want of one. A route closes only for a reason that is not
@@ -1218,6 +1228,15 @@ Recorded when a choice is made that later work should not quietly reverse. Newes
 each date. This log outlives this file: the closing step in §10 moves it, verbatim, to
 `doc/en-us/decisions.md`.
 
+- **2026-09-25** — **L5 and L7 are not built; L6 is Apple only; L8 uses sherpa-onnx.** The user's
+  decision on the recommendation after 0.3.3. L5 (Qualcomm NPU) would need a whole Whisper pipeline
+  around ONNX Runtime QNN — spectrogram, encoder, a decoder loop with its cache, the tokenizer —
+  over runtime files whose redistribution terms were never read, for chips nothing here can run
+  (this machine's v68 NPU is no longer supported). L7 (Windows x64 NPUs) would add OpenVINO, over
+  100 MB, with no x64 machine to run it. L6 on Android would need Kotlin compiled in the app build,
+  which D21 rules out, so the system recogniser comes to Apple only, inside the existing prebuilt
+  bridge. L8 uses the offline speaker diarization of the sherpa-onnx C API the app already bundles —
+  the one milestone left that this machine can actually run.
 - **2026-09-25** — L4: **A prebuilt bridge, not a Swift plugin.** The plan had a SwiftPM plugin
   with a Pigeon API; under D21 no Swift may compile in the app build, and FluidAudio compiles C, C++
   and Swift. So `packages/local_asr_apple/bridge` wraps it in five `@_cdecl` functions,

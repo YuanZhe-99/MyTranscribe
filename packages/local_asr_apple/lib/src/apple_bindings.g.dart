@@ -19,6 +19,22 @@ external int lasr_apple_load(ffi.Pointer<ffi.Char> folder, int cpu_only);
 @ffi.Native<ffi.Void Function(ffi.Int64)>()
 external void lasr_apple_release(int handle);
 
+@ffi.Native<ffi.Int32 Function()>()
+external int lasr_apple_speech_available();
+
+@ffi.Native<
+  ffi.Pointer<ffi.Char> Function(
+    ffi.Pointer<ffi.Float>,
+    ffi.Int32,
+    ffi.Pointer<ffi.Char>,
+  )
+>()
+external ffi.Pointer<ffi.Char> lasr_apple_speech_transcribe(
+  ffi.Pointer<ffi.Float> samples,
+  int count,
+  ffi.Pointer<ffi.Char> language,
+);
+
 @ffi.Native<
   ffi.Pointer<ffi.Char> Function(ffi.Int64, ffi.Pointer<ffi.Float>, ffi.Int32)
 >()
