@@ -45,7 +45,31 @@ One entry per route verified on this project's hardware: device, OS, driver, run
 package hash, quantization and decoding settings, real-time factor, first-result latency, peak
 memory, and the date.
 
-None yet — the first engine arrives in L1.
+None yet. A route is recorded here only once §7's acceptance list holds for it, including the
+line-by-line comparison of a real recording, which needs the user.
+
+### Measured, not yet verified: Windows ARM64, whisper.cpp CPU, large-v3-turbo (2026-09-25)
+
+- **Device**: a Snapdragon X-series laptop, 8 cores, 32 GB; Windows 11 Pro 10.0.26200.9457. CPU
+  only, so no driver is involved.
+- **Runtime**: whisper.cpp v1.9.4 from this project's Windows ARM64 set (`whisper-bin-v1.9.4-1`:
+  ARMv8.2 with dot-product and FP16, no OpenMP), bindings `prebuilt1`.
+- **Package**: `ggml-large-v3-turbo.bin`, f16, SHA-256
+  `1fc70f774d38eb169993ac391eea357ef47c88757ef72ee5943879b7e8e2bc69`; greedy decoding, flash
+  attention off, 8 threads (the thread policy at the time).
+- **Recording**: an 81.4-minute English lecture in 9 windows. Wall time 145.7 min, **RTF 1.79**;
+  the route check on the 11-second clip ran at RTF 2.53 and passed. Peak memory 2.65 GB. Every
+  window ran on the CPU; no fallback.
+- **Against a MAI-Transcribe-2 transcript of the same recording**: 8,331 words against 6,809, and
+  a word-level agreement (1 − WER) of 36.9 %. The measure counts every filler word and repetition
+  Whisper keeps and the reference service drops, so it does not by itself show a quality problem
+  — and it is not a pass either.
+- **Threads**, large-v3-turbo on the check clip: 4 → RTF 2.43, 6 → 1.89, 7 → 1.91, 8 → 3.04.
+  Upstream's own ARM64 command-line build (OpenMP, ARMv8.7) took RTF 4.75 at 8 threads on the same
+  clip, so the build is not the slow part. The engine now leaves two cores free.
+- **What it means**: turbo in f16 runs slower than real time on this CPU. The q5_0 package is the
+  candidate for a CPU route that keeps up, and OpenCL on the Adreno GPU (L3) for an accelerated
+  one. The route is not in the tested-here table.
 
 ## Unverified routes
 

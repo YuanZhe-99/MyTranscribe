@@ -240,10 +240,14 @@ String localDeviceClass({
 /// Side effects: None.
 /// Notes: Phones get at most four: their big cores are few, and a thread on
 /// an efficiency core holds the others back at every synchronisation. A
-/// desktop gets up to eight, past which whisper.cpp's CPU path stops getting
-/// faster and the rest of the machine starts getting slower.
-int localEngineThreads(int processors) =>
-    isMobilePlatform ? processors.clamp(1, 4) : processors.clamp(1, 8);
+/// desktop leaves two cores free (one when it has four or fewer) and uses at
+/// most eight: ggml's own thread pool waits by spinning, so a thread that
+/// shares a core with the OS or the Dart VM stalls all the others. Measured on
+/// the 8-core Snapdragon development machine, large-v3-turbo on the check
+/// clip: 6 threads RTF 1.89, 7 threads 1.91, 8 threads 3.04, 4 threads 2.43.
+int localEngineThreads(int processors) => isMobilePlatform
+    ? processors.clamp(1, 4)
+    : (processors - (processors > 4 ? 2 : 1)).clamp(1, 8);
 
 /// Purpose: Report whether this platform's whisper.cpp build has Metal.
 /// Inputs: None.

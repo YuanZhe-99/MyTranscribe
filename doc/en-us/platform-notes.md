@@ -179,7 +179,10 @@ with the values its source documents; a mismatch means the library and the bindi
 the engine refuses the library rather than call into it. Cancel and progress are callbacks created
 in the engine isolate, which is allowed because whisper.cpp calls both on the thread that called
 `whisper_full`. ggml's two enums are bound as 32-bit integers, the size every compiler these targets
-use gives them. The memory guard's figure for available memory comes from the OS through FFI.
+use gives them. The memory guard's figure for available memory comes from the OS through FFI. The engine
+uses at most four threads on a phone; on a desktop it leaves two cores free (one on a machine with
+four or fewer), at most eight, because ggml's thread pool spins while it waits — on the 8-core
+development machine eight threads ran 60 % slower than six (`localEngineThreads`).
 
 Where the CPU code is chosen at run time, ggml loads its variants as separate libraries from the
 folder the whisper library was loaded from, which the Dart side asks the OS for: on Android that

@@ -630,9 +630,11 @@ the hook, the LLVM and Ninja steps in CI.
       executable and plugins already link `MSVCP140` and `VCRUNTIME140` and the installer ships
       no runtime, so the app has always required the Visual C++ Redistributable; whisper.cpp adds
       only `VCOMP140` on x64, which that same package installs*
-- [ ] CI: the LLVM and Ninja steps and the whisper.cpp source cache removed; the binary cache keyed
+- [x] CI: the LLVM and Ninja steps and the whisper.cpp source cache removed; the binary cache keyed
       by the manifest's hash; the Linux test host uses the upstream Ubuntu build. **Done when all
-      five jobs are green**, and each job's build time is back within a few minutes of 0.2.1's
+      five jobs are green**, and each job's build time is back within a few minutes of 0.2.1's.
+      *2026-09-25, run 36093289385 on `30bb465`: all five green, 6–9 minutes each; the iOS IPA
+      carries `whisper.framework`*
 - [x] Verified again on this machine with our Windows ARM64 set: the package test, the tiny-model
       live test, the integration test in the app bundle; the route check passes. *2026-09-25: all
       three green; the Debug app bundle built in 36 s*
