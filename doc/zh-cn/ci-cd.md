@@ -63,6 +63,7 @@ cd MyTranscribe
 git submodule update --init          # myapps_data 是子模块
 flutter pub get
 dart pub get -C packages/local_asr_whisper   # 它自己的测试，flutter analyze 会读到
+dart pub get -C packages/local_asr_sherpa
 flutter gen-l10n
 ```
 

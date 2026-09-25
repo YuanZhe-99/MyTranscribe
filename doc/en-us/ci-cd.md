@@ -72,6 +72,7 @@ cd MyTranscribe
 git submodule update --init          # myapps_data is a submodule
 flutter pub get
 dart pub get -C packages/local_asr_whisper   # its own tests, which flutter analyze reads
+dart pub get -C packages/local_asr_sherpa
 flutter gen-l10n
 ```
 

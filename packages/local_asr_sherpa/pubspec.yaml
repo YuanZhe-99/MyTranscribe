@@ -1,0 +1,20 @@
+name: local_asr_sherpa
+description: >-
+  sherpa-onnx for MyTranscribe!!!!!: its pinned prebuilt C-API libraries,
+  fetched by hash in a build hook and bound directly from Dart.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.11.3
+
+dependencies:
+  archive: ^4.0.0
+  code_assets: '>=1.0.0 <3.0.0'
+  crypto: ^3.0.6
+  ffi: ^2.1.0
+  hooks: '>=1.0.0 <3.0.0'
+
+dev_dependencies:
+  ffigen: ^22.0.0
+  test: ^1.25.0

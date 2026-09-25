@@ -5,11 +5,12 @@ disk, and the audio never leaves the device. This page describes what is built s
 the packages, the routes, the checks and the job — and says where a piece arrives in a later
 milestone of `PLAN.md`.
 
-**State at L1:** the first engine, whisper.cpp, is bundled into every build as pinned prebuilt
-libraries and runs the Whisper models on the CPU everywhere, and on Metal on Apple platforms (see
-[`platform-notes.md`](../platform-notes.md)). Parakeet and Qwen are listed in the library but have
-no engine in this build until L2, so their page says the build cannot run them here. GPU routes
-other than Metal arrive in L3.
+**State at L2:** three engines, all bundled as pinned prebuilt libraries (see
+[`platform-notes.md`](../platform-notes.md)). whisper.cpp runs the Whisper models (adapter
+`whisper_cpp`) and, through its own Parakeet runtime, Parakeet (adapter `parakeet_cpp`) — on the CPU
+everywhere and on Metal on Apple platforms. sherpa-onnx runs Qwen3-ASR (adapter `sherpa_onnx`) on
+the CPU everywhere except iOS, for which sherpa-onnx publishes no library yet. GPU routes other than
+Metal arrive in L3.
 
 ## The record and the packages
 
@@ -39,11 +40,21 @@ never silently runs the other.
 | Whisper large-v3 turbo (q5_0) | whisper | `whisper-large-v3-turbo-q5_0-ggml` | 547 MiB | segment, word | any |
 | Whisper large-v3 | whisper | `whisper-large-v3-ggml` (f16; plus the encoder on Apple) | 2.9 GiB (+1.1 GiB on Apple) | segment, word | any |
 | Whisper large-v3 (q5_0) | whisper | `whisper-large-v3-q5_0-ggml` | 1.0 GiB | segment, word | any |
-| Parakeet TDT 0.6B v3 | parakeet | `parakeet-tdt-0.6b-v3-int8-onnx` | 465 MiB archive | segment, word | 25 European languages; **no Chinese, Japanese or Korean** |
+| Parakeet TDT 0.6B v3 | parakeet | `parakeet-tdt-0.6b-v3-q8_0-ggml` | 638 MiB | segment, word | 25 European languages; **no Chinese, Japanese or Korean** |
 | Qwen3-ASR 0.6B | qwen | `qwen3-asr-0.6b-int8-onnx` | 838 MiB archive | none | any (the model detects) |
 
 No local model labels speakers. Every built-in window ceiling is 600 seconds — an app ceiling chosen
-for memory and visible progress, not a promise from the model.
+for memory and visible progress, not a promise from the model — and an engine may lower it for its
+routes: Parakeet takes two-minute windows, because whisper.cpp's Parakeet encodes a whole window
+with attention over every frame of it, and Qwen3-ASR takes 30-second windows, because sherpa-onnx's
+exported decoder holds 512 tokens of audio and text together (55 seconds came back as one word).
+
+Parakeet's runtime returns one segment per window with a time for every token; the engine cuts it
+into sentences at sentence-ending marks, or at a word once a sentence passes 20 seconds. Qwen3-ASR
+returns text only: each window becomes one segment spanning it, marked as not really timed, and a
+job's keywords are given to it as hotwords — Qwen takes them when the model loads, so the engine
+reloads it when a job's keywords differ. sherpa-onnx cannot stop a window midway, so a cancelled
+Qwen window finishes and its text is dropped.
 
 The built-in models are seeded when the settings document has no local model at all — a fresh
 install, or the first start after upgrading — with derived ids, so two devices seed identical records

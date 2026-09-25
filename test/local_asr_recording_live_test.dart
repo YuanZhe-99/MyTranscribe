@@ -24,10 +24,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_transcribe/features/jobs/models/transcription_job.dart';
 import 'package:my_transcribe/features/jobs/services/job_runner.dart';
 import 'package:my_transcribe/features/jobs/services/job_store.dart';
+import 'package:my_transcribe/features/local/engines/sherpa_onnx_engine.dart';
 import 'package:my_transcribe/features/local/engines/whisper_cpp_engine.dart';
 import 'package:my_transcribe/features/local/models/engine_capability.dart';
 import 'package:my_transcribe/features/local/services/artifact_manager.dart';
 import 'package:my_transcribe/features/local/services/engine_registry.dart';
+import 'package:my_transcribe/features/local/services/local_asr_engine.dart';
 import 'package:my_transcribe/features/local/services/local_engine_state_store.dart';
 import 'package:my_transcribe/features/local/services/local_model_templates.dart';
 import 'package:my_transcribe/features/local/services/local_transcription_backend.dart';
@@ -115,11 +117,13 @@ void main() {
       final state = LocalEngineStateStore(
         file: () async => File(p.join(root.path, 'state.json')),
       );
-      final engine = WhisperCppEngine(
-        family: _model.startsWith('local:parakeet')
-            ? GgmlFamily.parakeet
-            : GgmlFamily.whisper,
-      );
+      final LocalAsrEngine engine = _model.startsWith('local:qwen')
+          ? SherpaOnnxEngine()
+          : WhisperCppEngine(
+              family: _model.startsWith('local:parakeet')
+                  ? GgmlFamily.parakeet
+                  : GgmlFamily.whisper,
+            );
       final registry = EngineRegistry(
         engines: [engine],
         artifacts: artifacts,
@@ -189,7 +193,12 @@ void main() {
       // ignore: avoid_print
       print(lines.join('\n'));
 
-      await engine.dispose();
+      switch (engine) {
+        case final WhisperCppEngine whisper:
+          await whisper.dispose();
+        case final SherpaOnnxEngine sherpa:
+          await sherpa.dispose();
+      }
       try {
         await root.delete(recursive: true);
       } catch (_) {}

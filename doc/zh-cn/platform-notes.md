@@ -124,7 +124,10 @@ Windows 上为 false，因为它没有文件转写 API，所以回退设置在�
 应用构建不编译任何原生代码（`PLAN.md` 的决定 D21）。`packages/local_asr_whisper` 里有一份清单
 `native/binaries.json`，按 URL 和 SHA-256 为每个目标固定一个压缩包。它的构建钩子下载正在构建的目标所对应的
 压缩包，核对哈希，把列出的库解压到 `.dart_tool/` 下它的共享缓存中，再作为代码资源交给 Flutter 工具。哈希不
-符时构建失败，而不是打包一个不同的二进制文件。所有压缩包都来自 whisper.cpp v1.9.4（提交 `927cfce3`）。
+符时构建失败，而不是打包一个不同的二进制文件。所有压缩包都来自 whisper.cpp v1.9.4（提交 `927cfce3`），并且每个都在
+Whisper 的库旁边带着 whisper.cpp 自带的 Parakeet 运行时（`parakeet`；在 Apple 上位于框架二进制文件内），Parakeet
+引擎用它自己生成的绑定（`parakeet_bindings.g.dart`，决定 D22）来调用它。我们自己的压缩包是 `whisper-bin-v1.9.4-2`
+这个发布，它是第一个包含 Parakeet 的。
 
 | 目标 | 压缩包 | CPU 代码 | 其他后端 |
 |---|---|---|---|
@@ -164,3 +167,23 @@ OpenMP 运行库 `VCOMP140.DLL`）。本应用本来就依赖这个运行库 —
 升级到更新的上游版本会一次涉及以上全部：用新标签运行 `native-prebuild.yml`，把 `native/binaries.json` 指向新的
 压缩包及其哈希，把新的头文件复制到 `third_party/`，重新生成绑定，默认值有变时更新布局检查，并提高
 `whisper_cpp_engine.dart` 中的 `_bindingsVersion`，让每台设备重新检查它的路线。
+
+### sherpa-onnx
+
+Qwen3-ASR 运行在 sherpa-onnx 上（决定 D22），通过 `packages/local_asr_sherpa`，其构建方式与 `local_asr_whisper`
+完全相同：`native/binaries.json` 按 URL 与 SHA-256 固定 sherpa-onnx v1.13.8 自己的发布资源，钩子下载并打包它们，
+`third_party/sherpa-onnx/c-api.h` 与许可证（Apache-2.0）一起放在仓库里，`dart run tool/ffigen.dart` 生成
+`lib/src/sherpa_bindings.g.dart`。不使用 pub 包 `sherpa_onnx`：1.13.8 不带 Windows ARM64 的 DLL，这台机器根本
+运行不了它。
+
+| 目标 | 压缩包 | 库 |
+|---|---|---|
+| Windows x64、ARM64 | `sherpa-onnx-v1.13.8-win-{x64,arm64}-shared-MD-Release-no-tts-lib.tar.bz2` | `sherpa-onnx-c-api.dll`、`onnxruntime.dll`、`onnxruntime_providers_shared.dll` |
+| Android arm64-v8a、x86_64 | `sherpa-onnx-1.13.8.aar` 中的 `jni/<abi>/` 文件夹 | `libsherpa-onnx-c-api.so`、`libonnxruntime.so` |
+| macOS | `sherpa-onnx-v1.13.8-osx-universal2-shared-no-tts-lib.tar.bz2`，每个架构取一个切片 | `libsherpa-onnx-c-api.dylib`、`libonnxruntime.dylib` |
+| Linux x64 | `sherpa-onnx-v1.13.8-linux-x64-shared-no-tts-lib.tar.bz2` | `libsherpa-onnx-c-api.so`、`libonnxruntime.so` |
+| iOS | 暂无 —— sherpa-onnx 没有为它发布动态库；引擎报告自己未构建 | |
+
+C API 按指针接收配置，没有能读回默认值的函数，因此防止布局不匹配的手段是版本：库报告的版本必须恰好是
+`1.13.8`，否则不使用它。`onnxruntime.dll` 还链接 `MSVCP140_1.dll`，它属于同一个 Visual C++ 可再发行组件包。
+Android 的压缩包是所有目标里最大的下载（48 MiB），由钩子下载一次。

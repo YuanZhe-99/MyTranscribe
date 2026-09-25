@@ -732,18 +732,23 @@ Per D22 (2026-09-25): Parakeet on whisper.cpp's `parakeet` library, Qwen3-ASR on
 API; both as prebuilt libraries pinned by hash (D21). Tested simply, per the user's decision of
 2026-09-25: the package tests and one short clip per model on this machine, and CI green.
 
-- [ ] ~~`sherpa_onnx` from pub …~~ superseded by D22. **Parakeet**: `native-prebuild.yml` also
+- [x] ~~`sherpa_onnx` from pub …~~ superseded by D22. **Parakeet**: `native-prebuild.yml` also
       packs `parakeet` for Windows ARM64 and Android (release `whisper-bin-v1.9.4-2`); the manifest
       adds it for every target; `parakeet.h` vendored and bound; a `ParakeetCppEngine` (adapter
       `parakeet_cpp`) on the same kind of isolate as whisper, segment times from the runtime and
       `hasRealTimestamps: true`; the template's package becomes `ggml-org/parakeet-GGUF` q8_0,
-      pinned by revision and hash
-- [ ] **Qwen3-ASR**: `packages/local_asr_sherpa` — a manifest of sherpa-onnx v1.13.8's prebuilt
+      pinned by revision and hash. *Done 2026-09-25: windows capped at 120 s (the encoder attends
+      over the whole window); sentences cut from the token times*
+- [x] **Qwen3-ASR**: `packages/local_asr_sherpa` — a manifest of sherpa-onnx v1.13.8's prebuilt
       shared libraries (Windows x64 and ARM64, Android from the AAR, macOS, Linux x64) plus an
       iOS framework built by `native-prebuild.yml`; `c-api.h` vendored and bound; a
       `SherpaOnnxEngine` (adapter `sherpa_onnx`) in its own isolate for Qwen3-ASR 0.6B int8 (no
       timestamps → `hasRealTimestamps: false`; language from the job or auto; the job's keywords
-      as hotwords)
+      as hotwords). *Done 2026-09-25, except **iOS, deferred**: sherpa-onnx publishes no dynamic
+      iOS library, and its shared iOS build needs a separately packaged ONNX Runtime framework that
+      nothing here can test — Qwen reports "not built" on iOS. Windows are capped at 30 s: the
+      exported decoder holds 512 tokens (55 s came back as one word). The C API has no abort, so a
+      cancel waits for the window; hotwords reload the model when a job's keywords differ*
 - [ ] The router's language rule proven with real audio: Chinese and Japanese never reach
       Parakeet; the new-job page says why a model is not offered for the chosen language rather
       than hiding it
@@ -752,8 +757,9 @@ API; both as prebuilt libraries pinned by hash (D21). Tested simply, per the use
       M9 meeting recording is not enough
 - [ ] `coreml` and `directml` providers are **not** switched on: they are strings the binary may
       not honour (report §4.1). If tried later, as a route with `unknown` placement
-- [ ] ~~Verification as in L1 on the same devices and recordings~~ — simple tests only (the
-      user's decision of 2026-09-25)
+- [x] ~~Verification as in L1 on the same devices and recordings~~ — simple tests only (the
+      user's decision of 2026-09-25): the package tests and the whole job pipeline on the JFK clip
+      for Parakeet and Qwen on this machine
 - [ ] Docs, glossary, `version-history.md` entry for 0.3.1; `AGENTS.md` behaviour contract
       gains the model-download endpoint and the "audio never leaves the device with a local model"
       promise; ~~`PRIVACY_POLICY.md` and the privacy page gain the local-model paragraph~~ (done

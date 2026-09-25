@@ -81,6 +81,7 @@ sibling repository's Section 5.1 in the same change.
 | trusted host | 受信任主机 | 受信任主機 | |
 | diarization | 说话人分离 | 說話人分離 | Prefer 说话人识别 in user-facing text. |
 | local model | 本地模型 | 本機模型 | A model that runs on the device. Taiwan says 本機 for "this machine". |
+| hotwords | 热词 | 熱詞 | Words a model is told to prefer; Qwen3-ASR takes a job's keywords as hotwords. |
 | engine | 引擎 | 引擎 | The runtime that runs a local model; rarely user-facing. |
 | download (a model) | 下载 | 下載 | |
 | compute device | 计算设备 | 運算裝置 | The CPU, GPU or NPU a model runs on. 裝置, not 設備, in Taiwan usage. |

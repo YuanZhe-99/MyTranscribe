@@ -58,7 +58,9 @@ const maxAutoWindowSeconds = 1500;
 
 /// The shortest stride the planner will produce.
 ///
-/// Below this the overhead of a request dominates the audio it carries.
+/// Below this the overhead of a request dominates the audio it carries. A
+/// window shorter than this — a local engine that takes 30 seconds at most —
+/// lowers the floor to what fits (see [_strideFloor]).
 const minStrideSeconds = 60;
 
 /// A final window shorter than this is folded into the one before it.
@@ -293,7 +295,7 @@ class ChunkPlanner {
       stride = window - overlap;
       reasons.add(PlanReason(cap, window));
     }
-    stride = stride.clamp(minStrideSeconds.toDouble(), window - overlap);
+    stride = stride.clamp(_strideFloor(window, overlap), window - overlap);
     if (stride <= 0) stride = window;
 
     final windows = _windows(duration, stride, overlap);
@@ -360,7 +362,7 @@ class ChunkPlanner {
       stride = window - overlap;
       reasons.add(PlanReason(cap, window));
     }
-    stride = stride.clamp(minStrideSeconds.toDouble(), window - overlap);
+    stride = stride.clamp(_strideFloor(window, overlap), window - overlap);
     if (stride <= 0) stride = window;
 
     final windows = _windows(duration, stride, overlap);
@@ -543,4 +545,17 @@ class ChunkPlanner {
         .toString()
         .substring(0, 16);
   }
+}
+
+/// Purpose: The shortest stride a plan may use for a window.
+/// Inputs: The [window] and the [overlap], in seconds.
+/// Returns: [minStrideSeconds], or the whole stride the window leaves when
+/// that is shorter.
+/// Side effects: None.
+/// Notes: Internal helper used within this file only. Without it a window
+/// under a minute — Qwen3-ASR's 30 seconds — put the floor above the ceiling
+/// and the clamp threw.
+double _strideFloor(double window, double overlap) {
+  final most = window - overlap;
+  return most < minStrideSeconds ? most : minStrideSeconds.toDouble();
 }

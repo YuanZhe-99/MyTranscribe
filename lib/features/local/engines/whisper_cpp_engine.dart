@@ -598,7 +598,7 @@ void _workerMain((SendPort, SendPort) ports) {
   final models = <int, SpeechModel>{};
   var next = 0;
 
-  requests.listen((message) async {
+  Future<void> handle(Object? message) async {
     final (id, request) = message as (int, _Request);
     Object? answer;
     try {
@@ -624,6 +624,13 @@ void _workerMain((SendPort, SendPort) ports) {
       answer = '$error';
     }
     replies.send((id, answer));
+  }
+
+  // One request at a time: a handler that awaits file I/O must not let the
+  // next request — a release — reach the model it is still using.
+  var queue = Future<void>.value();
+  requests.listen((message) {
+    queue = queue.then((_) => handle(message));
   });
 }
 

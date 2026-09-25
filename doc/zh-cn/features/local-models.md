@@ -3,10 +3,10 @@
 本地模型在设备上转写录音：不需要密钥，模型一旦在磁盘上就不需要网络，音频也从不离开设备。本页描述目前已经
 建成的部分 —— 记录、模型包、路线、检查和任务 —— 并说明哪一块会在 `PLAN.md` 的后续里程碑中到来。
 
-**L1 阶段的状态：** 第一个引擎 whisper.cpp 以固定的预编译库打包进每个构建，在所有平台上用 CPU 运行 Whisper
-模型，在 Apple 平台上还可用 Metal（见 [`platform-notes.md`](../platform-notes.md)）。Parakeet 和 Qwen 已列在
-模型库中，但在 L2 之前这个构建没有能运行它们的引擎，因此它们的页面会说明本构建无法在这里运行它们。Metal 以
-外的 GPU 路线在 L3 到来。
+**L2 阶段的状态：** 三个引擎，都以固定的预编译库打包（见 [`platform-notes.md`](../platform-notes.md)）。
+whisper.cpp 运行 Whisper 模型（适配器 `whisper_cpp`），并通过它自带的 Parakeet 运行时运行 Parakeet（适配器
+`parakeet_cpp`）—— 在所有平台上用 CPU，在 Apple 平台上还可用 Metal。sherpa-onnx 在 CPU 上运行 Qwen3-ASR
+（适配器 `sherpa_onnx`），iOS 除外，因为 sherpa-onnx 还没有为它发布库。Metal 以外的 GPU 路线在 L3 到来。
 
 ## 记录与模型包
 
@@ -32,11 +32,18 @@
 | Whisper large-v3 turbo (q5_0) | whisper | `whisper-large-v3-turbo-q5_0-ggml` | 547 MiB | 片段、词 | 任意 |
 | Whisper large-v3 | whisper | `whisper-large-v3-ggml`（f16；在 Apple 设备上另加编码器） | 2.9 GiB（Apple 上另加 1.1 GiB） | 片段、词 | 任意 |
 | Whisper large-v3 (q5_0) | whisper | `whisper-large-v3-q5_0-ggml` | 1.0 GiB | 片段、词 | 任意 |
-| Parakeet TDT 0.6B v3 | parakeet | `parakeet-tdt-0.6b-v3-int8-onnx` | 465 MiB 压缩包 | 片段、词 | 25 种欧洲语言；**不含中文、日语和韩语** |
+| Parakeet TDT 0.6B v3 | parakeet | `parakeet-tdt-0.6b-v3-q8_0-ggml` | 638 MiB | 片段、词 | 25 种欧洲语言；**不含中文、日语和韩语** |
 | Qwen3-ASR 0.6B | qwen | `qwen3-asr-0.6b-int8-onnx` | 838 MiB 压缩包 | 无 | 任意（由模型自行识别） |
 
 没有哪个本地模型会标注说话人。每个内置模型的窗口上限都是 600 秒 —— 这是应用出于内存和进度可见性选定的上
-限，不是模型的承诺。
+限，不是模型的承诺 —— 引擎还可以为它的路线再调低：Parakeet 用两分钟的窗口，因为 whisper.cpp 的 Parakeet 一次
+编码整个窗口，注意力覆盖其中每一帧；Qwen3-ASR 用 30 秒的窗口，因为 sherpa-onnx 导出的解码器总共只能容纳 512
+个音频与文本 token（55 秒的音频只返回了一个词）。
+
+Parakeet 的运行时每个窗口返回一个片段，其中每个 token 都有时间；引擎在句末标点处把它切成句子，或在一句超过
+20 秒后于下一个词处切开。Qwen3-ASR 只返回文本：每个窗口成为一个覆盖整个窗口的片段，标明没有真实时间戳；任务
+的关键词作为热词交给它 —— Qwen 在加载模型时接收热词，所以任务的关键词不同时，引擎会重新加载模型。sherpa-onnx
+无法中途停止一个窗口，所以被取消的 Qwen 窗口会跑完，然后丢弃它的文本。
 
 当设置文档里一个本地模型都没有时 —— 全新安装，或升级后的首次启动 —— 会用派生 id 预置内置模型，这样两台设备
 预置出完全相同的记录，首次同步会把它们合并。模板的刷新方式与来源模板相同：用户从未改过的字段跟随更新的模

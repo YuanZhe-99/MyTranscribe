@@ -152,7 +152,10 @@ keeps a manifest, `native/binaries.json`, that pins one archive per target by UR
 build hook downloads the archive for the target being built, checks the hash, unpacks the listed
 libraries into its shared cache under `.dart_tool/`, and hands them to the Flutter tool as code
 assets. A hash that does not match fails the build rather than bundle a different binary. Every
-archive is built from whisper.cpp v1.9.4 (commit `927cfce3`).
+archive is built from whisper.cpp v1.9.4 (commit `927cfce3`), and each carries whisper.cpp's own
+Parakeet runtime beside Whisper's (`parakeet`; inside the framework binary on Apple), which the
+Parakeet engine binds with its own generated bindings (`parakeet_bindings.g.dart`, decision D22).
+Our own archives are the `whisper-bin-v1.9.4-2` release, the first to include it.
 
 | Target | Archive | CPU code | Other backends |
 |---|---|---|---|
@@ -203,3 +206,25 @@ Moving to a newer upstream version touches all of it at once: run `native-prebui
 tag, point `native/binaries.json` at the new archives with their hashes, copy the new headers into
 `third_party/`, regenerate the bindings, update the layout check if the defaults moved, and bump
 `_bindingsVersion` in `whisper_cpp_engine.dart` so every device checks its routes again.
+
+### sherpa-onnx
+
+Qwen3-ASR runs on sherpa-onnx (decision D22), through `packages/local_asr_sherpa`, built exactly
+like `local_asr_whisper`: `native/binaries.json` pins sherpa-onnx v1.13.8's own release assets by URL
+and SHA-256, the hook downloads and bundles them, `third_party/sherpa-onnx/c-api.h` is vendored with
+the licence (Apache-2.0), and `dart run tool/ffigen.dart` generates `lib/src/sherpa_bindings.g.dart`.
+The pub package `sherpa_onnx` is not used: 1.13.8 ships no Windows ARM64 DLLs, so this machine could
+not have run it.
+
+| Target | Archive | Libraries |
+|---|---|---|
+| Windows x64, ARM64 | `sherpa-onnx-v1.13.8-win-{x64,arm64}-shared-MD-Release-no-tts-lib.tar.bz2` | `sherpa-onnx-c-api.dll`, `onnxruntime.dll`, `onnxruntime_providers_shared.dll` |
+| Android arm64-v8a, x86_64 | `sherpa-onnx-1.13.8.aar`, its `jni/<abi>/` folder | `libsherpa-onnx-c-api.so`, `libonnxruntime.so` |
+| macOS | `sherpa-onnx-v1.13.8-osx-universal2-shared-no-tts-lib.tar.bz2`, one slice per architecture | `libsherpa-onnx-c-api.dylib`, `libonnxruntime.dylib` |
+| Linux x64 | `sherpa-onnx-v1.13.8-linux-x64-shared-no-tts-lib.tar.bz2` | `libsherpa-onnx-c-api.so`, `libonnxruntime.so` |
+| iOS | none yet — sherpa-onnx publishes no dynamic library for it; the engine reports itself as not built | |
+
+The C API takes its config by pointer, with no function that reads defaults back, so the guard
+against a layout mismatch is the version: the library must report exactly `1.13.8`, or it is not
+used. `onnxruntime.dll` also links `MSVCP140_1.dll`, part of the same Visual C++ Redistributable.
+The Android archive is the largest download of any target (48 MiB), fetched once by the hook.

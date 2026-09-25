@@ -459,6 +459,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.0"
+  local_asr_sherpa:
+    dependency: "direct main"
+    description:
+      path: "packages/local_asr_sherpa"
+      relative: true
+    source: path
+    version: "0.1.0"
   local_asr_whisper:
     dependency: "direct main"
     description:

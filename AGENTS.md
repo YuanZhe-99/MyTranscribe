@@ -184,7 +184,9 @@ Do not change these without the user explicitly deciding to:
   changes a promise already made to the user.
 - **Recordings stay on the device.** Audio goes to the configured transcription service and, when
   the user turns audio sync on, the converted copy goes to their own WebDAV server. Nothing is
-  uploaded to a service the user did not configure.
+  uploaded to a service the user did not configure. With a local model the audio goes nowhere at
+  all; the one endpoint local models add is the model host in a package's manifest, contacted only
+  for a download the user asked for (`PRIVACY_POLICY.md`, Downloads).
 - **Record ids are a compatibility contract.** A provider or model record is addressed by its id
   across devices; renaming a shipped template id orphans every device's overrides for it. Ids may be
   added; a shipped id is never changed.
@@ -218,7 +220,8 @@ commit and **push before** committing the pointer bump here. A pointer to an unp
 every other clone. Pin to a **tagged** package commit before any app release.
 
 **Native code is embedded as prebuilt binaries, never compiled in the app build** (decision D21 of
-`PLAN.md`). whisper.cpp arrives through `packages/local_asr_whisper/native/binaries.json`, which pins
+`PLAN.md`). whisper.cpp arrives through `packages/local_asr_whisper/native/binaries.json` and
+sherpa-onnx through `packages/local_asr_sherpa/native/binaries.json`, which pin
 every archive by URL and SHA-256; never add a CMake step, a C file or a compiler to the app build or
 to `build.yml`. Where upstream publishes no usable binary, add the target to
 `.github/workflows/native-prebuild.yml`, run it, and pin its release asset. Never edit the generated

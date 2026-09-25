@@ -460,6 +460,15 @@ void main() {
       expect(byRoute.reasons.single.value, 300);
     });
 
+    test('plans a route whose windows are shorter than a minute', () {
+      // Qwen3-ASR's 30 seconds: the stride floor used to sit above the
+      // window and the clamp threw.
+      final plan = ChunkPlanner.planLocal(local(route: 30)).plan!;
+      expect(plan.strideSeconds, 25);
+      expect(plan.windows.first.endSeconds, 30);
+      expect(plan.windowCount, 144);
+    });
+
     test('caps the window by memory below the engine', () {
       final plan = ChunkPlanner.planLocal(local(memory: 240)).plan!;
       expect(plan.strideSeconds, 235);

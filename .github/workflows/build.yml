@@ -42,14 +42,16 @@ jobs:
           # GitHub copy here, so the default GITHUB_TOKEN suffices.
           submodules: recursive
 
-      # The prebuilt whisper.cpp archives the local-models hook downloads and
-      # unpacks (packages/local_asr_whisper/native/binaries.json, decision D21
-      # of the local-models plan). Keyed by the manifest and the hook, so an
-      # ordinary push downloads nothing.
+      # The prebuilt whisper.cpp and sherpa-onnx archives the local-models hooks
+      # download and unpack (each package's native/binaries.json, decisions D21
+      # and D22 of the local-models plan). Keyed by the manifests and the hooks,
+      # so an ordinary push downloads nothing.
       - uses: actions/cache@v4
         with:
-          path: .dart_tool/hooks_runner/shared/local_asr_whisper
-          key: whisper-bin-${{ github.job }}-${{ hashFiles('packages/local_asr_whisper/native/**', 'packages/local_asr_whisper/hook/**') }}
+          path: |
+            .dart_tool/hooks_runner/shared/local_asr_whisper
+            .dart_tool/hooks_runner/shared/local_asr_sherpa
+          key: native-bin-${{ github.job }}-${{ hashFiles('packages/local_asr_*/native/**', 'packages/local_asr_*/hook/**') }}
 
       - uses: actions/setup-java@v5
         with:
@@ -65,10 +67,11 @@ jobs:
 
       - run: flutter gen-l10n
 
-      # packages/local_asr_whisper has tests of its own, which flutter analyze
-      # reads; without that package's own dependencies it reports every
-      # `test` and `expect` in them as undefined.
+      # packages/local_asr_whisper and local_asr_sherpa have tests of their own,
+      # which flutter analyze reads; without each package's own dependencies it
+      # reports every `test` and `expect` in them as undefined.
       - run: dart pub get -C packages/local_asr_whisper
+      - run: dart pub get -C packages/local_asr_sherpa
 
       - run: flutter analyze
 
@@ -122,14 +125,16 @@ jobs:
         with:
           submodules: recursive
 
-      # The prebuilt whisper.cpp archives the local-models hook downloads and
-      # unpacks (packages/local_asr_whisper/native/binaries.json, decision D21
-      # of the local-models plan). Keyed by the manifest and the hook, so an
-      # ordinary push downloads nothing.
+      # The prebuilt whisper.cpp and sherpa-onnx archives the local-models hooks
+      # download and unpack (each package's native/binaries.json, decisions D21
+      # and D22 of the local-models plan). Keyed by the manifests and the hooks,
+      # so an ordinary push downloads nothing.
       - uses: actions/cache@v4
         with:
-          path: .dart_tool/hooks_runner/shared/local_asr_whisper
-          key: whisper-bin-${{ github.job }}-${{ hashFiles('packages/local_asr_whisper/native/**', 'packages/local_asr_whisper/hook/**') }}
+          path: |
+            .dart_tool/hooks_runner/shared/local_asr_whisper
+            .dart_tool/hooks_runner/shared/local_asr_sherpa
+          key: native-bin-${{ github.job }}-${{ hashFiles('packages/local_asr_*/native/**', 'packages/local_asr_*/hook/**') }}
 
       - uses: subosito/flutter-action@v2
         with:
@@ -178,14 +183,16 @@ jobs:
         with:
           submodules: recursive
 
-      # The prebuilt whisper.cpp archives the local-models hook downloads and
-      # unpacks (packages/local_asr_whisper/native/binaries.json, decision D21
-      # of the local-models plan). Keyed by the manifest and the hook, so an
-      # ordinary push downloads nothing.
+      # The prebuilt whisper.cpp and sherpa-onnx archives the local-models hooks
+      # download and unpack (each package's native/binaries.json, decisions D21
+      # and D22 of the local-models plan). Keyed by the manifests and the hooks,
+      # so an ordinary push downloads nothing.
       - uses: actions/cache@v4
         with:
-          path: .dart_tool/hooks_runner/shared/local_asr_whisper
-          key: whisper-bin-${{ github.job }}-${{ hashFiles('packages/local_asr_whisper/native/**', 'packages/local_asr_whisper/hook/**') }}
+          path: |
+            .dart_tool/hooks_runner/shared/local_asr_whisper
+            .dart_tool/hooks_runner/shared/local_asr_sherpa
+          key: native-bin-${{ github.job }}-${{ hashFiles('packages/local_asr_*/native/**', 'packages/local_asr_*/hook/**') }}
 
       - name: Cache the Flutter SDK
         uses: actions/cache@v4
@@ -230,14 +237,16 @@ jobs:
         with:
           submodules: recursive
 
-      # The prebuilt whisper.cpp archives the local-models hook downloads and
-      # unpacks (packages/local_asr_whisper/native/binaries.json, decision D21
-      # of the local-models plan). Keyed by the manifest and the hook, so an
-      # ordinary push downloads nothing.
+      # The prebuilt whisper.cpp and sherpa-onnx archives the local-models hooks
+      # download and unpack (each package's native/binaries.json, decisions D21
+      # and D22 of the local-models plan). Keyed by the manifests and the hooks,
+      # so an ordinary push downloads nothing.
       - uses: actions/cache@v4
         with:
-          path: .dart_tool/hooks_runner/shared/local_asr_whisper
-          key: whisper-bin-${{ github.job }}-${{ hashFiles('packages/local_asr_whisper/native/**', 'packages/local_asr_whisper/hook/**') }}
+          path: |
+            .dart_tool/hooks_runner/shared/local_asr_whisper
+            .dart_tool/hooks_runner/shared/local_asr_sherpa
+          key: native-bin-${{ github.job }}-${{ hashFiles('packages/local_asr_*/native/**', 'packages/local_asr_*/hook/**') }}
 
       - uses: subosito/flutter-action@v2
         with:
@@ -270,14 +279,16 @@ jobs:
         with:
           submodules: recursive
 
-      # The prebuilt whisper.cpp archives the local-models hook downloads and
-      # unpacks (packages/local_asr_whisper/native/binaries.json, decision D21
-      # of the local-models plan). Keyed by the manifest and the hook, so an
-      # ordinary push downloads nothing.
+      # The prebuilt whisper.cpp and sherpa-onnx archives the local-models hooks
+      # download and unpack (each package's native/binaries.json, decisions D21
+      # and D22 of the local-models plan). Keyed by the manifests and the hooks,
+      # so an ordinary push downloads nothing.
       - uses: actions/cache@v4
         with:
-          path: .dart_tool/hooks_runner/shared/local_asr_whisper
-          key: whisper-bin-${{ github.job }}-${{ hashFiles('packages/local_asr_whisper/native/**', 'packages/local_asr_whisper/hook/**') }}
+          path: |
+            .dart_tool/hooks_runner/shared/local_asr_whisper
+            .dart_tool/hooks_runner/shared/local_asr_sherpa
+          key: native-bin-${{ github.job }}-${{ hashFiles('packages/local_asr_*/native/**', 'packages/local_asr_*/hook/**') }}
 
       - uses: subosito/flutter-action@v2
         with:

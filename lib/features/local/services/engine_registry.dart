@@ -14,6 +14,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../engines/sherpa_onnx_engine.dart';
 import '../engines/whisper_cpp_engine.dart';
 import '../models/artifact_manifest.dart';
 import '../models/engine_capability.dart';
@@ -120,12 +121,18 @@ final parakeetCppEngineProvider = Provider<WhisperCppEngine>(
   (ref) => WhisperCppEngine(family: GgmlFamily.parakeet),
 );
 
+/// The sherpa-onnx engine, one per app, for Qwen3-ASR (decision D22).
+final sherpaOnnxEngineProvider = Provider<SherpaOnnxEngine>(
+  (ref) => SherpaOnnxEngine(),
+);
+
 /// The engine registry: every adapter this build compiles in.
 final engineRegistryProvider = Provider<EngineRegistry>(
   (ref) => EngineRegistry(
     engines: [
       ref.watch(whisperCppEngineProvider),
       ref.watch(parakeetCppEngineProvider),
+      ref.watch(sherpaOnnxEngineProvider),
     ],
     artifacts: ref.watch(artifactManagerProvider),
     state: ref.watch(localEngineStateStoreProvider),
