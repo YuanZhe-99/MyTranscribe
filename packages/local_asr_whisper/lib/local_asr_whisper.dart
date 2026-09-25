@@ -18,6 +18,8 @@ import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 
 import 'src/native.dart';
+import 'src/ggml_bindings.g.dart' show ggml_backend_dev_type;
+import 'src/parakeet_bindings.g.dart' as pk;
 import 'src/whisper_bindings.g.dart';
 
 /// One timed piece of text, in seconds from the start of the samples.
@@ -122,8 +124,12 @@ class WhisperLibrary {
       // Apple's binary has its backends linked in; elsewhere the CPU
       // variants are libraries beside this one, and ggml would otherwise look
       // beside the executable.
+      // Another isolate of this process may have registered them already —
+      // the whisper and Parakeet engines each have one — and registering them
+      // twice would list every device twice.
       final dir = libraryDirectory();
-      if (dir != null && !Platform.isMacOS && !Platform.isIOS) {
+      final registered = _hasCpuDevice();
+      if (dir != null && !registered && !Platform.isMacOS && !Platform.isIOS) {
         final native = dir.toNativeUtf8();
         try {
           ggml().ggml_backend_load_all_from_path(native.cast());
@@ -134,6 +140,36 @@ class WhisperLibrary {
       _loaded = true;
     }
     return ggml().ggml_backend_reg_count();
+  }
+
+  /// Purpose: Say whether ggml has a CPU device registered in this process.
+  /// Inputs: None.
+  /// Returns: `bool`.
+  /// Side effects: None.
+  /// Notes: Internal helper used within this file only.
+  static bool _hasCpuDevice() {
+    final bindings = ggml();
+    for (var i = 0; i < bindings.ggml_backend_dev_count(); i++) {
+      if (bindings.ggml_backend_dev_type$1(bindings.ggml_backend_dev_get(i)) ==
+          ggml_backend_dev_type.GGML_BACKEND_DEVICE_TYPE_CPU) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Purpose: Say whether this binary set has whisper.cpp's Parakeet library.
+  /// Inputs: None.
+  /// Returns: `bool`.
+  /// Side effects: Opens the library when it is there.
+  /// Notes: Call [load] first. Every set built from v1.9.4 onward has it.
+  static bool hasParakeet() {
+    try {
+      parakeet();
+      return true;
+    } on StateError {
+      return false;
+    }
   }
 
   /// Purpose: whisper.cpp's version string.
@@ -318,8 +354,33 @@ final _progressCallback =
       )
     >.isolateLocal(_reportProgress);
 
-/// A loaded model.
-class WhisperModel {
+/// A loaded speech model the engine can run a window through: whisper or
+/// Parakeet, one interface.
+abstract interface class SpeechModel {
+  /// Purpose: Transcribe samples.
+  /// Inputs: 16 kHz mono [samples]; the [language] and [prompt] where the
+  /// model takes them; the [threads]; the [control] block.
+  /// Returns: The segments, in order.
+  /// Side effects: Runs the model; writes progress into [control].
+  /// Notes: Blocks. Throws [WhisperCancelled] or [WhisperException].
+  List<WhisperSegment> transcribe(
+    Float32List samples, {
+    String? language,
+    String? prompt,
+    int threads,
+    WhisperControl? control,
+  });
+
+  /// Purpose: Free the model.
+  /// Inputs: None.
+  /// Returns: None.
+  /// Side effects: Frees native memory.
+  /// Notes: Safe to call more than once.
+  void release();
+}
+
+/// A loaded whisper model.
+class WhisperModel implements SpeechModel {
   WhisperModel._(this._context);
 
   Pointer<whisper_context> _context;
@@ -355,6 +416,7 @@ class WhisperModel {
   /// Side effects: Runs the model; writes progress into [control].
   /// Notes: Blocks until done. Throws [WhisperCancelled] when [control] was
   /// cancelled, [WhisperException] on any other failure.
+  @override
   List<WhisperSegment> transcribe(
     Float32List samples, {
     String? language,
@@ -437,9 +499,279 @@ class WhisperModel {
   /// Returns: None.
   /// Side effects: Frees native memory.
   /// Notes: Safe to call more than once; only after a transcription returned.
+  @override
   void release() {
     if (_context == nullptr) return;
     whisper_free(_context);
     _context = nullptr;
   }
+}
+
+/// The Parakeet functions once checked, per isolate.
+pk.ParakeetBindings? _parakeet;
+
+/// Purpose: The Parakeet bindings, checked once.
+/// Inputs: None.
+/// Returns: The bindings.
+/// Side effects: Loads the libraries; runs the layout check once.
+/// Notes: Internal helper used within this file only. Throws
+/// [WhisperException] when this binary set has no Parakeet library, or when
+/// its structs do not match the bindings — the same guard as
+/// [WhisperLibrary.load] applies to whisper's.
+pk.ParakeetBindings _parakeetBindings() {
+  final known = _parakeet;
+  if (known != null) return known;
+  WhisperLibrary.load();
+  final pk.ParakeetBindings bindings;
+  try {
+    bindings = parakeet();
+  } on StateError catch (error) {
+    throw WhisperException('Parakeet is not in this build: ${error.message}');
+  }
+  final full = bindings.parakeet_full_default_params(
+    pk.parakeet_sampling_strategy.PARAKEET_SAMPLING_GREEDY,
+  );
+  final context = bindings.parakeet_context_default_params();
+  final threads = Platform.numberOfProcessors < 4
+      ? Platform.numberOfProcessors
+      : 4;
+  final checks = <String, bool>{
+    'strategy': full.strategyAsInt == 0,
+    'n_threads': full.n_threads == threads,
+    'offsets': full.offset_ms == 0 && full.duration_ms == 0,
+    'no_context': full.no_context && full.audio_ctx == 0,
+    'callbacks':
+        full.progress_callback == nullptr &&
+        full.abort_callback == nullptr &&
+        full.abort_callback_user_data == nullptr,
+    'context': context.use_gpu && context.gpu_device == 0,
+  };
+  final wrong = [
+    for (final MapEntry(:key, :value) in checks.entries)
+      if (!value) key,
+  ];
+  if (wrong.isNotEmpty) {
+    throw WhisperException(
+      'The Parakeet library does not match its bindings '
+      '(${wrong.join(', ')}); it is not used.',
+    );
+  }
+  return _parakeet = bindings;
+}
+
+/// Purpose: The abort check, typed for Parakeet's parameters.
+/// Inputs: The control block's address.
+/// Returns: `true` to stop.
+/// Side effects: None.
+/// Notes: Internal helper used within this file only; the same flag as
+/// [_shouldAbort], called on the thread that called `parakeet_full`.
+bool _parakeetShouldAbort(Pointer<Void> control) =>
+    control.cast<Int32>()[0] != 0;
+
+/// Purpose: Parakeet's progress report, written into the control block.
+/// Inputs: The context, the state, the [progress] percentage, the control
+/// block's address.
+/// Returns: None.
+/// Side effects: Writes the percentage where another isolate reads it.
+/// Notes: Internal helper used within this file only.
+void _parakeetProgress(
+  Pointer<pk.parakeet_context> context,
+  Pointer<pk.parakeet_state> state,
+  int progress,
+  Pointer<Void> control,
+) => control.cast<Int32>()[1] = progress;
+
+/// The two callables for Parakeet, created once per isolate on first use.
+final _parakeetAbortCallback =
+    NativeCallable<Bool Function(Pointer<Void>)>.isolateLocal(
+      _parakeetShouldAbort,
+      exceptionalReturn: false,
+    );
+final _parakeetProgressCallback =
+    NativeCallable<
+      Void Function(
+        Pointer<pk.parakeet_context>,
+        Pointer<pk.parakeet_state>,
+        Int,
+        Pointer<Void>,
+      )
+    >.isolateLocal(_parakeetProgress);
+
+/// A loaded Parakeet TDT model, run by whisper.cpp's own Parakeet library.
+class ParakeetModel implements SpeechModel {
+  ParakeetModel._(this._bindings, this._context);
+
+  final pk.ParakeetBindings _bindings;
+  Pointer<pk.parakeet_context> _context;
+
+  /// Purpose: Load a Parakeet GGML model file.
+  /// Inputs: The model [path]; whether to allow a GPU backend.
+  /// Returns: The loaded model.
+  /// Side effects: Reads the file; allocates the model's memory.
+  /// Notes: Throws [WhisperException] when the file does not load or the
+  /// build has no Parakeet library.
+  static ParakeetModel load(String path, {bool useGpu = false}) {
+    final bindings = _parakeetBindings();
+    final params = bindings.parakeet_context_default_params()..use_gpu = useGpu;
+    final native = path.toNativeUtf8();
+    try {
+      final context = bindings.parakeet_init_from_file_with_params(
+        native.cast(),
+        params,
+      );
+      if (context == nullptr) {
+        throw WhisperException('The model at $path did not load.');
+      }
+      return ParakeetModel._(bindings, context);
+    } finally {
+      calloc.free(native);
+    }
+  }
+
+  /// Purpose: Transcribe samples.
+  /// Inputs: 16 kHz mono [samples]; the [threads]; the [control] block.
+  /// [language] and [prompt] are ignored: Parakeet v3 detects the language
+  /// itself and takes no prompt.
+  /// Returns: Sentence segments built from the token times.
+  /// Side effects: Runs the model; writes progress into [control].
+  /// Notes: Blocks. The runtime returns one segment per call with a time for
+  /// every token, so the sentences are cut here by [sentences].
+  @override
+  List<WhisperSegment> transcribe(
+    Float32List samples, {
+    String? language,
+    String? prompt,
+    int threads = 4,
+    WhisperControl? control,
+  }) {
+    if (_context == nullptr) throw const WhisperException('Released.');
+    final buffer = calloc<Float>(samples.length);
+    final user = control == null
+        ? nullptr
+        : Pointer<Void>.fromAddress(control.address);
+    try {
+      buffer.asTypedList(samples.length).setAll(0, samples);
+      final params =
+          _bindings.parakeet_full_default_params(
+              pk.parakeet_sampling_strategy.PARAKEET_SAMPLING_GREEDY,
+            )
+            ..n_threads = threads > 0 ? threads : 4
+            ..no_context = true;
+      if (user != nullptr) {
+        params
+          ..abort_callback = _parakeetAbortCallback.nativeFunction
+          ..abort_callback_user_data = user
+          ..progress_callback = _parakeetProgressCallback.nativeFunction
+          ..progress_callback_user_data = user;
+      }
+      final result = _bindings.parakeet_full(
+        _context,
+        params,
+        buffer,
+        samples.length,
+      );
+      if (result != 0 && (control?.isCancelled ?? false)) {
+        throw const WhisperCancelled();
+      }
+      if (result != 0) {
+        throw WhisperException('parakeet_full failed with code $result.');
+      }
+      final tokens = <ParakeetToken>[];
+      final count = _bindings.parakeet_full_n_segments(_context);
+      for (var s = 0; s < count; s++) {
+        final n = _bindings.parakeet_full_n_tokens(_context, s);
+        for (var t = 0; t < n; t++) {
+          final data = _bindings.parakeet_full_get_token_data(_context, s, t);
+          final piece = _bindings
+              .parakeet_full_get_token_text(_context, s, t)
+              .cast<Utf8>()
+              .toDartString();
+          tokens.add(ParakeetToken(piece, data.t0 / 100, data.t1 / 100));
+        }
+      }
+      return sentences(tokens);
+    } finally {
+      calloc.free(buffer);
+    }
+  }
+
+  /// Purpose: Free the model.
+  /// Inputs: None.
+  /// Returns: None.
+  /// Side effects: Frees native memory.
+  /// Notes: Safe to call more than once; only after a transcription returned.
+  @override
+  void release() {
+    if (_context == nullptr) return;
+    _bindings.parakeet_free(_context);
+    _context = nullptr;
+  }
+}
+
+/// One token of a Parakeet result: its SentencePiece text and its times.
+class ParakeetToken {
+  /// The raw piece: `▁` marks the start of a word.
+  final String piece;
+
+  /// Where it starts, in seconds from the start of the samples.
+  final double start;
+
+  /// Where it ends.
+  final double end;
+
+  /// Purpose: Create a token.
+  /// Inputs: All fields.
+  /// Returns: A new immutable value.
+  /// Side effects: None.
+  /// Notes: None.
+  const ParakeetToken(this.piece, this.start, this.end);
+}
+
+/// The longest a sentence runs before it is cut at the next word.
+const maxSentenceSeconds = 20.0;
+
+/// The marks that end a sentence, in the scripts Parakeet v3 writes.
+const _sentenceEnds = ['.', '?', '!', '。', '？', '！'];
+
+/// Purpose: Join Parakeet's tokens into sentence segments.
+/// Inputs: The [tokens], in order.
+/// Returns: One segment per sentence, trimmed; empty sentences dropped.
+/// Side effects: None.
+/// Notes: A sentence ends at a sentence-ending mark, or at the next word once
+/// it has run [maxSentenceSeconds]. A piece in angle brackets is a control
+/// token and carries no text. Public so the grouping is tested without a
+/// model.
+List<WhisperSegment> sentences(List<ParakeetToken> tokens) {
+  final segments = <WhisperSegment>[];
+  final text = StringBuffer();
+  double? start;
+  var end = 0.0;
+
+  void flush() {
+    final line = text.toString().trim();
+    final from = start;
+    if (line.isNotEmpty && from != null) {
+      segments.add(WhisperSegment(from, end, line));
+    }
+    text.clear();
+    start = null;
+  }
+
+  for (final token in tokens) {
+    final piece = token.piece;
+    if (piece.startsWith('<') && piece.endsWith('>')) continue;
+    final from = start;
+    if (piece.startsWith('▁') &&
+        from != null &&
+        token.start - from > maxSentenceSeconds) {
+      flush();
+    }
+    start ??= token.start;
+    end = token.end;
+    text.write(piece.replaceAll('▁', ' '));
+    final trimmed = piece.trimRight();
+    if (_sentenceEnds.any(trimmed.endsWith)) flush();
+  }
+  flush();
+  return segments;
 }

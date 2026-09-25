@@ -21,10 +21,16 @@ import '../models/local_model_config.dart';
 ///
 /// Raise it when a template changes, so the refresh reaches every device that
 /// never overrode the changed field.
-const localTemplateVersion = 1;
+///
+/// 2: Parakeet moved from a sherpa-onnx package to whisper.cpp's own Parakeet
+/// runtime (decision D22 of the local-models plan).
+const localTemplateVersion = 2;
 
 /// The adapter id of whisper.cpp.
 const whisperCppAdapterId = 'whisper_cpp';
+
+/// The adapter id of whisper.cpp's Parakeet runtime.
+const parakeetCppAdapterId = 'parakeet_cpp';
 
 /// The adapter id of sherpa-onnx.
 const sherpaOnnxAdapterId = 'sherpa_onnx';
@@ -43,6 +49,9 @@ const _whisperRevision = '5359861c739e955e79d9a303bcbc70fb988958b1';
 /// Where those files come from.
 const _whisperBase =
     'https://huggingface.co/ggerganov/whisper.cpp/resolve/$_whisperRevision';
+
+/// The Hugging Face commit of whisper.cpp's Parakeet conversions.
+const _parakeetRevision = '35156454d1a39de06863303dd209fd2bed6ee079';
 
 /// The sherpa-onnx release holding its speech models.
 const _sherpaBase =
@@ -254,34 +263,34 @@ List<LocalModelTemplate> buildLocalModelTemplates() => [
       wordTimestamps: Capability.supported,
       segmentTimestamps: Capability.supported,
       artifacts: {
-        sherpaOnnxAdapterId: ['parakeet-tdt-0.6b-v3-int8-onnx'],
+        parakeetCppAdapterId: ['parakeet-tdt-0.6b-v3-q8_0-ggml'],
       },
       templateVersion: localTemplateVersion,
     ),
     artifacts: [
       ArtifactManifest(
-        artifactId: 'parakeet-tdt-0.6b-v3-int8-onnx',
+        artifactId: 'parakeet-tdt-0.6b-v3-q8_0-ggml',
         modelId: 'local:parakeet-tdt-0.6b-v3',
-        adapterId: sherpaOnnxAdapterId,
-        format: ArtifactFormat.onnx,
-        quantization: 'int8',
-        revision: 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8',
+        adapterId: parakeetCppAdapterId,
+        format: ArtifactFormat.ggml,
+        quantization: 'q8_0',
+        revision: _parakeetRevision,
         files: [
           ArtifactFile(
-            path: 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8.tar.bz2',
-            bytes: 487170055,
+            path: 'ggml-parakeet-tdt-0.6b-v3-q8_0.bin',
+            bytes: 668757119,
             sha256:
-                '5793d0fd397c5778d2cf2126994d58e9d56b1be7c04d13c7a15bb1b4eafb16bf',
+                '4d64e9e96c2792186d072fde0034df0ad670cf680a2f53069052ead827fd600e',
             sourceUrl:
-                '$_sherpaBase/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8.tar.bz2',
-            unpack: ArchiveKind.tarBz2,
+                'https://huggingface.co/ggml-org/parakeet-GGUF/resolve/'
+                '$_parakeetRevision/ggml-parakeet-tdt-0.6b-v3-q8_0.bin',
           ),
         ],
         licenseId: 'CC-BY-4.0',
         licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
         attribution:
             'NVIDIA parakeet-tdt-0.6b-v3, licensed CC-BY-4.0; converted to '
-            'ONNX by the sherpa-onnx project.',
+            'GGML by the whisper.cpp project.',
       ),
     ],
   ),

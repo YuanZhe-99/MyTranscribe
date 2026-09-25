@@ -115,7 +115,11 @@ void main() {
       final state = LocalEngineStateStore(
         file: () async => File(p.join(root.path, 'state.json')),
       );
-      final engine = WhisperCppEngine();
+      final engine = WhisperCppEngine(
+        family: _model.startsWith('local:parakeet')
+            ? GgmlFamily.parakeet
+            : GgmlFamily.whisper,
+      );
       final registry = EngineRegistry(
         engines: [engine],
         artifacts: artifacts,
@@ -156,6 +160,11 @@ void main() {
       }
       watch.stop();
 
+      expect(
+        done.stage,
+        JobStage.done,
+        reason: '${done.error?.kind} ${done.error?.message}',
+      );
       final transcript = await TranscriptStore.load(job.id);
       final text = transcript!.segments.map((s) => s.text).join(' ');
       final seconds = done.media?.durationSeconds ?? 0;
@@ -180,7 +189,6 @@ void main() {
       // ignore: avoid_print
       print(lines.join('\n'));
 
-      expect(done.stage, JobStage.done, reason: done.error?.message);
       await engine.dispose();
       try {
         await root.delete(recursive: true);

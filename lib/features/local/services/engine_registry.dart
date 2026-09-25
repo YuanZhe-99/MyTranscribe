@@ -114,10 +114,19 @@ final whisperCppEngineProvider = Provider<WhisperCppEngine>(
   (ref) => WhisperCppEngine(),
 );
 
+/// The Parakeet engine, one per app: whisper.cpp's own Parakeet runtime, with
+/// a worker isolate of its own (decision D22 of the local-models plan).
+final parakeetCppEngineProvider = Provider<WhisperCppEngine>(
+  (ref) => WhisperCppEngine(family: GgmlFamily.parakeet),
+);
+
 /// The engine registry: every adapter this build compiles in.
 final engineRegistryProvider = Provider<EngineRegistry>(
   (ref) => EngineRegistry(
-    engines: [ref.watch(whisperCppEngineProvider)],
+    engines: [
+      ref.watch(whisperCppEngineProvider),
+      ref.watch(parakeetCppEngineProvider),
+    ],
     artifacts: ref.watch(artifactManagerProvider),
     state: ref.watch(localEngineStateStoreProvider),
   ),

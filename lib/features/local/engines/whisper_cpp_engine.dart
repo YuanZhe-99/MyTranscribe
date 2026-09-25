@@ -1,4 +1,5 @@
-/// Purpose: The whisper.cpp adapter: the first real on-device engine.
+/// Purpose: The whisper.cpp adapters: Whisper, and Parakeet through
+/// whisper.cpp's own Parakeet runtime (decision D22 of the local-models plan).
 /// Inputs: Installed GGML packages; PCM windows.
 /// Returns: Routes, prepared sessions and transcription events, through the
 /// `LocalAsrEngine` protocol.
@@ -31,7 +32,23 @@ import '../services/tested_here.dart';
 /// Which binary set and bindings the engine runs, part of every check key: a
 /// rebuilt set (`native/binaries.json`) or regenerated bindings can change what
 /// a route produces as surely as a new whisper.cpp can, so they bump this.
-const _bindingsVersion = 'prebuilt1';
+const _bindingsVersion = 'prebuilt2';
+
+/// The model families whisper.cpp's libraries run.
+enum GgmlFamily {
+  /// Whisper, through `whisper.h`.
+  whisper,
+
+  /// Parakeet TDT, through `parakeet.h`.
+  parakeet,
+}
+
+/// The longest window Parakeet is given, in seconds.
+///
+/// whisper.cpp's Parakeet encodes a whole window in one pass, with attention
+/// over every frame of it, so memory grows with the square of the window;
+/// two minutes keeps that small on a phone. The runner cuts windows to it.
+const parakeetMaxWindowSeconds = 120;
 
 /// What the worker learned about the native library.
 class WhisperRuntimeInfo {
@@ -47,6 +64,9 @@ class WhisperRuntimeInfo {
   /// The devices ggml found.
   final List<WhisperDevice> devices;
 
+  /// Whether this binary set has whisper.cpp's Parakeet library.
+  final bool hasParakeet;
+
   /// Purpose: Create a runtime description.
   /// Inputs: All fields.
   /// Returns: A new immutable value.
@@ -57,6 +77,7 @@ class WhisperRuntimeInfo {
     this.version = '',
     this.systemInfo = '',
     this.devices = const [],
+    this.hasParakeet = false,
   });
 
   /// The CPU device's description, for the check key.
@@ -79,23 +100,33 @@ class WhisperRuntimeInfo {
   }
 }
 
-/// The whisper.cpp engine.
+/// The whisper.cpp engine, for one model family.
 class WhisperCppEngine implements LocalAsrEngine {
   /// Purpose: Create the engine.
-  /// Inputs: Optional [testedHere], the table of routes this project verified
-  /// on this device's class, and [threads] for tests.
+  /// Inputs: The model [family]; optional [testedHere], the table of routes
+  /// this project verified on this device's class, and [threads] for tests.
   /// Returns: A new engine; the worker starts on first use.
   /// Side effects: None.
-  /// Notes: None.
-  WhisperCppEngine({bool Function(EngineRoute route)? testedHere, int? threads})
-    : _testedHere = testedHere ?? isTestedHere,
-      _threads = threads ?? localEngineThreads(Platform.numberOfProcessors);
+  /// Notes: One engine per family, each with its own worker isolate: the
+  /// Whisper and Parakeet adapters are separate routes to the router.
+  WhisperCppEngine({
+    this.family = GgmlFamily.whisper,
+    bool Function(EngineRoute route)? testedHere,
+    int? threads,
+  }) : _testedHere = testedHere ?? isTestedHere,
+       _threads = threads ?? localEngineThreads(Platform.numberOfProcessors);
+
+  /// Which model family this engine runs.
+  final GgmlFamily family;
 
   final bool Function(EngineRoute) _testedHere;
   final int _threads;
 
+  bool get _isParakeet => family == GgmlFamily.parakeet;
+
   @override
-  String get adapterId => whisperCppAdapterId;
+  String get adapterId =>
+      _isParakeet ? parakeetCppAdapterId : whisperCppAdapterId;
 
   _Worker? _worker;
   WhisperRuntimeInfo? _info;
@@ -123,6 +154,7 @@ class WhisperCppEngine implements LocalAsrEngine {
     for (final manifest in manifests) {
       if (manifest.adapterId != adapterId) continue;
       final model = _modelFile(manifest);
+      final built = info.loaded && (!_isParakeet || info.hasParakeet);
       final base = EngineRoute(
         adapterId: adapterId,
         modelId: manifest.modelId,
@@ -130,20 +162,22 @@ class WhisperCppEngine implements LocalAsrEngine {
         device: ComputeDevice.cpu,
         backend: 'cpu',
         evidence: cpuEvidence,
-        available: info.loaded && model != null,
-        unavailableReason: !info.loaded
-            ? 'whisper.cpp is not built for this device.'
+        available: built && model != null,
+        unavailableReason: !built
+            ? '${_isParakeet ? 'Parakeet' : 'whisper.cpp'} is not built for '
+                  'this device.'
             : model == null
             ? 'The package has no GGML model file.'
             : null,
         segmentTimestamps: Capability.supported,
         wordTimestamps: Capability.unknown,
+        maxWindowSeconds: _isParakeet ? parakeetMaxWindowSeconds : null,
         memoryBytes: manifest.minimumRamBytes,
         memorySource: manifest.ramEstimateSource,
         smokeKey: _key(info, manifest, model, gpu: false),
       );
       routes.add(_withTested(base));
-      if (info.loaded && info.hasGpu && hasMetalBackend) {
+      if (built && info.hasGpu && hasMetalBackend) {
         routes.add(
           _withTested(
             EngineRoute(
@@ -152,10 +186,16 @@ class WhisperCppEngine implements LocalAsrEngine {
               artifactId: manifest.artifactId,
               device: ComputeDevice.gpu,
               backend: 'metal',
-              evidence: EvidenceLevel.community,
+              // Whisper on Metal is upstream's own documented route; its
+              // Parakeet runtime is three months old and shows no Metal
+              // evidence yet.
+              evidence: _isParakeet
+                  ? EvidenceLevel.experimental
+                  : EvidenceLevel.community,
               available: model != null,
               segmentTimestamps: Capability.supported,
               wordTimestamps: Capability.unknown,
+              maxWindowSeconds: _isParakeet ? parakeetMaxWindowSeconds : null,
               memoryBytes: manifest.minimumRamBytes,
               memorySource: manifest.ramEstimateSource,
               smokeKey: _key(info, manifest, model, gpu: true),
@@ -188,16 +228,18 @@ class WhisperCppEngine implements LocalAsrEngine {
           wordTimestamps: route.wordTimestamps,
           memoryBytes: route.memoryBytes,
           memorySource: route.memorySource,
+          maxWindowSeconds: route.maxWindowSeconds,
         )
       : route;
 
   @override
   Future<PreparedSession> prepare(PrepareRequest request) async {
     final info = await runtime();
-    if (!info.loaded) {
-      throw const LocalAsrException(
+    if (!info.loaded || (_isParakeet && !info.hasParakeet)) {
+      throw LocalAsrException(
         LocalAsrErrorCode.backendNotBuilt,
-        'whisper.cpp is not built for this device.',
+        '${_isParakeet ? 'Parakeet' : 'whisper.cpp'} is not built for this '
+        'device.',
       );
     }
     final model = _modelFile(request.manifest);
@@ -233,7 +275,7 @@ class WhisperCppEngine implements LocalAsrEngine {
       '${path.substring(0, path.length - 4)}-encoder.mlmodelc',
     );
     final watch = Stopwatch()..start();
-    final id = await _worker!.call(_Load(path, useGpu));
+    final id = await _worker!.call(_Load(path, useGpu, _isParakeet));
     watch.stop();
     if (id is! int) {
       throw LocalAsrException(
@@ -241,10 +283,10 @@ class WhisperCppEngine implements LocalAsrEngine {
         'The model did not load: $id',
       );
     }
-    final sessionId = 'whisper-$id';
+    final sessionId = '${family.name}-$id';
     final placement = !useGpu
         ? PlacementKind.cpu
-        : encoder.existsSync()
+        : !_isParakeet && encoder.existsSync()
         ? PlacementKind.mixed
         : PlacementKind.gpu;
     _sessions[sessionId] = _Session(id, placement);
@@ -388,7 +430,9 @@ class WhisperCppEngine implements LocalAsrEngine {
     ArtifactFile? model, {
     required bool gpu,
   }) => SmokeTestKey(
-    adapterVersion: 'whisper.cpp ${info.version} $_bindingsVersion',
+    adapterVersion:
+        '${_isParakeet ? 'parakeet ' : ''}whisper.cpp ${info.version} '
+        '$_bindingsVersion',
     modelHash: model?.sha256 ?? '',
     osVersion: Platform.operatingSystemVersion,
     driverVersion: gpu ? info.gpuName : '',
@@ -441,9 +485,10 @@ class _Info extends _Request {
 }
 
 class _Load extends _Request {
-  const _Load(this.path, this.useGpu);
+  const _Load(this.path, this.useGpu, this.parakeet);
   final String path;
   final bool useGpu;
+  final bool parakeet;
 }
 
 class _Transcribe extends _Request {
@@ -550,7 +595,7 @@ void _workerMain((SendPort, SendPort) ports) {
   final (handshake, replies) = ports;
   final requests = ReceivePort();
   handshake.send(requests.sendPort);
-  final models = <int, WhisperModel>{};
+  final models = <int, SpeechModel>{};
   var next = 0;
 
   requests.listen((message) async {
@@ -559,9 +604,11 @@ void _workerMain((SendPort, SendPort) ports) {
     try {
       answer = switch (request) {
         _Info() => _info(),
-        _Load(:final path, :final useGpu) => () {
+        _Load(:final path, :final useGpu, :final parakeet) => () {
           final key = next++;
-          models[key] = WhisperModel.load(path, useGpu: useGpu);
+          models[key] = parakeet
+              ? ParakeetModel.load(path, useGpu: useGpu)
+              : WhisperModel.load(path, useGpu: useGpu);
           return key;
         }(),
         _Transcribe() => await _run(models[request.session], request),
@@ -594,6 +641,7 @@ WhisperRuntimeInfo _info() {
     version: WhisperLibrary.version(),
     systemInfo: WhisperLibrary.systemInfo(),
     devices: WhisperLibrary.devices(),
+    hasParakeet: WhisperLibrary.hasParakeet(),
   );
 }
 
@@ -603,7 +651,7 @@ WhisperRuntimeInfo _info() {
 /// Side effects: Reads the window; runs the model.
 /// Notes: Internal helper used within this file only.
 Future<List<WhisperSegment>> _run(
-  WhisperModel? model,
+  SpeechModel? model,
   _Transcribe request,
 ) async {
   if (model == null) throw const WhisperException('No such session.');

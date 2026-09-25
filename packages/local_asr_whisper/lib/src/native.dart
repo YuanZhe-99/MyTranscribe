@@ -14,6 +14,7 @@ import 'dart:io';
 import 'package:ffi/ffi.dart';
 
 import 'ggml_bindings.g.dart';
+import 'parakeet_bindings.g.dart';
 import 'whisper_bindings.g.dart';
 
 /// Purpose: Find the directory the whisper library was loaded from.
@@ -37,29 +38,66 @@ String? libraryDirectory() {
 /// libraries beside it (`ggml` and `ggml-base`), under the names each
 /// platform's set uses. Opening a library that is already loaded returns the
 /// same one, so nothing is loaded twice.
-GgmlBindings ggml() {
+GgmlBindings ggml() => GgmlBindings.fromLookup(
+  _lookupBeside(
+    windows: ['ggml.dll', 'ggml-base.dll'],
+    android: ['libggml.so', 'libggml-base.so'],
+    linux: ['libggml.so.0', 'libggml-base.so.0'],
+  ),
+);
+
+/// Purpose: The Parakeet functions, from the library that exports them.
+/// Inputs: None.
+/// Returns: The bindings.
+/// Side effects: Opens the parakeet library beside whisper's.
+/// Notes: whisper.cpp's own Parakeet runtime (decision D22 of the
+/// local-models plan). On Apple it is inside whisper's binary; elsewhere it is
+/// its own library beside whisper's. Throws [StateError] when the binary set
+/// has none.
+ParakeetBindings parakeet() => ParakeetBindings.fromLookup(
+  _lookupBeside(
+    windows: ['parakeet.dll'],
+    android: ['libparakeet.so'],
+    linux: ['libparakeet.so.1'],
+  ),
+);
+
+/// Purpose: A symbol lookup over libraries beside the whisper library.
+/// Inputs: The file names per platform.
+/// Returns: A lookup that tries each library in turn.
+/// Side effects: Opens the libraries.
+/// Notes: Internal helper used within this file only. On Apple every symbol is
+/// in whisper's own binary. Opening a library that is already loaded returns
+/// the same one, so nothing is loaded twice.
+Pointer<T> Function<T extends NativeType>(String) _lookupBeside({
+  required List<String> windows,
+  required List<String> android,
+  required List<String> linux,
+}) {
   final path = _libraryPath();
   if (path == null) throw StateError('The whisper library is not loaded.');
   final dir = File(path).parent.path;
   final names = Platform.isMacOS || Platform.isIOS
       ? [File(path).uri.pathSegments.last]
       : Platform.isWindows
-      ? ['ggml.dll', 'ggml-base.dll']
+      ? windows
       : Platform.isAndroid
-      ? ['libggml.so', 'libggml-base.so']
-      : ['libggml.so.0', 'libggml-base.so.0'];
+      ? android
+      : linux;
   final libraries = [
     for (final name in names)
       if (File('$dir${Platform.pathSeparator}$name').existsSync())
         DynamicLibrary.open('$dir${Platform.pathSeparator}$name'),
   ];
-  if (libraries.isEmpty) throw StateError('No ggml library beside $path.');
-  return GgmlBindings.fromLookup(<T extends NativeType>(String symbol) {
+  if (libraries.isEmpty) {
+    throw StateError('None of ${names.join(', ')} is beside $path.');
+  }
+  return <T extends NativeType>(String symbol) {
     for (final library in libraries) {
       if (library.providesSymbol(symbol)) return library.lookup<T>(symbol);
     }
-    throw ArgumentError('No ggml library exports $symbol.');
-  });
+    throw ArgumentError('No library beside $path exports $symbol.');
+  };
 }
 
 /// Purpose: Report how much memory this process could still use.

@@ -12,42 +12,46 @@
       "entry": "whisper.dll",
       "files": [
         { "from": "Release/whisper.dll" },
+        { "from": "Release/parakeet.dll" },
         { "from": "Release/ggml.dll" },
         { "from": "Release/ggml-base.dll" },
         { "from": "Release/ggml-cpu-*.dll" }
       ]
     },
     "windows_arm64": {
-      "url": "https://github.com/YuanZhe-99/MyTranscribe/releases/download/whisper-bin-v1.9.4-1/whisper-win-arm64.zip",
-      "sha256": "c4be80ab4b1e947f10fce90bf012469fdf730eaf76bb096f49361b1263102fdd",
-      "bytes": 921591,
+      "url": "https://github.com/YuanZhe-99/MyTranscribe/releases/download/whisper-bin-v1.9.4-2/whisper-win-arm64.zip",
+      "sha256": "2f69369c45fed8717a19c47838abb3b78832ef4019b9cc5762e912c24a35cdf2",
+      "bytes": 994863,
       "entry": "whisper.dll",
       "files": [
         { "from": "whisper.dll" },
+        { "from": "parakeet.dll" },
         { "from": "ggml.dll" },
         { "from": "ggml-base.dll" },
         { "from": "ggml-cpu.dll" }
       ]
     },
     "android_arm64": {
-      "url": "https://github.com/YuanZhe-99/MyTranscribe/releases/download/whisper-bin-v1.9.4-1/whisper-android-arm64-v8a.zip",
-      "sha256": "ba35d475b483d85c6ed5e6ebec8817089a06ecac86cb62737988f1c70b5cb5cc",
-      "bytes": 3564310,
+      "url": "https://github.com/YuanZhe-99/MyTranscribe/releases/download/whisper-bin-v1.9.4-2/whisper-android-arm64-v8a.zip",
+      "sha256": "9cce57835c2d253812511afea341821cfbfb3f322fc4be83eb192f8da14a0968",
+      "bytes": 3776329,
       "entry": "libwhisper.so",
       "files": [
         { "from": "libwhisper.so" },
+        { "from": "libparakeet.so" },
         { "from": "libggml.so" },
         { "from": "libggml-base.so" },
         { "from": "libggml-cpu-*.so" }
       ]
     },
     "android_x64": {
-      "url": "https://github.com/YuanZhe-99/MyTranscribe/releases/download/whisper-bin-v1.9.4-1/whisper-android-x86_64.zip",
-      "sha256": "c0a2ab85f9a5ce448cd90276fd313986cc648723c9e6efeaa560a611d9db3203",
-      "bytes": 7687327,
+      "url": "https://github.com/YuanZhe-99/MyTranscribe/releases/download/whisper-bin-v1.9.4-2/whisper-android-x86_64.zip",
+      "sha256": "621d60274a10f3340e0611fd5adf225f2391920c6e05fb5f3b148dcf705bd289",
+      "bytes": 7912395,
       "entry": "libwhisper.so",
       "files": [
         { "from": "libwhisper.so" },
+        { "from": "libparakeet.so" },
         { "from": "libggml.so" },
         { "from": "libggml-base.so" },
         { "from": "libggml-cpu-*.so" }
@@ -60,6 +64,7 @@
       "entry": "libwhisper.so.1",
       "files": [
         { "from": "whisper-bin-ubuntu-x64/libwhisper.so.1.9.4", "as": "libwhisper.so.1" },
+        { "from": "whisper-bin-ubuntu-x64/libparakeet.so.1.9.4", "as": "libparakeet.so.1" },
         { "from": "whisper-bin-ubuntu-x64/libggml.so.0.23.0", "as": "libggml.so.0" },
         { "from": "whisper-bin-ubuntu-x64/libggml-base.so.0.23.0", "as": "libggml-base.so.0" },
         { "from": "whisper-bin-ubuntu-x64/libggml-cpu-*.so" }

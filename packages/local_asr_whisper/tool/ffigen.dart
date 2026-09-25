@@ -2,8 +2,8 @@
 /// Inputs: Optionally the path to `libclang` as the first argument; otherwise
 /// Visual Studio's LLVM component on Windows, then ffigen's default places.
 /// Returns: None.
-/// Side effects: Rewrites `lib/src/whisper_bindings.g.dart` and
-/// `lib/src/ggml_bindings.g.dart`.
+/// Side effects: Rewrites `lib/src/whisper_bindings.g.dart`,
+/// `lib/src/ggml_bindings.g.dart` and `lib/src/parakeet_bindings.g.dart`.
 /// Notes: Run after the headers in `third_party/whisper.cpp/include/` change,
 /// which happens only when `native/binaries.json` moves to a new upstream
 /// version — the bindings must describe exactly the version the binaries were
@@ -33,6 +33,22 @@ const _whisperFunctions = {
   'whisper_full_get_segment_text',
   'whisper_full_lang_id',
   'whisper_lang_str',
+};
+
+/// The parakeet entry points: whisper.cpp's own Parakeet TDT runtime, in its
+/// own library beside whisper's (inside whisper's binary on Apple).
+const _parakeetFunctions = {
+  'parakeet_version',
+  'parakeet_print_system_info',
+  'parakeet_context_default_params',
+  'parakeet_init_from_file_with_params',
+  'parakeet_free',
+  'parakeet_full_default_params',
+  'parakeet_full',
+  'parakeet_full_n_segments',
+  'parakeet_full_n_tokens',
+  'parakeet_full_get_token_text',
+  'parakeet_full_get_token_data',
 };
 
 /// The ggml entry points: backend loading, the device list, logging. They
@@ -96,6 +112,23 @@ Future<void> main(List<String> args) async {
     ),
     visitors: [
       Visitor(func: (f) => f.isIncluded = _ggmlFunctions.contains(f.name)),
+    ],
+  ).generate(libclangDylib: libclang == null ? null : Uri.file(libclang));
+
+  await FfiGenerator(
+    input: input('parakeet.h'),
+    output: Output(
+      dart: DartOutput(path: root.resolve('lib/src/parakeet_bindings.g.dart')),
+      preamble: preamble,
+      style: const DynamicLibraryBindings(
+        wrapperName: 'ParakeetBindings',
+        wrapperDocComment:
+            'whisper.cpp\x27s Parakeet functions, looked up in whichever loaded '
+            'library exports them.',
+      ),
+    ),
+    visitors: [
+      Visitor(func: (f) => f.isIncluded = _parakeetFunctions.contains(f.name)),
     ],
   ).generate(libclangDylib: libclang == null ? null : Uri.file(libclang));
 }
