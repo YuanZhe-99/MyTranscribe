@@ -26,7 +26,7 @@ on:
       release_tag:
         description: Release to publish the archives to
         required: true
-        default: whisper-bin-v1.9.4-1
+        default: whisper-bin-v1.9.4-2
 
 permissions:
   contents: write
@@ -82,7 +82,7 @@ jobs:
         run: |
           out=whisper-android-${{ matrix.abi }}
           mkdir "$out"
-          cp build/bin/libwhisper.so build/bin/libggml.so build/bin/libggml-base.so build/bin/libggml-cpu-*.so "$out/"
+          cp build/bin/libwhisper.so build/bin/libparakeet.so build/bin/libggml.so build/bin/libggml-base.so build/bin/libggml-cpu-*.so "$out/"
           "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip" --strip-unneeded "$out"/*.so
           cp whisper/LICENSE "$out/LICENSE"
           {
@@ -155,7 +155,7 @@ jobs:
         run: |
           $out = 'whisper-win-arm64'
           New-Item -ItemType Directory $out | Out-Null
-          Get-ChildItem build\bin -Filter *.dll | Where-Object { $_.Name -match '^(whisper|ggml.*)\.dll$' } | Copy-Item -Destination $out
+          Get-ChildItem build\bin -Filter *.dll | Where-Object { $_.Name -match '^(whisper|parakeet|ggml.*)\.dll$' } | Copy-Item -Destination $out
           Copy-Item whisper\LICENSE "$out\LICENSE"
           @(
             "whisper.cpp ${{ inputs.upstream_ref }} ($(git -C whisper rev-parse HEAD))",

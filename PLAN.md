@@ -337,7 +337,7 @@ a new dated entry saying why, and does not silently do otherwise.
 | D8 | **Evidence grades are in the code, not only in the docs.** An `EvidenceLevel` enum (`official`, `community`, `experimental`, `none`) on every engine×model×device route, mirroring the report's A/B/E/U — `none` rather than `unverified`, which is the product's word for a route this project has not tested (D20) — and a `PlacementKind` (`cpu`, `gpu`, `npu`, `mixed`, `unknown`) recorded on every finished window from what the runtime actually reported. | "NPU" in a menu is a promise. `unknown` is what to say when the runtime gives no placement evidence; a fabricated percentage is a lie the diagnostics page would repeat forever. |
 | D9 | *Superseded by D21 on 2026-09-24; kept for the record.* **whisper.cpp is compiled from a pinned tag inside a build hook, in a package of our own (`packages/local_asr_whisper`).** Not a pub package: the two that exist ship x86_64-only Windows binaries (`whisper_ggml` 2.6.0, AVX2 prebuilt) or no desktop at all (`whisper_cpp_flutter_plus` 0.4.1, Android and iOS only) — checked 2026-09-24 — and neither would build on the ARM64 development machine. Build hooks are the recommended FFI route since Flutter 3.38, need no per-OS build files, and the hook may run CMake with the backend flags per target. On Windows, x64 and ARM64 alike, the hook compiles with **clang/LLVM**: it is what upstream builds its own Windows ARM64 binaries with (`whisper-bin-win-cpu-arm64.zip` and `whisper-bin-win-opencl-adreno-arm64.zip` since b5130, 2026-09-11), MSVC's `cl.exe` lacks the FP16 vector intrinsics, and the OpenCL backend does not support it at all. | The FFmpeg precedent: a plugin that cannot build on this machine is not a plugin this project can use. Pinning a tag (v1.9.4, released 2026-09-11, at the time of writing) is what makes a bug reproducible. |
 | D10 | **GPU backends are separate dynamic libraries loaded at runtime (`GGML_BACKEND_DL`), never linked into the base library.** Vulkan on Windows x64, OpenCL on Windows ARM64 and Android, Metal on Apple; the CPU backend is always present. A backend whose vendor SDK is absent at build time is simply not produced, and the app reports "not built" rather than failing to start. Under D21, "built" means "in the pinned binary set for that target". | A missing `vulkan-1.dll` or a driver without OpenCL must not take the whole app down. The ggml backend registry is designed for exactly this, and it is how one binary can say honestly which routes it has. |
-| D11 | **sherpa-onnx is the Parakeet and Qwen baseline on all four platforms**, from the official `sherpa_onnx` pub package at the first release whose Windows sub-package carries the ARM64 DLLs (upstream merged them on 2026-09-20, after the 1.13.8 release of 2026-09-10), otherwise vendored and trimmed exactly as FFmpeg was, with the ARM64 archive fetched by hash in a build hook. Pinned at or above 1.13.8 for the Qwen fixes. | It already publishes both models with Android, iOS, Windows and macOS support and has a Dart API; establishing the CPU baseline first is what §12 of the report and this app's own history (M1: verify on real hardware before optimising) both say. |
+| D11 | *For Parakeet and for how the library is delivered, superseded by D22 (2026-09-25).* **sherpa-onnx is the Parakeet and Qwen baseline on all four platforms**, from the official `sherpa_onnx` pub package at the first release whose Windows sub-package carries the ARM64 DLLs (upstream merged them on 2026-09-20, after the 1.13.8 release of 2026-09-10), otherwise vendored and trimmed exactly as FFmpeg was, with the ARM64 archive fetched by hash in a build hook. Pinned at or above 1.13.8 for the Qwen fixes. | It already publishes both models with Android, iOS, Windows and macOS support and has a Dart API; establishing the CPU baseline first is what §12 of the report and this app's own history (M1: verify on real hardware before optimising) both say. |
 | D12 | **The Apple native adapter uses FluidAudio for Parakeet and Qwen on the Neural Engine, through a typed Pigeon channel; WhisperKit is optional and later.** This raises the deployment targets to **iOS 17 and macOS 14**, recorded in `platform-notes.md`. | FluidAudio's `Package.swift` declares `.macOS(.v14), .iOS(.v17)` (checked 2026-09-24, v0.17.1 released 2026-09-23); a Swift package cannot be weak-linked below its platform floor, so the choice is raise the targets or not ship the adapter. whisper.cpp's own Core ML encoder needs no SDK and stays available on the current targets, which is why Whisper comes first (L1) and the Swift adapter later (L4). **The user approved the bump on 2026-09-24.** It is still the one decision here that removes devices, so it lands in the first milestone that needs it — L4, or L1 if the pinned whisper.cpp's Metal backend or Core ML encoder turns out to need a newer floor than iOS 14 / macOS 10.15 — and that release's notes say which devices it drops. |
 | D13 | **Qualcomm is two targets with two runtimes, never one.** Windows on Snapdragon (X Elite / X2 Elite / 8cx Gen 3 — the last is this project's own machine, corrected 2026-09-25) and Android on Snapdragon (8 Gen 3 / 8 Elite / 8 Elite Gen 5) get separate adapters, separate model assets and separate verification records. The GPU route on both is the ggml OpenCL backend, which upstream verifies on exactly these chips (Adreno 750/830/840, X1-85, X2-90) on both operating systems (checked 2026-09-24); **Vulkan is not a Qualcomm route** — it produced gibberish and ran slower than the CPU on Adreno X1, and whisper.cpp crashes inside the Adreno Vulkan driver on the 830. The NPU route is ONNX Runtime's QNN execution provider with Qualcomm AI Hub's precompiled **Whisper-Large-V3-Turbo** assets, per SoC — and **the ggml Hexagon backend is not a shipping route on Windows**, because upstream's own guide requires `bcdedit /set TESTSIGNING ON` for its NPU libraries. | A Windows ARM64 build is not an Android build, an X Elite context binary is not an 8 Elite one, and a route that needs test-signing is a developer tool, not a feature. |
 | D14 | **Google Tensor is CPU first, GPU experimental, NPU not offered.** The Pixel 10 verification is of the CPU path with Arm dot-product and i8mm kernels and, separately, of whether a Vulkan build of whisper.cpp runs correctly at all on its PowerVR GPU. The Tensor NPU is reachable only through Google's Tensor SDK beta — sign-up gated, ahead-of-time compiled, delivered as a Play AI Pack, G5 and G6 only — and only Parakeet has a published artifact for it; **the user decided on 2026-09-24 not to apply for it**, so it is not offered and not a milestone (§2.4). | The user's phone is the one Android device this project can verify on, and a plan that only verified Snapdragon would verify nothing. |
@@ -348,6 +348,7 @@ a new dated entry saying why, and does not silently do otherwise.
 | D19 | *Amended by the user on 2026-09-24: 0.3.0 ships when L1 is done, and each later release takes the next patch number — 0.3.1, 0.3.2, … — tagged `v0.3.x`; the rest of this row is the original default.* **The first release of this plan is 0.3.0** (`0.3.0+4` — the version the user confirmed on 2026-09-24), after L0–L2: local transcription on the CPU on all four platforms, with the honest capability model. The later milestones ship in later releases — 0.4.0 onward by default, one milestone per release or several together — each version confirmed by the user when it is ready, as `AGENTS.md` requires. No release waits for a verification this project cannot perform (D20). | A milestone that ships is a milestone that gets used, and the first real recording through a local model will find things no test does — that is what M8 and M9 taught. |
 | D20 | **A route this project cannot test on real hardware ships as unverified support; it is not held back.** *Verified* means this project ran §7's acceptance list on hardware of that class and recorded it in the support matrix, and that stays the gate for the classes its own devices cover: Windows ARM64 on the Snapdragon X machine, Tensor G5 on the Pixel 10, Apple Silicon Macs on the Mac mini, and an iPhone if one becomes available. Every other route is **unverified**: built and linked in CI, covered by the host and fake-engine tests, exercised wherever anything here can run it (the x64 build under emulation on the ARM64 machine, the iOS Simulator), and shipped with five safeguards. (1) The product says it has not been tested on this kind of device. (2) Auto picks an accelerator route only when this project tested it on this kind of device, or when its evidence is **A** or **B**, it passed its smoke test here and ran faster than the CPU in it; an untested **E** or **U** route runs only when the user chooses it, and the CPU route is Auto's floor everywhere, tested or not. (3) Every route, verified or not, runs its smoke test on this device before its first job and again when the adapter, model, OS or driver changes; a failure disables it here, with the reason. (4) An in-flight marker is written before each native call and cleared after it; a marker found at the next start means the process died inside that route, which is recorded as `crashed` here and never picked automatically again, and the interrupted job resumes under the fallback policy, whose default is the same model on the CPU. (5) The diagnostics page copies a report — device, OS, driver, route, smoke-test result, speed; no file names, no text — that the user may send by hand; a report from real hardware goes into the matrix as a community result, which can raise a route's evidence grade but never makes it tested here. | The user decided this on 2026-09-24: most devices this app targets — Snapdragon and MediaTek phones, x64 PCs with Intel, AMD or NVIDIA graphics, Intel and AMD NPUs, iPhones — cannot be tested here, so unverified support is the only support they can have. The safeguards make an untested route cost its user a failed check or one lost window, never a crash loop or a silently wrong transcript. |
 | D21 | **Native code is embedded as prebuilt binaries, never compiled while the app builds; the Dart side binds the upstream library directly.** For each target, in this order: (1) **upstream's own release binaries** of the pinned version, when they cover the target and every file in them may be redistributed; (2) otherwise **a set this project builds once per pinned upstream version** in a manual workflow (`native-prebuild.yml`) and publishes as assets of a GitHub Release in this repository (tag `whisper-bin-<upstream version>-<n>`, which the `v*` release trigger ignores); (3) compiling during the app build is not an option. Every archive is pinned by URL and SHA-256 in one manifest (`packages/local_asr_whisper/native/binaries.json`); the build hook downloads, verifies, unpacks into its shared cache and declares the libraries as bundled code assets, and nothing else. **No C shim**: `whisper.h` and the ggml headers of the pinned version are vendored, `ffigen` generates the bindings, and the parameter structs travel by value through Dart FFI. The layout risk the shim was meant to remove is guarded twice: the bindings are regenerated from the vendored headers of exactly the pinned version, and at load the engine reads `whisper_full_default_params` back through the generated struct and compares it with the documented defaults — a mismatch reports the runtime as unusable rather than calling into it. Cancel and progress stay in native memory shared between isolates (D16): the abort and progress callbacks are `NativeCallable.isolateLocal` in the engine isolate, which is legal because whisper.cpp calls both on the thread that called `whisper_full` (ggml's CPU backend checks abort only on thread 0, the caller — `ggml-cpu.c`, v1.9.4). Available memory is read from the OS by Dart FFI. **Where the binaries come from, as checked on 2026-09-24** (v1.9.4 is commit `927cfce3`, whose release assets are published under the build tag `b5130`): Windows x64 — upstream `whisper-bin-x64.zip` (CPU variants chosen at run time; needs the VC++ runtime and `VCOMP140.DLL`, both redistributable); macOS and iOS — upstream `whisper-b5130-xcframework.zip` (dynamic frameworks with Metal and the Core ML encoder, iOS 16.4 / macOS 13.3 floors); Linux x64, the CI test host only — upstream `whisper-bin-ubuntu-x64.tar.gz`; **Windows ARM64 — our own set**, because upstream's `whisper-bin-win-cpu-arm64.zip` needs `libomp140.aarch64.dll` from Visual Studio's `debug_nonredist` folder, which may not be shipped, and targets ARMv8.7, which older Snapdragon laptops cannot run (ours: ARMv8.2 with dot-product and FP16, no OpenMP); **Android arm64-v8a and x86_64 — our own set**, because upstream publishes none. | The user decided this on 2026-09-24, after the Windows x64 job spent over an hour compiling ggml's CPU variants and three other jobs failed on compiler, linker and ccache differences that no app build should ever meet. A build that only copies verified files takes the same time on every machine, cannot fail on a toolchain, and ships the exact bytes upstream tested. Building our own set once per upstream version keeps the one expensive, fragile step out of every app build and every contributor's machine. |
+| D22 | **Parakeet runs on whisper.cpp's own `parakeet` library; Qwen3-ASR runs on sherpa-onnx's C API.** Supersedes D11's "sherpa-onnx for both" (2026-09-25). Parakeet: whisper.cpp v1.9.4 ships `parakeet.h` and a `parakeet` library beside `whisper` in every binary set this app already bundles (inside the Apple framework, `parakeet.dll` in the Windows zips, `libparakeet.so` on Linux), with the TDT decoding fix #4017 first released in v1.9.4, greedy decoding, abort and progress callbacks and token-level timestamps; the model is `ggml-org/parakeet-GGUF` (q8_0, 669 MB). One more library in the same sets and one more set of generated bindings; no second runtime, and later GPU backends serve both. Qwen3-ASR: whisper.cpp has no port, and llama.cpp's fails past about two minutes of audio, so it stays on sherpa-onnx — but through its **C API from the prebuilt shared libraries in sherpa-onnx's own GitHub releases**, pinned by hash in a second manifest exactly as D21 does for whisper.cpp, because the pub package ships no Windows ARM64 DLLs as of 1.13.8 (2026-09-11) and bundles its own copies per platform; iOS, for which sherpa-onnx publishes no dynamic library, gets one more target in `native-prebuild.yml`. | The research of 2026-09-25: a second runtime for a model the first one already runs is weight without benefit, and the pub package would have left the development machine unable to run Qwen at all. |
 
 ## 4. Architecture
 
@@ -725,20 +726,24 @@ the hook, the LLVM and Ninja steps in CI.
       their smoke test passing wherever anything can run it, the tests above are green, and both
       language trees say how
 
-### L2 — Parakeet and Qwen on the CPU (sherpa-onnx), and release 0.3.1
+### L2 — Parakeet and Qwen on the CPU, and release 0.3.1
 
-Under D21, sherpa-onnx comes as its published prebuilt libraries (the pub package's, or the
-release archives by hash); nothing of it is compiled in the app build.
+Per D22 (2026-09-25): Parakeet on whisper.cpp's `parakeet` library, Qwen3-ASR on sherpa-onnx's C
+API; both as prebuilt libraries pinned by hash (D21). Tested simply, per the user's decision of
+2026-09-25: the package tests and one short clip per model on this machine, and CI green.
 
-- [ ] `sherpa_onnx` from pub at the first version that carries the Windows ARM64 DLLs (PR #3957,
-      merged 2026-09-20, after 1.13.8); until then, a vendored trimmed copy with the ARM64 archive
-      fetched by hash in a build hook, documented exactly as the FFmpeg copy is (`VENDORED.md`,
-      `analysis_options.yaml` exclusion, the KGP rule from `platform-notes.md` checked for its
-      Android plugin)
-- [ ] `SherpaOnnxEngine` in its own isolate: Parakeet TDT 0.6B v3 int8 (token timestamps →
-      segments), Qwen3-ASR 0.6B int8 (no timestamps → `hasRealTimestamps: false`, segments by
-      the runtime's sentence splits; language from the job or auto; the job's keywords as
-      Qwen hotwords); sherpa-onnx ≥ 1.13.8 for the silence and feature-alignment fixes
+- [ ] ~~`sherpa_onnx` from pub …~~ superseded by D22. **Parakeet**: `native-prebuild.yml` also
+      packs `parakeet` for Windows ARM64 and Android (release `whisper-bin-v1.9.4-2`); the manifest
+      adds it for every target; `parakeet.h` vendored and bound; a `ParakeetCppEngine` (adapter
+      `parakeet_cpp`) on the same kind of isolate as whisper, segment times from the runtime and
+      `hasRealTimestamps: true`; the template's package becomes `ggml-org/parakeet-GGUF` q8_0,
+      pinned by revision and hash
+- [ ] **Qwen3-ASR**: `packages/local_asr_sherpa` — a manifest of sherpa-onnx v1.13.8's prebuilt
+      shared libraries (Windows x64 and ARM64, Android from the AAR, macOS, Linux x64) plus an
+      iOS framework built by `native-prebuild.yml`; `c-api.h` vendored and bound; a
+      `SherpaOnnxEngine` (adapter `sherpa_onnx`) in its own isolate for Qwen3-ASR 0.6B int8 (no
+      timestamps → `hasRealTimestamps: false`; language from the job or auto; the job's keywords
+      as hotwords)
 - [ ] The router's language rule proven with real audio: Chinese and Japanese never reach
       Parakeet; the new-job page says why a model is not offered for the chosen language rather
       than hiding it
@@ -747,15 +752,17 @@ release archives by hash); nothing of it is compiled in the app build.
       M9 meeting recording is not enough
 - [ ] `coreml` and `directml` providers are **not** switched on: they are strings the binary may
       not honour (report §4.1). If tried later, as a route with `unknown` placement
-- [ ] Verification as in L1 on the same devices and recordings; RTF and memory into the matrix
+- [ ] ~~Verification as in L1 on the same devices and recordings~~ — simple tests only (the
+      user's decision of 2026-09-25)
 - [ ] Docs, glossary, `version-history.md` entry for 0.3.1; `AGENTS.md` behaviour contract
       gains the model-download endpoint and the "audio never leaves the device with a local model"
-      promise; `PRIVACY_POLICY.md` and the privacy page gain the local-model paragraph
+      promise; ~~`PRIVACY_POLICY.md` and the privacy page gain the local-model paragraph~~ (done
+      in 0.3.0)
 - [ ] **Release 0.3.1** (D19 as amended): `0.3.1+5`, `msix_version` `0.3.1.0`, the three
       `installer.iss` fields, the `version-history.md` entry, the annotated tag `v0.3.1`
-- [ ] **Done when**: all three model families transcribe on the CPU on Windows ARM64, the Pixel
-      10 and the Mac, the language rule holds, iOS, Windows x64 and every other Android device
-      ship unverified per D20, and 0.3.1 is tagged
+- [ ] **Done when**: all three model families transcribe a short clip on the CPU on this machine,
+      the language rule holds, every other target ships unverified per D20 with CI green, and
+      0.3.1 is tagged
 
 ### L3 — GPU routes, each behind its own smoke test
 
@@ -764,6 +771,13 @@ that may be shipped — its `whisper-bin-win-opencl-adreno-arm64.zip` carries th
 non-redistributable OpenMP DLL as its CPU build, so it does not qualify as of 2026-09-24 — and
 otherwise one more target in `native-prebuild.yml`. The `-D…` flags below are what that workflow
 builds with, not steps of the app build.
+
+**What the development machine can test, found 2026-09-25**: nothing on its GPU. The 8cx Gen 3
+has no native OpenCL or Vulkan driver; its only OpenCL platform is Microsoft's OpenCLOn12, which
+lacks `cl_khr_fp16` and subgroups, so ggml drops the device (upstream's OpenCL zip, run on this
+machine), and Vulkan exists only as the Dozen layer over D3D12. Every L3 route therefore ships
+unverified (D20), tested simply: built, loaded where a device answers, gated by the smoke test on
+each user's device.
 
 A route is offered when its backend was built, its driver answers, and its smoke test on this
 device passed; Auto picks it only under D20's rule, so an **E** route is never on unless this
@@ -804,6 +818,12 @@ others as "not built", "no driver", "failed" or "crashed" with the reason.
 
 ### L4 — Apple native: the Neural Engine
 
+*Found 2026-09-25:* FluidAudio (v0.17.4, iOS 17 / macOS 14) **removed its Qwen3-ASR backend in
+v0.15.3**, so the Neural Engine route is Parakeet only; and it compiles C and C++ targets inside
+the Xcode build, so under D21 it is built once by `native-prebuild.yml` into a dynamic framework
+together with a small C-callable bridge, and bound from Dart like the other engines — no Swift
+compiled in the app build.
+
 Raises the deployment targets to iOS 17 / macOS 14, which the user approved on 2026-09-24 (D12);
 nothing here waits for another confirmation. If L1 already had to raise them, this milestone
 uses them as they are.
@@ -837,6 +857,12 @@ uses them as they are.
       placement recorded, the Qwen gate has a number, and the docs say what the target bump cost
 
 ### L5 — Qualcomm NPU: two adapters
+
+*Found 2026-09-25:* the development machine's NPU is Hexagon **v68**. ONNX Runtime QNN dropped
+the v68 libraries after 1.21.0 (2025-03-07), Qualcomm's own QNN package ships v73 and v81 only,
+Windows ML offers the QNN provider only on the X series, and AI Hub removed the 8cx Gen 3 target
+on 2025-12-08. The NPU route is **U** on this machine and cannot be verified here; the X-series
+route ships unverified, and only once the QNN libraries' redistribution terms are read.
 
 Whisper-Large-V3-Turbo only, because it is the only ASR model with a vendor package (§2.5). The
 record is the **turbo** record; large-v3 is not offered on this route.
@@ -1160,6 +1186,14 @@ Recorded when a choice is made that later work should not quietly reverse. Newes
 each date. This log outlives this file: the closing step in §10 moves it, verbatim, to
 `doc/en-us/decisions.md`.
 
+- **2026-09-25** — **What this machine can run, and L2's runtimes (D22).** Research the same day,
+  partly run on this machine: the CPU is 4× Cortex-X1C + 4× Cortex-A78C, ARMv8.2 with dot-product
+  and FP16, no i8mm, BF16 or SVE — our ARMv8.2 build was the right baseline; the GPU has no native
+  OpenCL or Vulkan driver (OpenCLOn12 lacks FP16, so ggml drops it); the NPU is Hexagon v68, which
+  current QNN packages and AI Hub no longer support. So L3 and L5 cannot be verified here. For L2,
+  whisper.cpp's own `parakeet` library runs Parakeet on the binaries already bundled, and Qwen3-ASR
+  goes through sherpa-onnx's prebuilt C-API libraries rather than the pub package, which has no
+  Windows ARM64 DLLs yet. FluidAudio has dropped Qwen3-ASR (L4).
 - **2026-09-25** — **No device sessions; simple tests; L2–L9 in order.** The user decided, after
   0.3.0: the Pixel 10, Mac and iPhone runs are skipped, so everything on them ships as unverified
   support (D20) — L1's device-verification box closes on that; the CPU routes are not measured
