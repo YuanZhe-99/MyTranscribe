@@ -317,6 +317,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get libraryApiKeySet => '已在本机设置';
 
   @override
+  String get libraryApiKeyUnreadable => '暂时无法读取已保存的密钥，因此没有做任何更改。请重试。';
+
+  @override
   String get libraryAuth => '认证方式';
 
   @override
@@ -1634,6 +1637,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get libraryApiKeySet => '已在本機設定';
+
+  @override
+  String get libraryApiKeyUnreadable => '暫時無法讀取已儲存的金鑰，因此沒有做任何變更。請重試。';
 
   @override
   String get libraryAuth => '驗證方式';

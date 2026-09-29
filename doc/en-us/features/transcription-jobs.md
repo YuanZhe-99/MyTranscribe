@@ -15,6 +15,12 @@ queued -> probing -> planning -> normalizing -> [ cutting -> uploading -> parsin
 Any stage can fail or be cancelled. A failed or cancelled job keeps the windows it finished, so
 resuming does not pay for them again.
 
+A job cancelled while it is still waiting in the queue is recorded as cancelled at once, so it does
+not read "queued" again after a restart, and a cancel that arrives in the moment between a job
+leaving the queue and its first stage is honoured too. A job that is already running is not
+rewritten as "queued" behind the runner's back. If the record of a job that has just failed or been
+cancelled cannot itself be written, the outcome is still shown and the jobs behind it still run.
+
 - **probing** reads the recording's duration and bit rate. Without a media toolkit this is skipped
   and only the file's size can inform the plan.
 - **planning** decides whether to split at all and, if so, into what. See
@@ -54,6 +60,10 @@ uploading it, so overlapping the two would buy little.
 
 The screen is kept awake for the duration of a job and released in every exit path, including
 failure and cancellation.
+
+Finishing never fails a job that has its transcript. If the Markdown and text files cannot be
+written beside the recording they go to the job's own exports folder, and if that fails as well the
+job is still done, with no output files listed.
 
 ## When something goes wrong
 

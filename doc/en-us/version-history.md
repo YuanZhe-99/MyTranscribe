@@ -3,6 +3,44 @@
 Newest first. Each entry says what changed and, where it matters, why — the reasoning is the part
 that is hard to recover later.
 
+## 0.3.6 — 2026-09-28
+
+A maintenance release: bugs and slow spots found in a review, no new features and no change to any
+file format or to what goes over the wire.
+
+- **A stuck queue can no longer happen.** If a job's record could not be written when it failed or
+  was cancelled, the error escaped and every job behind it waited for ever. The outcome is now
+  recorded on a best-effort basis and the queue carries on. A cancel made at the moment a job leaves
+  the queue is no longer lost, and a job cancelled while waiting is written down as cancelled instead
+  of reading "queued" after a restart. A job that has just started is no longer rewritten as
+  "queued" behind the runner's back.
+- **A finished job cannot fail on its output files.** If the Markdown and text files cannot be
+  written beside the recording they go to the job's exports folder, and if that fails too the job is
+  still done.
+- **Settings and keys are written one at a time.** Two settings changed at nearly the same moment
+  could erase one another in `storage_config.json`, and a key typed while a sync was running could
+  be overwritten by it. Both are now read-modify-write under a lock (never held across a network
+  call). If either file cannot be parsed, it is renamed to `<name>.unreadable-<UTC timestamp>` and
+  the app continues from an empty one, so nothing is destroyed and nothing is blocked; an I/O error
+  is not treated as bad content. When the keys file cannot be read, the key field says so instead of
+  saving over it. After a refused key upload, a failed re-download now fails the sync rather than
+  guessing.
+- **Downloads give up and can be cancelled.** The FFmpeg and model downloads stop after 30 seconds
+  without an answer or 60 seconds without data, and Cancel works while waiting for the first byte.
+  FFmpeg is unpacked to a temporary name and renamed, its archive is removed after a failure, and a
+  failed model reinstall puts the previous package back. Pressing download twice no longer starts
+  two downloads.
+- **The transcript no longer rebuilds on every playback tick.** Only the line that stopped and the
+  line that started playing are redrawn; following the audio still scrolls as before.
+- **Smaller fixes.** FFmpeg's output is read as UTF-8; a sync started while a transcript is being
+  projected keeps the change made meanwhile; the whisper progress poll no longer piles up closures;
+  the rename, add-host and edit-line dialogs no longer dispose their text fields while closing; a
+  slow probe of an earlier recording no longer describes a newer one; a startup error while
+  resuming jobs is no longer unhandled.
+- Tests: the JSON round-trip check in the job runner tests was dropped and its polling loops now
+  wait on the runner's own state; the model-capability checks became one table; new tests cover
+  each fix above.
+
 ## 0.3.5 — 2026-09-25
 
 Speaker labels on the device (L8 of the local-models plan).

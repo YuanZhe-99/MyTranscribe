@@ -119,7 +119,9 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
       final toolkit = await ref.read(mediaToolkitProvider.future);
       if ((await toolkit.status()).available) {
         final info = await toolkit.probe(path);
-        if (mounted) setState(() => _media = info);
+        // A second pick can land while this probe runs; the older probe must
+        // not describe the newer file.
+        if (mounted && _file?.path == path) setState(() => _media = info);
       }
     } on MediaException {
       // Left unknown on purpose; the plan preview says what it can.

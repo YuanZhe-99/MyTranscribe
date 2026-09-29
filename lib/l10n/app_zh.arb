@@ -161,6 +161,7 @@
   "libraryApiKeyNote": "保存在本机。只会发送给此来源；连接安全时才会同步到你的 WebDAV 服务器。",
   "libraryApiKeySave": "保存密钥",
   "libraryApiKeySet": "已在本机设置",
+  "libraryApiKeyUnreadable": "暂时无法读取已保存的密钥，因此没有做任何更改。请重试。",
   "libraryAuth": "认证方式",
   "libraryAuthBearer": "API 密钥",
   "libraryAuthHeader": "自定义请求头",

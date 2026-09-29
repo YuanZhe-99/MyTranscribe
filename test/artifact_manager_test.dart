@@ -116,6 +116,34 @@ ArtifactManifest _manifest(
   licenseId: 'MIT',
 );
 
+/// A client whose requests never get an answer, until it is closed.
+///
+/// Closing it fails the request the way a real client does when it is closed
+/// mid-request, which is what cancelling relies on.
+class _HangingClient extends http.BaseClient {
+  final _pending = <Completer<http.StreamedResponse>>[];
+
+  /// Whether [close] was called.
+  bool closed = false;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) {
+    final completer = Completer<http.StreamedResponse>();
+    _pending.add(completer);
+    return completer.future;
+  }
+
+  @override
+  void close() {
+    closed = true;
+    for (final completer in _pending) {
+      if (!completer.isCompleted) {
+        completer.completeError(http.ClientException('closed'));
+      }
+    }
+  }
+}
+
 void main() {
   late Directory root;
   late Directory models;
@@ -417,5 +445,94 @@ void main() {
       jsonDecode(jsonEncode(json)) as Map<String, dynamic>,
     );
     expect(back.toJson(), json);
+  });
+
+  group('a download that goes quiet', () {
+    ArtifactManager patient(_Server server, {http.Client Function()? client}) =>
+        ArtifactManager(
+          modelsDir: () async => models,
+          downloader: ArtifactDownloader(
+            clientFactory: client ?? server.client,
+            connectTimeout: const Duration(milliseconds: 150),
+            stallTimeout: const Duration(milliseconds: 150),
+          ),
+          freeSpace: (_) async => null,
+          platform: 'windows',
+          clock: () => DateTime.utc(2026, 9, 24),
+        );
+
+    test('a body that stops arriving fails as a network error, and keeps what '
+        'came', () async {
+      final server = _Server({url: model})..stallAfter = 3000;
+      await expectLater(
+        patient(server).install(_manifest([_file('model.bin', model, url)])),
+        throwsA(
+          isA<ArtifactException>().having(
+            (e) => e.failure,
+            'failure',
+            ArtifactFailure.network,
+          ),
+        ),
+      );
+      final partials = Directory(
+        p.join(models.path, '.downloads', 'pkg'),
+      ).listSync().whereType<File>().toList();
+      expect(partials.single.lengthSync(), 3000, reason: 'resumable');
+    });
+
+    test('a server that never answers fails as a network error', () async {
+      final client = _HangingClient();
+      await expectLater(
+        patient(
+          _Server({}),
+          client: () => client,
+        ).install(_manifest([_file('model.bin', model, url)])),
+        throwsA(
+          isA<ArtifactException>().having(
+            (e) => e.failure,
+            'failure',
+            ArtifactFailure.network,
+          ),
+        ),
+      );
+      expect(client.closed, isTrue);
+    });
+
+    test(
+      'cancelling while the server has not answered stops at once',
+      () async {
+        final client = _HangingClient();
+        final cancel = DownloadCancelToken();
+        final manager = ArtifactManager(
+          modelsDir: () async => models,
+          // A long timeout: only the cancel can end this in time.
+          downloader: ArtifactDownloader(
+            clientFactory: () => client,
+            connectTimeout: const Duration(seconds: 30),
+          ),
+          freeSpace: (_) async => null,
+          platform: 'windows',
+          clock: () => DateTime.utc(2026, 9, 24),
+        );
+        final install = manager.install(
+          _manifest([_file('model.bin', model, url)]),
+          cancel: cancel,
+        );
+        final failure = expectLater(
+          install,
+          throwsA(
+            isA<ArtifactException>().having(
+              (e) => e.failure,
+              'failure',
+              ArtifactFailure.cancelled,
+            ),
+          ),
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        cancel.cancel();
+        await failure.timeout(const Duration(seconds: 5));
+        expect(client.closed, isTrue);
+      },
+    );
   });
 }

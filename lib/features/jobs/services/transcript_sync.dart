@@ -34,6 +34,7 @@ library;
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:myapps_data/myapps_data.dart' show atomicWriteString;
 import 'package:path/path.dart' as p;
 
@@ -89,16 +90,38 @@ class TranscriptSyncService {
   /// A rebuild reads every job folder, and the daily backup check runs whether
   /// or not anything happened. This makes the common case — nothing changed —
   /// cost one file-exists check.
-  static bool _dirty = true;
+  ///
+  /// Two counters rather than a flag: [markDirty] bumps [_generation], and a
+  /// build records the generation it *started* at in [_projected]. A change
+  /// made while a build is running therefore leaves the counters apart, where
+  /// a flag cleared after the build would have swallowed it.
+  static int _generation = 1;
+  static int _projected = 0;
+
+  /// Called once a build has recorded where it started, before it reads the
+  /// job folders; tests only.
+  ///
+  /// It lets a test change a job at the one moment that matters — while the
+  /// projection is being built — which timing alone cannot reproduce reliably.
+  @visibleForTesting
+  static Future<void> Function()? debugAfterBuildStarts;
+
+  /// Purpose: Say whether the projection is stale.
+  /// Inputs: None.
+  /// Returns: True when a change has been marked since the last build started.
+  /// Side effects: None.
+  /// Notes: Exposed for tests only.
+  @visibleForTesting
+  static bool get isDirty => _projected != _generation;
 
   /// Purpose: Say that a transcription changed and the projection is stale.
   /// Inputs: None.
   /// Returns: None.
-  /// Side effects: Sets a flag.
+  /// Side effects: Advances the change counter.
   /// Notes: Called wherever a job record or a transcript is written by the
   /// user or the runner — never by the apply step, which would make the sync
   /// chase its own tail.
-  static void markDirty() => _dirty = true;
+  static void markDirty() => _generation++;
 
   /// Purpose: Build the projection from the job folders.
   /// Inputs: The [jobsDir] to read, and the [previous] projection if any.
@@ -182,8 +205,11 @@ class TranscriptSyncService {
         ? await retryingFileOperation(file.readAsString)
         : null;
 
-    if (!_dirty && before != null) return (before: before, after: before);
+    if (!isDirty && before != null) return (before: before, after: before);
 
+    // Captured before the build: a markDirty during it must survive.
+    final startedAt = _generation;
+    await debugAfterBuildStarts?.call();
     final previous = before == null ? null : _parse(before);
     final projection = await buildProjection(
       jobsDir: jobsDir,
@@ -194,7 +220,7 @@ class TranscriptSyncService {
     if (after != before) {
       await retryingFileOperation(() => atomicWriteString(file, after));
     }
-    _dirty = false;
+    _projected = startedAt;
     return (before: before, after: after);
   }
 

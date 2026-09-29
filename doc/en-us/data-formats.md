@@ -149,6 +149,14 @@ Read and written by the storage hub through typed accessors. **A default is stor
 key**, so a later build that changes a default changes it for everyone who never touched the
 setting. A value of the wrong type reads as unset, so a hand-edited file cannot crash the app.
 
+Every change is a read-modify-write under one lock inside the app, so two settings changed at nearly
+the same moment cannot erase one another. If the file exists but cannot be parsed (it is not JSON,
+or not a JSON object), the next write does not overwrite it: the file is renamed to
+`storage_config.json.unreadable-<UTC timestamp>` in the same folder and the write starts from an
+empty map, so `storagePath` and the trusted hosts stay recoverable by hand. Reading stays lenient
+and renames nothing. An I/O error — a file that is locked or cannot be read — is never taken for
+bad content: the write fails and the file is left as it was.
+
 | Key | Meaning |
 |---|---|
 | `storagePath` | custom app directory; absent means the platform default |

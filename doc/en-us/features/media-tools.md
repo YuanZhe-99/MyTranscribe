@@ -58,6 +58,13 @@ When nothing is found, Settings says so plainly and offers two things: download 
 or point at one you already have. The download fetches the right architecture, extracts only the two
 executables, verifies they run, and records what it downloaded.
 
+The download gives up when the host does not answer within 30 seconds or sends nothing for 60
+seconds, and Cancel is heard while it is still waiting for the first byte. Each executable is
+written under a temporary `.part` name and renamed into place, and the archive is deleted whether
+the download worked or not, so a failure never leaves a truncated tool for the app to find. What
+`ffmpeg` and `ffprobe` print (the probe's JSON, the version line) is read as UTF-8, so a file name
+or tag that is not ASCII survives on a system whose code page is not UTF-8.
+
 Until a toolkit is available the app is not broken — it can still transcribe a recording small
 enough to upload whole. A job that needs splitting fails with a message that names the missing tool
 and offers to set it up, rather than a generic error.

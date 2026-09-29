@@ -154,36 +154,87 @@ Future<void> showJobRenameDialog(
   JobRunner runner,
   TranscriptionJob job,
 ) async {
-  final l10n = AppLocalizations.of(context)!;
-  final controller = TextEditingController(text: job.title ?? '');
   final title = await showDialog<String>(
     context: context,
-    builder: (ctx) => AlertDialog(
+    builder: (ctx) => _RenameDialog(job: job),
+  );
+  if (title != null) await runner.rename(job.id, title);
+}
+
+/// The rename dialog; owns its text controller.
+///
+/// The controller lives in this widget's [State] so it is disposed with the
+/// dialog's own element. Disposing it right after `showDialog` returns (the
+/// old shape) does so while the closing animation is still building the field.
+class _RenameDialog extends StatefulWidget {
+  /// The job being renamed.
+  final TranscriptionJob job;
+
+  /// Purpose: Create the dialog.
+  /// Inputs: [job].
+  /// Returns: A new instance.
+  /// Side effects: None.
+  /// Notes: None.
+  const _RenameDialog({required this.job});
+
+  /// Purpose: Create the dialog's state.
+  /// Inputs: None.
+  /// Returns: The state.
+  /// Side effects: None.
+  /// Notes: None.
+  @override
+  State<_RenameDialog> createState() => _RenameDialogState();
+}
+
+/// State for [_RenameDialog].
+class _RenameDialogState extends State<_RenameDialog> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.job.title ?? '',
+  );
+
+  /// Purpose: Release the text controller.
+  /// Inputs: None.
+  /// Returns: None.
+  /// Side effects: Disposes the controller.
+  /// Notes: Runs only after the dialog's route has finished animating out.
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Purpose: Build the dialog.
+  /// Inputs: `context`.
+  /// Returns: The dialog.
+  /// Side effects: None here; the buttons pop the route.
+  /// Notes: None.
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return AlertDialog(
       title: Text(l10n.jobRenameTitle),
       content: TextField(
-        controller: controller,
+        controller: _controller,
         autofocus: true,
         decoration: InputDecoration(
-          hintText: job.sourceName,
+          hintText: widget.job.sourceName,
           helperText: l10n.jobRenameHint,
           helperMaxLines: 2,
         ),
-        onSubmitted: (value) => Navigator.of(ctx).pop(value),
+        onSubmitted: (value) => Navigator.of(context).pop(value),
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(ctx).pop(),
+          onPressed: () => Navigator.of(context).pop(),
           child: Text(l10n.cancel),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(ctx).pop(controller.text),
+          onPressed: () => Navigator.of(context).pop(_controller.text),
           child: Text(l10n.save),
         ),
       ],
-    ),
-  );
-  controller.dispose();
-  if (title != null) await runner.rename(job.id, title);
+    );
+  }
 }
 
 /// The button that renames a transcription.

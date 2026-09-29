@@ -8,6 +8,8 @@
 /// `doc/en-us/features/secure-secrets-sync.md`.
 library;
 
+import 'dart:io' show FileSystemException;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -247,7 +249,17 @@ class _ProviderEditorPageState extends ConsumerState<ProviderEditorPage> {
     );
     if (confirmed != true) return;
 
-    await SecretsStore.setKey(widget.providerId, null);
+    try {
+      await SecretsStore.setKey(widget.providerId, null);
+    } on FileSystemException {
+      // Deleting the source anyway would orphan a live credential in a file
+      // that cannot be read right now; stop and let the user try again.
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.libraryApiKeyUnreadable)));
+      return;
+    }
     await ref
         .read(settingsRepositoryProvider)
         .deleteProvider(widget.providerId);

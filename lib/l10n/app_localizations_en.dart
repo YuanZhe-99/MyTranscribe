@@ -324,6 +324,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryApiKeySet => 'Set on this device';
 
   @override
+  String get libraryApiKeyUnreadable =>
+      'The saved keys could not be read just now, so nothing was changed. Try again.';
+
+  @override
   String get libraryAuth => 'Authentication';
 
   @override

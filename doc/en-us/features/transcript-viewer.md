@@ -22,6 +22,12 @@ A player bar runs along the bottom: play and pause, skip, a scrubber, and a spee
 any segment seeks to it, and the segment under the playhead is highlighted as it plays. The audio is
 the normalized copy the job already made, so it is there without keeping the original.
 
+Playback moves a marker, not the page. The list is not rebuilt on every position update: when the
+line under the playhead changes, only the line that stopped and the line that started are redrawn,
+and following scrolls to the playing line once per change. The list itself stays a plain (non-lazy)
+list, because following scrolls to the playing line through a handle that only exists for a line
+that has been built.
+
 A recording small enough to have been sent whole never had a converted copy, and one whose copy the
 user has given back no longer has one; in both cases the original recording is played instead while
 it can still be found. The bar says there is nothing to play only when neither is on the device.

@@ -194,6 +194,34 @@ void main() {
       expect(keysFile.existsSync(), isTrue);
       expect((await SecretsStore.load()).keys, isEmpty);
     });
+
+    test('a damaged file is set aside when a key is saved, not lost', () async {
+      final keysFile = File(p.join(root.path, 'MyTranscribe', secretsFileName))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('{ this is not json');
+
+      await SecretsStore.setKey(openaiProviderId, 'sk-new');
+
+      expect(await SecretsStore.keyFor(openaiProviderId), 'sk-new');
+      final aside = keysFile.parent
+          .listSync()
+          .whereType<File>()
+          .where((f) => p.basename(f.path).contains('.unreadable-'))
+          .toList();
+      expect(aside.single.readAsStringSync(), '{ this is not json');
+    });
+
+    test('an I/O error saving a key is thrown and changes nothing', () async {
+      final keysFile = File(p.join(root.path, 'MyTranscribe', secretsFileName))
+        ..createSync(recursive: true);
+      keysFile.deleteSync();
+      Directory(keysFile.path).createSync();
+
+      await expectLater(
+        SecretsStore.setKey(openaiProviderId, 'sk-new'),
+        throwsA(isA<FileSystemException>()),
+      );
+    });
   });
 
   group('the written file', () {
@@ -217,6 +245,115 @@ void main() {
       await repository.load();
       final decoded = jsonDecode(await rawSettings()) as Map<String, dynamic>;
       expect(jsonEncode(decoded).toLowerCase(), isNot(contains('apikey')));
+    });
+  });
+
+  group('storage_config.json', () {
+    /// Purpose: Locate the config file the hub writes.
+    /// Inputs: None.
+    /// Returns: The file, which may not exist yet.
+    /// Side effects: None.
+    /// Notes: Internal helper used within this file only. The config always
+    /// lives in the default location, beside the app directory's parent.
+    File configFile() =>
+        File(p.join(root.path, 'MyTranscribe', 'storage_config.json'));
+
+    /// Purpose: List the files set aside beside the config.
+    /// Inputs: None.
+    /// Returns: Their paths.
+    /// Side effects: Lists a directory.
+    /// Notes: Internal helper used within this file only.
+    List<File> setAside() => configFile().parent
+        .listSync()
+        .whereType<File>()
+        .where((f) => p.basename(f.path).contains('.unreadable-'))
+        .toList();
+
+    test('setters running at once do not erase one another', () async {
+      await Future.wait([
+        TranscribeStorage.setThemeMode('dark'),
+        TranscribeStorage.setLocaleTag('zh_TW'),
+        TranscribeStorage.setLastTab('library'),
+        TranscribeStorage.setViewerFontSize(20),
+        TranscribeStorage.setSyncIncludesAudio(true),
+      ]);
+
+      final config = await TranscribeStorage.readConfig();
+      expect(config['themeMode'], 'dark');
+      expect(config['locale'], 'zh_TW');
+      expect(config['lastTab'], 'library');
+      expect(config['viewerFontSize'], 20);
+      expect(config['syncIncludesAudio'], true);
+    });
+
+    test('keeps keys it does not own', () async {
+      await TranscribeStorage.writeConfigLocked({'fromEngine': 'kept'});
+      await TranscribeStorage.setThemeMode('light');
+      expect((await TranscribeStorage.readConfig())['fromEngine'], 'kept');
+    });
+
+    test('an unparseable file is set aside, not overwritten', () async {
+      await TranscribeStorage.getAppDir();
+      configFile().writeAsStringSync('{ "themeMode": "dark", oops');
+
+      // Reading stays lenient and touches nothing.
+      expect(await TranscribeStorage.readConfig(), isEmpty);
+      expect(setAside(), isEmpty);
+
+      await TranscribeStorage.setLocaleTag('zh');
+
+      expect((await TranscribeStorage.readConfig())['locale'], 'zh');
+      final aside = setAside();
+      expect(aside, hasLength(1));
+      expect(aside.single.readAsStringSync(), '{ "themeMode": "dark", oops');
+    });
+
+    test('a file that is not a JSON object is set aside too', () async {
+      await TranscribeStorage.getAppDir();
+      configFile().writeAsStringSync('[1, 2, 3]');
+
+      await TranscribeStorage.setThemeMode('dark');
+
+      expect((await TranscribeStorage.readConfig())['themeMode'], 'dark');
+      expect(setAside().single.readAsStringSync(), '[1, 2, 3]');
+    });
+
+    test('a blank or absent file is simply started', () async {
+      await TranscribeStorage.getAppDir();
+      configFile().writeAsStringSync('  \n');
+
+      await TranscribeStorage.setThemeMode('dark');
+
+      expect((await TranscribeStorage.readConfig())['themeMode'], 'dark');
+      expect(setAside(), isEmpty);
+    });
+
+    test('an I/O error is thrown, and nothing is set aside', () async {
+      // A folder where the file should be: not readable as a file, not
+      // replaceable by one. That is an I/O problem, not bad content.
+      await TranscribeStorage.getAppDir();
+      if (configFile().existsSync()) configFile().deleteSync();
+      Directory(configFile().path).createSync();
+
+      await expectLater(
+        TranscribeStorage.setThemeMode('dark'),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect(setAside(), isEmpty);
+    });
+
+    test('a failed write does not block the next one', () async {
+      await TranscribeStorage.getAppDir();
+      if (configFile().existsSync()) configFile().deleteSync();
+      final blocker = Directory(configFile().path)..createSync();
+      await expectLater(
+        TranscribeStorage.setThemeMode('dark'),
+        throwsA(isA<FileSystemException>()),
+      );
+      blocker.deleteSync();
+
+      await TranscribeStorage.setThemeMode('light');
+      expect((await TranscribeStorage.readConfig())['themeMode'], 'light');
     });
   });
 }

@@ -9,6 +9,8 @@
 /// old value, so nothing is lost by not showing it.
 library;
 
+import 'dart:io' show FileSystemException;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -59,7 +61,8 @@ class _ApiKeyFieldState extends ConsumerState<ApiKeyField> {
   /// Purpose: Store what the user typed.
   /// Inputs: None.
   /// Returns: None.
-  /// Side effects: Writes the keys file, schedules a sync, clears the field.
+  /// Side effects: Writes the keys file, schedules a sync, clears the field; on
+  /// an unreadable keys file shows a message and keeps the typed key.
   /// Notes: Internal helper used within this file only. The field is cleared
   /// after saving, so the key does not sit in the widget tree for the rest of
   /// the session.
@@ -69,7 +72,16 @@ class _ApiKeyFieldState extends ConsumerState<ApiKeyField> {
     final value = _controller.text.trim();
     if (value.isEmpty) return;
 
-    await SecretsStore.setKey(widget.providerId, value);
+    try {
+      await SecretsStore.setKey(widget.providerId, value);
+    } on FileSystemException {
+      // The keys file could not be read, so nothing was written. The typed key
+      // stays in the field for another try.
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.libraryApiKeyUnreadable)),
+      );
+      return;
+    }
     ref.refresh(configuredProvidersProvider);
     if (!mounted) return;
     _controller.clear();
@@ -80,12 +92,22 @@ class _ApiKeyFieldState extends ConsumerState<ApiKeyField> {
   /// Purpose: Remove the stored key.
   /// Inputs: None.
   /// Returns: None.
-  /// Side effects: Writes a tombstone and refreshes the status.
+  /// Side effects: Writes a tombstone and refreshes the status; on an
+  /// unreadable keys file shows a message and changes nothing.
   /// Notes: Internal helper used within this file only. A tombstone rather than
   /// a deletion, so the removal survives the next sync instead of the other
   /// device putting the key back.
   Future<void> _clear() async {
-    await SecretsStore.setKey(widget.providerId, null);
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await SecretsStore.setKey(widget.providerId, null);
+    } on FileSystemException {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.libraryApiKeyUnreadable)),
+      );
+      return;
+    }
     ref.refresh(configuredProvidersProvider);
     if (mounted) setState(() {});
   }

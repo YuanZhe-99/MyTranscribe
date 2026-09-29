@@ -107,7 +107,11 @@ class LocalModelsController
   /// state as it goes.
   /// Notes: A failure is kept in the state for the page to show, not thrown.
   Future<void> download(LocalModelConfig model) async {
-    if (state[model.id]?.busy ?? false) return;
+    // `_cancels` is filled synchronously below, so a second tap before the
+    // first progress report (which is what makes `state` busy) is refused too.
+    if ((state[model.id]?.busy ?? false) || _cancels.containsKey(model.id)) {
+      return;
+    }
     final artifacts = ref.read(artifactManagerProvider);
     final cancel = DownloadCancelToken();
     _cancels[model.id] = cancel;

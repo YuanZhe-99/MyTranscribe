@@ -13,6 +13,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 import 'package:my_transcribe/app/data_modules.dart';
 import 'package:my_transcribe/features/secrets/models/provider_secrets.dart';
 import 'package:my_transcribe/features/secrets/services/secrets_store.dart';
@@ -40,6 +41,38 @@ class _FakePathProvider extends PathProviderPlatform
 
   @override
   Future<String?> getTemporaryPath() async => root;
+}
+
+/// A store that can misbehave at chosen moments, wrapped around the fake.
+class _HookedStore extends http.BaseClient {
+  _HookedStore(this.inner);
+
+  final FakeWebDavStore inner;
+
+  /// Runs once, just before the first PUT reaches the store.
+  Future<void> Function()? beforePut;
+
+  /// Set to make every GET after the first fail at the transport (the client
+  /// retries a dropped connection, so failing one attempt would prove nothing).
+  bool failLaterGets = false;
+
+  int _gets = 0;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    if (request.method == 'GET') {
+      _gets++;
+      if (failLaterGets && _gets >= 2) {
+        throw http.ClientException('connection dropped');
+      }
+    }
+    if (request.method == 'PUT' && beforePut != null) {
+      final hook = beforePut!;
+      beforePut = null;
+      await hook();
+    }
+    return inner.send(request);
+  }
 }
 
 void main() {
@@ -292,5 +325,85 @@ void main() {
       expect(outcome.status, SecretsSyncStatus.synced);
       expect(store.content, contains('sk-secret'));
     });
+  });
+
+  group('the local file while an exchange is running', () {
+    /// Purpose: Run the exchange through a hooked store.
+    /// Inputs: The [hooked] store.
+    /// Returns: The outcome.
+    /// Side effects: As [exchange].
+    /// Notes: Internal helper used within this file only.
+    Future<SecretsSyncOutcome> hookedExchange(_HookedStore hooked) =>
+        SecretsSyncService.exchange(
+          config('https://cloud.example.com/dav'),
+          clientFactory: (c) => shared.WebDavClient(c, httpClient: hooked),
+        );
+
+    test('a key typed during the upload is not lost by the rebase', () async {
+      await SecretsStore.setKey('provider:openai', 'sk-mine');
+      store.refuseNextPut = true;
+      remoteHas('provider:openrouter', 'sk-theirs', DateTime.utc(2026, 1, 1));
+      final hooked = _HookedStore(store)
+        ..beforePut = () => SecretsStore.setKey('provider:local', 'sk-typed');
+
+      final outcome = await hookedExchange(hooked);
+
+      expect(outcome.status, SecretsSyncStatus.synced);
+      expect(await SecretsStore.keyFor('provider:local'), 'sk-typed');
+      expect(await SecretsStore.keyFor('provider:openai'), 'sk-mine');
+      expect(await SecretsStore.keyFor('provider:openrouter'), 'sk-theirs');
+      expect(store.content, contains('sk-typed'));
+    });
+
+    test('a failed re-download after a refusal fails, and overwrites nothing '
+        'remote', () async {
+      await SecretsStore.setKey('provider:openai', 'sk-mine');
+      store.refuseNextPut = true;
+      remoteHas('provider:openrouter', 'sk-theirs', DateTime.utc(2026, 1, 1));
+      final before = store.content;
+      final hooked = _HookedStore(store)..failLaterGets = true;
+
+      final outcome = await hookedExchange(hooked);
+
+      expect(outcome.status, SecretsSyncStatus.failed);
+      expect(store.writes, isEmpty, reason: 'nothing was uploaded');
+      expect(store.content, before);
+      expect(await SecretsStore.keyFor('provider:openai'), 'sk-mine');
+    });
+
+    test('two keys set at once are both kept', () async {
+      await Future.wait([
+        SecretsStore.setKey('provider:a', 'sk-a'),
+        SecretsStore.setKey('provider:b', 'sk-b'),
+        SecretsStore.setKey('provider:c', 'sk-c'),
+      ]);
+      final keys = await SecretsStore.load();
+      expect(keys.keyFor('provider:a'), 'sk-a');
+      expect(keys.keyFor('provider:b'), 'sk-b');
+      expect(keys.keyFor('provider:c'), 'sk-c');
+    });
+
+    test(
+      'an unparseable file is set aside, then the exchange carries on',
+      () async {
+        final file = File(
+          '${(await TranscribeStorage.getAppDir()).path}/$secretsFileName',
+        );
+        file.writeAsStringSync('{ this is not json');
+        remoteHas('provider:openrouter', 'sk-theirs', DateTime.utc(2026, 1, 1));
+
+        final outcome = await exchange('https://cloud.example.com/dav');
+
+        expect(outcome.status, SecretsSyncStatus.synced);
+        expect(await SecretsStore.keyFor('provider:openrouter'), 'sk-theirs');
+        final aside = file.parent
+            .listSync()
+            .whereType<File>()
+            .where((f) => f.path.contains('$secretsFileName.unreadable-'))
+            .toList();
+        expect(aside, hasLength(1));
+        expect(aside.single.readAsStringSync(), '{ this is not json');
+      },
+    );
   });
 }

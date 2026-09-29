@@ -164,57 +164,58 @@ void main() {
   });
 
   group('template capabilities', () {
-    late SettingsLibrary library;
+    // One case per reason a capability is what it is; the reasons are the
+    // point, so each keeps its comment.
+    final cases = <String, void Function(SettingsLibrary library)>{
+      'gpt-transcribe takes a language list, not a single code': (library) {
+        final model = library.model(
+          templateModelId(openaiProviderId, 'gpt-transcribe'),
+        )!;
+        expect(model.languageParamStyle, LanguageParamStyle.languages);
+        expect(model.supportsKeywords, isTrue);
+        expect(model.supportsPrompt, isTrue);
+        // It returns text and nothing else, which is what makes the transcript
+        // viewer show approximate times rather than real ones.
+        expect(model.segmentTimestamps, Capability.unsupported);
+        expect(model.diarization, Capability.unsupported);
+      },
+      'whisper is the OpenAI model that returns times': (library) {
+        final model = library.model(
+          templateModelId(openaiProviderId, 'whisper-1'),
+        )!;
+        expect(model.segmentTimestamps, Capability.supported);
+        expect(model.responseFormats, contains('verbose_json'));
+      },
+      'the diarizing model carries what a speaker request needs': (library) {
+        final model = library.model(
+          templateModelId(openaiProviderId, 'gpt-4o-transcribe-diarize'),
+        )!;
+        expect(model.diarization, Capability.supported);
+        expect(model.responseFormats.first, 'diarized_json');
+        expect(model.requiresChunkingStrategy, isTrue);
+        expect(model.maxKnownSpeakers, 4);
+        // It takes no prompt, so the job page must not offer one for it.
+        expect(model.supportsPrompt, isFalse);
+      },
+      'the gateway caps request length for every model behind it': (library) {
+        // A provider-level limit, distinct from a model's: the gateway gives up
+        // on a long upstream request whatever the model would have accepted.
+        final provider = library.provider(openrouterProviderId)!;
+        expect(provider.maxRequestSeconds, 600);
+      },
+      'the gateway never offers a prompt, because it drops one': (library) {
+        // Accepting a prompt and ignoring it is worse than refusing it: the
+        // user would see their context accepted and never learn it was
+        // discarded.
+        for (final model in library.modelsOf(openrouterProviderId)) {
+          expect(model.supportsPrompt, isFalse, reason: model.id);
+        }
+      },
+    };
 
-    setUp(() => library = repository.read(seeded()));
-
-    test('gpt-transcribe takes a language list, not a single code', () {
-      final model = library.model(
-        templateModelId(openaiProviderId, 'gpt-transcribe'),
-      )!;
-      expect(model.languageParamStyle, LanguageParamStyle.languages);
-      expect(model.supportsKeywords, isTrue);
-      expect(model.supportsPrompt, isTrue);
-      // It returns text and nothing else, which is what makes the transcript
-      // viewer show approximate times rather than real ones.
-      expect(model.segmentTimestamps, Capability.unsupported);
-      expect(model.diarization, Capability.unsupported);
-    });
-
-    test('whisper is the OpenAI model that returns times', () {
-      final model = library.model(
-        templateModelId(openaiProviderId, 'whisper-1'),
-      )!;
-      expect(model.segmentTimestamps, Capability.supported);
-      expect(model.responseFormats, contains('verbose_json'));
-    });
-
-    test('the diarizing model carries what a speaker request needs', () {
-      final model = library.model(
-        templateModelId(openaiProviderId, 'gpt-4o-transcribe-diarize'),
-      )!;
-      expect(model.diarization, Capability.supported);
-      expect(model.responseFormats.first, 'diarized_json');
-      expect(model.requiresChunkingStrategy, isTrue);
-      expect(model.maxKnownSpeakers, 4);
-      // It takes no prompt, so the job page must not offer one for it.
-      expect(model.supportsPrompt, isFalse);
-    });
-
-    test('the gateway caps request length for every model behind it', () {
-      // A provider-level limit, distinct from a model's: the gateway gives up
-      // on a long upstream request whatever the model would have accepted.
-      final provider = library.provider(openrouterProviderId)!;
-      expect(provider.maxRequestSeconds, 600);
-    });
-
-    test('the gateway never offers a prompt, because it drops one', () {
-      // Accepting a prompt and ignoring it is worse than refusing it: the user
-      // would see their context accepted and never learn it was discarded.
-      for (final model in library.modelsOf(openrouterProviderId)) {
-        expect(model.supportsPrompt, isFalse, reason: model.id);
-      }
-    });
+    for (final entry in cases.entries) {
+      test(entry.key, () => entry.value(repository.read(seeded())));
+    }
   });
 
   group('template refresh', () {

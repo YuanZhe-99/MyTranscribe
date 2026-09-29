@@ -29,6 +29,7 @@ import 'package:my_transcribe/features/transcript/services/transcript_providers.
 import 'package:my_transcribe/features/transcript/services/transcript_store.dart';
 import 'package:my_transcribe/features/transcript/views/transcript_viewer_page.dart';
 import 'package:my_transcribe/l10n/app_localizations.dart';
+import 'package:my_transcribe/shared/services/audio_player_service.dart';
 import 'package:my_transcribe/shared/services/transcribe_storage.dart';
 import 'package:my_transcribe/shared/utils/adaptive_layout.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -121,7 +122,8 @@ void main() {
 
   /// Purpose: Open the viewer on a transcript at a pinned viewport.
   /// Inputs: `tester`, the viewport `size`, and the transcript's [segments],
-  /// [speakers] and whether its times are only [approximate].
+  /// [speakers], whether its times are only [approximate], the [player] that
+  /// stands in for the audio, and the view [preferences].
   /// Returns: None.
   /// Side effects: Sets and restores the test view size; pumps a tree.
   /// Notes: Internal helper used within this file only.
@@ -132,6 +134,8 @@ void main() {
     List<Speaker> speakers = const [],
     bool approximate = false,
     List<String> knownNames = const [],
+    AudioPlayerService? player,
+    ViewerPreferences preferences = const ViewerPreferences(),
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
@@ -151,7 +155,7 @@ void main() {
           ),
           jobProvider(jobId).overrideWithValue(AsyncValue.data(job)),
           viewerPreferencesProvider.overrideWithValue(
-            const AsyncValue.data(ViewerPreferences()),
+            AsyncValue.data(preferences),
           ),
           // Left un-overridden this would read disk and stay loading for ever
           // in the fake-async zone; the page tolerates that, but a test about
@@ -164,11 +168,11 @@ void main() {
             ),
           ),
         ],
-        child: const MaterialApp(
+        child: MaterialApp(
           locale: Locale('zh'),
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
-          home: TranscriptViewerPage(jobId: jobId),
+          home: TranscriptViewerPage(jobId: jobId, player: player),
         ),
       ),
     );
@@ -195,6 +199,69 @@ void main() {
       await pumpViewer(tester, const Size(412, 915), const []);
 
       expect(find.text(l10n.viewerEmpty), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('follows the line being played, and marks it', (tester) async {
+      final player = AudioPlayerService();
+      addTearDown(player.dispose);
+      final lines = [
+        for (var i = 0; i < 60; i++) (i * 5.0, i * 5.0 + 5, null, '第$i句。'),
+      ];
+      await pumpViewer(tester, const Size(412, 600), lines, player: player);
+
+      double offset() =>
+          tester.widget<ListView>(find.byType(ListView)).controller!.offset;
+      FontWeight? weightOf(String text) =>
+          tester.widget<Text>(find.text(text)).style?.fontWeight;
+
+      expect(offset(), 0);
+      expect(weightOf('第6句。'), isNull);
+
+      // Playback reaches line 6 (30 s in), near the bottom of the screen. Rows past
+      // the list's cache extent are not built, so following moves a few lines
+      // at a time as the audio advances, exactly as it does on a device.
+      player.state.value = player.state.value.copyWith(
+        position: const Duration(seconds: 32),
+      );
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(offset(), greaterThan(0), reason: 'following scrolls to the line');
+      expect(weightOf('第6句。'), FontWeight.w600);
+      expect(weightOf('第5句。'), isNull, reason: 'only the playing line');
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('marks the line being played without moving the page when '
+        'following is off', (tester) async {
+      final player = AudioPlayerService();
+      addTearDown(player.dispose);
+      final lines = [
+        for (var i = 0; i < 60; i++) (i * 5.0, i * 5.0 + 5, null, '第$i句。'),
+      ];
+      await pumpViewer(
+        tester,
+        const Size(412, 600),
+        lines,
+        player: player,
+        preferences: const ViewerPreferences(follow: false),
+      );
+
+      player.state.value = player.state.value.copyWith(
+        position: const Duration(seconds: 32),
+      );
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<ListView>(find.byType(ListView)).controller!.offset,
+        0,
+      );
+      expect(
+        tester.widget<Text>(find.text('第6句。')).style?.fontWeight,
+        FontWeight.w600,
+      );
       expect(tester.takeException(), isNull);
     });
 
@@ -336,10 +403,7 @@ void main() {
       await pumpViewer(
         tester,
         const Size(412, 915),
-        [
-          (0, 5, 'spk_1', '大家好。'),
-          (5, 10, 'spk_2', '老师好。'),
-        ],
+        [(0, 5, 'spk_1', '大家好。'), (5, 10, 'spk_2', '老师好。')],
         speakers: const [
           Speaker(id: 'spk_1', name: '张老师', colorIndex: 0),
           Speaker(id: 'spk_2', colorIndex: 1),
@@ -396,10 +460,7 @@ void main() {
       await pumpViewer(
         tester,
         const Size(412, 915),
-        [
-          (0, 5, 'spk_1', '大家好。'),
-          (5, 10, 'spk_2', '老师好。'),
-        ],
+        [(0, 5, 'spk_1', '大家好。'), (5, 10, 'spk_2', '老师好。')],
         speakers: const [
           Speaker(id: 'spk_1', colorIndex: 0),
           Speaker(id: 'spk_2', colorIndex: 1),
@@ -460,9 +521,7 @@ void main() {
       expect(first!.speakers.single.name, isNull);
 
       await TranscriptStore.save(
-        first.copyWith(
-          speakers: [first.speakers.single.copyWith(name: '张老师')],
-        ),
+        first.copyWith(speakers: [first.speakers.single.copyWith(name: '张老师')]),
       );
       container.read(transcriptRevisionProvider.notifier).state++;
 

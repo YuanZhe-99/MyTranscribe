@@ -114,13 +114,24 @@ class ArtifactDownloader {
   /// The HTTP client factory, injectable for tests.
   final http.Client Function() clientFactory;
 
+  /// How long to wait for the server to answer before giving up.
+  final Duration connectTimeout;
+
+  /// How long the body may go without a single byte before giving up.
+  final Duration stallTimeout;
+
   /// Purpose: Create a downloader.
-  /// Inputs: Optional [clientFactory].
+  /// Inputs: Optional [clientFactory], [connectTimeout] and [stallTimeout].
   /// Returns: A new downloader.
   /// Side effects: None.
-  /// Notes: None.
-  ArtifactDownloader({http.Client Function()? clientFactory})
-    : clientFactory = clientFactory ?? http.Client.new;
+  /// Notes: The timeouts are injectable so a test does not wait a minute for
+  /// a stall. A stalled or unanswered download fails as a network error, which
+  /// the caller already treats as resumable.
+  ArtifactDownloader({
+    http.Client Function()? clientFactory,
+    this.connectTimeout = const Duration(seconds: 30),
+    this.stallTimeout = const Duration(seconds: 60),
+  }) : clientFactory = clientFactory ?? http.Client.new;
 
   /// Purpose: Download [file] to [partial], resuming, and verify it.
   /// Inputs: The manifest entry, the partial-download path, optional
@@ -179,6 +190,9 @@ class ArtifactDownloader {
   ) async {
     if (cancel?.isCancelled ?? false) throw _cancelled();
     final client = clientFactory();
+    // Registered before the request goes out: a cancel while the server is
+    // still answering closes the connection instead of waiting for it.
+    cancel?.onCancel(client.close);
     IOSink? sink;
     StreamSubscription<List<int>>? subscription;
     try {
@@ -187,12 +201,20 @@ class ArtifactDownloader {
 
       final http.StreamedResponse response;
       try {
-        response = await client.send(request);
+        response = await client.send(request).timeout(connectTimeout);
+      } on TimeoutException {
+        throw const ArtifactException(
+          ArtifactFailure.network,
+          'The server did not answer in time.',
+        );
       } on SocketException catch (error) {
+        if (cancel?.isCancelled ?? false) throw _cancelled();
         throw ArtifactException(ArtifactFailure.network, error.message);
       } on http.ClientException catch (error) {
+        if (cancel?.isCancelled ?? false) throw _cancelled();
         throw ArtifactException(ArtifactFailure.network, error.message);
       }
+      if (cancel?.isCancelled ?? false) throw _cancelled();
 
       final int start;
       if (response.statusCode == 206 && have > 0) {
@@ -219,24 +241,38 @@ class ArtifactDownloader {
       onProgress?.call(received, file.bytes);
 
       final done = Completer<void>();
-      subscription = response.stream.listen(
-        (chunk) {
-          sink!.add(chunk);
-          received += chunk.length;
-          onProgress?.call(received, file.bytes);
-        },
-        onError: (Object error) {
-          if (!done.isCompleted) {
-            done.completeError(
-              ArtifactException(ArtifactFailure.network, '$error'),
-            );
-          }
-        },
-        onDone: () {
-          if (!done.isCompleted) done.complete();
-        },
-        cancelOnError: true,
-      );
+      // `timeout` on the stream is the stall watchdog: it fires when no chunk
+      // arrives for [stallTimeout], however long the transfer has run.
+      subscription = response.stream
+          .timeout(stallTimeout)
+          .listen(
+            (chunk) {
+              sink!.add(chunk);
+              received += chunk.length;
+              onProgress?.call(received, file.bytes);
+            },
+            onError: (Object error) {
+              if (done.isCompleted) return;
+              if (cancel?.isCancelled ?? false) {
+                done.completeError(_cancelled());
+              } else if (error is TimeoutException) {
+                done.completeError(
+                  const ArtifactException(
+                    ArtifactFailure.network,
+                    'The download stalled.',
+                  ),
+                );
+              } else {
+                done.completeError(
+                  ArtifactException(ArtifactFailure.network, '$error'),
+                );
+              }
+            },
+            onDone: () {
+              if (!done.isCompleted) done.complete();
+            },
+            cancelOnError: true,
+          );
       cancel?.onCancel(() {
         if (!done.isCompleted) done.completeError(_cancelled());
       });

@@ -34,3 +34,26 @@ Future<T> retryingFileOperation<T>(
     }
   }
 }
+
+/// Purpose: Move a file whose content cannot be parsed out of the way.
+/// Inputs: The unreadable [file].
+/// Returns: The path it was moved to, `<name>.unreadable-<UTC timestamp>` in
+/// the same folder.
+/// Side effects: Renames the file. Throws on an I/O error.
+/// Notes: The bytes are kept, never deleted: whatever wrote them may be
+/// recoverable by hand. Used for `storage_config.json` and the secrets file,
+/// where refusing to write until the user repaired the file would block every
+/// later save for good, while overwriting it would destroy the only copy. The
+/// timestamp has no colons so the name is valid on Windows, and carries
+/// microseconds so two moves in a row do not collide.
+Future<String> setAsideUnreadable(File file) async {
+  final stamp = DateTime.now()
+      .toUtc()
+      .toIso8601String()
+      .replaceAll('-', '')
+      .replaceAll(':', '')
+      .replaceAll('.', '');
+  final target = '${file.path}.unreadable-$stamp';
+  await retryingFileOperation(() => file.rename(target));
+  return target;
+}

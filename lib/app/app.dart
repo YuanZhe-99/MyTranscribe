@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -69,7 +71,11 @@ class _MyTranscribeAppState extends ConsumerState<MyTranscribeApp> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(jobRunnerProvider).restore();
+      // A corrupt job folder must not surface as an unhandled async error at
+      // startup. The jobs are simply not resumed until the next start.
+      unawaited(
+        ref.read(jobRunnerProvider).restore().catchError((Object _) {}),
+      );
     });
   }
 

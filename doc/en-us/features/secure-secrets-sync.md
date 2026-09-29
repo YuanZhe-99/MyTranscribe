@@ -66,9 +66,18 @@ and the same remote directory:
 3. Merge per key by `updatedAt`, last writer wins, tombstones included so a deleted key does not
    come back.
 4. Write locally if anything changed, then upload conditionally on the version tag we read. If the
-   server says it changed underneath us, read again and re-merge once.
+   server says it changed underneath us, read again and re-merge once; if that second read fails,
+   the exchange fails and uploads nothing.
 
 Force upload and force download skip the merge in the matching direction, like the module does.
+
+**The local file is locked; the network is not.** Reading the local keys, merging and writing them
+(and the re-merge after a refused upload) happen under one in-app lock shared with the key field, so
+a key typed while an exchange runs is merged in rather than overwritten. No network call is made
+while the lock is held. If the local keys file cannot be parsed, it is renamed to
+`transcribe_secrets.json.unreadable-<UTC timestamp>` and the operation carries on from an empty
+file, so the keys it held can be recovered by hand. An I/O error is never taken for bad content: the
+key field then says the saved keys could not be read, and changes nothing.
 
 **Why this runs outside the engine's lock.** The lock protects a three-way merge whose base snapshot
 must not move underneath it. The keys file has no base snapshot and no merge state — it is a map of

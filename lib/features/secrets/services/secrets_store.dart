@@ -12,16 +12,19 @@
 /// the privacy policy says so.
 library;
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:myapps_data/myapps_data.dart' show atomicWriteString;
+import 'package:myapps_data/myapps_data.dart'
+    show AtomicWriteQueue, atomicWriteString;
 import 'package:path/path.dart' as p;
 
 import '../../../app/data_modules.dart';
 import '../../../shared/services/auto_sync_service.dart';
 import '../../../shared/services/transcribe_storage.dart';
+import '../../../shared/utils/file_retry.dart';
 import '../models/provider_secrets.dart';
 
 /// Reads and writes the keys.
@@ -64,6 +67,64 @@ class SecretsStore {
     }
   }
 
+  /// Serializes every read-modify-write of the keys file in this process, so a
+  /// key typed in Settings cannot be lost to a sync exchange that read the file
+  /// a moment earlier (or the other way round).
+  static final AtomicWriteQueue _lock = AtomicWriteQueue();
+
+  /// Purpose: Run a read-modify-write of the keys file without interleaving.
+  /// Inputs: [action], which should read with [loadForWrite] and write with
+  /// [save] or [saveQuiet].
+  /// Returns: What [action] returns, or its error.
+  /// Side effects: Whatever [action] does.
+  /// Notes: [save] and [saveQuiet] stay unlocked primitives, so an action
+  /// holding the lock can call them. **Never hold the lock across a network
+  /// call**, and never call [withLock] (or [setKey], [deleteAll]) from inside
+  /// [action]: the queue is not re-entrant and that would wait on itself
+  /// forever.
+  static Future<T> withLock<T>(Future<T> Function() action) {
+    final completer = Completer<T>();
+    _lock.enqueue(() async {
+      try {
+        completer.complete(await action());
+      } catch (error, stack) {
+        completer.completeError(error, stack);
+      }
+    });
+    return completer.future;
+  }
+
+  /// Purpose: Read the keys for a change that will be written back.
+  /// Inputs: None.
+  /// Returns: The keys; empty when the file is absent or blank, or when its
+  /// content could not be parsed.
+  /// Side effects: Reads the file; when the content cannot be parsed, renames
+  /// it to `transcribe_secrets.json.unreadable-<UTC timestamp>`. Throws a
+  /// [FileSystemException] on an I/O error.
+  /// Notes: [load] treats "unreadable" and "absent" the same, which is right
+  /// for a read but wrong for the read half of a write: the write would then
+  /// replace the only copy of whatever keys the damaged file still holds. Here
+  /// the damaged bytes are set aside first, so they can be recovered by hand
+  /// and the write can go ahead. An I/O error is different — the file may be
+  /// fine and merely locked — so it is thrown rather than treated as content.
+  /// The UI says so with the `libraryApiKeyUnreadable` message.
+  static Future<SecretsFile> loadForWrite() async {
+    final file = await _file();
+    if (!await file.exists()) return const SecretsFile();
+    try {
+      final raw = await file.readAsString();
+      if (raw.trim().isEmpty) return const SecretsFile();
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, dynamic>) return SecretsFile.fromJson(decoded);
+    } on FileSystemException {
+      rethrow;
+    } on FormatException {
+      // Falls through to set the file aside.
+    }
+    await setAsideUnreadable(file);
+    return const SecretsFile();
+  }
+
   /// Purpose: Write the keys, and let auto-sync know.
   /// Inputs: [secrets].
   /// Returns: A future completing after the write.
@@ -102,13 +163,18 @@ class SecretsStore {
   /// Purpose: Set or clear one source's key.
   /// Inputs: [providerId], [apiKey] — null or empty clears it.
   /// Returns: A future completing after the write.
-  /// Side effects: Writes the file and notifies auto-sync.
+  /// Side effects: Writes the file and notifies auto-sync. Throws when the
+  /// file cannot be read for an I/O reason, leaving it untouched.
   /// Notes: Clearing writes a tombstone, so the deletion survives the next
-  /// exchange rather than being undone by the other device.
-  static Future<void> setKey(String providerId, String? apiKey) async {
-    final secrets = await load();
-    await save(secrets.withKey(providerId, apiKey));
-  }
+  /// exchange rather than being undone by the other device. Runs under
+  /// [withLock], and reads with [loadForWrite]: a damaged file is set aside
+  /// rather than overwritten, and a locked one fails instead of being replaced
+  /// by a file holding only this key.
+  static Future<void> setKey(String providerId, String? apiKey) =>
+      withLock(() async {
+        final secrets = await loadForWrite();
+        await save(secrets.withKey(providerId, apiKey));
+      });
 
   /// Purpose: Delete the file entirely.
   /// Inputs: None.
@@ -118,10 +184,10 @@ class SecretsStore {
   /// a later sync from another device brings the keys back — which is the
   /// intended behaviour for a device being handed on, and is stated where the
   /// action is offered.
-  static Future<void> deleteAll() async {
+  static Future<void> deleteAll() => withLock(() async {
     final file = await _file();
     if (await file.exists()) await file.delete();
-  }
+  });
 }
 
 /// Purpose: Encode the keys file the way it is stored and uploaded.

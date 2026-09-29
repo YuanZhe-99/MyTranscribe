@@ -362,9 +362,25 @@ class ArtifactManager {
         p.join(models.path, modelDownloadsDirName, '$id.old'),
       );
       if (await old.exists()) await old.delete(recursive: true);
-      if (await target.exists()) await target.rename(old.path);
-      await staging.rename(target.path);
-      if (await old.exists()) await old.delete(recursive: true);
+      final hadPrevious = await target.exists();
+      if (hadPrevious) await target.rename(old.path);
+      try {
+        await staging.rename(target.path);
+      } catch (_) {
+        // The new package did not go into place: put the previous one back, so
+        // a failed reinstall never leaves the user with no package at all.
+        if (hadPrevious && !await target.exists()) {
+          try {
+            await old.rename(target.path);
+          } catch (_) {}
+        }
+        rethrow;
+      }
+      // Best effort: the install has succeeded, and a leftover `.old` is
+      // removed by the next install of this package.
+      try {
+        if (await old.exists()) await old.delete(recursive: true);
+      } catch (_) {}
 
       onProgress?.call(InstallProgress(InstallStage.done, total, total));
       return result;

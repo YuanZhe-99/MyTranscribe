@@ -228,30 +228,10 @@ class _SecretsEndpointSectionState extends State<SecretsEndpointSection> {
   /// as a host, not as a URL: somebody who pastes `http://nas/dav` here has
   /// misunderstood what the list is, and accepting it would trust nothing.
   Future<void> _add(AppLocalizations l10n) async {
-    final controller = TextEditingController();
     final host = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.secretsTrustedHostAdd),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(hintText: l10n.secretsTrustedHostHint),
-          onSubmitted: (value) => Navigator.of(ctx).pop(value),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: Text(l10n.commonAdd),
-          ),
-        ],
-      ),
+      builder: (ctx) => const _AddHostDialog(),
     );
-    controller.dispose();
 
     final entry = host?.trim().toLowerCase() ?? '';
     if (entry.isEmpty) return;
@@ -278,4 +258,71 @@ class _SecretsEndpointSectionState extends State<SecretsEndpointSection> {
       ).hasMatch(entry) &&
       !entry.contains('/') &&
       !entry.contains(':');
+}
+
+/// The dialog that asks for a host to trust; owns its text controller.
+///
+/// The controller lives in this widget's [State] so it is disposed with the
+/// dialog's own element, not while the closing animation is still building the
+/// field.
+class _AddHostDialog extends StatefulWidget {
+  /// Purpose: Create the dialog.
+  /// Inputs: None.
+  /// Returns: A new instance.
+  /// Side effects: None.
+  /// Notes: None.
+  const _AddHostDialog();
+
+  /// Purpose: Create the dialog's state.
+  /// Inputs: None.
+  /// Returns: The state.
+  /// Side effects: None.
+  /// Notes: None.
+  @override
+  State<_AddHostDialog> createState() => _AddHostDialogState();
+}
+
+/// State for [_AddHostDialog].
+class _AddHostDialogState extends State<_AddHostDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  /// Purpose: Release the text controller.
+  /// Inputs: None.
+  /// Returns: None.
+  /// Side effects: Disposes the controller.
+  /// Notes: Runs only after the dialog's route has finished animating out.
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Purpose: Build the dialog.
+  /// Inputs: `context`.
+  /// Returns: The dialog.
+  /// Side effects: None here; the buttons pop the route.
+  /// Notes: None.
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return AlertDialog(
+      title: Text(l10n.secretsTrustedHostAdd),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: InputDecoration(hintText: l10n.secretsTrustedHostHint),
+        onSubmitted: (value) => Navigator.of(context).pop(value),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: Text(l10n.commonAdd),
+        ),
+      ],
+    );
+  }
 }

@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../app/data_modules.dart';
 import '../../features/providers/models/transcribe_settings.dart';
+import '../utils/file_retry.dart';
 import '../utils/platform_capabilities.dart';
 import 'auto_sync_service.dart';
 
@@ -155,13 +156,13 @@ class TranscribeStorage {
       final oldDir = await getAppDir();
 
       _customPath = newPath;
-      final config = await readConfig();
-      if (newPath != null) {
-        config['storagePath'] = newPath;
-      } else {
-        config.remove('storagePath');
-      }
-      await writeConfig(config);
+      await updateConfig((config) {
+        if (newPath != null) {
+          config['storagePath'] = newPath;
+        } else {
+          config.remove('storagePath');
+        }
+      });
 
       final newDir = await getAppDir();
       if (oldDir.path == newDir.path) return true;
@@ -222,7 +223,10 @@ class TranscribeStorage {
   /// Returns: `Future<Map<String, dynamic>>` — empty when absent or malformed.
   /// Side effects: Reads `storage_config.json`.
   /// Notes: The shared engines read and write their own keys here through
-  /// `TranscribeStorageAdapter`, so this must never drop unknown keys.
+  /// `TranscribeStorageAdapter`, so this must never drop unknown keys. Lenient
+  /// on purpose — a preference getter must not crash the app over a damaged
+  /// file — which is exactly why it must not be the read half of a write: use
+  /// [updateConfig].
   static Future<Map<String, dynamic>> readConfig() async {
     try {
       final file = await _getConfigFile();
@@ -235,19 +239,91 @@ class TranscribeStorage {
     }
   }
 
-  /// Purpose: Write the whole device-local settings map.
+  /// Serializes every read-modify-write of `storage_config.json` in this
+  /// process, so two setters cannot both read the old map and the second write
+  /// erase the first one's key.
+  static final AtomicWriteQueue _configLock = AtomicWriteQueue();
+
+  /// Purpose: Read the config for a change that will be written back.
+  /// Inputs: None.
+  /// Returns: The map to edit — empty when the file is absent or blank.
+  /// Side effects: Reads `storage_config.json`; when its content cannot be
+  /// parsed, renames it to `storage_config.json.unreadable-<UTC timestamp>`.
+  /// Notes: Internal helper used within this file only. Unlike [readConfig] it
+  /// never turns a damaged file into `{}` *silently*: the bytes are kept aside
+  /// before the write that replaces them, so `storagePath` and the trusted
+  /// hosts can still be recovered by hand. A [FormatException] (or a value that
+  /// is not a JSON object) is handled this way; an I/O error is rethrown, since
+  /// the file may be perfectly good and merely locked.
+  static Future<Map<String, dynamic>> _readConfigForWrite() async {
+    final file = await _getConfigFile();
+    if (!await file.exists()) return {};
+    try {
+      final raw = await retryingFileOperation(file.readAsString);
+      if (raw.trim().isEmpty) return {};
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, dynamic>) return decoded;
+    } on FileSystemException {
+      rethrow;
+    } on FormatException {
+      // Bad JSON or bad UTF-8: falls through to set the file aside.
+    }
+    await setAsideUnreadable(file);
+    return {};
+  }
+
+  /// Purpose: Write the whole device-local settings map, unlocked.
   /// Inputs: `config`.
   /// Returns: None.
-  /// Side effects: Atomically writes `storage_config.json`.
-  /// Notes: Callers read-modify-write, so keys owned by the shared engines
-  /// survive an app-owned change and the other way round.
+  /// Side effects: Atomically writes `storage_config.json`, retrying a brief
+  /// lock.
+  /// Notes: The primitive under [updateConfig] and [writeConfigLocked]; it
+  /// takes no lock itself so that a caller already holding the lock cannot
+  /// deadlock on it.
   static Future<void> writeConfig(Map<String, dynamic> config) async {
     final file = await _getConfigFile();
-    await atomicWriteString(
-      file,
-      const JsonEncoder.withIndent('  ').convert(config),
+    await retryingFileOperation(
+      () => atomicWriteString(
+        file,
+        const JsonEncoder.withIndent('  ').convert(config),
+      ),
     );
   }
+
+  /// Purpose: Write the whole device-local settings map under the config lock.
+  /// Inputs: `config`.
+  /// Returns: None.
+  /// Side effects: As [writeConfig].
+  /// Notes: For callers outside this class that already hold a map — the
+  /// shared engines' adapter. It makes their write wait for an in-flight
+  /// [updateConfig] rather than interleave with it; it cannot restore a key an
+  /// engine's own earlier read did not contain, so such callers should write
+  /// only keys they own.
+  static Future<void> writeConfigLocked(Map<String, dynamic> config) =>
+      _withConfigLock(() => writeConfig(config));
+
+  /// Purpose: Change the device-local settings map atomically.
+  /// Inputs: `edit`, which mutates the map it is given.
+  /// Returns: None.
+  /// Side effects: Reads and rewrites `storage_config.json` under the config
+  /// lock; may move an unparseable file aside (see [_readConfigForWrite]).
+  /// Notes: Every app-owned setter goes through here. Never call another
+  /// locked method from inside [edit].
+  static Future<void> updateConfig(
+    void Function(Map<String, dynamic> config) edit,
+  ) => _withConfigLock(() async {
+    final config = await _readConfigForWrite();
+    edit(config);
+    await writeConfig(config);
+  });
+
+  /// Purpose: Run an action while holding the config lock.
+  /// Inputs: `action`.
+  /// Returns: Completes with the action's outcome, or its error.
+  /// Side effects: Whatever the action does.
+  /// Notes: Internal helper used within this file only.
+  static Future<void> _withConfigLock(Future<void> Function() action) =>
+      _configLock.enqueue(action);
 
   /// Purpose: Read a device-local boolean preference.
   /// Inputs: `key`.
@@ -267,15 +343,14 @@ class TranscribeStorage {
   /// Notes: Internal helper used within this file only. Defaults are stored as
   /// an absent key, so a later build that changes a default changes it for
   /// everyone who never touched the setting.
-  static Future<void> _setBool(String key, bool? value) async {
-    final config = await readConfig();
-    if (value == null) {
-      config.remove(key);
-    } else {
-      config[key] = value;
-    }
-    await writeConfig(config);
-  }
+  static Future<void> _setBool(String key, bool? value) =>
+      updateConfig((config) {
+        if (value == null) {
+          config.remove(key);
+        } else {
+          config[key] = value;
+        }
+      });
 
   /// Purpose: Read a device-local string preference.
   /// Inputs: `key`.
@@ -293,15 +368,14 @@ class TranscribeStorage {
   /// Returns: None.
   /// Side effects: Rewrites `storage_config.json`.
   /// Notes: Internal helper used within this file only.
-  static Future<void> _setString(String key, String? value) async {
-    final config = await readConfig();
-    if (value == null || value.isEmpty) {
-      config.remove(key);
-    } else {
-      config[key] = value;
-    }
-    await writeConfig(config);
-  }
+  static Future<void> _setString(String key, String? value) =>
+      updateConfig((config) {
+        if (value == null || value.isEmpty) {
+          config.remove(key);
+        } else {
+          config[key] = value;
+        }
+      });
 
   /// Purpose: Read a device-local integer preference.
   /// Inputs: `key`.
@@ -318,15 +392,13 @@ class TranscribeStorage {
   /// Returns: None.
   /// Side effects: Rewrites `storage_config.json`.
   /// Notes: Internal helper used within this file only.
-  static Future<void> _setInt(String key, int? value) async {
-    final config = await readConfig();
+  static Future<void> _setInt(String key, int? value) => updateConfig((config) {
     if (value == null) {
       config.remove(key);
     } else {
       config[key] = value;
     }
-    await writeConfig(config);
-  }
+  });
 
   /// Purpose: Read the persisted theme mode.
   /// Inputs: None.
@@ -514,15 +586,14 @@ class TranscribeStorage {
   /// Side effects: Rewrites `storage_config.json`.
   /// Notes: An empty list removes the key, so the default reads as "trust
   /// nothing extra".
-  static Future<void> setSecretsTrustedHosts(List<String> hosts) async {
-    final config = await readConfig();
-    if (hosts.isEmpty) {
-      config.remove('secretsTrustedHosts');
-    } else {
-      config['secretsTrustedHosts'] = hosts;
-    }
-    await writeConfig(config);
-  }
+  static Future<void> setSecretsTrustedHosts(List<String> hosts) =>
+      updateConfig((config) {
+        if (hosts.isEmpty) {
+          config.remove('secretsTrustedHosts');
+        } else {
+          config['secretsTrustedHosts'] = hosts;
+        }
+      });
 
   /// Purpose: Read the transcript viewer's text size.
   /// Inputs: None.

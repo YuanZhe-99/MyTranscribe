@@ -87,7 +87,9 @@ class SecretsSyncService {
   /// Notes: Called after the settings sync has returned, so a refused address
   /// still syncs everything else. Neither direction happens when the address is
   /// refused: downloading a key over plain HTTP exposes it just as surely as
-  /// uploading one.
+  /// uploading one. The local read-merge-write (and the rebase after a 412) runs
+  /// under `SecretsStore.withLock`; no network call is made while it is held. A
+  /// failed re-download after a 412 fails the exchange instead of guessing.
   static Future<SecretsSyncOutcome> exchange(
     shared.WebDAVConfig config, {
     List<String> trustedHosts = const [],
@@ -114,15 +116,27 @@ class SecretsSyncService {
         );
       }
 
-      final local = await SecretsStore.load();
       final theirs = _parse(remote);
-      if (local.keys.isEmpty && theirs.keys.isEmpty) {
+
+      // The read, the merge and the local write are one step under the store's
+      // lock, so a key typed in Settings meanwhile is either in `local` or
+      // written after this — never overwritten by a file read a moment ago.
+      // The lock is released before any further network call.
+      final step = await SecretsStore.withLock(() async {
+        final local = await SecretsStore.loadForWrite();
+        if (local.keys.isEmpty && theirs.keys.isEmpty) {
+          return (local: local, merged: local, changed: false, nothing: true);
+        }
+        final merged = mergeSecrets(local, theirs);
+        final changed = !_same(local, merged);
+        if (changed) await SecretsStore.saveQuiet(merged);
+        return (local: local, merged: merged, changed: changed, nothing: false);
+      });
+      if (step.nothing) {
         return const SecretsSyncOutcome(status: SecretsSyncStatus.nothingToDo);
       }
-
-      final merged = mergeSecrets(local, theirs);
-      final changedLocally = !_same(local, merged);
-      if (changedLocally) await SecretsStore.saveQuiet(merged);
+      final merged = step.merged;
+      final changedLocally = step.changed;
 
       final body = const JsonEncoder.withIndent('  ').convert(merged.toJson());
       final changedRemotely = !_same(theirs, merged);
@@ -146,8 +160,25 @@ class SecretsSyncService {
 
       if (result.is412) {
         final again = await client.download(secretsFileName);
-        final rebased = mergeSecrets(merged, _parse(again));
-        await SecretsStore.saveQuiet(rebased);
+        if (again.status == shared.RemoteFileStatus.error) {
+          // Without the newer remote copy the rebase would be a guess, and the
+          // upload after it could overwrite what the other device just wrote.
+          return SecretsSyncOutcome(
+            status: SecretsSyncStatus.failed,
+            error: again.error,
+            downloaded: changedLocally,
+            keyCount: merged.keys.length,
+          );
+        }
+        final theirsAgain = _parse(again);
+        // Rebased under the lock on what is on disk *now*, which may hold a
+        // key entered while the upload was in flight.
+        final rebased = await SecretsStore.withLock(() async {
+          final current = await SecretsStore.loadForWrite();
+          final next = mergeSecrets(mergeSecrets(current, merged), theirsAgain);
+          await SecretsStore.saveQuiet(next);
+          return next;
+        });
         result = await client.upload(
           secretsFileName,
           const JsonEncoder.withIndent('  ').convert(rebased.toJson()),

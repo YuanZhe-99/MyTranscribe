@@ -139,10 +139,12 @@ class TranscribeStorageAdapter implements StorageAdapter {
   /// Inputs: [config] complete settings map.
   /// Returns: A future completing after the write.
   /// Side effects: Writes local storage.
-  /// Notes: The engines read-modify-write, so unknown keys survive.
+  /// Notes: The engines read-modify-write, so unknown keys survive. Goes
+  /// through the hub's config lock so an engine write cannot interleave with an
+  /// app setter's read-modify-write.
   @override
   Future<void> writeConfig(Map<String, dynamic> config) =>
-      TranscribeStorage.writeConfig(config);
+      TranscribeStorage.writeConfigLocked(config);
 }
 
 /// Purpose: Encode a settings document the way the storage hub writes it.

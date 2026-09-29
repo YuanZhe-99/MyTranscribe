@@ -9,6 +9,7 @@
 /// `doc/en-us/features/media-tools.md`.
 library;
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi' show Abi;
 import 'dart:io';
@@ -103,16 +104,26 @@ class FfmpegDownloader {
   /// The architecture to fetch for, defaulting to this machine's.
   final Abi abi;
 
+  /// How long to wait for the server to answer before giving up.
+  final Duration connectTimeout;
+
+  /// How long the body may go without a single byte before giving up.
+  final Duration stallTimeout;
+
   /// Purpose: Create a downloader.
-  /// Inputs: [destination], optional [clientFactory] and [abi].
+  /// Inputs: [destination], optional [clientFactory], [abi] and the two
+  /// timeouts.
   /// Returns: A new downloader.
   /// Side effects: None until [download] is called.
   /// Notes: [abi] is injectable so the asset-name rule can be tested for an
-  /// architecture the test machine is not.
+  /// architecture the test machine is not. The timeouts are injectable so a
+  /// test does not wait a minute for a stall.
   FfmpegDownloader({
     required this.destination,
     http.Client Function()? clientFactory,
     Abi? abi,
+    this.connectTimeout = const Duration(seconds: 30),
+    this.stallTimeout = const Duration(seconds: 60),
   }) : clientFactory = clientFactory ?? http.Client.new,
        abi = abi ?? Abi.current();
 
@@ -166,9 +177,13 @@ class FfmpegDownloader {
     final archiveFile = File(archivePath);
 
     final client = clientFactory();
+    // Registered before the request goes out, so a cancel while the server is
+    // still answering closes the connection instead of waiting for it.
+    final cancelSubscription = cancel?.onCancel.listen((_) => client.close());
     try {
       final request = http.Request('GET', Uri.parse(target.url));
-      final response = await client.send(request);
+      final response = await client.send(request).timeout(connectTimeout);
+      cancel?.throwIfCancelled();
       if (response.statusCode != 200) {
         throw MediaException(
           MediaFailureKind.toolFailed,
@@ -179,7 +194,7 @@ class FfmpegDownloader {
       final sink = archiveFile.openWrite();
       var received = 0;
       try {
-        await for (final chunk in response.stream) {
+        await for (final chunk in response.stream.timeout(stallTimeout)) {
           if (cancel?.isCancelled ?? false) break;
           sink.add(chunk);
           received += chunk.length;
@@ -244,14 +259,31 @@ class FfmpegDownloader {
       return ffmpegPath;
     } on MediaException {
       rethrow;
+    } on TimeoutException catch (error) {
+      throw MediaException(
+        MediaFailureKind.toolFailed,
+        'The download stalled and was stopped.',
+        toolOutput: '$error',
+      );
     } catch (error) {
+      // A cancel closes the client, which surfaces here as a network error.
+      if (cancel?.isCancelled ?? false) {
+        throw const MediaException(
+          MediaFailureKind.cancelled,
+          'The download was cancelled.',
+        );
+      }
       throw MediaException(
         MediaFailureKind.toolFailed,
         'The download could not be completed.',
         toolOutput: '$error',
       );
     } finally {
+      await cancelSubscription?.cancel();
       client.close();
+      // Whatever happened, a half-written or already-unpacked archive is of no
+      // use and can be a hundred megabytes.
+      await _deleteQuietly(archiveFile);
     }
   }
 
@@ -276,12 +308,25 @@ class FfmpegDownloader {
         final base = p.basename(entry.name.replaceAll('\\', '/'));
         if (!wanted.contains(base)) continue;
 
+        // Written beside the final name and renamed into place, so a failure
+        // half way through an entry never leaves a truncated executable that
+        // the locator would then pick up as the app's own FFmpeg.
         final outputPath = p.join(destination.path, base);
-        final output = OutputFileStream(outputPath);
+        final partPath = '$outputPath.part';
+        final output = OutputFileStream(partPath);
         try {
           entry.writeContent(output);
-        } finally {
+        } catch (_) {
           await output.close();
+          await _deleteQuietly(File(partPath));
+          rethrow;
+        }
+        await output.close();
+        try {
+          await File(partPath).rename(outputPath);
+        } catch (_) {
+          await _deleteQuietly(File(partPath));
+          rethrow;
         }
         written[p.basenameWithoutExtension(base)] = outputPath;
       }

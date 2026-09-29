@@ -209,10 +209,15 @@ class JobRunner {
   /// Returns: None.
   /// Side effects: Rewrites the job's stage when it had stopped.
   /// Notes: Internal helper used within this file only. The finished windows
-  /// and the plan are left alone; only the stage and the old error go.
+  /// and the plan are left alone; only the stage and the old error go. Does
+  /// nothing once the runner has taken the job or the job has left the queue
+  /// (cancelled, removed): a write made then would race the run's own saves
+  /// and could put a stale stage over a newer one.
   Future<void> _markQueued(String jobId) async {
+    if (_running == jobId || !_queue.contains(jobId)) return;
     final job = await JobStore.load(jobId);
     if (job == null || !job.stage.isFinished) return;
+    if (_running == jobId || !_queue.contains(jobId)) return;
     await _write(
       job.copyWith(
         stage: JobStage.queued,
@@ -275,12 +280,23 @@ class JobRunner {
   /// Inputs: [jobId].
   /// Returns: None.
   /// Side effects: Cancels the running conversion and the in-flight upload, or
-  /// removes the job from the queue.
+  /// removes the job from the queue and records it as cancelled.
   /// Notes: A cancelled job keeps the windows it finished, so resuming it does
-  /// not pay for them again.
-  void cancel(String jobId) {
-    _queue.remove(jobId);
-    if (state.value.active?.id == jobId) {
+  /// not pay for them again. A job the runner has taken off the queue but not
+  /// yet started (`_running` is set, `state.active` is not) is cancelled too.
+  void cancel(String jobId) => _cancel(jobId, persist: true);
+
+  /// Purpose: Stop a job, optionally writing "cancelled" for one that was
+  /// still waiting.
+  /// Inputs: [jobId]; [persist] false when the record is about to be deleted.
+  /// Returns: None.
+  /// Side effects: As [cancel]; may rewrite the record's stage.
+  /// Notes: Internal helper used within this file only. A running job writes
+  /// its own cancelled stage from [_run]; only a job that never started needs
+  /// it written here, or it would read "queued" on disk after a restart.
+  void _cancel(String jobId, {required bool persist}) {
+    final wasQueued = _queue.remove(jobId);
+    if (state.value.active?.id == jobId || _running == jobId) {
       _cancelRequested = jobId;
       _mediaCancel?.cancel();
       _activeClient?.cancel();
@@ -288,6 +304,27 @@ class JobRunner {
       if (local != null) unawaited(local.cancel());
     }
     _publish();
+    if (persist && wasQueued) unawaited(_markCancelled(jobId));
+  }
+
+  /// Purpose: Record that a waiting job was cancelled.
+  /// Inputs: [jobId].
+  /// Returns: None.
+  /// Side effects: Rewrites the stage to cancelled when it was queued.
+  /// Notes: Internal helper used within this file only. Writes only when the
+  /// stored stage is still queued and the runner has neither taken nor
+  /// re-queued the job, so it never overwrites a newer state. Failures are
+  /// swallowed: the cancel itself already happened in memory.
+  Future<void> _markCancelled(String jobId) async {
+    try {
+      final job = await JobStore.load(jobId);
+      if (job == null || job.stage != JobStage.queued) return;
+      if (_running == jobId || _queue.contains(jobId)) return;
+      await _write(
+        job.copyWith(stage: JobStage.cancelled, clearCurrentChunk: true),
+      );
+      _bump();
+    } catch (_) {}
   }
 
   /// Purpose: Run a job again with one feature turned off.
@@ -322,7 +359,7 @@ class JobRunner {
   /// on a file that vanished, which is a confusing way to report a deletion the
   /// user asked for.
   Future<void> remove(String jobId) async {
-    cancel(jobId);
+    _cancel(jobId, persist: false);
     // `_running` rather than the published state, because a job that has just
     // been taken off the queue is in neither place for a moment, and deleting
     // its folder in that moment is exactly the race this loop exists to avoid.
@@ -425,8 +462,12 @@ class JobRunner {
           final job = await JobStore.load(id);
           if (job == null) continue;
           await _run(job);
+        } catch (_) {
+          // One job that cannot be read or recorded must not strand the jobs
+          // behind it; `_run` has already published whatever it could.
         } finally {
           _running = null;
+          _cancelRequested = null;
         }
       }
     } finally {
@@ -446,17 +487,19 @@ class JobRunner {
   /// awake for the duration and released in every exit path, including a
   /// failure and a cancellation.
   Future<void> _run(TranscriptionJob initial) async {
-    _cancelRequested = null;
+    // `_cancelRequested` is not cleared here: a cancel made between the job
+    // leaving the queue and this point must still take effect. `_pump` clears
+    // it once the job is done with.
     _latest = initial;
     await SyncWakeLock.acquire();
     try {
       await _advance(initial);
     } on _JobCancelled {
-      await _save(
+      await _saveBestEffort(
         _latest!.copyWith(stage: JobStage.cancelled, clearCurrentChunk: true),
       );
     } on _JobFailed catch (failure) {
-      await _save(
+      await _saveBestEffort(
         _latest!.copyWith(
           stage: JobStage.failed,
           error: failure.error,
@@ -464,7 +507,7 @@ class JobRunner {
         ),
       );
     } catch (error) {
-      await _save(
+      await _saveBestEffort(
         _latest!.copyWith(
           stage: JobStage.failed,
           error: JobError(kind: JobFailureKind.unknown, message: '$error'),
@@ -480,7 +523,6 @@ class JobRunner {
       _mediaCancel = null;
       _activeClient = null;
       _localSession = null;
-      _cancelRequested = null;
       _latest = null;
       state.value = JobQueueState(
         queued: List.of(_queue),
@@ -1073,9 +1115,16 @@ class JobRunner {
       speakerMap: speakerMap,
     );
     await TranscriptStore.save(transcript);
-    final outputs = await _writeTranscriptFiles()
-        ? await _writeOutputs(job, transcript)
-        : const <String>[];
+    // The transcript is already saved, so a text file that cannot be written
+    // must not turn a finished job into a failed one.
+    var outputs = const <String>[];
+    try {
+      if (await _writeTranscriptFiles()) {
+        outputs = await _writeOutputs(job, transcript);
+      }
+    } catch (_) {
+      outputs = const <String>[];
+    }
 
     if (!job.options.keepChunks && !plan.uploadsOriginal) {
       await JobStore.deleteChunkAudio(job.id);
@@ -1270,22 +1319,26 @@ class JobRunner {
     final markdown = renderJobMarkdown(job, transcript);
     final text = renderJobPlainText(transcript);
 
-    Directory target;
+    Future<List<String>> writeTo(Directory target) async {
+      final markdownPath = p.join(target.path, '$stem.transcript.md');
+      final textPath = p.join(target.path, '$stem.transcript.txt');
+      await File(markdownPath).writeAsString(markdown);
+      await File(textPath).writeAsString(text);
+      return [markdownPath, textPath];
+    }
+
     try {
       final beside = File(job.sourcePath).parent;
       final probe = File(p.join(beside.path, '.mytranscribe_write_test'));
       await probe.writeAsString('');
       await probe.delete();
-      target = beside;
+      return await writeTo(beside);
     } catch (_) {
-      target = await JobStore.exportsDir(job.id);
+      // The probe passing does not guarantee the real files can be written (a
+      // read-only file of the same name, a full disk), so the fallback covers
+      // the writes as well.
+      return writeTo(await JobStore.exportsDir(job.id));
     }
-
-    final markdownPath = p.join(target.path, '$stem.transcript.md');
-    final textPath = p.join(target.path, '$stem.transcript.txt');
-    await File(markdownPath).writeAsString(markdown);
-    await File(textPath).writeAsString(text);
-    return [markdownPath, textPath];
   }
 
   /// Purpose: Write a job, applying anything renamed since it was read.
@@ -1321,6 +1374,27 @@ class JobRunner {
       finished: state.value.finished,
     );
     return written;
+  }
+
+  /// Purpose: Save a job's final state without letting a failed write escape.
+  /// Inputs: [job].
+  /// Returns: None.
+  /// Side effects: Writes the record and updates [state]; when the write
+  /// fails, [state] is still updated in memory.
+  /// Notes: Internal helper used within this file only. Used by the handlers
+  /// that record how a run ended: if they threw, the queue behind the job
+  /// would be stranded and the failure would surface nowhere.
+  Future<void> _saveBestEffort(TranscriptionJob job) async {
+    try {
+      await _save(job);
+    } catch (_) {
+      _latest = job;
+      state.value = JobQueueState(
+        active: job,
+        queued: List.of(_queue),
+        finished: state.value.finished,
+      );
+    }
   }
 
   /// Purpose: Publish the queue without changing a job.

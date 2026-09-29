@@ -31,6 +31,13 @@ const _stderrTailLines = 20;
 /// that will never come.
 const _commonArgs = ['-nostdin', '-hide_banner', '-loglevel', 'error', '-y'];
 
+/// How a tool's captured output is decoded.
+///
+/// The default is the system code page, which mangles a UTF-8 file name or tag
+/// in ffprobe's JSON on a non-UTF-8 Windows locale. FFmpeg tools write UTF-8;
+/// a stray malformed byte becomes U+FFFD instead of an exception.
+const _utf8 = Utf8Codec(allowMalformed: true);
+
 class ExternalFfmpegMediaToolkit implements MediaToolkit {
   /// Finds the executables.
   final FfmpegLocator locator;
@@ -87,7 +94,12 @@ class ExternalFfmpegMediaToolkit implements MediaToolkit {
 
     var version = ffmpeg.source.name;
     try {
-      final result = await Process.run(ffmpeg.path, const ['-version']);
+      final result = await Process.run(
+        ffmpeg.path,
+        const ['-version'],
+        stdoutEncoding: _utf8,
+        stderrEncoding: _utf8,
+      );
       final firstLine = const LineSplitter()
           .convert('${result.stdout}')
           .firstOrNull;
@@ -122,15 +134,20 @@ class ExternalFfmpegMediaToolkit implements MediaToolkit {
     }
     final ffprobe = await _require('ffprobe');
 
-    final result = await Process.run(ffprobe.path, [
-      '-v',
-      'error',
-      '-print_format',
-      'json',
-      '-show_format',
-      '-show_streams',
-      path,
-    ]);
+    final result = await Process.run(
+      ffprobe.path,
+      [
+        '-v',
+        'error',
+        '-print_format',
+        'json',
+        '-show_format',
+        '-show_streams',
+        path,
+      ],
+      stdoutEncoding: _utf8,
+      stderrEncoding: _utf8,
+    );
     if (result.exitCode != 0) {
       throw MediaException(
         MediaFailureKind.badInput,

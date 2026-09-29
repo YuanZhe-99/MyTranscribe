@@ -681,6 +681,12 @@ abstract class AppLocalizations {
   /// **'Set on this device'**
   String get libraryApiKeySet;
 
+  /// No description provided for @libraryApiKeyUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'The saved keys could not be read just now, so nothing was changed. Try again.'**
+  String get libraryApiKeyUnreadable;
+
   /// No description provided for @libraryAuth.
   ///
   /// In en, this message translates to:

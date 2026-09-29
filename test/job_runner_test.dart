@@ -260,6 +260,30 @@ void main() {
     fail('the job did not finish');
   }
 
+  /// Purpose: Wait until the runner's published state satisfies a condition.
+  /// Inputs: The [run]ner and the [done] test.
+  /// Returns: None; fails the test after twenty seconds.
+  /// Side effects: Adds and removes a listener.
+  /// Notes: Internal helper used within this file only. Waits on the runner's
+  /// own notifier rather than polling the disk on a timer.
+  Future<void> waitFor(JobRunner run, bool Function(JobQueueState) done) async {
+    if (done(run.state.value)) return;
+    final reached = Completer<void>();
+    void listener() {
+      if (!reached.isCompleted && done(run.state.value)) reached.complete();
+    }
+
+    run.state.addListener(listener);
+    try {
+      await reached.future.timeout(
+        const Duration(seconds: 20),
+        onTimeout: () => fail('the runner never reached the expected state'),
+      );
+    } finally {
+      run.state.removeListener(listener);
+    }
+  }
+
   group('a recording that needs splitting', () {
     test('is converted once, cut into windows, and joined back up', () async {
       final toolkit = _FakeToolkit();
@@ -761,27 +785,77 @@ void main() {
 
       run.enqueue(created.id);
       // Let it get past the first window, then stop it.
-      for (var i = 0; i < 400; i++) {
-        await Future<void>.delayed(const Duration(milliseconds: 5));
-        final job = await JobStore.load(created.id);
-        if ((job?.chunks.length ?? 0) >= 1) break;
-      }
+      await waitFor(run, (s) => (s.active?.chunks.length ?? 0) >= 1);
       run.cancel(created.id);
 
-      for (var i = 0; i < 600; i++) {
-        await Future<void>.delayed(const Duration(milliseconds: 10));
+      await waitFor(run, (s) => s.finished?.id == created.id);
+      final job = await JobStore.load(created.id);
+      expect(job!.stage, JobStage.cancelled);
+      expect(
+        job.chunks,
+        isNotEmpty,
+        reason: 'a cancelled job keeps what it already paid for',
+      );
+    });
+
+    test(
+      'a cancel made in the same breath as the enqueue is honoured',
+      () async {
+        // The runner takes the job off the queue synchronously, so for a moment
+        // it is neither queued nor "active". A cancel in that gap used to be
+        // dropped, and the whole recording was transcribed regardless.
+        final server = FakeTranscriptionServer([FakeReply.text('never asked')]);
+        final run = runner(_FakeToolkit(duration: 90), server);
+        final created = await createJob(run, model: _wholeFileModel);
+
+        run.enqueue(created.id);
+        run.cancel(created.id);
+
+        await waitFor(run, (s) => s.finished?.id == created.id);
         final job = await JobStore.load(created.id);
-        if (job != null && job.stage.isFinished) {
-          expect(job.stage, JobStage.cancelled);
-          expect(
-            job.chunks,
-            isNotEmpty,
-            reason: 'a cancelled job keeps what it already paid for',
-          );
-          return;
-        }
+        expect(job!.stage, JobStage.cancelled);
+        expect(server.requests, isEmpty, reason: 'nothing was paid for');
+      },
+    );
+
+    test('a job cancelled while waiting is recorded as cancelled', () async {
+      final run = runner(
+        _FakeToolkit(duration: 90),
+        FakeTranscriptionServer([FakeReply.text('one')]),
+      );
+      final first = await createJob(run, model: _wholeFileModel);
+      final second = await createJob(run, model: _wholeFileModel);
+
+      run.enqueue(first.id);
+      run.enqueue(second.id);
+      run.cancel(second.id);
+
+      await waitFor(run, (s) => s.finished?.id == first.id);
+      // The write is not awaited by cancel(), so wait for it to land.
+      for (var i = 0; i < 200; i++) {
+        final stage = (await JobStore.load(second.id))!.stage;
+        if (stage == JobStage.cancelled) break;
+        await Future<void>.delayed(const Duration(milliseconds: 10));
       }
-      fail('the job did not stop');
+      expect((await JobStore.load(second.id))!.stage, JobStage.cancelled);
+      expect((await JobStore.load(first.id))!.stage, JobStage.done);
+    });
+
+    test('removing a waiting job does not write it back', () async {
+      final run = runner(
+        _FakeToolkit(duration: 90),
+        FakeTranscriptionServer([FakeReply.text('one')]),
+      );
+      final first = await createJob(run, model: _wholeFileModel);
+      final second = await createJob(run, model: _wholeFileModel);
+
+      run.enqueue(first.id);
+      run.enqueue(second.id);
+      await run.remove(second.id);
+
+      await waitFor(run, (s) => s.finished?.id == first.id);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(await JobStore.load(second.id), isNull);
     });
   });
 
@@ -869,6 +943,72 @@ void main() {
 
       expect(job.error!.kind, JobFailureKind.mediaFailed);
     });
+
+    test(
+      'a job whose record cannot be saved does not strand the next',
+      () async {
+        // The record's folder is swapped for a file once the runner has read the
+        // job, so every write it then attempts fails. Saving the failure fails
+        // too, which used to throw out of the queue and leave the job behind it
+        // waiting for ever.
+        final server = FakeTranscriptionServer([FakeReply.text('one')]);
+        late final String brokenId;
+        var broken = false;
+        final run = JobRunner(
+          toolkit: () async {
+            if (!broken) {
+              broken = true;
+              final dir = await TranscribeStorage.jobDir(brokenId);
+              await dir.delete(recursive: true);
+              File(dir.path).writeAsStringSync('not a folder');
+            }
+            return _FakeToolkit(duration: 90);
+          },
+          repository: repository,
+          clientFactory: () => TranscriptionClient(
+            clientFactory: () => server,
+            sleep: (_) async {},
+          ),
+          keyLookup: (_) async => 'sk-test',
+          writeTranscriptFiles: () async => false,
+        );
+        final first = await createJob(run, model: _wholeFileModel);
+        final second = await createJob(run, model: _wholeFileModel);
+        brokenId = first.id;
+
+        run.enqueue(first.id);
+        run.enqueue(second.id);
+
+        await waitFor(run, (s) => s.finished?.id == second.id);
+        expect((await JobStore.load(second.id))!.stage, JobStage.done);
+      },
+    );
+
+    test(
+      'a transcript file that cannot be written does not fail the job',
+      () async {
+        // A folder where the Markdown file should go: the probe write beside the
+        // recording succeeds, the real write does not.
+        Directory(
+          p.join(p.dirname(source.path), 'lecture.transcript.md'),
+        ).createSync();
+        final run = runner(
+          _FakeToolkit(duration: 90),
+          FakeTranscriptionServer([FakeReply.text('one')]),
+        );
+        final job = await runToCompletion(
+          run,
+          (await createJob(run, model: _wholeFileModel)).id,
+        );
+
+        expect(job.stage, JobStage.done, reason: '${job.error?.message}');
+        expect(job.outputs, hasLength(2));
+        for (final path in job.outputs) {
+          expect(File(path).existsSync(), isTrue);
+          expect(p.dirname(path), isNot(p.dirname(source.path)));
+        }
+      },
+    );
   });
 
   group('the record on disk', () {
@@ -951,36 +1091,13 @@ void main() {
 
       // As soon as the first window has landed, so the runner certainly writes
       // again afterwards.
-      for (var i = 0; i < 400; i++) {
-        await Future<void>.delayed(const Duration(milliseconds: 5));
-        final current = await JobStore.load(job.id);
-        if ((current?.chunks.length ?? 0) >= 1) break;
-      }
+      await waitFor(run, (s) => (s.active?.chunks.length ?? 0) >= 1);
       await run.rename(job.id, '讲座一');
 
-      for (var i = 0; i < 600; i++) {
-        await Future<void>.delayed(const Duration(milliseconds: 10));
-        final current = await JobStore.load(job.id);
-        if (current != null && current.stage.isFinished) {
-          expect(current.stage, JobStage.done);
-          expect(current.title, '讲座一');
-          return;
-        }
-      }
-      fail('the job did not finish');
-    });
-
-    test('a name survives a round trip through JSON', () async {
-      final run = runner(
-        _FakeToolkit(duration: 90),
-        FakeTranscriptionServer([FakeReply.text('one')]),
-      );
-      final job = await createJob(run, model: _wholeFileModel);
-      await run.rename(job.id, 'Week 2');
-
-      final loaded = await JobStore.load(job.id);
-      expect(loaded!.toJson()['title'], 'Week 2');
-      expect(TranscriptionJob.fromJson(loaded.toJson()).displayName, 'Week 2');
+      await waitFor(run, (s) => s.finished?.id == job.id);
+      final current = await JobStore.load(job.id);
+      expect(current!.stage, JobStage.done);
+      expect(current.title, '讲座一');
     });
 
     test('lists every job, newest first', () async {

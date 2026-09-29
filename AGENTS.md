@@ -304,7 +304,7 @@ to everyone. The same applies to the tailnet name itself — tests that need a T
 **The submodule URL stays relative.** `../MyApps-DATA.git` resolves against whichever remote the
 clone came from, so a Gitea clone reaches the Gitea copy and a GitHub clone reaches
 `github.com/YuanZhe-99/MyApps-DATA`. Both must therefore carry the tag this repository pins, and
-today both carry `v1.0.2` at the same commit. Publishing a release that pins a tag which exists only
+today both carry `v1.0.3` at the same commit. Publishing a release that pins a tag which exists only
 on Gitea would leave every public clone unable to run `flutter pub get`.
 
 **Never commit:** secrets, API keys, credentials, WebDAV configuration, signing keys

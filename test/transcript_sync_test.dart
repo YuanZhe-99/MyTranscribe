@@ -181,6 +181,24 @@ void main() {
       await TranscriptSyncService.writeProjection();
       expect((await projection()).ids, {'job-1'});
     });
+
+    test('a change made during a build stays marked', () async {
+      // The flag used to be cleared after the build, which swallowed a change
+      // made during it: the projection went out without it, and nothing said it
+      // was stale.
+      await writeJob('job-1');
+      TranscriptSyncService.debugAfterBuildStarts = () async {
+        TranscriptSyncService.markDirty();
+      };
+      addTearDown(() => TranscriptSyncService.debugAfterBuildStarts = null);
+
+      await TranscriptSyncService.writeProjection();
+      expect(TranscriptSyncService.isDirty, isTrue);
+
+      TranscriptSyncService.debugAfterBuildStarts = null;
+      await TranscriptSyncService.writeProjection();
+      expect(TranscriptSyncService.isDirty, isFalse);
+    });
   });
 
   group('applying a synced projection', () {

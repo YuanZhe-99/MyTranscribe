@@ -37,12 +37,17 @@ class TranscriptViewerPage extends ConsumerStatefulWidget {
   /// Which job's transcript to show.
   final String jobId;
 
+  /// A player to use instead of opening a real one; tests only.
+  ///
+  /// The page does not dispose an injected player: whoever passed it owns it.
+  final AudioPlayerService? player;
+
   /// Purpose: Create the viewer.
-  /// Inputs: [jobId].
+  /// Inputs: [jobId], and optionally a [player] (tests only).
   /// Returns: A new instance.
   /// Side effects: None.
   /// Notes: None.
-  const TranscriptViewerPage({super.key, required this.jobId});
+  const TranscriptViewerPage({super.key, required this.jobId, this.player});
 
   /// Purpose: Create the mutable state object for this widget.
   /// Inputs: None.
@@ -55,7 +60,7 @@ class TranscriptViewerPage extends ConsumerStatefulWidget {
 }
 
 class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
-  final _player = AudioPlayerService();
+  late final AudioPlayerService _player = widget.player ?? AudioPlayerService();
   final _scroll = ScrollController();
   final _search = TextEditingController();
 
@@ -106,6 +111,19 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
   /// Attached to whichever line is being played, so it can be scrolled to.
   final _playingKey = GlobalKey();
 
+  /// Which row playback is in, or -1 for none.
+  ///
+  /// An index into [_spans]. Each row listens to this for itself, so playback
+  /// moving from one row to the next rebuilds those two rows and not the page.
+  final _playingIndex = ValueNotifier<int>(-1);
+
+  /// The start and end, in seconds, of each row currently built.
+  List<({double start, double end})> _spans = const [];
+
+  /// What kind of row [_spans] describes, `run` or `line`; it names the row in
+  /// [_followedLine] so the two views never mistake one for the other.
+  String _spanKind = 'line';
+
   /// Which line was last scrolled to, so it is not scrolled to repeatedly.
   ///
   /// Without this the page would fight the user for the scroll position on
@@ -117,17 +135,30 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
   int _hitIndex = 0;
   bool _searching = false;
 
+  /// Purpose: Start following the player.
+  /// Inputs: None.
+  /// Returns: None.
+  /// Side effects: Subscribes to the player's state.
+  /// Notes: Flutter lifecycle override.
+  @override
+  void initState() {
+    super.initState();
+    _player.state.addListener(_onTick);
+  }
+
   /// Purpose: Release the player, the scroll controller and the search field.
   /// Inputs: None.
   /// Returns: None.
-  /// Side effects: Frees the audio device.
+  /// Side effects: Frees the audio device (unless the player was injected).
   /// Notes: Flutter lifecycle override.
   @override
   void dispose() {
-    _player.dispose();
+    _player.state.removeListener(_onTick);
+    if (widget.player == null) _player.dispose();
     _scroll.dispose();
     _search.dispose();
     _edits.dispose();
+    _playingIndex.dispose();
     super.dispose();
   }
 
@@ -258,7 +289,9 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
       }
     }
 
-    if (_edited == null && _stored == null && stored is! AsyncData<Transcript?>) {
+    if (_edited == null &&
+        _stored == null &&
+        stored is! AsyncData<Transcript?>) {
       return Scaffold(
         appBar: AppBar(),
         body: const Center(child: CircularProgressIndicator()),
@@ -431,8 +464,12 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
   /// Purpose: Build the reading or correcting view.
   /// Inputs: [l10n], the [transcript] and the current [hits].
   /// Returns: `Widget`.
-  /// Side effects: None.
-  /// Notes: Internal helper used within this file only.
+  /// Side effects: Records the time spans of the rows it builds in [_spans].
+  /// Notes: Internal helper used within this file only. The list is a plain
+  /// non-lazy `ListView` on purpose: following playback scrolls to the playing
+  /// row through its `GlobalKey`, which only resolves for a row that is
+  /// built. It is *not* rebuilt on every playback tick: the playing row is
+  /// tracked by [_playingIndex], and only the rows whose state changed rebuild.
   Widget _body(
     AppLocalizations l10n,
     Transcript transcript,
@@ -442,69 +479,126 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
         ? null
         : hits[_hitIndex].segmentIndex;
 
-    return ValueListenableBuilder<PlaybackState>(
-      valueListenable: _player.state,
-      builder: (context, playback, _) {
-        final at = playback.positionSeconds;
-        return Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: viewerContentMaxWidth),
-            child: ListView(
-              controller: _scroll,
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              children: [
-                if (!transcript.hasTimestamps)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      l10n.viewerApproximate,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: viewerContentMaxWidth),
+        child: ListView(
+          controller: _scroll,
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          children: [
+            if (!transcript.hasTimestamps)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  l10n.viewerApproximate,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
-                if (_mode == ViewerMode.transcript &&
-                    _group &&
-                    transcript.hasSpeakers)
-                  ..._paragraphs(l10n, transcript, at)
-                else
-                  ..._lines(l10n, transcript, at, current),
-              ],
-            ),
-          ),
-        );
-      },
+                ),
+              ),
+            if (_mode == ViewerMode.transcript &&
+                _group &&
+                transcript.hasSpeakers)
+              ..._paragraphs(l10n, transcript)
+            else
+              ..._lines(l10n, transcript, current),
+          ],
+        ),
+      ),
     );
   }
 
-  /// Purpose: Build the grouped, flowing view.
-  /// Inputs: [l10n], the [transcript], and where playback is [at].
-  /// Returns: The paragraphs.
+  /// Purpose: Find which row playback is in.
+  /// Inputs: [at], the playback position in seconds.
+  /// Returns: The index into [_spans], or -1 when no row covers [at].
   /// Side effects: None.
+  /// Notes: Internal helper used within this file only.
+  int _spanIndexAt(double at) =>
+      _spans.indexWhere((span) => span.start <= at && at < span.end);
+
+  /// Purpose: Follow the player's position.
+  /// Inputs: None; reads the player's state.
+  /// Returns: None.
+  /// Side effects: Writes [_playingIndex] when the playing row changed, and
+  /// scrolls to it when following.
+  /// Notes: Internal helper used within this file only. Runs on every position
+  /// event, several times a second, and does nothing unless the row changed —
+  /// which is the whole point: the list is no longer rebuilt per tick. Only
+  /// ever called from a listener or a post-frame callback, never from build,
+  /// because writing a notifier that rows listen to during build is an error.
+  void _onTick() {
+    final index = _spanIndexAt(_player.state.value.positionSeconds);
+    if (index == _playingIndex.value) return;
+    _playingIndex.value = index;
+    _followPlayback(index < 0 ? null : '$_spanKind:$index');
+  }
+
+  /// Purpose: Record the rows just built, so playback can be matched to them.
+  /// Inputs: The [kind] of row and their [spans].
+  /// Returns: None.
+  /// Side effects: Stores them and, when they changed, schedules a re-match
+  /// after the frame.
+  /// Notes: Internal helper used within this file only. The re-match is
+  /// deferred because this runs during build, where the notifier cannot be
+  /// written. A change of view mode gives the notifier a different meaning (a
+  /// paragraph index becomes a line index), so the followed-line memory is
+  /// cleared and the next match scrolls again.
+  void _setSpans(String kind, List<({double start, double end})> spans) {
+    final changed = kind != _spanKind || !_sameSpans(spans, _spans);
+    _spanKind = kind;
+    _spans = spans;
+    if (!changed) return;
+    _followedLine = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // The index may be unchanged in number but mean another row now.
+      _playingIndex.value = -1;
+      _onTick();
+    });
+  }
+
+  /// Purpose: Compare two lists of spans.
+  /// Inputs: [a], [b].
+  /// Returns: Whether they hold the same times in the same order.
+  /// Side effects: None.
+  /// Notes: Internal helper used within this file only.
+  bool _sameSpans(
+    List<({double start, double end})> a,
+    List<({double start, double end})> b,
+  ) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  /// Purpose: Build the grouped, flowing view.
+  /// Inputs: [l10n] and the [transcript].
+  /// Returns: The paragraphs.
+  /// Side effects: Records the paragraphs' spans.
   /// Notes: Internal helper used within this file only. Grouping only means
   /// anything when there are speakers to group by, which is why the caller
-  /// checks that before choosing this.
-  List<Widget> _paragraphs(
-    AppLocalizations l10n,
-    Transcript transcript,
-    double at,
-  ) {
+  /// checks that before choosing this. Each paragraph listens to
+  /// [_playingIndex] for itself, so a change of playing paragraph rebuilds two
+  /// paragraphs rather than the page.
+  List<Widget> _paragraphs(AppLocalizations l10n, Transcript transcript) {
     final runs = groupBySpeaker(
       transcript,
       (id) => _nameOf(transcript, id, l10n),
     );
     final palette = Theme.of(context).brightness;
-    final playingRun = runs.indexWhere(
-      (run) => run.startSeconds <= at && at < run.endSeconds,
-    );
-    _followPlayback(playingRun < 0 ? null : 'run:$playingRun');
+    _setSpans('run', [
+      for (final run in runs) (start: run.startSeconds, end: run.endSeconds),
+    ]);
 
     return [
       for (var runIndex = 0; runIndex < runs.length; runIndex++)
-        Builder(
-          key: runIndex == playingRun ? _playingKey : null,
-          builder: (context) {
+        ValueListenableBuilder<int>(
+          valueListenable: _playingIndex,
+          builder: (context, playingIndex, _) {
+            final playing = runIndex == playingIndex;
             final run = runs[runIndex];
             final speakerIndex = transcript.speakers.indexWhere(
               (s) =>
@@ -512,42 +606,46 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
                   run.speaker,
             );
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      if (run.speaker != null)
-                        Text(
-                          run.speaker!,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: _fontSize,
-                            // "Unknown" matches no speaker record, and giving
-                            // it the first palette colour made it look like a
-                            // person.
-                            color: speakerIndex < 0
-                                ? Theme.of(context).colorScheme
-                                      .onSurfaceVariant
-                                : speakerColor(
-                                    transcript
-                                        .speakers[speakerIndex]
-                                        .colorIndex,
-                                    palette,
-                                  ),
+            return KeyedSubtree(
+              key: playing ? _playingKey : null,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        if (run.speaker != null)
+                          Text(
+                            run.speaker!,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: _fontSize,
+                              // "Unknown" matches no speaker record, and giving
+                              // it the first palette colour made it look like
+                              // a person.
+                              color: speakerIndex < 0
+                                  ? Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant
+                                  : speakerColor(
+                                      transcript
+                                          .speakers[speakerIndex]
+                                          .colorIndex,
+                                      palette,
+                                    ),
+                            ),
                           ),
-                        ),
-                      if (_showTimes) ...[
-                        const SizedBox(width: 8),
-                        _timeChip(transcript, run.startSeconds),
+                        if (_showTimes) ...[
+                          const SizedBox(width: 8),
+                          _timeChip(transcript, run.startSeconds),
+                        ],
                       ],
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  _highlighted(run.text, _fontSize, runIndex == playingRun),
-                ],
+                    ),
+                    const SizedBox(height: 4),
+                    _highlighted(run.text, _fontSize, playing),
+                  ],
+                ),
               ),
             );
           },
@@ -556,80 +654,88 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
   }
 
   /// Purpose: Build the per-line view.
-  /// Inputs: [l10n], the [transcript], where playback is [at], and which line
-  /// the search is [current]ly on.
+  /// Inputs: [l10n], the [transcript], and which line the search is
+  /// [current]ly on.
   /// Returns: The rows.
-  /// Side effects: None.
+  /// Side effects: Records the rows' spans.
   /// Notes: Internal helper used within this file only. Tapping a row plays
   /// from it, which is what makes correcting a transcript bearable: you hear
-  /// the line you are fixing without hunting for it.
+  /// the line you are fixing without hunting for it. Each row listens to
+  /// [_playingIndex] for itself, like the paragraphs.
   List<Widget> _lines(
     AppLocalizations l10n,
     Transcript transcript,
-    double at,
     int? current,
   ) {
     final scheme = Theme.of(context).colorScheme;
-    final playingLine = transcript.segments.indexWhere(
-      (segment) => segment.startSeconds <= at && at < segment.endSeconds,
-    );
-    _followPlayback(playingLine < 0 ? null : 'line:$playingLine');
+    _setSpans('line', [
+      for (final segment in transcript.segments)
+        (start: segment.startSeconds, end: segment.endSeconds),
+    ]);
 
     return [
       for (var index = 0; index < transcript.segments.length; index++)
-        Builder(
-          key: index == playingLine ? _playingKey : null,
-          builder: (context) {
+        ValueListenableBuilder<int>(
+          valueListenable: _playingIndex,
+          builder: (context, playingIndex, _) {
             final segment = transcript.segments[index];
-            final playing = index == playingLine;
+            final playing = index == playingIndex;
             final speaker = transcript.speaker(segment.speakerId);
 
-            return InkWell(
-              onTap: () => _player.seek(segment.startSeconds),
-              onLongPress: () => _editSegment(l10n, transcript, segment),
-              child: Container(
-                width: double.infinity,
-                color: index == current
-                    ? scheme.tertiaryContainer.withValues(alpha: 0.5)
-                    : (playing ? scheme.surfaceContainerHighest : null),
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        if (_showTimes)
-                          _timeChip(transcript, segment.startSeconds),
-                        // Shown for a line nobody is credited with too, once
-                        // this transcript identifies anybody at all: "Unknown"
-                        // is a fact about the line, not an empty label.
-                        if (transcript.hasSpeakers) ...[
-                          const SizedBox(width: 8),
-                          Text(
-                            _nameOf(transcript, segment.speakerId, l10n) ?? '',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: speaker == null
-                                  ? scheme.onSurfaceVariant
-                                  : speakerColor(
-                                      speaker.colorIndex,
-                                      Theme.of(context).brightness,
-                                    ),
+            return KeyedSubtree(
+              key: playing ? _playingKey : null,
+              child: InkWell(
+                onTap: () => _player.seek(segment.startSeconds),
+                onLongPress: () => _editSegment(l10n, transcript, segment),
+                child: Container(
+                  width: double.infinity,
+                  color: index == current
+                      ? scheme.tertiaryContainer.withValues(alpha: 0.5)
+                      : (playing ? scheme.surfaceContainerHighest : null),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 4,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          if (_showTimes)
+                            _timeChip(transcript, segment.startSeconds),
+                          // Shown for a line nobody is credited with too, once
+                          // this transcript identifies anybody at all:
+                          // "Unknown" is a fact about the line, not an empty
+                          // label.
+                          if (transcript.hasSpeakers) ...[
+                            const SizedBox(width: 8),
+                            Text(
+                              _nameOf(transcript, segment.speakerId, l10n) ??
+                                  '',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: speaker == null
+                                    ? scheme.onSurfaceVariant
+                                    : speakerColor(
+                                        speaker.colorIndex,
+                                        Theme.of(context).brightness,
+                                      ),
+                              ),
                             ),
+                          ],
+                          const Spacer(),
+                          IconButton(
+                            tooltip: l10n.viewerEditSegment,
+                            visualDensity: VisualDensity.compact,
+                            icon: const Icon(Icons.edit_outlined, size: 18),
+                            onPressed: () =>
+                                _editSegment(l10n, transcript, segment),
                           ),
                         ],
-                        const Spacer(),
-                        IconButton(
-                          tooltip: l10n.viewerEditSegment,
-                          visualDensity: VisualDensity.compact,
-                          icon: const Icon(Icons.edit_outlined, size: 18),
-                          onPressed: () =>
-                              _editSegment(l10n, transcript, segment),
-                        ),
-                      ],
-                    ),
-                    _highlighted(segment.text, _fontSize, playing),
-                  ],
+                      ),
+                      _highlighted(segment.text, _fontSize, playing),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -771,7 +877,10 @@ class _TranscriptViewerPageState extends ConsumerState<TranscriptViewerPage> {
         // Null while the library is still being read, and in a widget test
         // where nothing overrides it — an empty list simply offers nothing.
         knownNames:
-            ref.watch(settingsLibraryProvider).value?.defaults
+            ref
+                .watch(settingsLibraryProvider)
+                .value
+                ?.defaults
                 .knownSpeakerNames ??
             const [],
         onNameUsed: (name) async {

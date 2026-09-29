@@ -94,6 +94,12 @@ A running job **leases** its package. While a lease is held, the package can be 
 removed. A cancelled download keeps its partial file, so the next attempt resumes it. "Verify" hashes
 the installed files again against the manifest.
 
+A download gives up with a network error when the host does not answer within 30 seconds or sends
+nothing for 60 seconds; the partial file is kept and the next attempt resumes it. Cancel is heard
+while the app is still waiting for the host, and pressing download twice cannot start two downloads
+of one model. If moving a new package into place fails after the old one was set aside, the old one
+is moved back, so a failed reinstall never leaves the model with no package at all.
+
 On iOS and macOS the models live in the caches directory, which iCloud backup and Time Machine leave
 out — a model is a re-downloadable cache. The system may purge that directory when space runs short;
 the model then shows as not downloaded. On Android and Windows, models live under the app directory,

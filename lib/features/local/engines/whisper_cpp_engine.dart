@@ -377,10 +377,13 @@ class WhisperCppEngine implements LocalAsrEngine {
           control.address,
         ),
       );
+      // Created once: a fresh `call.then` every 250 ms tick would pile up
+      // closures for the whole length of a long window.
+      final finishedFuture = call.then((_) => true);
       var last = -1;
       while (true) {
         final finished = await Future.any([
-          call.then((_) => true),
+          finishedFuture,
           Future<bool>.delayed(const Duration(milliseconds: 250), () => false),
         ]);
         final progress = control.progress;

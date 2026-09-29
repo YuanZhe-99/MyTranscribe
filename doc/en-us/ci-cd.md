@@ -94,7 +94,7 @@ Apple one being the largest), and served from `.dart_tool/` after that.
 The submodule URL is **relative** — `../MyApps-DATA.git` — so it resolves against whichever remote
 you cloned from. A GitHub clone reaches `github.com/YuanZhe-99/MyApps-DATA`, a Gitea clone reaches
 the Gitea copy, and neither has to know the other exists. Both must carry the tag this repository
-pins; today that is `v1.0.2` at the same commit on both.
+pins; today that is `v1.0.3` at the same commit on both.
 
 ## Verify
 

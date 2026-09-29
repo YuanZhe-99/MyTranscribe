@@ -161,6 +161,7 @@
   "libraryApiKeyNote": "Stored on this device. Sent only to this source, and to your WebDAV server when the connection is safe.",
   "libraryApiKeySave": "Save key",
   "libraryApiKeySet": "Set on this device",
+  "libraryApiKeyUnreadable": "The saved keys could not be read just now, so nothing was changed. Try again.",
   "libraryAuth": "Authentication",
   "libraryAuthBearer": "API key",
   "libraryAuthHeader": "Custom header",
