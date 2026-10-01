@@ -2504,6 +2504,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Report copied. It holds no file names and no transcript text, and the app sends it nowhere.'**
   String get diagnosticsCopied;
+
+  /// No description provided for @settingsUiStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Interface style'**
+  String get settingsUiStyle;
+
+  /// No description provided for @settingsUiStyleDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Expressive uses rounder shapes, bolder titles and a floating navigation bar. Material 3 is the standard look with a full-width bar.'**
+  String get settingsUiStyleDesc;
+
+  /// No description provided for @settingsUiStyleMaterial3.
+  ///
+  /// In en, this message translates to:
+  /// **'Material 3'**
+  String get settingsUiStyleMaterial3;
+
+  /// No description provided for @settingsUiStyleExpressive.
+  ///
+  /// In en, this message translates to:
+  /// **'Expressive'**
+  String get settingsUiStyleExpressive;
+
+  /// No description provided for @backupModuleProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get backupModuleProfile;
+
+  /// No description provided for @profileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profileTitle;
+
+  /// No description provided for @profileName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get profileName;
+
+  /// No description provided for @profileNamePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Set your name'**
+  String get profileNamePlaceholder;
+
+  /// No description provided for @profileEditHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Name and avatar sync across your devices'**
+  String get profileEditHint;
+
+  /// No description provided for @profileChangeAvatar.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose avatar'**
+  String get profileChangeAvatar;
+
+  /// No description provided for @profileRemoveAvatar.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get profileRemoveAvatar;
+
+  /// No description provided for @profileAvatarError.
+  ///
+  /// In en, this message translates to:
+  /// **'This image could not be used'**
+  String get profileAvatarError;
+
+  /// No description provided for @profileOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile and settings'**
+  String get profileOpenSettings;
 }
 
 class _AppLocalizationsDelegate

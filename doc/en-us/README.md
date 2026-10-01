@@ -65,6 +65,7 @@ The shared WebDAV sync, backup, and ZIP engines are not in this repository. They
 - [`features/secure-secrets-sync.md`](features/secure-secrets-sync.md) — where API keys live and
   when they are allowed to travel.
 - [`features/sync-and-backup.md`](features/sync-and-backup.md) — the screens under Settings › Data.
+- [`features/profile.md`](features/profile.md) — the display name and avatar, and how they sync.
 
 ### Algorithms
 

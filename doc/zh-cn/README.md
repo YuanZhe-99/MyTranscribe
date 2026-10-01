@@ -57,6 +57,7 @@ bundle 名称）使用用户自行配置的转写服务把录音转成文字。�
 - [`features/secure-secrets-sync.md`](features/secure-secrets-sync.md) —— API Key 存放在哪里，以及它们何时
   被允许离开本机。
 - [`features/sync-and-backup.md`](features/sync-and-backup.md) —— 设置 · 数据 下的各个界面。
+- [`features/profile.md`](features/profile.md) —— 名称和头像，以及它们如何同步。
 
 ### 算法
 

@@ -775,5 +775,18 @@
   "diagnosticsEngineMissing": "此设备上未构建",
   "diagnosticsRoutes": "路线",
   "diagnosticsCopyReport": "复制报告",
-  "diagnosticsCopied": "报告已复制。其中不含文件名和转写文本，应用也不会把它发送到任何地方。"
+  "diagnosticsCopied": "报告已复制。其中不含文件名和转写文本，应用也不会把它发送到任何地方。",
+  "settingsUiStyle": "界面风格",
+  "settingsUiStyleDesc": "Expressive 使用更圆润的形状、更粗的标题和悬浮导航栏。Material 3 为标准外观，使用通栏导航栏。",
+  "settingsUiStyleMaterial3": "Material 3",
+  "settingsUiStyleExpressive": "Expressive",
+  "backupModuleProfile": "个人资料",
+  "profileTitle": "个人资料",
+  "profileName": "名称",
+  "profileNamePlaceholder": "设置你的名称",
+  "profileEditHint": "名称和头像会在你的设备间同步",
+  "profileChangeAvatar": "选择头像",
+  "profileRemoveAvatar": "移除",
+  "profileAvatarError": "无法使用此图片",
+  "profileOpenSettings": "个人资料与设置"
 }

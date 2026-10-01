@@ -3,6 +3,35 @@
 Newest first. Each entry says what changed and, where it matters, why — the reasoning is the part
 that is hard to recover later.
 
+## 0.4.0 — 2026-10-01
+
+A visual release: native Material 3 with a choice of interface style, a floating navigation bar,
+and a profile that follows you between devices. No existing file format changes; one file is added.
+
+- **Native Material 3.** `flex_color_scheme` is gone. The theme is `ColorScheme.fromSeed` from the
+  teal seed `0xFF006A60`, and on Android 12+ the wallpaper's dynamic colour takes over
+  (`dynamic_color`). Desktop never gets dynamic colour, since the plugin would return the system
+  accent over the app's own. Expected changes: scaffolds and cards no longer carry a primary tint,
+  navigation labels are always shown, and dividers are thinner. No layout changes.
+- **Interface style: Material 3 or Expressive** (Settings, default Expressive, device-local, stored
+  as `uiStyle: "material3"` in `storage_config.json` and never synced). Expressive is a theme-level
+  approximation: larger corner radii, buttons that morph when pressed, heavier titles, the 2024
+  progress and slider designs, and a fade-forward page transition; it also floats the bottom bar.
+  Material 3 is the stock theme with the classic full-width bar. Both share every colour and neither
+  changes a layout. The rail on wide windows is the same in both.
+- **Floating navigation bar.** On narrow windows Expressive draws the bottom bar as a pill-shaped
+  island in the bottom-bar slot, so pages and the FAB do not move.
+- **Profile.** A display name and an avatar: on the Transcribe tab left of the title (tap for
+  Settings) and as the first row of Settings, where both are edited. It is a third data module,
+  `profile.json`, appended after the settings and the transcripts, merged per field by timestamp
+  with no conflict dialog. The avatar is a 512 x 512 JPEG under `images/` with a new file name each
+  time, carried by the engine's image phase through the module's `referencedImages`. The old picture
+  stays on the server, a known limit. Older builds neither download nor delete the file. The
+  `audio/` side channel is untouched.
+- **Colours.** The app had no status colours to move; the speaker hues are identities and stay.
+- Tests: the profile model, merge, module and store; both themes and the style's storage; the
+  floating bar against the classic one. The registry test now expects three modules.
+
 ## 0.3.6 — 2026-09-28
 
 A maintenance release: bugs and slow spots found in a review, no new features and no change to any

@@ -10,12 +10,13 @@ The engine itself lives in the shared `myapps_data` package and is documented at
 
 ## What is registered
 
-Two data modules, in this order:
+Three data modules, in this order:
 
 | File | Module id | Carries |
 |---|---|---|
 | `transcribe_settings.json` | `settings` | Sources, models, local models and defaults |
 | `transcribe_transcripts.json` | `transcripts` | Every finished transcription's record and text |
+| `profile.json` | `profile` | The display name and the avatar's file name |
 
 The remote directory is `/MyTranscribe`. `lib/app/data_modules.dart` is the only place those names
 appear. A further module would be appended to the registry, never inserted before these — the engine
@@ -114,6 +115,17 @@ offer to run it again.
 The whole document is downloaded on every sync — the engine has no ETag short-circuit yet. A year of
 recordings is on the order of ten megabytes, which is acceptable; a conditional GET belongs in the
 shared package.
+
+## Profile
+
+`profile.json` merges per field, last writer wins by each field's own timestamp, with ties keeping
+the local value; it never raises a conflict, and no conflict dialog is involved. The module declares
+the avatar through `referencedImages`, which is what makes the engine's `images/` phase run here:
+it uploads a referenced picture the server lacks and downloads one the device lacks. The phase is
+incremental, never overwrites a file of the same name and never deletes a remote file, so every new
+avatar gets a new file name and a replaced avatar's old picture stays on the server. A build older
+than 0.4.0 never asks for `profile.json`, so it neither downloads nor deletes it. Each sync makes one
+more request for it. The remote `audio/` folder is the app's own side channel and is untouched.
 
 ## Audio
 

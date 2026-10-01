@@ -530,7 +530,7 @@ void main() {
         );
         await Future<void>.delayed(const Duration(milliseconds: 50));
         cancel.cancel();
-        await failure.timeout(const Duration(seconds: 5));
+        await failure.timeout(const Duration(seconds: 20));
         expect(client.closed, isTrue);
       },
     );

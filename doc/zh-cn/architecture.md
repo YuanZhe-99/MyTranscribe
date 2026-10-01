@@ -34,8 +34,15 @@ packages/myapps_data/       共享的同步、备份与 ZIP 引擎（git 子模�
   还意味着它们没有导航栏需要扣除，而布局规则正依赖这一点。`buildAppRouter` 接收初始位置，根部件用
   `late final` 持有路由器，这样主题或语言变化不会重建它、把导航历史清空。
 - **没有依赖注入容器。** Riverpod 的 provider 加上静态服务单例就是全部。
-- **通过 `flex_color_scheme` 使用 Material 3**，种子为 `FlexScheme.tealM3`。配色是系列各应用一眼可辨
-  的依据。
+- **原生 Material 3，外加界面风格。** `AppTheme` 以一个种子色（青色，`0xFF006A60`）通过
+  `ColorScheme.fromSeed` 构建配色，这正是系列各应用一眼可辨的依据；在 Android 12+ 上由壁纸生成的动态取色
+  （`dynamic_color`）取代它。桌面端绝不使用动态取色，因为该插件会返回系统强调色，盖掉应用自己的颜色。*界面风格*
+  是设备本地的选择：**Expressive**（默认）在 Material 3 之上叠加主题层的 Expressive 近似 —— 更大的圆角、按下
+  时变形的按钮、更粗的标题、2024 版进度条与滑块、淡入前进的页面转场 —— 并把底部栏悬浮成浮岛；**Material 3**
+  是标准主题加经典通栏。两者共用全部颜色，也从不改变布局。Flutter 没有 Expressive 组件，因此弹簧动效、波浪
+  指示器和按钮组都不模仿。这里没有语义状态色板：唯一固定的颜色是说话人色相，它们表示身份而不是状态。
+- **同步的个人资料。** 一个名称和一个头像（`features/profile.md`），保存在 `profile.json` 中，是第三个数据
+  模块。
 - **模型全部手写。** 不做代码生成。每个模型都有 `fromJson` 与 `toJson`，并带一个 `extraJson`，这样新
   版本写入的字段被旧版本读出再写回时不会丢失。
 - **持久化是应用目录下带缩进的 JSON 文件。** 没有数据库，也不用 `shared_preferences`。缩进是有意义

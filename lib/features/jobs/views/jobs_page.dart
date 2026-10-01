@@ -11,16 +11,37 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/utils/adaptive_layout.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../profile/views/profile_avatar.dart';
 import '../models/transcription_job.dart';
 import '../services/job_providers.dart';
 import '../services/job_runner.dart';
 import 'job_detail_page.dart';
 import 'job_text.dart';
 import 'new_job_page.dart';
+
+/// Purpose: Build the home app bar, with the profile avatar left of the title.
+/// Inputs: `context`; `l10n`.
+/// Returns: `AppBar` titled with the transcribe tab's name.
+/// Side effects: Tapping the avatar opens Settings, whose header edits the
+/// name and avatar.
+/// Notes: Internal helper used within this file only. The avatar appears on
+/// this first tab only (0.4.0); no other page carries it.
+AppBar _homeAppBar(BuildContext context, AppLocalizations l10n) => AppBar(
+  leading: Padding(
+    padding: const EdgeInsetsDirectional.only(start: 8),
+    child: IconButton(
+      tooltip: l10n.profileOpenSettings,
+      onPressed: () => context.go('/settings'),
+      icon: const ProfileAvatar(radius: 16),
+    ),
+  ),
+  title: Text(l10n.jobsTitle),
+);
 
 class JobsPage extends ConsumerStatefulWidget {
   /// Purpose: Create a jobs page instance.
@@ -108,7 +129,7 @@ class _JobsPageState extends ConsumerState<JobsPage> {
 
     if (!_twoPane) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.jobsTitle)),
+        appBar: _homeAppBar(context, l10n),
         body: list,
         floatingActionButton: fab,
       );
@@ -116,7 +137,7 @@ class _JobsPageState extends ConsumerState<JobsPage> {
 
     final contentWidth = shellContentWidth(screen.width);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.jobsTitle)),
+      appBar: _homeAppBar(context, l10n),
       body: Row(
         children: [
           SizedBox(width: jobsListPaneWidth(contentWidth), child: list),

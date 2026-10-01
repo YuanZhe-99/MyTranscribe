@@ -44,6 +44,12 @@ is covered by a concept page, and a table of one-line stubs would say less than 
 
 | Source file | Described by |
 |---|---|
+| `lib/features/profile/models/profile_data.dart` | [features/profile.md](../features/profile.md), [data-formats.md](../data-formats.md) |
+| `lib/features/profile/services/profile_merge.dart` | [features/profile.md](../features/profile.md), [sync.md](../sync.md) |
+| `lib/features/profile/services/profile_store.dart` | [features/profile.md](../features/profile.md) |
+| `lib/features/profile/providers/profile_provider.dart` | [features/profile.md](../features/profile.md) |
+| `lib/features/profile/views/profile_avatar.dart` | [features/profile.md](../features/profile.md) |
+| `lib/features/profile/views/profile_header.dart` | [features/profile.md](../features/profile.md) |
 | `lib/features/providers/models/transcribe_settings.dart` | [data-formats.md](../data-formats.md) |
 | `lib/features/providers/models/provider_config.dart` | [features/provider-library.md](../features/provider-library.md) |
 | `lib/features/providers/models/model_config.dart` | [features/provider-library.md](../features/provider-library.md) |

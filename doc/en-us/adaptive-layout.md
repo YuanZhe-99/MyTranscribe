@@ -60,6 +60,12 @@ cannot drift apart, and the rail uses `groupAlignment: 0` — the default top al
 sitting under a leading button or FAB, and three destinations pinned to the top of a tall rail would
 leave the whole lower half empty.
 
+The bottom bar has two looks, chosen by the interface style rather than by width. **Expressive**
+(the default) draws it as a floating, pill-shaped island, at most 480 wide, with side and bottom
+margins; it sits in the Scaffold's bottom-bar slot, not over the body, so pages keep their layout
+and the FAB keeps its place. **Material 3** keeps the classic full-width bar. The rail is the same
+in both.
+
 ### Rule C — how many of these fit? (width only, per content)
 
 ```dart

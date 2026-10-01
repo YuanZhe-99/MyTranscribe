@@ -97,8 +97,15 @@ void main() {
 
   test('no message is left in English in a Chinese catalog', () {
     // Catches a key added to all three files with the English text pasted in.
-    // Proper nouns and language names are the deliberate exceptions.
-    const allowed = {'appTitle', 'settingsWebDAVNextcloud', 'settingsVersion'};
+    // Proper nouns, style names and language names are the deliberate exceptions.
+    const allowed = {
+      'appTitle',
+      'settingsWebDAVNextcloud',
+      'settingsVersion',
+      // The two interface styles are named as Google names them.
+      'settingsUiStyleMaterial3',
+      'settingsUiStyleExpressive',
+    };
     final english = read(template);
     for (final path in translations) {
       final other = read(path);

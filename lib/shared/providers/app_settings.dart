@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/theme.dart';
 import '../services/transcribe_storage.dart';
 
 /// How the transcript viewer lays a transcript out.
@@ -21,6 +22,14 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
   AppSettingsNotifier() : super(const AppSettings()) {
     _loadPersisted();
   }
+
+  /// Purpose: Create a notifier that starts from fixed settings.
+  /// Inputs: `settings`.
+  /// Returns: A new `AppSettingsNotifier` instance.
+  /// Side effects: None; nothing is read from disk.
+  /// Notes: For tests that override `appSettingsProvider`. Setters still
+  /// persist through `TranscribeStorage`.
+  AppSettingsNotifier.fixed(super.settings);
 
   /// Purpose: Load the persisted preferences from disk.
   /// Inputs: None.
@@ -52,6 +61,9 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
     final groupSpeakers = await TranscribeStorage.getViewerGroupSpeakers();
     final keepChunks = await TranscribeStorage.getKeepChunkFiles();
     final autoSaveFiles = await TranscribeStorage.getAutoSaveTranscriptFiles();
+    final uiStyle = (await TranscribeStorage.getUiStyle()) == 'material3'
+        ? AppUiStyle.material3
+        : AppUiStyle.expressive;
 
     final themeMode = switch (modeStr) {
       'light' => ThemeMode.light,
@@ -79,6 +91,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
       viewerGroupSpeakers: groupSpeakers,
       keepChunkFiles: keepChunks,
       autoSaveTranscriptFiles: autoSaveFiles,
+      uiStyle: uiStyle,
     );
   }
 
@@ -114,6 +127,21 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
           : locale.languageCode;
       TranscribeStorage.setLocaleTag(tag);
     }
+  }
+
+  /// Purpose: Switch the interface style.
+  /// Inputs: `style`.
+  /// Returns: None.
+  /// Side effects: Persists the choice.
+  /// Notes: Expressive is the default and is stored as an absent key. Expressive
+  /// gets the theme-level Expressive approximation and the floating island
+  /// bottom bar; Material 3 the stock theme and the classic full-width bar. The
+  /// wide-window rail is the same in both.
+  void setUiStyle(AppUiStyle style) {
+    state = state.copyWith(uiStyle: style);
+    TranscribeStorage.setUiStyle(
+      style == AppUiStyle.material3 ? 'material3' : null,
+    );
   }
 
   /// Purpose: Change the transcript viewer's text size.
@@ -209,6 +237,10 @@ class AppSettings {
   /// recording it was made from.
   final bool autoSaveTranscriptFiles;
 
+  /// The interface style (0.4.0): Expressive (default, with the floating island
+  /// bottom bar) or stock Material 3 (classic bottom bar).
+  final AppUiStyle uiStyle;
+
   /// Purpose: Create an app settings instance.
   /// Inputs: All fields.
   /// Returns: A new `AppSettings` instance.
@@ -224,6 +256,7 @@ class AppSettings {
     this.viewerGroupSpeakers = true,
     this.keepChunkFiles = false,
     this.autoSaveTranscriptFiles = false,
+    this.uiStyle = AppUiStyle.expressive,
   });
 
   /// Purpose: Create a copy with selected fields replaced.
@@ -240,6 +273,7 @@ class AppSettings {
     bool? viewerGroupSpeakers,
     bool? keepChunkFiles,
     bool? autoSaveTranscriptFiles,
+    AppUiStyle? uiStyle,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -250,6 +284,7 @@ class AppSettings {
       keepChunkFiles: keepChunkFiles ?? this.keepChunkFiles,
       autoSaveTranscriptFiles:
           autoSaveTranscriptFiles ?? this.autoSaveTranscriptFiles,
+      uiStyle: uiStyle ?? this.uiStyle,
     );
   }
 }

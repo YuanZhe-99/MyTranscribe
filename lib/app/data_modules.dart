@@ -31,8 +31,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:myapps_data/myapps_data.dart';
+import 'package:path/path.dart' as p;
 
 import '../features/jobs/models/transcripts_document.dart';
+import '../features/profile/models/profile_data.dart';
+import '../features/profile/services/profile_merge.dart';
 import '../features/providers/models/transcribe_settings.dart';
 import '../shared/services/sync_merge.dart';
 import '../shared/services/transcribe_storage.dart';
@@ -60,6 +63,15 @@ const transcriptsDataFileName = 'transcribe_transcripts.json';
 
 /// Backup bundle module key for that file (I2).
 const transcriptsModuleId = 'transcripts';
+
+/// Local and remote name of the profile file (0.4.0; I1/I2).
+///
+/// Shared by every app in the series, so the name and module id are identical
+/// everywhere and frozen once shipped.
+const profileFileName = 'profile.json';
+
+/// Backup bundle module key for that file (I2).
+const profileModuleId = 'profile';
 
 /// Remote subdirectory holding one converted audio file per transcription.
 ///
@@ -338,13 +350,62 @@ DataModule buildTranscriptsModule() => DataModule(
       ),
 );
 
+/// Purpose: Validate a `profile.json` payload before it is written.
+/// Inputs: [json] raw module content.
+/// Returns: None; throws when the payload is not a JSON object.
+/// Side effects: None.
+/// Notes: The model is tolerant inside the object.
+void validateProfileJson(String json) {
+  ProfileData.fromJson(jsonDecode(json));
+}
+
+/// Purpose: Extract the avatar image basename referenced by the profile.
+/// Inputs: [json] raw or merged module JSON.
+/// Returns: A set holding the avatar's basename, or empty.
+/// Side effects: None.
+/// Notes: This is what makes the avatar file travel through the engine's
+/// `images/` phase, the only image MyTranscribe has. Malformed input yields an
+/// empty set.
+Set<String> profileReferencedImages(String json) {
+  try {
+    final avatar = ProfileData.fromJson(jsonDecode(json)).avatar;
+    return avatar == null ? {} : {p.basename(avatar)};
+  } catch (_) {
+    return {};
+  }
+}
+
+/// Purpose: Describe `profile.json` to the shared engines (0.4.0).
+/// Inputs: None.
+/// Returns: The profile [DataModule].
+/// Side effects: None.
+/// Notes: Conflict-free (each field is last-writer-wins by its own
+/// timestamp), so `baseJson` and `autoResolve` are unused. Builds older than
+/// 0.4.0 never request this file, so adding it leaves them unaffected.
+DataModule buildProfileModule() => DataModule(
+  fileName: profileFileName,
+  moduleId: profileModuleId,
+  validate: validateProfileJson,
+  referencedImages: profileReferencedImages,
+  merge:
+      ({
+        required String localJson,
+        required String remoteJson,
+        required String? baseJson,
+        required bool autoResolve,
+      }) => ModuleMergeOutcome(
+        mergedJson: mergeProfileJson(localJson, remoteJson),
+      ),
+);
+
 /// Purpose: Provide MyTranscribe's ordered module registry.
 /// Inputs: None.
-/// Returns: A registry holding the settings and transcripts modules.
+/// Returns: A registry holding the settings, transcripts and profile modules (0.4.0).
 /// Side effects: None.
 /// Notes: Built once; the shared engines treat registry order as significant,
 /// so a further module must be appended, never inserted before these.
 final ModuleRegistry transcribeModuleRegistry = ModuleRegistry([
   buildSettingsModule(),
   buildTranscriptsModule(),
+  buildProfileModule(),
 ]);

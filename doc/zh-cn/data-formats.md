@@ -11,6 +11,8 @@
 |---|---|---|---|
 | `transcribe_settings.json` | 来源、模型、本地模型、默认值 | 是 —— 一个数据模块 | 是 |
 | `transcribe_transcripts.json` | 每条已完成转写的记录和文本 | 是 —— 一个数据模块 | 是 |
+| `profile.json` | 名称和头像文件名，各带自己的时间戳 | 是 —— 一个数据模块 | 是 |
+| `images/avatar_<uuid>.jpg` | 头像图片，512 x 512 | 是 —— 经引擎的图片阶段，由 `profile.json` 指明 | 是 —— 作为数据块 |
 | `transcribe_secrets.json` | API Key，每个来源一个 | 仅在安全端点下，通过单独的交换流程 | **否** |
 | `storage_config.json` | 设备本地偏好 | 否 | 否 |
 | `webdav_config.json` | 服务器地址、凭据、自动同步开关 | 否 | 否 |
@@ -108,6 +110,25 @@ payload。无法识别的 `kind` 读作 `unknown`，会被原样带过而不是�
 哪些内容会被投影、写回时又被允许对文件夹做什么，见 [`sync.md`](sync.md)：只有已完成的转写才会被重新投影，
 正在重跑的任务会被冻结而不是丢弃，删除只来自三方合并，读不出来的记录会中止投影而不是在其中留下缺口。
 
+## `profile.json` —— 个人资料
+
+一个名称和一个头像，以相同的文件名与系列中的其他应用共用。每个字段带有自己的 UTC 时间戳，因此在一台设备上改
+名称、在另一台上换头像，两处修改都会保留。
+
+```json
+{
+  "version": 1,
+  "displayName": "Yuan",
+  "displayNameUpdatedAt": "2026-10-01T08:00:00.000Z",
+  "avatar": "images/avatar_<uuid>.jpg",
+  "avatarUpdatedAt": "2026-10-01T08:05:00.000Z"
+}
+```
+
+字段只有在有了时间戳之后才会写出。被移除的头像写成带时间戳的显式 `null`，这样移除会被同步，而不会被当作
+"从未设置"。未知的顶层键会被保留。在用户设置名称或头像之前，该文件不存在。图片始终使用全新的文件名；见
+[features/profile.md](features/profile.md)。
+
 ## `transcribe_secrets.json` —— 密钥
 
 ```jsonc
@@ -142,6 +163,7 @@ payload。无法识别的 `kind` 读作 `unknown`，会被原样带过而不是�
 | `storagePath` | 自定义应用目录；缺省表示平台默认位置 |
 | `themeMode` | `light` 或 `dark`；缺省表示跟随系统 |
 | `locale` | `language` 或 `language_COUNTRY`；缺省表示跟随系统 |
+| `uiStyle` | `material3`；缺省表示默认的 Expressive |
 | `lastTab` | 启动时打开的标签页 |
 | `viewerFontSize`、`viewerShowTimestamps`、`viewerGroupSpeakers` | 转写稿查看器的偏好 |
 | `keepChunkFiles` | 任务完成后保留切分后的音频 |

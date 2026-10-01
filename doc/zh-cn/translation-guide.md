@@ -47,6 +47,14 @@
 | local version / remote version | 本地版本 / 远程版本 | 本機版本 / 遠端版本 |
 | server | 服务器 | 伺服器 |
 | network | 网络 | 網路 |
+| interface style | 界面风格 | 介面風格 |
+| Expressive | Expressive | Expressive |
+| floating navigation bar | 悬浮导航栏 | 懸浮導覽列 |
+| profile | 个人资料 | 個人資料 |
+| avatar | 头像 | 頭像 |
+| display name | 名称 | 名稱 |
+| dynamic color | 动态取色 | 動態色彩 |
+| seed color | 种子色 | 種子色 |
 
 ### 5.2 本应用专有术语
 

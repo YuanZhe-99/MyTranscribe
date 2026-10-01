@@ -775,5 +775,18 @@
   "diagnosticsEngineMissing": "此裝置上未建置",
   "diagnosticsRoutes": "路線",
   "diagnosticsCopyReport": "複製報告",
-  "diagnosticsCopied": "報告已複製。其中不含檔名和轉寫文字，應用程式也不會把它傳送到任何地方。"
+  "diagnosticsCopied": "報告已複製。其中不含檔名和轉寫文字，應用程式也不會把它傳送到任何地方。",
+  "settingsUiStyle": "介面風格",
+  "settingsUiStyleDesc": "Expressive 使用更圓潤的形狀、更粗的標題和懸浮導覽列。Material 3 為標準外觀，使用通欄導覽列。",
+  "settingsUiStyleMaterial3": "Material 3",
+  "settingsUiStyleExpressive": "Expressive",
+  "backupModuleProfile": "個人資料",
+  "profileTitle": "個人資料",
+  "profileName": "名稱",
+  "profileNamePlaceholder": "設定你的名稱",
+  "profileEditHint": "名稱和頭像會在你的裝置間同步",
+  "profileChangeAvatar": "選擇頭像",
+  "profileRemoveAvatar": "移除",
+  "profileAvatarError": "無法使用此圖片",
+  "profileOpenSettings": "個人資料與設定"
 }

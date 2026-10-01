@@ -10,6 +10,11 @@
 | 各处显示名称 | `MyTranscribe!!!!!` |
 | 发布者 | `yuanzhe` |
 
+## 动态取色
+
+在 Android 12+ 上，主题使用 `dynamic_color` 提供的由壁纸生成的配色；其他平台以及较旧的 Android 使用青色种子色。
+只允许 Android 提供动态配色：桌面端插件会返回系统强调色，这会取代应用自己的颜色。见 [architecture.md](architecture.md)。
+
 ## FFmpeg：两种后端，一个接口
 
 切分录音需要 FFmpeg，而应用获得它的方式因平台而异。两种后端实现同一个 `MediaToolkit` 接口，由

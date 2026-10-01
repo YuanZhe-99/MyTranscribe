@@ -12,6 +12,8 @@ default directory, because it is the file that records the custom path.
 |---|---|---|---|
 | `transcribe_settings.json` | sources, models, local models, defaults | yes — a data module | yes |
 | `transcribe_transcripts.json` | every finished transcription's record and text | yes — a data module | yes |
+| `profile.json` | the display name and the avatar's file name, each with its own timestamp | yes — a data module | yes |
+| `images/avatar_<uuid>.jpg` | the avatar picture, 512 x 512 | yes — through the engine's image phase, named by `profile.json` | yes — as a blob |
 | `transcribe_secrets.json` | API keys, one per source | only to a secure endpoint, by a separate exchange | **no** |
 | `storage_config.json` | device-local preferences | no | no |
 | `webdav_config.json` | server URL, credentials, auto-sync flag | no | no |
@@ -123,6 +125,27 @@ What is projected, and what applying one is allowed to do to the folders, is in
 rather than dropped, deletions come only from the three-way merge, and a record that cannot be read
 stops the projection rather than leaving a gap in it.
 
+## `profile.json` — the profile
+
+A display name and an avatar, shared with every other app in the series under the same file name.
+Each field carries its own UTC timestamp, so a name changed on one device and an avatar changed on
+another both survive.
+
+```json
+{
+  "version": 1,
+  "displayName": "Yuan",
+  "displayNameUpdatedAt": "2026-10-01T08:00:00.000Z",
+  "avatar": "images/avatar_<uuid>.jpg",
+  "avatarUpdatedAt": "2026-10-01T08:05:00.000Z"
+}
+```
+
+A field is written only once it has a timestamp. A removed avatar is written as an explicit `null`
+with its timestamp, so the removal syncs instead of reading as "never set". Unknown top-level keys
+are preserved. The file is absent until the user sets a name or an avatar. The picture is always a
+fresh file name; see [features/profile.md](features/profile.md).
+
 ## `transcribe_secrets.json` — the keys
 
 ```jsonc
@@ -162,6 +185,7 @@ bad content: the write fails and the file is left as it was.
 | `storagePath` | custom app directory; absent means the platform default |
 | `themeMode` | `light` or `dark`; absent follows the system |
 | `locale` | `language` or `language_COUNTRY`; absent follows the system |
+| `uiStyle` | `material3`; absent means the default, Expressive |
 | `lastTab` | the tab to open on |
 | `viewerFontSize`, `viewerShowTimestamps`, `viewerGroupSpeakers` | transcript viewer preferences |
 | `keepChunkFiles` | keep a job's split audio after it finishes |

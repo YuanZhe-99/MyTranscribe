@@ -14,13 +14,17 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:my_transcribe/app/theme.dart';
 import 'package:my_transcribe/l10n/app_localizations.dart';
+import 'package:my_transcribe/shared/providers/app_settings.dart';
 import 'package:my_transcribe/shared/widgets/shell_scaffold.dart';
 
 /// Purpose: Pump the shell at a pinned viewport.
-/// Inputs: `tester`, `size` in logical pixels, optional `location`.
+/// Inputs: `tester`, `size` in logical pixels, optional `location` and
+/// `uiStyle`.
 /// Returns: None.
 /// Side effects: Sets and restores the test view size; pumps a tree.
 /// Notes: Internal helper used within this file only.
@@ -28,6 +32,7 @@ Future<void> pumpShell(
   WidgetTester tester,
   Size size, {
   String location = '/jobs',
+  AppUiStyle uiStyle = AppUiStyle.expressive,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
@@ -51,17 +56,25 @@ Future<void> pumpShell(
   );
 
   await tester.pumpWidget(
-    MaterialApp.router(
-      locale: const Locale('zh'),
-      supportedLocales: AppLocalizations.supportedLocales,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      routerConfig: router,
+    ProviderScope(
+      overrides: [
+        appSettingsProvider.overrideWithValue(
+          AppSettingsNotifier.fixed(AppSettings(uiStyle: uiStyle)),
+        ),
+      ],
+      child: MaterialApp.router(
+        locale: const Locale('zh'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        routerConfig: router,
+      ),
     ),
   );
   await tester.pumpAndSettle();
 }
 
 void main() {
+  bottomBarStyleTests();
   testWidgets('a phone in portrait gets a bottom bar', (tester) async {
     await pumpShell(tester, const Size(412, 915)); // Pixel 8, portrait
     expect(find.byType(NavigationBar), findsOneWidget);
@@ -136,5 +149,49 @@ void main() {
     final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
     expect(rail.groupAlignment, 0);
     expect(rail.labelType, NavigationRailLabelType.all);
+  });
+}
+
+/// The floating island's key, so a test can tell it from the classic bar.
+const _island = ValueKey('floatingNavBarIsland');
+
+/// Purpose: Test the bottom bar style that follows the interface style.
+/// Inputs: None.
+/// Returns: None.
+/// Side effects: Pumps widget trees.
+/// Notes: Expressive floats the bar; Material 3 keeps the classic full-width
+/// one; a rail looks the same in both.
+void bottomBarStyleTests() {
+  group('bottom bar style', () {
+    testWidgets('Expressive (the default) floats the bar', (tester) async {
+      await pumpShell(tester, const Size(412, 915));
+      expect(find.byKey(_island), findsOneWidget);
+      expect(find.byType(NavigationBar), findsOneWidget);
+    });
+
+    testWidgets('Material 3 keeps the classic full-width bar', (tester) async {
+      await pumpShell(
+        tester,
+        const Size(412, 915),
+        uiStyle: AppUiStyle.material3,
+      );
+      expect(find.byKey(_island), findsNothing);
+      expect(find.byType(NavigationBar), findsOneWidget);
+    });
+
+    testWidgets('the rail ignores the style', (tester) async {
+      for (final style in AppUiStyle.values) {
+        await pumpShell(tester, const Size(1280, 720), uiStyle: style);
+        expect(find.byType(NavigationRail), findsOneWidget);
+        expect(find.byKey(_island), findsNothing);
+      }
+    });
+
+    testWidgets('the floating bar still navigates', (tester) async {
+      await pumpShell(tester, const Size(412, 915));
+      await tester.tap(find.byIcon(Icons.settings_outlined));
+      await tester.pumpAndSettle();
+      expect(find.text('page /settings'), findsOneWidget);
+    });
   });
 }

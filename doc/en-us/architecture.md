@@ -40,8 +40,19 @@ resume and merge are shared by uploaded and local jobs; see
   `late final` field so a theme or locale change does not rebuild it and reset navigation history.
 - **There is no dependency injection container.** Riverpod providers plus static service singletons
   are the whole of it.
-- **Material 3 through `flex_color_scheme`**, seeded with `FlexScheme.tealM3`. The scheme is what
-  tells the series' apps apart at a glance.
+- **Native Material 3, with an interface style.** `AppTheme` builds `ColorScheme.fromSeed` from one
+  seed colour, teal (`0xFF006A60`), which tells the series' apps apart at a glance; on Android 12+ the
+  wallpaper's dynamic colour (`dynamic_color`) replaces it. Desktop is never given dynamic colour,
+  because the plugin would return the system accent over the app's own. The *interface style* is a
+  device-local choice: **Expressive** (the default) layers a theme-level Expressive approximation on
+  top of Material 3 — larger corner radii, buttons that morph when pressed, heavier titles, the 2024
+  progress and slider designs, a fade-forward page transition — and floats the bottom bar as an
+  island; **Material 3** is the stock theme with the classic full-width bar. The two share every
+  colour and never change a layout. Flutter ships no Expressive components, so spring motion, wavy
+  indicators and button groups are not imitated. There is no semantic status palette: the only fixed
+  colours are the speaker hues, which are identities rather than states.
+- **A synced profile.** A display name and an avatar (`features/profile.md`), kept in `profile.json`,
+  the third data module.
 - **Models are hand-written.** No code generation. Every model has `fromJson` and `toJson` and
   carries an `extraJson` map, so a field written by a newer build survives being read and rewritten
   by an older one.

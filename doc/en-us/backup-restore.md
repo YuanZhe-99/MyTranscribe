@@ -1,8 +1,8 @@
 # Backup, restore and ZIP transfer
 
 Two ways to keep a copy of the configuration: local bundles kept on the device, and a ZIP file the
-user can put anywhere. Both carry **only** what the module registry lists: the settings file and
-the transcripts projection. Neither carries API keys or recordings.
+user can put anywhere. Both carry **only** what the module registry lists: the settings file, the
+transcripts projection and the profile. Neither carries API keys or recordings.
 
 The engines live in the shared `myapps_data` package; this page describes how they are configured
 here.
@@ -10,8 +10,8 @@ here.
 ## Local backups
 
 A backup is one JSON bundle in `backups/`, named `backup_<yyyyMMdd_HHmmss>.json`, holding the raw
-content of each registered data file. MyTranscribe has no images, so the blob store the format also
-supports stays empty here.
+content of each registered data file. The profile's avatar is the only image, so the blob store the format also
+supports holds at most that one picture.
 
 - **Automatic:** once a day, if the user turned it on, checked at launch, on resume and on the
   periodic tick, so a device left open across midnight still gets one.

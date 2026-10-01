@@ -16,16 +16,21 @@ import 'package:my_transcribe/features/providers/models/transcribe_settings.dart
 
 void main() {
   group('the registry', () {
-    test('holds the settings and transcripts modules, in that order', () {
-      // Order is significant to the shared engines, and both names are
-      // persisted contracts. A further module is appended, never inserted.
-      final modules = transcribeModuleRegistry.modules;
-      expect(modules, hasLength(2));
-      expect(modules[0].fileName, 'transcribe_settings.json');
-      expect(modules[0].moduleId, 'settings');
-      expect(modules[1].fileName, 'transcribe_transcripts.json');
-      expect(modules[1].moduleId, 'transcripts');
-    });
+    test(
+      'holds the settings, transcripts and profile modules, in that order',
+      () {
+        // Order is significant to the shared engines, and both names are
+        // persisted contracts. A further module is appended, never inserted.
+        final modules = transcribeModuleRegistry.modules;
+        expect(modules, hasLength(3));
+        expect(modules[0].fileName, 'transcribe_settings.json');
+        expect(modules[0].moduleId, 'settings');
+        expect(modules[1].fileName, 'transcribe_transcripts.json');
+        expect(modules[1].moduleId, 'transcripts');
+        expect(modules[2].fileName, profileFileName);
+        expect(modules[2].moduleId, profileModuleId);
+      },
+    );
 
     test('does not carry the API keys, the job folder or the audio', () {
       // The whole security argument rests on this: sync, backup and ZIP only

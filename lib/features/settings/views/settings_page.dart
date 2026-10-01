@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../../app/theme.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/providers/app_settings.dart';
 import '../../../shared/services/import_export_service.dart';
@@ -28,6 +29,7 @@ import '../../local/models/engine_capability.dart';
 import '../../local/services/engine_registry.dart';
 import '../../local/services/local_models_controller.dart';
 import '../../local/views/engine_diagnostics_page.dart';
+import '../../profile/views/profile_header.dart';
 import '../../local/views/speaker_labels_tile.dart';
 import '../../media/widgets/media_tools_tile.dart';
 import 'backup_page.dart';
@@ -323,6 +325,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         bottom: shellListBottomInset(MediaQuery.sizeOf(context).width),
       ),
       children: [
+        // Avatar and name (0.4.0); synced, unlike the device-local settings
+        // below. Tapping opens the edit dialog.
+        const ProfileHeader(),
         _section(l10n.settingsGeneral, [
           ListTile(
             leading: const Icon(Icons.palette_outlined),
@@ -350,6 +355,31 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               ],
               selected: {settings.themeMode},
               onSelectionChanged: (s) => notifier.setThemeMode(s.first),
+            ),
+          ),
+          // Interface style (0.4.0): Expressive (default) also floats the
+          // bottom bar, Material 3 keeps the classic one. Laid out like the
+          // theme picker above.
+          ListTile(
+            leading: const Icon(Icons.auto_awesome_outlined),
+            title: Text(l10n.settingsUiStyle),
+            subtitle: Text(l10n.settingsUiStyleDesc),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: SegmentedButton<AppUiStyle>(
+              segments: [
+                ButtonSegment(
+                  value: AppUiStyle.material3,
+                  label: Text(l10n.settingsUiStyleMaterial3),
+                ),
+                ButtonSegment(
+                  value: AppUiStyle.expressive,
+                  label: Text(l10n.settingsUiStyleExpressive),
+                ),
+              ],
+              selected: {settings.uiStyle},
+              onSelectionChanged: (s) => notifier.setUiStyle(s.first),
             ),
           ),
           ListTile(

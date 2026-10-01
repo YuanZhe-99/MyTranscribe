@@ -782,5 +782,18 @@
   "diagnosticsEngineMissing": "Not built for this device",
   "diagnosticsRoutes": "Routes",
   "diagnosticsCopyReport": "Copy report",
-  "diagnosticsCopied": "Report copied. It holds no file names and no transcript text, and the app sends it nowhere."
+  "diagnosticsCopied": "Report copied. It holds no file names and no transcript text, and the app sends it nowhere.",
+  "settingsUiStyle": "Interface style",
+  "settingsUiStyleDesc": "Expressive uses rounder shapes, bolder titles and a floating navigation bar. Material 3 is the standard look with a full-width bar.",
+  "settingsUiStyleMaterial3": "Material 3",
+  "settingsUiStyleExpressive": "Expressive",
+  "backupModuleProfile": "Profile",
+  "profileTitle": "Profile",
+  "profileName": "Name",
+  "profileNamePlaceholder": "Set your name",
+  "profileEditHint": "Name and avatar sync across your devices",
+  "profileChangeAvatar": "Choose avatar",
+  "profileRemoveAvatar": "Remove",
+  "profileAvatarError": "This image could not be used",
+  "profileOpenSettings": "Profile and settings"
 }

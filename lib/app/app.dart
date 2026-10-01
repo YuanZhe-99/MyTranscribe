@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/gestures.dart';
+import 'package:dynamic_color/dynamic_color.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -88,29 +90,43 @@ class _MyTranscribeAppState extends ConsumerState<MyTranscribeApp> {
   Widget build(BuildContext context) {
     final settings = ref.watch(appSettingsProvider);
 
-    return MaterialApp.router(
-      title: 'MyTranscribe!!!!!',
-      debugShowCheckedModeBanner: false,
+    // The platform's wallpaper colors reach the theme on Android only: the
+    // desktop plugins report the system accent, which would replace the
+    // app's own seed color.
+    final allowDynamic =
+        !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
-      // Enable desktop scroll
-      scrollBehavior: _DesktopScrollBehavior(),
+    return DynamicColorBuilder(
+      builder: (lightDynamic, darkDynamic) => MaterialApp.router(
+        title: 'MyTranscribe!!!!!',
+        debugShowCheckedModeBanner: false,
 
-      // Theme
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: settings.themeMode,
+        // Enable desktop scroll
+        scrollBehavior: _DesktopScrollBehavior(),
 
-      // Localization
-      locale: settings.locale,
-      supportedLocales: AppLocalizations.supportedLocales,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      localeListResolutionCallback: resolveAppLocale,
+        // Theme
+        theme: AppTheme.light(
+          allowDynamic ? lightDynamic : null,
+          settings.uiStyle,
+        ),
+        darkTheme: AppTheme.dark(
+          allowDynamic ? darkDynamic : null,
+          settings.uiStyle,
+        ),
+        themeMode: settings.themeMode,
 
-      // DevicePreview
-      builder: DevicePreview.appBuilder,
+        // Localization
+        locale: settings.locale,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localeListResolutionCallback: resolveAppLocale,
 
-      // Routing
-      routerConfig: _router,
+        // DevicePreview
+        builder: DevicePreview.appBuilder,
+
+        // Routing
+        routerConfig: _router,
+      ),
     );
   }
 }

@@ -11,6 +11,13 @@ targeted.
 | Display name everywhere | `MyTranscribe!!!!!` |
 | Publisher | `yuanzhe` |
 
+## Dynamic colour
+
+On Android 12+ the theme uses the wallpaper-derived scheme from `dynamic_color`; elsewhere, and on
+older Android, it uses the teal seed. Only Android is allowed to supply one: the desktop plugins
+return the system accent, which would replace the app's own colour. See
+[architecture.md](architecture.md).
+
 ## FFmpeg: two backends, one interface
 
 Splitting a recording needs FFmpeg, and how the app gets it differs by platform. Both backends

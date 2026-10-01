@@ -415,6 +415,25 @@ class TranscribeStorage {
   static Future<void> setThemeMode(String? mode) =>
       _setString('themeMode', mode);
 
+  /// Purpose: Read the persisted interface style (0.4.0).
+  /// Inputs: None.
+  /// Returns: `Future<String?>` — `material3`, or null for the default
+  /// Expressive style.
+  /// Side effects: Reads `storage_config.json`.
+  /// Notes: Device-local, like the theme mode: it is never part of the synced
+  /// settings file.
+  static Future<String?> getUiStyle() async =>
+      (await _getString('uiStyle')) == 'material3' ? 'material3' : null;
+
+  /// Purpose: Persist the interface style (0.4.0).
+  /// Inputs: `name` — `material3`, or null for the default Expressive style.
+  /// Returns: None.
+  /// Side effects: Rewrites `storage_config.json`.
+  /// Notes: Only the non-default Material 3 style is stored, as
+  /// `uiStyle: "material3"`.
+  static Future<void> setUiStyle(String? name) =>
+      _setString('uiStyle', name == 'material3' ? 'material3' : null);
+
   /// Purpose: Read the persisted interface language.
   /// Inputs: None.
   /// Returns: `Future<String?>` — `language` or `language_COUNTRY`, or null to
