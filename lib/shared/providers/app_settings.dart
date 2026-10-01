@@ -64,6 +64,9 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
     final uiStyle = (await TranscribeStorage.getUiStyle()) == 'material3'
         ? AppUiStyle.material3
         : AppUiStyle.expressive;
+    final expressiveWideBottomNav = await TranscribeStorage.getWideBottomNav();
+    final navRailOnRight = await TranscribeStorage.getNavRailRight();
+    final alwaysSideNav = await TranscribeStorage.getAlwaysSideNav();
 
     final themeMode = switch (modeStr) {
       'light' => ThemeMode.light,
@@ -92,6 +95,9 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
       keepChunkFiles: keepChunks,
       autoSaveTranscriptFiles: autoSaveFiles,
       uiStyle: uiStyle,
+      expressiveWideBottomNav: expressiveWideBottomNav,
+      navRailOnRight: navRailOnRight,
+      alwaysSideNav: alwaysSideNav,
     );
   }
 
@@ -142,6 +148,41 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
     TranscribeStorage.setUiStyle(
       style == AppUiStyle.material3 ? 'material3' : null,
     );
+  }
+
+  /// Purpose: Choose whether the Expressive style keeps its bottom bar on
+  /// wide windows instead of the side rail (0.4.1).
+  /// Inputs: `enabled`.
+  /// Returns: None.
+  /// Side effects: Persists the preference; the shell rebuilds.
+  /// Notes: Off (side rail) by default. Ignored by the Material 3 style.
+  void setExpressiveWideBottomNav(bool enabled) {
+    state = state.copyWith(expressiveWideBottomNav: enabled);
+    TranscribeStorage.setWideBottomNav(enabled);
+  }
+
+  /// Purpose: Choose which side of the window the navigation rail sits on
+  /// (0.4.1).
+  /// Inputs: `right`.
+  /// Returns: None.
+  /// Side effects: Persists the preference; the shell rebuilds.
+  /// Notes: Left by default; applies to both styles whenever the rail shows.
+  void setNavRailOnRight(bool right) {
+    state = state.copyWith(navRailOnRight: right);
+    TranscribeStorage.setNavRailRight(right);
+  }
+
+  /// Purpose: Choose whether the side rail is used even on narrow windows
+  /// (0.4.1).
+  /// Inputs: `enabled`.
+  /// Returns: None.
+  /// Side effects: Persists the preference; the shell rebuilds.
+  /// Notes: Off by default and not recommended on phones, where the rail takes
+  /// width from the content. When on it overrides the Expressive
+  /// bottom-on-wide-screens choice.
+  void setAlwaysSideNav(bool enabled) {
+    state = state.copyWith(alwaysSideNav: enabled);
+    TranscribeStorage.setAlwaysSideNav(enabled);
   }
 
   /// Purpose: Change the transcript viewer's text size.
@@ -237,9 +278,21 @@ class AppSettings {
   /// recording it was made from.
   final bool autoSaveTranscriptFiles;
 
-  /// The interface style (0.4.0): Expressive (default, with the floating island
+  /// The interface style (0.4.0): Expressive (default, with the compact floating
   /// bottom bar) or stock Material 3 (classic bottom bar).
   final AppUiStyle uiStyle;
+
+  /// Whether the Expressive style keeps its bottom bar on wide windows instead
+  /// of the side rail (0.4.1). Off by default.
+  final bool expressiveWideBottomNav;
+
+  /// Whether the navigation rail sits on the right of the window (0.4.1). Off
+  /// (left) by default; applies to both styles.
+  final bool navRailOnRight;
+
+  /// Whether the side rail is used even on narrow windows such as phones
+  /// (0.4.1). Off by default; not recommended there.
+  final bool alwaysSideNav;
 
   /// Purpose: Create an app settings instance.
   /// Inputs: All fields.
@@ -257,6 +310,9 @@ class AppSettings {
     this.keepChunkFiles = false,
     this.autoSaveTranscriptFiles = false,
     this.uiStyle = AppUiStyle.expressive,
+    this.expressiveWideBottomNav = false,
+    this.navRailOnRight = false,
+    this.alwaysSideNav = false,
   });
 
   /// Purpose: Create a copy with selected fields replaced.
@@ -274,6 +330,9 @@ class AppSettings {
     bool? keepChunkFiles,
     bool? autoSaveTranscriptFiles,
     AppUiStyle? uiStyle,
+    bool? expressiveWideBottomNav,
+    bool? navRailOnRight,
+    bool? alwaysSideNav,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -285,6 +344,10 @@ class AppSettings {
       autoSaveTranscriptFiles:
           autoSaveTranscriptFiles ?? this.autoSaveTranscriptFiles,
       uiStyle: uiStyle ?? this.uiStyle,
+      expressiveWideBottomNav:
+          expressiveWideBottomNav ?? this.expressiveWideBottomNav,
+      navRailOnRight: navRailOnRight ?? this.navRailOnRight,
+      alwaysSideNav: alwaysSideNav ?? this.alwaysSideNav,
     );
   }
 }

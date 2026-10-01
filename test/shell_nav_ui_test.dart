@@ -33,6 +33,9 @@ Future<void> pumpShell(
   Size size, {
   String location = '/jobs',
   AppUiStyle uiStyle = AppUiStyle.expressive,
+  bool wideBottom = false,
+  bool railRight = false,
+  bool alwaysSide = false,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
@@ -59,7 +62,14 @@ Future<void> pumpShell(
     ProviderScope(
       overrides: [
         appSettingsProvider.overrideWithValue(
-          AppSettingsNotifier.fixed(AppSettings(uiStyle: uiStyle)),
+          AppSettingsNotifier.fixed(
+            AppSettings(
+              uiStyle: uiStyle,
+              expressiveWideBottomNav: wideBottom,
+              navRailOnRight: railRight,
+              alwaysSideNav: alwaysSide,
+            ),
+          ),
         ),
       ],
       child: MaterialApp.router(
@@ -75,9 +85,10 @@ Future<void> pumpShell(
 
 void main() {
   bottomBarStyleTests();
+  wideNavigationTests();
   testWidgets('a phone in portrait gets a bottom bar', (tester) async {
     await pumpShell(tester, const Size(412, 915)); // Pixel 8, portrait
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byKey(_island), findsOneWidget);
     expect(find.byType(NavigationRail), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -113,8 +124,13 @@ void main() {
 
   testWidgets('both renderings carry the same destinations', (tester) async {
     // One list feeds the bar and the rail, so they cannot drift apart. This
-    // asserts the labels really do arrive in both.
-    await pumpShell(tester, const Size(412, 915));
+    // asserts the labels really do arrive in both. The classic bar is used
+    // here because the Expressive bar shows only the selected label.
+    await pumpShell(
+      tester,
+      const Size(412, 915),
+      uiStyle: AppUiStyle.material3,
+    );
     final barLabels = tester
         .widgetList<NavigationDestination>(find.byType(NavigationDestination))
         .map((d) => d.label)
@@ -166,7 +182,11 @@ void bottomBarStyleTests() {
     testWidgets('Expressive (the default) floats the bar', (tester) async {
       await pumpShell(tester, const Size(412, 915));
       expect(find.byKey(_island), findsOneWidget);
-      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(NavigationBar), findsNothing);
+      // Only the selected destination shows its label; the others are icons
+      // with tooltips.
+      expect(find.text('转写'), findsOneWidget);
+      expect(find.byTooltip('设置'), findsOneWidget);
     });
 
     testWidgets('Material 3 keeps the classic full-width bar', (tester) async {
@@ -193,5 +213,81 @@ void bottomBarStyleTests() {
       await tester.pumpAndSettle();
       expect(find.text('page /settings'), findsOneWidget);
     });
+  });
+}
+
+/// Purpose: Test the wide-window navigation settings (0.4.1).
+/// Inputs: None.
+/// Returns: None.
+/// Side effects: Pumps widget trees.
+/// Notes: Expressive may keep its bottom bar on wide windows; the rail can sit
+/// on either side in both styles.
+void wideNavigationTests() {
+  group('wide-window navigation (0.4.1)', () {
+    testWidgets('Expressive can keep its bottom bar on a wide window', (
+      tester,
+    ) async {
+      await pumpShell(tester, const Size(933, 704), wideBottom: true);
+      expect(find.byKey(_island), findsOneWidget);
+      expect(find.byType(NavigationRail), findsNothing);
+    });
+
+    testWidgets('Material 3 ignores the wide bottom-bar setting', (
+      tester,
+    ) async {
+      await pumpShell(
+        tester,
+        const Size(933, 704),
+        uiStyle: AppUiStyle.material3,
+        wideBottom: true,
+      );
+      expect(find.byType(NavigationRail), findsOneWidget);
+    });
+
+    testWidgets('the rail sits on the left by default', (tester) async {
+      await pumpShell(tester, const Size(933, 704));
+      expect(tester.getTopLeft(find.byType(NavigationRail)).dx, 0);
+    });
+
+    for (final style in AppUiStyle.values) {
+      testWidgets('a phone can use the rail when asked (${style.name})', (
+        tester,
+      ) async {
+        await pumpShell(
+          tester,
+          const Size(412, 915),
+          uiStyle: style,
+          alwaysSide: true,
+        );
+        expect(find.byType(NavigationRail), findsOneWidget);
+        expect(find.byKey(_island), findsNothing);
+        expect(find.byType(NavigationBar), findsNothing);
+      });
+    }
+
+    testWidgets('always-side overrides the wide bottom bar', (tester) async {
+      await pumpShell(
+        tester,
+        const Size(933, 704),
+        wideBottom: true,
+        alwaysSide: true,
+      );
+      expect(find.byType(NavigationRail), findsOneWidget);
+    });
+
+    for (final style in AppUiStyle.values) {
+      testWidgets('the rail can sit on the right (${style.name})', (
+        tester,
+      ) async {
+        await pumpShell(
+          tester,
+          const Size(933, 704),
+          uiStyle: style,
+          railRight: true,
+        );
+        expect(tester.getRect(find.byType(NavigationRail)).right, 933);
+        expect(find.text('page /jobs'), findsOneWidget);
+      });
+    }
   });
 }

@@ -321,8 +321,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final notifier = ref.read(appSettingsProvider.notifier);
 
     return ListView(
-      padding: EdgeInsets.only(
-        bottom: shellListBottomInset(MediaQuery.sizeOf(context).width),
+      padding: navBarAwarePadding(
+        context,
+        EdgeInsets.only(
+          bottom: shellListBottomInset(MediaQuery.sizeOf(context).width),
+        ),
       ),
       children: [
         // Avatar and name (0.4.0); synced, unlike the device-local settings
@@ -382,6 +385,55 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               onSelectionChanged: (s) => notifier.setUiStyle(s.first),
             ),
           ),
+          // Navigation placement on wide windows (0.4.1). Expressive may keep
+          // its floating bar at the bottom; whenever a side rail shows (both
+          // styles), it can sit on the left or the right.
+          // Off by default and not recommended: the rail takes width from the
+          // content on a phone. When on, it overrides the option below.
+          SwitchListTile(
+            secondary: const Icon(Icons.vertical_split_outlined),
+            title: Text(l10n.settingsAlwaysSideNav),
+            subtitle: Text(l10n.settingsAlwaysSideNavDesc),
+            value: settings.alwaysSideNav,
+            onChanged: notifier.setAlwaysSideNav,
+          ),
+          if (settings.uiStyle == AppUiStyle.expressive &&
+              !settings.alwaysSideNav)
+            SwitchListTile(
+              secondary: const Icon(Icons.call_to_action_outlined),
+              title: Text(l10n.settingsWideBottomNav),
+              subtitle: Text(l10n.settingsWideBottomNavDesc),
+              value: settings.expressiveWideBottomNav,
+              onChanged: notifier.setExpressiveWideBottomNav,
+            ),
+          if (settings.uiStyle == AppUiStyle.material3 ||
+              settings.alwaysSideNav ||
+              !settings.expressiveWideBottomNav) ...[
+            ListTile(
+              leading: const Icon(Icons.view_sidebar_outlined),
+              title: Text(l10n.settingsRailSide),
+              subtitle: Text(l10n.settingsRailSideDesc),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SegmentedButton<bool>(
+                segments: [
+                  ButtonSegment(
+                    value: false,
+                    icon: const Icon(Icons.align_horizontal_left, size: 18),
+                    label: Text(l10n.settingsRailSideLeft),
+                  ),
+                  ButtonSegment(
+                    value: true,
+                    icon: const Icon(Icons.align_horizontal_right, size: 18),
+                    label: Text(l10n.settingsRailSideRight),
+                  ),
+                ],
+                selected: {settings.navRailOnRight},
+                onSelectionChanged: (s) => notifier.setNavRailOnRight(s.first),
+              ),
+            ),
+          ],
           ListTile(
             leading: const Icon(Icons.language),
             title: Text(l10n.settingsLanguage),

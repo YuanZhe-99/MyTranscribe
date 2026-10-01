@@ -434,6 +434,58 @@ class TranscribeStorage {
   static Future<void> setUiStyle(String? name) =>
       _setString('uiStyle', name == 'material3' ? 'material3' : null);
 
+  /// Purpose: Return whether the Expressive style keeps its bottom bar on
+  /// wide windows (0.4.1).
+  /// Inputs: None.
+  /// Returns: `Future<bool>` — false (side rail) by default.
+  /// Side effects: Reads `storage_config.json`.
+  /// Notes: Device-local; the Material 3 style always uses the rail there.
+  static Future<bool> getWideBottomNav() async =>
+      (await _getBool('wideBottomNav')) == true;
+
+  /// Purpose: Persist whether the Expressive style keeps its bottom bar on
+  /// wide windows (0.4.1).
+  /// Inputs: `enabled`.
+  /// Returns: None.
+  /// Side effects: Rewrites `storage_config.json`.
+  /// Notes: Only `true` is stored; false removes the key.
+  static Future<void> setWideBottomNav(bool enabled) =>
+      _setBool('wideBottomNav', enabled ? true : null);
+
+  /// Purpose: Return whether the navigation rail sits on the right (0.4.1).
+  /// Inputs: None.
+  /// Returns: `Future<bool>` — false (left) by default.
+  /// Side effects: Reads `storage_config.json`.
+  /// Notes: Device-local; applies to both interface styles.
+  static Future<bool> getNavRailRight() async =>
+      (await _getBool('navRailRight')) == true;
+
+  /// Purpose: Persist which side the navigation rail sits on (0.4.1).
+  /// Inputs: `right`.
+  /// Returns: None.
+  /// Side effects: Rewrites `storage_config.json`.
+  /// Notes: Only the right side is stored; left removes the key.
+  static Future<void> setNavRailRight(bool right) =>
+      _setBool('navRailRight', right ? true : null);
+
+  /// Purpose: Return whether the side rail is used even on narrow windows
+  /// (0.4.1).
+  /// Inputs: None.
+  /// Returns: `Future<bool>` — false by default.
+  /// Side effects: Reads `storage_config.json`.
+  /// Notes: Device-local; not recommended on phones.
+  static Future<bool> getAlwaysSideNav() async =>
+      (await _getBool('alwaysSideNav')) == true;
+
+  /// Purpose: Persist whether the side rail is used even on narrow windows
+  /// (0.4.1).
+  /// Inputs: `enabled`.
+  /// Returns: None.
+  /// Side effects: Rewrites `storage_config.json`.
+  /// Notes: Only `true` is stored; false removes the key.
+  static Future<void> setAlwaysSideNav(bool enabled) =>
+      _setBool('alwaysSideNav', enabled ? true : null);
+
   /// Purpose: Read the persisted interface language.
   /// Inputs: None.
   /// Returns: `Future<String?>` — `language` or `language_COUNTRY`, or null to

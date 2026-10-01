@@ -7,8 +7,12 @@ A display name and a round avatar, kept on every device you sync.
 - **The home tab.** The avatar sits left of the title on the Transcribe tab, and only there. Tapping
   it opens Settings.
 - **The top of Settings.** An avatar and name row, the first item of the list. Tapping it opens a
-  dialog to choose or remove the avatar and to edit the name. An avatar change is saved at once; the
-  name is saved with Save.
+  dialog to choose, adjust or remove the avatar and to edit the name. Choosing a picture opens the
+  avatar editor first (0.4.1): a full-screen circle over the image that you drag, pinch or scroll to
+  zoom (1 to 8 times), rotate by 90 degrees, reset and save. "Adjust avatar", and a tap on the large
+  avatar, reopen the editor on the current picture, and with no avatar yet that tap picks one.
+  Backing out of the editor saves nothing. An avatar change is saved at once; the name is saved with
+  Save.
 - **Without a picture** the avatar shows the first letter of the name, or a person icon when there is
   no name either. A picture that has not arrived from sync yet shows the same placeholder and
   replaces it once the file is on the device.
@@ -16,8 +20,9 @@ A display name and a round avatar, kept on every device you sync.
 ## How it is stored
 
 `profile.json` (see [data-formats.md](../data-formats.md)) holds the name and the avatar's path, each
-with its own timestamp. The picture is `images/avatar_<uuid>.jpg`, a 512 x 512 centred square JPEG,
-with the photo's orientation corrected first. Every change of avatar uses a **new file name**: the
+with its own timestamp. The picture is `images/avatar_<uuid>.jpg`, a 512 x 512 square JPEG: the square the user framed in the avatar editor (0.4.1), cut from the
+upright, at most 2048-pixel copy the editor works on (the pure image functions live in
+`avatar_image.dart` and run in an isolate). Every change of avatar uses a **new file name**: the
 engine's image phase is incremental and never overwrites a file of the same name, so reusing a name
 would leave other devices with the old picture. The previous file is deleted on this device only, and
 only when its name starts with `avatar_`. The old picture stays on the server, a known limit.

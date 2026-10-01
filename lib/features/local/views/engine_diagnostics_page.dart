@@ -19,6 +19,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/utils/adaptive_layout.dart';
 import '../../providers/services/settings_repository.dart';
 import '../engines/whisper_cpp_engine.dart';
 import '../models/engine_capability.dart';
@@ -72,7 +73,7 @@ class EngineDiagnosticsPage extends ConsumerWidget {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: navBarAwarePadding(context, const EdgeInsets.all(16)),
         children: [
           Text(l10n.diagnosticsDevice, style: theme.textTheme.titleSmall),
           const SizedBox(height: 4),

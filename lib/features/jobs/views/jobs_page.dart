@@ -201,8 +201,11 @@ class _JobsPageState extends ConsumerState<JobsPage> {
 
         final active = queue.active;
         return ListView.builder(
-          padding: EdgeInsets.only(
-            bottom: shellListBottomInset(MediaQuery.sizeOf(context).width),
+          padding: navBarAwarePadding(
+            context,
+            EdgeInsets.only(
+              bottom: shellListBottomInset(MediaQuery.sizeOf(context).width),
+            ),
           ),
           itemCount: records.length,
           itemBuilder: (context, index) {

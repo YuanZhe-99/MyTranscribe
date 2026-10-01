@@ -61,10 +61,27 @@ sitting under a leading button or FAB, and three destinations pinned to the top 
 leave the whole lower half empty.
 
 The bottom bar has two looks, chosen by the interface style rather than by width. **Expressive**
-(the default) draws it as a floating, pill-shaped island, at most 480 wide, with side and bottom
-margins; it sits in the Scaffold's bottom-bar slot, not over the body, so pages keep their layout
-and the FAB keeps its place. **Material 3** keeps the classic full-width bar. The rail is the same
-in both.
+(the default, 0.4.1) draws it as a compact floating pill that is only as wide as its items, centred
+with side and bottom margins: the selected destination shows its icon and label side by side in a
+tonal pill, the others show their icon alone with a tooltip. The shell sets `extendBody`, so pages
+draw behind the bar and the Scaffold reports its height as `MediaQuery.padding.bottom`; the shell
+also raises `viewPadding.bottom` so a page's own FAB sits above the bar. Every scroll view with an
+explicit padding, and every layout anchored to the bottom, passes its padding through
+`navBarAwarePadding(context, padding)` so the last content scrolls clear of the bar (a list with no
+explicit padding gets this for free). The shell pages covered are the jobs list and job detail, the
+library list and its three editors, the settings list and every settings sub-page hosted in its
+detail pane. **Material 3** keeps the classic full-width bar. The rail is the same in both.
+
+**Wide windows (0.4.1).** Three device-local settings (Settings, General) move the navigation on wide
+windows. *Bottom navigation on wide screens* (`wideBottomNav`, Expressive only, off by default) keeps
+the floating bar instead of the rail when `useNavigationRail` is true; Material 3 ignores it. *Side
+navigation position* (`navRailRight`, both styles, off = left) puts the rail on the right, as
+`[content, divider, rail]`, and is hidden while the bottom bar is kept. A third setting, *Side navigation on narrow screens*
+(`alwaysSideNav`, both styles, off by default and labelled not recommended), shows the rail at any width and overrides
+*Bottom navigation on wide screens*, which is hidden while it is on: `showRail = alwaysSide || (wide &&
+!(expressive && wideBottom))`. None of the three is synced.
+Known approximation: `shellContentWidth` still subtracts the rail on a wide window with the bottom
+bar kept, so it under-counts by about 81 dp, which is conservative and never wrong.
 
 ### Rule C — how many of these fit? (width only, per content)
 

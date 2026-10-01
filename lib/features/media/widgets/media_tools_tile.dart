@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/utils/adaptive_layout.dart';
 import '../../../shared/services/transcribe_storage.dart';
 import '../services/ffmpeg_downloader.dart';
 import '../services/media_toolkit.dart';
@@ -219,7 +220,10 @@ class _MediaToolsPageState extends ConsumerState<MediaToolsPage> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsMediaTools)),
       body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: navBarAwarePadding(
+          context,
+          const EdgeInsets.symmetric(vertical: 8),
+        ),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),

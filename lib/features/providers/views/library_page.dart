@@ -247,8 +247,12 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
           );
         }
         return ListView(
-          padding: EdgeInsets.only(
-            bottom: shellListBottomInset(MediaQuery.sizeOf(context).width) + 72,
+          padding: navBarAwarePadding(
+            context,
+            EdgeInsets.only(
+              bottom:
+                  shellListBottomInset(MediaQuery.sizeOf(context).width) + 72,
+            ),
           ),
           children: [
             if (data.localModels.isNotEmpty) ..._thisDeviceSection(l10n, data),

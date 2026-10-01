@@ -52,9 +52,20 @@ bool useNavigationRail(double screenWidth);
 `groupAlignment: 0` —— 默认的顶部对齐是给下方还有前导按钮或 FAB 的导航栏用的，三个目的地钉在高导航栏的
 顶部会让下半部分整片空着。
 
-底部栏有两种外观，由界面风格而不是宽度决定。**Expressive**（默认）把它画成悬浮的胶囊形浮岛，最宽 480，带有侧边和
-底部边距；它位于 Scaffold 的底部栏槽位而不是盖在内容上，因此页面保持原有布局，FAB 也留在原处。**Material 3**
-保持经典的通栏。导航栏在两种风格下相同。
+底部栏有两种外观，由界面风格而不是宽度决定。**Expressive**（默认，0.4.1）把它画成紧凑的悬浮胶囊，宽度只随其项目而定，
+居中并带有侧边和底部边距：选中的目的地以图标加文字横排显示在色调胶囊中，其余只显示图标并带提示。shell 设置了
+`extendBody`，页面因此绘制在栏的后面，Scaffold 把栏高作为 `MediaQuery.padding.bottom` 传下去；shell 同时抬高
+`viewPadding.bottom`，让页面自己的 FAB 位于栏的上方。每个显式传入 padding 的滚动视图，以及每个贴底的布局，都把
+自己的 padding 经 `navBarAwarePadding(context, padding)` 传入，使最后的内容能滚到栏的上方（未显式传 padding 的
+列表自动获得）。覆盖的 shell 页面有：任务列表与任务详情、来源库列表及其三个编辑页、设置列表及其详情栏中承载的每个
+设置子页。**Material 3** 保持经典的通栏。导航栏在两种风格下相同。
+
+**宽屏（0.4.1）。** 设置（通用）里有三项设备本地设置可调整导航。*宽屏时导航栏放在底部*（`wideBottomNav`，
+仅 Expressive，默认关）在 `useNavigationRail` 为真时仍显示悬浮栏而不是导航栏；Material 3 忽略此项。*侧边导航栏位置*
+（`navRailRight`，两种风格，关 = 左）把导航栏放到右侧，即 `[内容, 分割线, 导航栏]`，保留底部栏时隐藏此项。第三项设置 *窄屏也使用侧边导航栏*
+（`alwaysSideNav`，两种风格，默认关，标注为不推荐）在任何宽度都显示导航栏，并覆盖*宽屏时导航栏放在底部*（开启时隐藏该项）：
+`showRail = alwaysSide || (wide && !(expressive && wideBottom))`。三者都不同步。
+已知近似：宽屏保留底部栏时，`shellContentWidth` 仍会扣除导航栏宽度，约少算 81 dp，偏保守，不会出错。
 
 ### 规则 C —— 这些东西能放下几个？（只看宽度，按内容）
 

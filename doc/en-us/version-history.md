@@ -3,6 +3,29 @@
 Newest first. Each entry says what changed and, where it matters, why — the reasoning is the part
 that is hard to recover later.
 
+## 0.4.1 — 2026-10-01
+
+A refinement release for the navigation and the profile picture. No file format changes; three
+device-local keys are added to `storage_config.json`.
+
+- **A compact floating navigation bar.** The Expressive bottom bar is now a pill as wide as its
+  items rather than a full-width island: the selected destination shows its icon and label together
+  in a tonal pill, the others show an icon and a tooltip, and the width and colour animate. Pages draw
+  behind it (`extendBody`), so every shell page leaves room to scroll its last content above the bar:
+  scroll views with an explicit padding go through `navBarAwarePadding`, and the shell raises
+  `viewPadding.bottom` so a page's FAB is not hidden behind it. Audited: the jobs list and job
+  detail (including the two-pane detail), the library list and its provider, model and local-model
+  editors, the settings list and every sub-page hosted in its detail pane.
+- **Wide-window navigation.** Three device-local settings: keep the Expressive floating bar at the
+  bottom on wide windows (`wideBottomNav`), put the side rail on the left or the right
+  (`navRailRight`), and use the rail even on narrow screens (`alwaysSideNav`, off by default, not
+  recommended). None syncs.
+- **An avatar editor.** After choosing a picture, drag, zoom, rotate and reset it inside a circle
+  before saving; "Adjust avatar" (and a tap on the large avatar) reopens it on the current picture.
+  The picture is stored as before, with a new file name each time.
+- Tests: the shell with the bar kept on wide windows and the rail on either side; the avatar
+  rotate, crop and clamp functions; storing and re-reading an avatar.
+
 ## 0.4.0 — 2026-10-01
 
 A visual release: native Material 3 with a choice of interface style, a floating navigation bar,

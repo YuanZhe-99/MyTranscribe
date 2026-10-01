@@ -46,8 +46,8 @@ resume and merge are shared by uploaded and local jobs; see
   because the plugin would return the system accent over the app's own. The *interface style* is a
   device-local choice: **Expressive** (the default) layers a theme-level Expressive approximation on
   top of Material 3 — larger corner radii, buttons that morph when pressed, heavier titles, the 2024
-  progress and slider designs, a fade-forward page transition — and floats the bottom bar as an
-  island; **Material 3** is the stock theme with the classic full-width bar. The two share every
+  progress and slider designs, a fade-forward page transition — and floats the bottom bar as a
+  compact pill; **Material 3** is the stock theme with the classic full-width bar. The two share every
   colour and never change a layout. Flutter ships no Expressive components, so spring motion, wavy
   indicators and button groups are not imitated. There is no semantic status palette: the only fixed
   colours are the speaker hues, which are identities rather than states.

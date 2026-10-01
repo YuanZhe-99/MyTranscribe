@@ -361,7 +361,7 @@ class _ProviderEditorPageState extends ConsumerState<ProviderEditorPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: pageMaxContentWidth),
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: navBarAwarePadding(context, const EdgeInsets.all(16)),
               children: [
                 TextFormField(
                   controller: _name,

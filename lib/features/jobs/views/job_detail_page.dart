@@ -305,11 +305,9 @@ class _Body extends ConsumerWidget {
     final width = MediaQuery.sizeOf(context).width;
 
     return ListView(
-      padding: EdgeInsets.fromLTRB(
-        16,
-        16,
-        16,
-        shellListBottomInset(width) + 16,
+      padding: navBarAwarePadding(
+        context,
+        EdgeInsets.fromLTRB(16, 16, 16, shellListBottomInset(width) + 16),
       ),
       children: [
         if (embedded)

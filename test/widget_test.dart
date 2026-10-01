@@ -29,7 +29,9 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byType(NavigationBar), findsOneWidget);
+    // Expressive (the default style) draws its own floating bar, not a
+    // NavigationBar.
+    expect(find.byKey(const ValueKey('floatingNavBarIsland')), findsOneWidget);
     expect(find.byType(NavigationRail), findsNothing);
     expect(tester.takeException(), isNull);
   });

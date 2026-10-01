@@ -2529,6 +2529,54 @@ abstract class AppLocalizations {
   /// **'Expressive'**
   String get settingsUiStyleExpressive;
 
+  /// No description provided for @settingsWideBottomNav.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom navigation on wide screens'**
+  String get settingsWideBottomNav;
+
+  /// No description provided for @settingsWideBottomNavDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'On unfolded foldables, tablets and desktop windows, keep the floating bar at the bottom instead of a side rail.'**
+  String get settingsWideBottomNavDesc;
+
+  /// No description provided for @settingsRailSide.
+  ///
+  /// In en, this message translates to:
+  /// **'Side navigation position'**
+  String get settingsRailSide;
+
+  /// No description provided for @settingsRailSideDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Where the navigation rail sits on wide screens.'**
+  String get settingsRailSideDesc;
+
+  /// No description provided for @settingsRailSideLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get settingsRailSideLeft;
+
+  /// No description provided for @settingsRailSideRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Right'**
+  String get settingsRailSideRight;
+
+  /// No description provided for @settingsAlwaysSideNav.
+  ///
+  /// In en, this message translates to:
+  /// **'Side navigation on narrow screens'**
+  String get settingsAlwaysSideNav;
+
+  /// No description provided for @settingsAlwaysSideNavDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the side rail on phones too. Not recommended: it takes width from the content.'**
+  String get settingsAlwaysSideNavDesc;
+
   /// No description provided for @backupModuleProfile.
   ///
   /// In en, this message translates to:
@@ -2582,6 +2630,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Profile and settings'**
   String get profileOpenSettings;
+
+  /// No description provided for @profileAdjustAvatar.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust avatar'**
+  String get profileAdjustAvatar;
+
+  /// No description provided for @profileAvatarRotate.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotate'**
+  String get profileAvatarRotate;
+
+  /// No description provided for @profileAvatarReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get profileAvatarReset;
+
+  /// No description provided for @profileAvatarEditorHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to move. Pinch or scroll to zoom.'**
+  String get profileAvatarEditorHint;
 }
 
 class _AppLocalizationsDelegate

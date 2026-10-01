@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/utils/adaptive_layout.dart';
 import '../../providers/services/settings_repository.dart';
 
 class SpeakerNamesPage extends ConsumerStatefulWidget {
@@ -87,7 +88,10 @@ class _SpeakerNamesPageState extends ConsumerState<SpeakerNamesPage> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsSpeakerNames)),
       body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: navBarAwarePadding(
+          context,
+          const EdgeInsets.symmetric(vertical: 8),
+        ),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),

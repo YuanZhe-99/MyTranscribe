@@ -186,6 +186,9 @@ bad content: the write fails and the file is left as it was.
 | `themeMode` | `light` or `dark`; absent follows the system |
 | `locale` | `language` or `language_COUNTRY`; absent follows the system |
 | `uiStyle` | `material3`; absent means the default, Expressive |
+| `wideBottomNav` | `true` keeps the Expressive floating bar at the bottom on wide windows; absent means the side rail |
+| `navRailRight` | `true` puts the side rail on the right; absent means the left |
+| `alwaysSideNav` | `true` uses the side rail even on narrow windows (not recommended); absent means the bottom bar on phones |
 | `lastTab` | the tab to open on |
 | `viewerFontSize`, `viewerShowTimestamps`, `viewerGroupSpeakers` | transcript viewer preferences |
 | `keepChunkFiles` | keep a job's split audio after it finishes |

@@ -29,7 +29,7 @@ class PrivacyPolicyPage extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: viewerContentMaxWidth),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: navBarAwarePadding(context, const EdgeInsets.all(16)),
             child: SelectableText(
               _policyText,
               style: Theme.of(context).textTheme.bodyMedium,

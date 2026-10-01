@@ -1382,6 +1382,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsUiStyleExpressive => 'Expressive';
 
   @override
+  String get settingsWideBottomNav => 'Bottom navigation on wide screens';
+
+  @override
+  String get settingsWideBottomNavDesc =>
+      'On unfolded foldables, tablets and desktop windows, keep the floating bar at the bottom instead of a side rail.';
+
+  @override
+  String get settingsRailSide => 'Side navigation position';
+
+  @override
+  String get settingsRailSideDesc =>
+      'Where the navigation rail sits on wide screens.';
+
+  @override
+  String get settingsRailSideLeft => 'Left';
+
+  @override
+  String get settingsRailSideRight => 'Right';
+
+  @override
+  String get settingsAlwaysSideNav => 'Side navigation on narrow screens';
+
+  @override
+  String get settingsAlwaysSideNavDesc =>
+      'Use the side rail on phones too. Not recommended: it takes width from the content.';
+
+  @override
   String get backupModuleProfile => 'Profile';
 
   @override
@@ -1407,4 +1434,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileOpenSettings => 'Profile and settings';
+
+  @override
+  String get profileAdjustAvatar => 'Adjust avatar';
+
+  @override
+  String get profileAvatarRotate => 'Rotate';
+
+  @override
+  String get profileAvatarReset => 'Reset';
+
+  @override
+  String get profileAvatarEditorHint =>
+      'Drag to move. Pinch or scroll to zoom.';
 }

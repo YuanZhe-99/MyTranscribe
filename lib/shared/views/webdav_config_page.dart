@@ -19,6 +19,7 @@ import '../../app/data_modules.dart';
 import '../../features/jobs/models/transcripts_document.dart';
 import '../../features/providers/models/transcribe_settings.dart';
 import '../../l10n/app_localizations.dart';
+import '../utils/adaptive_layout.dart';
 import '../../features/secrets/services/secrets_store.dart';
 import '../../features/secrets/services/secrets_sync_service.dart';
 import '../../features/secrets/views/secrets_endpoint_section.dart';
@@ -559,7 +560,7 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.all(16),
+              padding: navBarAwarePadding(context, const EdgeInsets.all(16)),
               children: [
                 Row(
                   children: [

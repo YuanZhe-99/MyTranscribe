@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/utils/adaptive_layout.dart';
 import '../../../shared/utils/byte_format.dart';
 import '../../providers/models/model_config.dart';
 import '../../providers/services/settings_repository.dart';
@@ -65,7 +66,7 @@ class LocalModelPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(model.displayName)),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: navBarAwarePadding(context, const EdgeInsets.all(16)),
         children: [
           Text(
             localModelStateLabel(
