@@ -72,16 +72,17 @@ explicit padding gets this for free). The shell pages covered are the jobs list 
 library list and its three editors, the settings list and every settings sub-page hosted in its
 detail pane. **Material 3** keeps the classic full-width bar. The rail is the same in both.
 
-**Wide windows (0.4.1).** Three device-local settings (Settings, General) move the navigation on wide
-windows. *Bottom navigation on wide screens* (`wideBottomNav`, Expressive only, off by default) keeps
-the floating bar instead of the rail when `useNavigationRail` is true; Material 3 ignores it. *Side
-navigation position* (`navRailRight`, both styles, off = left) puts the rail on the right, as
-`[content, divider, rail]`, and is hidden while the bottom bar is kept. A third setting, *Side navigation on narrow screens*
-(`alwaysSideNav`, both styles, off by default and labelled not recommended), shows the rail at any width and overrides
-*Bottom navigation on wide screens*, which is hidden while it is on: `showRail = alwaysSide || (wide &&
-!(expressive && wideBottom))`. None of the three is synced.
-Known approximation: `shellContentWidth` still subtracts the rail on a wide window with the bottom
-bar kept, so it under-counts by about 81 dp, which is conservative and never wrong.
+**Navigation position (0.4.1).** Two device-local settings (Settings, General, both styles) place the
+navigation. *Navigation position* (`navPlacement`) has three options: **bottom** everywhere (the
+default, so the rail is no longer automatic on wide windows), **side on wide** (the rail when
+`useNavigationRail` is true, the bottom bar otherwise) and **side** everywhere, phones included (not
+recommended: the rail takes width from the content). `showRail = switch (placement) { bottom => false,
+sideOnWide => wide, side => true }`; Material 3 uses its classic `NavigationBar` wherever the bottom
+bar shows. *Side navigation position* (`navRailOnRight`, off = left) puts the rail on the right, as
+`[content, divider, rail]`, and is shown whenever the placement is not bottom. Neither is synced.
+Known approximation: the pure width functions (`shellContentWidth` and friends) still follow
+`useNavigationRail(width)`, so they under-count by about 81 dp when a wide window uses the bottom bar and
+over-count the rail on a phone forced to the side; this is conservative and never wrong.
 
 ### Rule C — how many of these fit? (width only, per content)
 
@@ -117,7 +118,7 @@ the floor holds at every width from 600 to 2000 rather than trusting the arithme
 
 | Page | Rule | Notes |
 |---|---|---|
-| Shell (`ShellScaffold`) | B, width only | Rail from 600. A phone in landscape gets a rail and cannot split; both are correct. |
+| Shell (`ShellScaffold`) | B, width only | Rail from 600 when the navigation position is "side on wide" (the default is bottom everywhere). A phone in landscape gets a rail and cannot split; both are correct. |
 | Transcribe (jobs list and detail) | A, via `useJobsTwoPane` | List and detail side by side, `jobsListPaneWidth` capped against `jobDetailPaneMinWidth`. |
 | Library | A, via `useLibraryTwoPane` | Same shape; the list is wider because it is grouped by source. |
 | Settings | A, directly | List and detail, `settingsLeftPaneWidth`. The sub-page is hosted in a nested `Navigator` holding one route, which reports `canPop == false` so it grows no back arrow. |

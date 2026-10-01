@@ -3,6 +3,7 @@
 /// (`Isolate.run`) to keep the UI responsive.
 library;
 
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
@@ -122,3 +123,32 @@ Uint8List squareAvatarJpeg(Uint8List bytes, int size) {
   );
   return Uint8List.fromList(img.encodeJpg(square, quality: 88));
 }
+
+/// Purpose: Run [prepareAvatarSource] in another isolate.
+/// Inputs: `bytes`, `quarterTurns`.
+/// Returns: `Future<AvatarSource>`.
+/// Side effects: Spawns a short-lived isolate.
+/// Notes: A top-level function on purpose: a closure created inside a
+/// widget's State method also captures that State (and its controllers),
+/// which cannot be sent to another isolate. Here the closure captures only
+/// the arguments. Throws [FormatException] for non-images.
+Future<AvatarSource> prepareAvatarSourceInBackground(
+  Uint8List bytes, {
+  int quarterTurns = 0,
+}) => Isolate.run(() => prepareAvatarSource(bytes, quarterTurns: quarterTurns));
+
+/// Purpose: Run [cropAvatarJpeg] in another isolate.
+/// Inputs: as [cropAvatarJpeg].
+/// Returns: `Future<Uint8List>` — the avatar JPEG.
+/// Side effects: Spawns a short-lived isolate.
+/// Notes: Top-level for the same reason as
+/// [prepareAvatarSourceInBackground].
+Future<Uint8List> cropAvatarJpegInBackground(
+  Uint8List source, {
+  required int x,
+  required int y,
+  required int side,
+  required int size,
+}) => Isolate.run(
+  () => cropAvatarJpeg(source, x: x, y: y, side: side, size: size),
+);

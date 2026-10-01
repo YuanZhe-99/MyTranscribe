@@ -60,12 +60,13 @@ bool useNavigationRail(double screenWidth);
 列表自动获得）。覆盖的 shell 页面有：任务列表与任务详情、来源库列表及其三个编辑页、设置列表及其详情栏中承载的每个
 设置子页。**Material 3** 保持经典的通栏。导航栏在两种风格下相同。
 
-**宽屏（0.4.1）。** 设置（通用）里有三项设备本地设置可调整导航。*宽屏时导航栏放在底部*（`wideBottomNav`，
-仅 Expressive，默认关）在 `useNavigationRail` 为真时仍显示悬浮栏而不是导航栏；Material 3 忽略此项。*侧边导航栏位置*
-（`navRailRight`，两种风格，关 = 左）把导航栏放到右侧，即 `[内容, 分割线, 导航栏]`，保留底部栏时隐藏此项。第三项设置 *窄屏也使用侧边导航栏*
-（`alwaysSideNav`，两种风格，默认关，标注为不推荐）在任何宽度都显示导航栏，并覆盖*宽屏时导航栏放在底部*（开启时隐藏该项）：
-`showRail = alwaysSide || (wide && !(expressive && wideBottom))`。三者都不同步。
-已知近似：宽屏保留底部栏时，`shellContentWidth` 仍会扣除导航栏宽度，约少算 81 dp，偏保守，不会出错。
+**导航栏位置（0.4.1）。** 两项设备本地设置（设置 › 通用，两种风格通用）决定导航栏放在哪里。*导航栏位置*（`navPlacement`）有三个选项：
+**全部底部**（默认，因此宽屏不再自动使用导航栏）、**宽屏侧边**（`useNavigationRail` 为真时用导航栏，否则用底部栏）和
+**全部侧边**（手机也用导航栏，不推荐：会占用内容的宽度）。`showRail = switch (placement) { bottom => false,
+sideOnWide => wide, side => true }`；Material 3 在显示底部栏的地方使用经典的 `NavigationBar`。*侧边导航栏位置*
+（`navRailOnRight`，关 = 左）把导航栏放到右侧，即 `[内容, 分割线, 导航栏]`，只要位置不是底部就显示。两者都不同步。
+已知近似：纯宽度函数（`shellContentWidth` 等）仍按 `useNavigationRail(width)` 计算，因此宽屏使用底部栏时约少算 81 dp，
+手机被设为侧边时则多扣了导航栏宽度；偏保守，不会出错。
 
 ### 规则 C —— 这些东西能放下几个？（只看宽度，按内容）
 
@@ -99,7 +100,7 @@ int columnCapacity(double contentWidth, {required double minItemWidth, gap, maxC
 
 | 页面 | 规则 | 说明 |
 |---|---|---|
-| 外壳（`ShellScaffold`） | B，只看宽度 | 从 600 起用导航栏。横握手机会得到导航栏且不能分栏；两者都正确。 |
+| 外壳（`ShellScaffold`） | B，只看宽度 | 导航栏位置为"宽屏侧边"时，从 600 起用导航栏（默认是全部底部）。横握手机会得到导航栏且不能分栏；两者都正确。 |
 | 转写（任务列表与详情） | A，经由 `useJobsTwoPane` | 列表与详情并排，`jobsListPaneWidth` 以 `jobDetailPaneMinWidth` 封顶。 |
 | 库 | A，经由 `useLibraryTwoPane` | 形态相同；列表更宽，因为它按来源分组。 |
 | 设置 | A，直接使用 | 列表与详情，`settingsLeftPaneWidth`。子页面托管在只含一条路由的嵌套 `Navigator` 中，它报告 `canPop == false`，因此不会长出返回箭头。 |

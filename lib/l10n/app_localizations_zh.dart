@@ -1339,29 +1339,32 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsUiStyleExpressive => 'Expressive';
 
   @override
-  String get settingsWideBottomNav => '宽屏时导航栏放在底部';
-
-  @override
-  String get settingsWideBottomNavDesc =>
-      '折叠屏展开、平板和桌面窗口中，导航栏仍以悬浮栏放在底部，而不是放在侧边。';
-
-  @override
   String get settingsRailSide => '侧边导航栏位置';
 
   @override
-  String get settingsRailSideDesc => '宽屏时侧边导航栏显示在哪一侧。';
+  String get settingsNavPlacement => '导航栏位置';
+
+  @override
+  String get settingsNavPlacementDesc =>
+      '全部放在底部；宽屏（折叠屏展开、平板、桌面）时放在侧边；或全部放在侧边（手机上不推荐）。';
+
+  @override
+  String get settingsNavPlacementBottom => '全部底部';
+
+  @override
+  String get settingsNavPlacementSideOnWide => '宽屏侧边';
+
+  @override
+  String get settingsNavPlacementSide => '全部侧边';
+
+  @override
+  String get settingsRailSideDesc => '侧边导航栏显示在窗口的哪一侧。';
 
   @override
   String get settingsRailSideLeft => '左侧';
 
   @override
   String get settingsRailSideRight => '右侧';
-
-  @override
-  String get settingsAlwaysSideNav => '窄屏也使用侧边导航栏';
-
-  @override
-  String get settingsAlwaysSideNavDesc => '手机上也把导航栏放在侧边。不推荐：会占用内容的宽度。';
 
   @override
   String get backupModuleProfile => '个人资料';
@@ -2738,29 +2741,32 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get settingsUiStyleExpressive => 'Expressive';
 
   @override
-  String get settingsWideBottomNav => '寬螢幕時導覽列放在底部';
-
-  @override
-  String get settingsWideBottomNavDesc =>
-      '摺疊螢幕展開、平板和桌面視窗中，導覽列仍以懸浮列放在底部，而不是放在側邊。';
-
-  @override
   String get settingsRailSide => '側邊導覽列位置';
 
   @override
-  String get settingsRailSideDesc => '寬螢幕時側邊導覽列顯示在哪一側。';
+  String get settingsNavPlacement => '導覽列位置';
+
+  @override
+  String get settingsNavPlacementDesc =>
+      '全部放在底部；寬螢幕（摺疊螢幕展開、平板、桌面）時放在側邊；或全部放在側邊（手機上不建議）。';
+
+  @override
+  String get settingsNavPlacementBottom => '全部底部';
+
+  @override
+  String get settingsNavPlacementSideOnWide => '寬螢幕側邊';
+
+  @override
+  String get settingsNavPlacementSide => '全部側邊';
+
+  @override
+  String get settingsRailSideDesc => '側邊導覽列顯示在視窗的哪一側。';
 
   @override
   String get settingsRailSideLeft => '左側';
 
   @override
   String get settingsRailSideRight => '右側';
-
-  @override
-  String get settingsAlwaysSideNav => '窄螢幕也使用側邊導覽列';
-
-  @override
-  String get settingsAlwaysSideNavDesc => '手機上也把導覽列放在側邊。不建議：會佔用內容的寬度。';
 
   @override
   String get backupModuleProfile => '個人資料';

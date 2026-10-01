@@ -164,9 +164,8 @@ payload。无法识别的 `kind` 读作 `unknown`，会被原样带过而不是�
 | `themeMode` | `light` 或 `dark`；缺省表示跟随系统 |
 | `locale` | `language` 或 `language_COUNTRY`；缺省表示跟随系统 |
 | `uiStyle` | `material3`；缺省表示默认的 Expressive |
-| `wideBottomNav` | `true` 表示 Expressive 的悬浮栏在宽屏时仍放在底部；缺省表示使用侧边导航栏 |
+| `navPlacement` | `sideOnWide` 或 `side`；缺省表示所有窗口都用底部栏（默认） |
 | `navRailRight` | `true` 表示侧边导航栏放在右侧；缺省表示左侧 |
-| `alwaysSideNav` | `true` 表示窄屏也使用侧边导航栏（不推荐）；缺省表示手机上使用底部栏 |
 | `lastTab` | 启动时打开的标签页 |
 | `viewerFontSize`、`viewerShowTimestamps`、`viewerGroupSpeakers` | 转写稿查看器的偏好 |
 | `keepChunkFiles` | 任务完成后保留切分后的音频 |

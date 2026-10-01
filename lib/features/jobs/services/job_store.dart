@@ -232,10 +232,15 @@ class JobStore {
   /// Returns: A future completing after the deletion.
   /// Side effects: Removes the whole job folder.
   /// Notes: This removes the recording's converted copy and the transcript
-  /// along with the record, which is what the user is told when they confirm.
+  /// along with the record, which is what the user is told when they confirm. The
+  /// delete is retried a few times, because a file that something else holds
+  /// open for a moment would otherwise fail it.
   static Future<void> delete(String jobId) async {
     final dir = await TranscribeStorage.jobDir(jobId);
-    if (await dir.exists()) await dir.delete(recursive: true);
+    if (await dir.exists()) {
+      // A scanner or indexer can hold a file briefly on Windows; retry.
+      await retryingFileOperation(() => dir.delete(recursive: true));
+    }
   }
 
   /// Purpose: Remove the split audio, keeping everything else.

@@ -1,4 +1,3 @@
-import 'dart:isolate';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -91,8 +90,9 @@ class _AvatarEditorPageState extends State<AvatarEditorPage> {
     final bytes = widget.source;
     final turns = _turns;
     try {
-      final image = await Isolate.run(
-        () => prepareAvatarSource(bytes, quarterTurns: turns),
+      final image = await prepareAvatarSourceInBackground(
+        bytes,
+        quarterTurns: turns,
       );
       if (!mounted) return;
       setState(() {
@@ -154,14 +154,12 @@ class _AvatarEditorPageState extends State<AvatarEditorPage> {
     final side = (_viewport / scale * toPixels).round();
     final bytes = image.bytes;
     try {
-      final jpeg = await Isolate.run(
-        () => cropAvatarJpeg(
-          bytes,
-          x: x,
-          y: y,
-          side: side,
-          size: ProfileStore.avatarSize,
-        ),
+      final jpeg = await cropAvatarJpegInBackground(
+        bytes,
+        x: x,
+        y: y,
+        side: side,
+        size: ProfileStore.avatarSize,
       );
       if (mounted) Navigator.of(context).pop(jpeg);
     } catch (_) {

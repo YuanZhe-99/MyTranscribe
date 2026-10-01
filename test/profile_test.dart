@@ -253,6 +253,25 @@ void main() {
       expect(centre.r, lessThan(60));
     });
 
+    test('the background wrappers run in an isolate', () async {
+      final png = Uint8List.fromList(
+        img.encodePng(img.Image(width: 300, height: 200)),
+      );
+      final source = await prepareAvatarSourceInBackground(
+        png,
+        quarterTurns: 1,
+      );
+      expect(source.width, 200);
+      final jpeg = await cropAvatarJpegInBackground(
+        source.bytes,
+        x: 0,
+        y: 0,
+        side: 200,
+        size: 64,
+      );
+      expect(img.decodeJpg(jpeg)!.width, 64);
+    });
+
     test('cropAvatarJpeg clamps a square that runs off the image', () {
       final png = Uint8List.fromList(
         img.encodePng(img.Image(width: 120, height: 80)),

@@ -64,9 +64,12 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
     final uiStyle = (await TranscribeStorage.getUiStyle()) == 'material3'
         ? AppUiStyle.material3
         : AppUiStyle.expressive;
-    final expressiveWideBottomNav = await TranscribeStorage.getWideBottomNav();
+    final navPlacement = switch (await TranscribeStorage.getNavPlacement()) {
+      'sideOnWide' => NavPlacement.sideOnWide,
+      'side' => NavPlacement.side,
+      _ => NavPlacement.bottom,
+    };
     final navRailOnRight = await TranscribeStorage.getNavRailRight();
-    final alwaysSideNav = await TranscribeStorage.getAlwaysSideNav();
 
     final themeMode = switch (modeStr) {
       'light' => ThemeMode.light,
@@ -95,9 +98,8 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
       keepChunkFiles: keepChunks,
       autoSaveTranscriptFiles: autoSaveFiles,
       uiStyle: uiStyle,
-      expressiveWideBottomNav: expressiveWideBottomNav,
+      navPlacement: navPlacement,
       navRailOnRight: navRailOnRight,
-      alwaysSideNav: alwaysSideNav,
     );
   }
 
@@ -150,15 +152,17 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
     );
   }
 
-  /// Purpose: Choose whether the Expressive style keeps its bottom bar on
-  /// wide windows instead of the side rail (0.4.1).
-  /// Inputs: `enabled`.
+  /// Purpose: Choose where navigation sits (0.4.1).
+  /// Inputs: `placement`.
   /// Returns: None.
   /// Side effects: Persists the preference; the shell rebuilds.
-  /// Notes: Off (side rail) by default. Ignored by the Material 3 style.
-  void setExpressiveWideBottomNav(bool enabled) {
-    state = state.copyWith(expressiveWideBottomNav: enabled);
-    TranscribeStorage.setWideBottomNav(enabled);
+  /// Notes: Bottom by default, for both styles. [NavPlacement.side] puts the
+  /// rail on phones too, which is not recommended.
+  void setNavPlacement(NavPlacement placement) {
+    state = state.copyWith(navPlacement: placement);
+    TranscribeStorage.setNavPlacement(
+      placement == NavPlacement.bottom ? null : placement.name,
+    );
   }
 
   /// Purpose: Choose which side of the window the navigation rail sits on
@@ -170,19 +174,6 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
   void setNavRailOnRight(bool right) {
     state = state.copyWith(navRailOnRight: right);
     TranscribeStorage.setNavRailRight(right);
-  }
-
-  /// Purpose: Choose whether the side rail is used even on narrow windows
-  /// (0.4.1).
-  /// Inputs: `enabled`.
-  /// Returns: None.
-  /// Side effects: Persists the preference; the shell rebuilds.
-  /// Notes: Off by default and not recommended on phones, where the rail takes
-  /// width from the content. When on it overrides the Expressive
-  /// bottom-on-wide-screens choice.
-  void setAlwaysSideNav(bool enabled) {
-    state = state.copyWith(alwaysSideNav: enabled);
-    TranscribeStorage.setAlwaysSideNav(enabled);
   }
 
   /// Purpose: Change the transcript viewer's text size.
@@ -282,17 +273,12 @@ class AppSettings {
   /// bottom bar) or stock Material 3 (classic bottom bar).
   final AppUiStyle uiStyle;
 
-  /// Whether the Expressive style keeps its bottom bar on wide windows instead
-  /// of the side rail (0.4.1). Off by default.
-  final bool expressiveWideBottomNav;
+  /// Where the shell puts its navigation (0.4.1). Bottom by default.
+  final NavPlacement navPlacement;
 
   /// Whether the navigation rail sits on the right of the window (0.4.1). Off
   /// (left) by default; applies to both styles.
   final bool navRailOnRight;
-
-  /// Whether the side rail is used even on narrow windows such as phones
-  /// (0.4.1). Off by default; not recommended there.
-  final bool alwaysSideNav;
 
   /// Purpose: Create an app settings instance.
   /// Inputs: All fields.
@@ -310,9 +296,8 @@ class AppSettings {
     this.keepChunkFiles = false,
     this.autoSaveTranscriptFiles = false,
     this.uiStyle = AppUiStyle.expressive,
-    this.expressiveWideBottomNav = false,
+    this.navPlacement = NavPlacement.bottom,
     this.navRailOnRight = false,
-    this.alwaysSideNav = false,
   });
 
   /// Purpose: Create a copy with selected fields replaced.
@@ -330,9 +315,8 @@ class AppSettings {
     bool? keepChunkFiles,
     bool? autoSaveTranscriptFiles,
     AppUiStyle? uiStyle,
-    bool? expressiveWideBottomNav,
+    NavPlacement? navPlacement,
     bool? navRailOnRight,
-    bool? alwaysSideNav,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -344,10 +328,8 @@ class AppSettings {
       autoSaveTranscriptFiles:
           autoSaveTranscriptFiles ?? this.autoSaveTranscriptFiles,
       uiStyle: uiStyle ?? this.uiStyle,
-      expressiveWideBottomNav:
-          expressiveWideBottomNav ?? this.expressiveWideBottomNav,
+      navPlacement: navPlacement ?? this.navPlacement,
       navRailOnRight: navRailOnRight ?? this.navRailOnRight,
-      alwaysSideNav: alwaysSideNav ?? this.alwaysSideNav,
     );
   }
 }

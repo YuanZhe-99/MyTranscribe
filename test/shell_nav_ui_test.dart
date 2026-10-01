@@ -33,9 +33,8 @@ Future<void> pumpShell(
   Size size, {
   String location = '/jobs',
   AppUiStyle uiStyle = AppUiStyle.expressive,
-  bool wideBottom = false,
+  NavPlacement placement = NavPlacement.sideOnWide,
   bool railRight = false,
-  bool alwaysSide = false,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
@@ -65,9 +64,8 @@ Future<void> pumpShell(
           AppSettingsNotifier.fixed(
             AppSettings(
               uiStyle: uiStyle,
-              expressiveWideBottomNav: wideBottom,
+              navPlacement: placement,
               navRailOnRight: railRight,
-              alwaysSideNav: alwaysSide,
             ),
           ),
         ),
@@ -216,63 +214,63 @@ void bottomBarStyleTests() {
   });
 }
 
-/// Purpose: Test the wide-window navigation settings (0.4.1).
+/// Purpose: Test the navigation-position setting (0.4.1).
 /// Inputs: None.
 /// Returns: None.
 /// Side effects: Pumps widget trees.
-/// Notes: Expressive may keep its bottom bar on wide windows; the rail can sit
-/// on either side in both styles.
+/// Notes: Bottom everywhere is the default; the rail can sit on either side in
+/// both styles. [pumpShell] itself defaults to side-on-wide, which is what the
+/// older geometry tests were written for.
 void wideNavigationTests() {
-  group('wide-window navigation (0.4.1)', () {
-    testWidgets('Expressive can keep its bottom bar on a wide window', (
-      tester,
-    ) async {
-      await pumpShell(tester, const Size(933, 704), wideBottom: true);
-      expect(find.byKey(_island), findsOneWidget);
-      expect(find.byType(NavigationRail), findsNothing);
-    });
-
-    testWidgets('Material 3 ignores the wide bottom-bar setting', (
-      tester,
-    ) async {
-      await pumpShell(
-        tester,
-        const Size(933, 704),
-        uiStyle: AppUiStyle.material3,
-        wideBottom: true,
-      );
-      expect(find.byType(NavigationRail), findsOneWidget);
-    });
-
-    testWidgets('the rail sits on the left by default', (tester) async {
-      await pumpShell(tester, const Size(933, 704));
-      expect(tester.getTopLeft(find.byType(NavigationRail)).dx, 0);
+  group('navigation position (0.4.1)', () {
+    test('the default is bottom everywhere', () {
+      expect(const AppSettings().navPlacement, NavPlacement.bottom);
     });
 
     for (final style in AppUiStyle.values) {
-      testWidgets('a phone can use the rail when asked (${style.name})', (
+      testWidgets('bottom keeps the bar on a wide window (${style.name})', (
+        tester,
+      ) async {
+        await pumpShell(
+          tester,
+          const Size(933, 704),
+          uiStyle: style,
+          placement: NavPlacement.bottom,
+        );
+        expect(find.byType(NavigationRail), findsNothing);
+        expect(
+          style == AppUiStyle.expressive
+              ? find.byKey(_island)
+              : find.byType(NavigationBar),
+          findsOneWidget,
+        );
+      });
+
+      testWidgets('side shows the rail on a phone (${style.name})', (
         tester,
       ) async {
         await pumpShell(
           tester,
           const Size(412, 915),
           uiStyle: style,
-          alwaysSide: true,
+          placement: NavPlacement.side,
         );
         expect(find.byType(NavigationRail), findsOneWidget);
         expect(find.byKey(_island), findsNothing);
         expect(find.byType(NavigationBar), findsNothing);
       });
+
+      testWidgets('side-on-wide keeps the bar on a phone (${style.name})', (
+        tester,
+      ) async {
+        await pumpShell(tester, const Size(412, 915), uiStyle: style);
+        expect(find.byType(NavigationRail), findsNothing);
+      });
     }
 
-    testWidgets('always-side overrides the wide bottom bar', (tester) async {
-      await pumpShell(
-        tester,
-        const Size(933, 704),
-        wideBottom: true,
-        alwaysSide: true,
-      );
-      expect(find.byType(NavigationRail), findsOneWidget);
+    testWidgets('the rail sits on the left by default', (tester) async {
+      await pumpShell(tester, const Size(933, 704));
+      expect(tester.getTopLeft(find.byType(NavigationRail)).dx, 0);
     });
 
     for (final style in AppUiStyle.values) {

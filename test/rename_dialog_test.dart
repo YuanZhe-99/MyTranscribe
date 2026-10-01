@@ -66,7 +66,7 @@ void main() {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await tester.tap(find.text(l10n.cancel));
     // Through the whole closing animation, frame by frame.
-    for (var i = 0; i < 10; i++) {
+    for (var i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }
     await tester.pumpAndSettle();

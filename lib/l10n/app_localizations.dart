@@ -2529,28 +2529,46 @@ abstract class AppLocalizations {
   /// **'Expressive'**
   String get settingsUiStyleExpressive;
 
-  /// No description provided for @settingsWideBottomNav.
-  ///
-  /// In en, this message translates to:
-  /// **'Bottom navigation on wide screens'**
-  String get settingsWideBottomNav;
-
-  /// No description provided for @settingsWideBottomNavDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'On unfolded foldables, tablets and desktop windows, keep the floating bar at the bottom instead of a side rail.'**
-  String get settingsWideBottomNavDesc;
-
   /// No description provided for @settingsRailSide.
   ///
   /// In en, this message translates to:
   /// **'Side navigation position'**
   String get settingsRailSide;
 
+  /// No description provided for @settingsNavPlacement.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation position'**
+  String get settingsNavPlacement;
+
+  /// No description provided for @settingsNavPlacementDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom everywhere, at the side on wide screens such as unfolded foldables, tablets and desktop, or at the side everywhere (not recommended on phones).'**
+  String get settingsNavPlacementDesc;
+
+  /// No description provided for @settingsNavPlacementBottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom'**
+  String get settingsNavPlacementBottom;
+
+  /// No description provided for @settingsNavPlacementSideOnWide.
+  ///
+  /// In en, this message translates to:
+  /// **'Side on wide'**
+  String get settingsNavPlacementSideOnWide;
+
+  /// No description provided for @settingsNavPlacementSide.
+  ///
+  /// In en, this message translates to:
+  /// **'Side'**
+  String get settingsNavPlacementSide;
+
   /// No description provided for @settingsRailSideDesc.
   ///
   /// In en, this message translates to:
-  /// **'Where the navigation rail sits on wide screens.'**
+  /// **'Which side of the window the navigation rail sits on.'**
   String get settingsRailSideDesc;
 
   /// No description provided for @settingsRailSideLeft.
@@ -2564,18 +2582,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Right'**
   String get settingsRailSideRight;
-
-  /// No description provided for @settingsAlwaysSideNav.
-  ///
-  /// In en, this message translates to:
-  /// **'Side navigation on narrow screens'**
-  String get settingsAlwaysSideNav;
-
-  /// No description provided for @settingsAlwaysSideNavDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Use the side rail on phones too. Not recommended: it takes width from the content.'**
-  String get settingsAlwaysSideNavDesc;
 
   /// No description provided for @backupModuleProfile.
   ///

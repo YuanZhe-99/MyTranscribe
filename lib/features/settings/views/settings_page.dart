@@ -385,32 +385,39 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               onSelectionChanged: (s) => notifier.setUiStyle(s.first),
             ),
           ),
-          // Navigation placement on wide windows (0.4.1). Expressive may keep
-          // its floating bar at the bottom; whenever a side rail shows (both
-          // styles), it can sit on the left or the right.
-          // Off by default and not recommended: the rail takes width from the
-          // content on a phone. When on, it overrides the option below.
-          SwitchListTile(
-            secondary: const Icon(Icons.vertical_split_outlined),
-            title: Text(l10n.settingsAlwaysSideNav),
-            subtitle: Text(l10n.settingsAlwaysSideNavDesc),
-            value: settings.alwaysSideNav,
-            onChanged: notifier.setAlwaysSideNav,
+          // Navigation position (0.4.1, both styles): bottom everywhere (the
+          // default), side rail on wide windows only, or side rail everywhere
+          // (not recommended on phones). Left/right shows for either side
+          // option.
+          ListTile(
+            leading: const Icon(Icons.view_sidebar_outlined),
+            title: Text(l10n.settingsNavPlacement),
+            subtitle: Text(l10n.settingsNavPlacementDesc),
           ),
-          if (settings.uiStyle == AppUiStyle.expressive &&
-              !settings.alwaysSideNav)
-            SwitchListTile(
-              secondary: const Icon(Icons.call_to_action_outlined),
-              title: Text(l10n.settingsWideBottomNav),
-              subtitle: Text(l10n.settingsWideBottomNavDesc),
-              value: settings.expressiveWideBottomNav,
-              onChanged: notifier.setExpressiveWideBottomNav,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SegmentedButton<NavPlacement>(
+              segments: [
+                ButtonSegment(
+                  value: NavPlacement.bottom,
+                  label: Text(l10n.settingsNavPlacementBottom),
+                ),
+                ButtonSegment(
+                  value: NavPlacement.sideOnWide,
+                  label: Text(l10n.settingsNavPlacementSideOnWide),
+                ),
+                ButtonSegment(
+                  value: NavPlacement.side,
+                  label: Text(l10n.settingsNavPlacementSide),
+                ),
+              ],
+              selected: {settings.navPlacement},
+              onSelectionChanged: (s) => notifier.setNavPlacement(s.first),
             ),
-          if (settings.uiStyle == AppUiStyle.material3 ||
-              settings.alwaysSideNav ||
-              !settings.expressiveWideBottomNav) ...[
+          ),
+          if (settings.navPlacement != NavPlacement.bottom) ...[
             ListTile(
-              leading: const Icon(Icons.view_sidebar_outlined),
+              leading: const Icon(Icons.swap_horiz),
               title: Text(l10n.settingsRailSide),
               subtitle: Text(l10n.settingsRailSideDesc),
             ),
