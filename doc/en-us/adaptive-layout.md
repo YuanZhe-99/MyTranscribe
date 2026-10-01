@@ -68,7 +68,10 @@ draw behind the bar and the Scaffold reports its height as `MediaQuery.padding.b
 also raises `viewPadding.bottom` so a page's own FAB sits above the bar. Every scroll view with an
 explicit padding, and every layout anchored to the bottom, passes its padding through
 `navBarAwarePadding(context, padding)` so the last content scrolls clear of the bar (a list with no
-explicit padding gets this for free). The shell pages covered are the jobs list and job detail, the
+explicit padding gets this for free; `SingleChildScrollView`, `CustomScrollView` and
+`ReorderableListView` never do). A route pushed from a shell page with a plain `Navigator.push` lives
+inside the shell navigator and is covered by the bar too, so this app pushes with
+`rootNavigator: true` and opens modal sheets with `useRootNavigator: true`. The shell pages covered are the jobs list and job detail, the
 library list and its three editors, the settings list and every settings sub-page hosted in its
 detail pane. **Material 3** keeps the classic full-width bar. The rail is the same in both.
 

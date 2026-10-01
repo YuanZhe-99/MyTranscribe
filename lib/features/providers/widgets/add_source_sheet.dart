@@ -23,6 +23,9 @@ Future<ProviderPreset?> showAddSourceSheet(BuildContext context) {
   final l10n = AppLocalizations.of(context)!;
   return showModalBottomSheet<ProviderPreset>(
     context: context,
+    // Opened from the library, which lives in the shell: the shell navigator's
+    // overlay is drawn behind the floating bar, the root one above it.
+    useRootNavigator: true,
     showDragHandle: true,
     isScrollControlled: true,
     builder: (ctx) {

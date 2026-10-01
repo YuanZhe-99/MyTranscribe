@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../utils/adaptive_layout.dart';
+
 /// A centred icon, title and one paragraph, for a page with nothing in it yet.
 ///
 /// Every empty page in the app uses this, so "nothing here" looks the same
@@ -43,6 +45,9 @@ class EmptyState extends StatelessWidget {
     final theme = Theme.of(context);
     return Center(
       child: SingleChildScrollView(
+        // A scroll view does not apply the bar's inset itself; the empty pages
+        // are shell pages, so keep the text centred above the floating bar.
+        padding: navBarAwarePadding(context, EdgeInsets.zero),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Padding(

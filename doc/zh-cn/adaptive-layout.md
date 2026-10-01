@@ -57,7 +57,9 @@ bool useNavigationRail(double screenWidth);
 `extendBody`，页面因此绘制在栏的后面，Scaffold 把栏高作为 `MediaQuery.padding.bottom` 传下去；shell 同时抬高
 `viewPadding.bottom`，让页面自己的 FAB 位于栏的上方。每个显式传入 padding 的滚动视图，以及每个贴底的布局，都把
 自己的 padding 经 `navBarAwarePadding(context, padding)` 传入，使最后的内容能滚到栏的上方（未显式传 padding 的
-列表自动获得）。覆盖的 shell 页面有：任务列表与任务详情、来源库列表及其三个编辑页、设置列表及其详情栏中承载的每个
+列表自动获得；`SingleChildScrollView`、`CustomScrollView` 和 `ReorderableListView` 则永远不会）。从 shell 页面用普通
+`Navigator.push` 推入的路由位于 shell 的导航器之内，同样会被栏遮住，所以本应用推路由时使用 `rootNavigator: true`，
+打开模态底部面板时使用 `useRootNavigator: true`。覆盖的 shell 页面有：任务列表与任务详情、来源库列表及其三个编辑页、设置列表及其详情栏中承载的每个
 设置子页。**Material 3** 保持经典的通栏。导航栏在两种风格下相同。
 
 **导航栏位置（0.4.1）。** 两项设备本地设置（设置 › 通用，两种风格通用）决定导航栏放在哪里。*导航栏位置*（`navPlacement`）有三个选项：

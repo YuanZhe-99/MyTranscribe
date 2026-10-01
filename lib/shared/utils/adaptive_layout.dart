@@ -333,8 +333,12 @@ bool useLibraryTwoPane(double screenWidth, double screenHeight) =>
 /// draw behind the bar and the Scaffold reports the bar's height as
 /// `MediaQuery.padding.bottom`. Scroll views with an explicit padding do not
 /// apply that inset themselves; passing their padding through here leaves room
-/// to scroll the last content above the bar. Elsewhere (classic bar, rail,
-/// pushed routes) the inset is just the system's, so this is harmless.
+/// to scroll the last content above the bar. `ListView`/`GridView` with no
+/// padding, and a page outside the shell, need nothing. A route pushed with
+/// `Navigator.push` from a shell page lives inside the shell navigator and is
+/// covered by the bar too, unless it uses `rootNavigator: true`; the same holds
+/// for a modal sheet without `useRootNavigator: true`. Elsewhere (classic bar,
+/// rail) the inset is just the system's, so this is harmless.
 EdgeInsets navBarAwarePadding(BuildContext context, EdgeInsets padding) =>
     padding.copyWith(
       bottom: padding.bottom + MediaQuery.paddingOf(context).bottom,
