@@ -3,6 +3,18 @@
 Newest first. Each entry says what changed and, where it matters, why — the reasoning is the part
 that is hard to recover later.
 
+## 0.4.2 — 2026-10-01
+
+A fix release. No file format or setting changes.
+
+- **Shell pages and sheets no longer sit under the floating navigation bar.** The 0.4.1 audit
+  listed the shell pages as covered, but that was incomplete: the add-source sheet opened on the
+  shell navigator, whose overlay is drawn behind the bar, and the empty-state pages used a scroll
+  view that does not apply the bar's inset. The sheet now opens with `useRootNavigator: true`,
+  `EmptyState` passes its padding through `navBarAwarePadding`, and the `navBarAwarePadding` docs now
+  say that `SingleChildScrollView`, `CustomScrollView` and `ReorderableListView` never get the inset
+  for free and that routes pushed from a shell page need `rootNavigator: true`.
+
 ## 0.4.1 — 2026-10-01
 
 A refinement release for the navigation and the profile picture. No file format changes; two

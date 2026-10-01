@@ -2,6 +2,16 @@
 
 新的在前。每条记录说明改了什么，以及在重要之处说明为什么 —— 事后最难还原的正是理由。
 
+## 0.4.2 — 2026-10-01
+
+修正版本。没有文件格式或设置变化。
+
+- **shell 页面和底部面板不再位于悬浮导航栏的下方。** 0.4.1 的审查把这些 shell 页面列为已覆盖，但并不完整：添加来源的
+  底部面板打开在 shell 的导航器上，而它的 overlay 绘制在栏的后面；空状态页面使用的滚动视图不会自行应用栏的内边距。
+  现在该面板以 `useRootNavigator: true` 打开，`EmptyState` 的 padding 经 `navBarAwarePadding` 传入，`navBarAwarePadding`
+  的文档也写明 `SingleChildScrollView`、`CustomScrollView` 和 `ReorderableListView` 永远不会自动获得该内边距，并且从
+  shell 页面推入的路由需要 `rootNavigator: true`。
+
 ## 0.4.1 — 2026-10-01
 
 导航与头像的完善版本。没有文件格式变化；`storage_config.json` 新增两个设备本地的键。
