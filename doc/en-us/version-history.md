@@ -1,5 +1,12 @@
 # Version history
 
+## 0.5.0 — 2026-10-04
+
+Adopt MyApps-UI `v0.1.0` after its publication to both remotes. Theme construction,
+style enums and common adaptive rules now have one shared implementation. Preserve
+teal branding, facade APIs, navigation, profile and data formats. Full Flutter suite:
+638 passed, 20 skipped; analysis passed. Version `0.5.0+14`.
+
 Newest first. Each entry says what changed and, where it matters, why — the reasoning is the part
 that is hard to recover later.
 

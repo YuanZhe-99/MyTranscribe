@@ -520,6 +520,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.18.0"
+  myapps_adaptive:
+    dependency: "direct main"
+    description:
+      path: "packages/myapps_ui/packages/myapps_adaptive"
+      relative: true
+    source: path
+    version: "0.1.0"
   myapps_data:
     dependency: "direct main"
     description:
@@ -527,6 +534,13 @@ packages:
       relative: true
     source: path
     version: "1.0.3"
+  myapps_ui:
+    dependency: "direct main"
+    description:
+      path: "packages/myapps_ui/packages/myapps_ui"
+      relative: true
+    source: path
+    version: "0.1.0"
   nested:
     dependency: transitive
     description:

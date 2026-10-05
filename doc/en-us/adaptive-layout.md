@@ -1,5 +1,7 @@
 # Adaptive layout
 
+Shared implementation ownership and fresh-clone instructions: [shared-ui.md](shared-ui.md).
+
 Every layout decision in this app is made by one module that imports nothing from Flutter:
 `lib/shared/utils/adaptive_layout.dart`. Pages call a named predicate; they never compare a width to
 a number themselves. The rules and their derivation come from the series guide kept beside the

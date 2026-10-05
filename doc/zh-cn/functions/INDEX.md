@@ -32,7 +32,7 @@ find lib -name "*.dart" -not -path "lib/l10n/*" | xargs grep -h '/// Purpose:' |
 |---|---|
 | `lib/app/app.dart` | [architecture.md](../architecture.md) |
 | `lib/app/router.dart` | [architecture.md](../architecture.md) |
-| `lib/app/theme.dart` | [architecture.md](../architecture.md) |
+| `lib/app/theme.dart` | [shared-ui.md](../shared-ui.md) |
 | `lib/app/flavor.dart` | [architecture.md](../architecture.md) |
 | `lib/app/locale_resolution.dart` | [architecture.md](../architecture.md) |
 | `lib/app/data_modules.dart` | [data-formats.md](../data-formats.md), [sync.md](../sync.md) |
@@ -150,7 +150,7 @@ find lib -name "*.dart" -not -path "lib/l10n/*" | xargs grep -h '/// Purpose:' |
 | `lib/shared/services/import_export_service.dart` | [backup-restore.md](../backup-restore.md) |
 | `lib/shared/services/auto_sync_service.dart` | [sync.md](../sync.md) |
 | `lib/shared/providers/app_settings.dart` | [data-formats.md](../data-formats.md) |
-| `lib/shared/utils/adaptive_layout.dart` | [adaptive-layout.md](../adaptive-layout.md) |
+| `lib/shared/utils/adaptive_layout.dart` | [shared-ui.md](../shared-ui.md) |
 | `lib/shared/utils/file_retry.dart` | [data-formats.md](../data-formats.md) |
 | `lib/shared/utils/platform_capabilities.dart` | [platform-notes.md](../platform-notes.md) |
 | `lib/shared/views/webdav_config_page.dart` | [sync.md](../sync.md) |

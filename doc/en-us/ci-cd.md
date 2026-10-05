@@ -1,5 +1,7 @@
 # Building and verifying
 
+Shared implementation ownership and fresh-clone instructions: [shared-ui.md](shared-ui.md).
+
 ## Remotes
 
 | Remote | Where | For |

@@ -1,5 +1,8 @@
 # 架构
 
+公共主题和布局基础现在由 MyApps-UI 提供；职责划分、接入方式和升级顺序见
+[shared-ui.md](shared-ui.md)。
+
 ## 形态
 
 MyTranscribe 是一个三标签页的 Flutter 应用，没有自己的后端。它所做的一切，要么是本地文件操作，要么

@@ -2,12 +2,17 @@ name: my_transcribe
 description: "MyTranscribe!!!!! — Your speech-to-text companion"
 publish_to: 'none'
 
-version: 0.4.2+13
+version: 0.5.0+14
 
 environment:
   sdk: ^3.11.3
 
 dependencies:
+  # Shared theme and adaptive foundation, pinned by the MyApps-UI submodule.
+  myapps_ui:
+    path: packages/myapps_ui/packages/myapps_ui
+  myapps_adaptive:
+    path: packages/myapps_ui/packages/myapps_adaptive
   flutter:
     sdk: flutter
   flutter_localizations:
@@ -132,7 +137,7 @@ msix_config:
   display_name: MyTranscribe!!!!!
   publisher_display_name: yuanzhe
   identity_name: com.yuanzhe.mytranscribe
-  msix_version: 0.4.2.0
+  msix_version: 0.5.0.0
   logo_path: assets/icon/app_icon.png
   capabilities: internetClient
   install_certificate: false

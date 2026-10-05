@@ -1,5 +1,8 @@
 # Architecture
 
+Shared theme and adaptive foundations now come from MyApps-UI; see
+[shared-ui.md](shared-ui.md) for ownership, integration and update order.
+
 ## Shape
 
 MyTranscribe is a Flutter app with three tabs and no backend of its own. Everything it does is
