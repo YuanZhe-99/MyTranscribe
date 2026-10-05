@@ -1,5 +1,10 @@
 # Version history
 
+## 0.5.4 — P5 settings regions and shared-license attribution
+
+Settings consumes feature-aware designed panes from MyApps-UI v0.1.5.
+Add explicit source and GPL v3 attribution for the three consumed packages.
+
 ## 0.5.3 — Shared settings and catalogs
 
 - Adopt MyApps-UI v0.1.4 settings components and common ARB checks.

@@ -1,5 +1,12 @@
 # Shared UI foundations
 
+## P5 region policies and attribution
+
+Settings consumes MyApps-UI v0.1.5 MyAppsPaneBody with its existing gate and width
+policy. Separator fallback reports the actual mode to the app's routing cache.
+AppLicensePage names all three consumed packages, source URL and GNU GPL v3.
+Job, library and transcript page designs remain app-owned.
+
 ## Settings and common catalogs
 
 The app pins MyApps-UI v0.1.4. Shared settings sections and segmented controls

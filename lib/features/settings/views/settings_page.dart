@@ -14,7 +14,7 @@ library;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:myapps_ui/myapps_ui.dart'
-    show MyAppsSettingsSection, MyAppsSettingsSegments;
+    show MyAppsSettingsSection, MyAppsSettingsSegments, MyAppsPaneBody;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -255,22 +255,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     _twoPane = canSplitLayout(screen.width, screen.height);
 
     final list = _buildSettingsList(l10n);
-    if (!_twoPane) {
-      return Scaffold(
-        appBar: AppBar(title: Text(l10n.settingsTitle)),
-        body: list,
-      );
-    }
-
-    final contentWidth = shellContentWidth(screen.width, context: context);
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsTitle)),
-      body: Row(
-        children: [
-          SizedBox(width: settingsLeftPaneWidth(contentWidth), child: list),
-          const VerticalDivider(width: 1),
-          Expanded(child: _buildDetailPane(l10n)),
-        ],
+      body: MyAppsPaneBody(
+        primary: list,
+        secondary: _buildDetailPane(l10n),
+        allowSplit: canSplitLayout(screen.width, screen.height),
+        primaryWidthFor: settingsLeftPaneWidth,
+        topInset: MediaQuery.paddingOf(context).top + kToolbarHeight,
+        onSplitChanged: (value) => _twoPane = value,
       ),
     );
   }

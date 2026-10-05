@@ -1,5 +1,7 @@
 # Adaptive layout
 
+P5 settings uses shared designed panes and separator fallback; see [shared-ui.md](shared-ui.md).
+
 P2 uses shared navigation and measured content constraints; see [shared-ui.md](shared-ui.md).
 
 Shared implementation ownership and fresh-clone instructions: [shared-ui.md](shared-ui.md).
