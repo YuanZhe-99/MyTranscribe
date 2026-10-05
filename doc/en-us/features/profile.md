@@ -1,5 +1,9 @@
 # Profile
 
+P3 delegates model, merge, storage coordination and avatar components to
+`myapps_profile`; app providers, picker, module registration and edit dialog retain
+the behaviors below. See [../shared-ui.md](../shared-ui.md).
+
 A display name and a round avatar, kept on every device you sync.
 
 ## What the user sees

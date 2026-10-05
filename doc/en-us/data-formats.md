@@ -1,5 +1,7 @@
 # Data formats
 
+P3 shared profile ownership and adapters: [shared-ui.md](shared-ui.md). Existing formats and module order are retained.
+
 Every file the app writes, where it lives, and whether it travels.
 
 ## Inventory

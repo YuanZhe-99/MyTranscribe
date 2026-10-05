@@ -1,5 +1,7 @@
 # MyTranscribe `lib/` Function Index
 
+Profile rows now document shared exports and app adapters; implementation ownership is in [shared-ui.md](../shared-ui.md).
+
 The top-level index of the hand-written Function Explanation Layer documentation for `lib/`. Each
 row links to a per-source-file page mirroring the `lib/` tree, with `.dart` replaced by `.md`.
 

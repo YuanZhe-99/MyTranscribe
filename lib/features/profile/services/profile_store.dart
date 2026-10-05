@@ -1,145 +1,79 @@
-import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:myapps_data/myapps_data.dart' show atomicWriteString;
-import 'package:path/path.dart' as p;
-import 'package:uuid/uuid.dart';
-
+import 'package:myapps_profile/myapps_profile.dart';
 import '../../../shared/services/auto_sync_service.dart';
 import '../../../shared/services/transcribe_storage.dart';
-import '../models/profile_data.dart';
-import 'profile_merge.dart';
 
-/// Owns `profile.json` (0.4.0): the user's display name and avatar.
-///
-/// The file is registered in `lib/app/data_modules.dart`, so it syncs over
-/// WebDAV and is backed up; a save therefore notifies auto-sync. Every write
-/// is a read-modify-write through [update], serialised inside this process.
-/// The avatar image itself lives in `images/` under the app directory, which is how it
-/// reaches other devices through the engine's image phase.
+/// App storage and synchronization facade over the shared repository.
 class ProfileStore {
-  /// Purpose: Prevent direct instantiation and expose only static members.
+  /// Purpose: Prevent facade instantiation
   /// Inputs: None.
-  /// Returns: A new `ProfileStore._` instance.
+  /// Returns: None.
   /// Side effects: None.
-  /// Notes: None.
+  /// Notes: Public app API retained.
   const ProfileStore._();
+  static const fileName = ProfileRepository.fileName;
+  static const avatarSize = ProfileRepository.avatarSize;
+  static final _repository = ProfileRepository(
+    getAppDir: TranscribeStorage.getAppDir,
+    writeJson: atomicWriteString,
+    onSaved: AutoSyncService.instance.notifySaved,
+  );
 
-  /// The file's name under the app directory. Must match `profileFileName`
-  /// in `lib/app/data_modules.dart`.
-  static const fileName = 'profile.json';
-
-  /// Edge length in pixels of the stored square avatar.
-  static const avatarSize = 512;
-
-  static Future<void> _tail = Future.value();
-
-  /// Purpose: Resolve the file.
+  /// Purpose: Delegate load to the shared repository
   /// Inputs: None.
-  /// Returns: `Future<File>`.
-  /// Side effects: May create the app directory.
-  /// Notes: Internal helper used within this file only.
-  static Future<File> _file() async {
-    final dir = await TranscribeStorage.getAppDir();
-    return File(p.join(dir.path, fileName));
-  }
+  /// Returns: `Future<ProfileData>`.
+  /// Side effects: Reads or writes profile storage as appropriate.
+  /// Notes: Public app API retained.
+  static Future<ProfileData> load() => _repository.load();
 
-  /// Purpose: Resolve an app-relative image path to a file.
-  /// Inputs: `relativePath` — e.g. `images/avatar_<uuid>.jpg`.
-  /// Returns: `Future<File>` — the file, which may not exist.
-  /// Side effects: May create the app directory.
-  /// Notes: MyTranscribe has no image service; the avatar is its only image.
-  static Future<File> resolveImage(String relativePath) async {
-    final dir = await TranscribeStorage.getAppDir();
-    return File(p.join(dir.path, relativePath));
-  }
-
-  /// Purpose: Load the profile.
-  /// Inputs: None.
-  /// Returns: `Future<ProfileData>` — empty when the file is absent or
-  /// unreadable.
-  /// Side effects: Reads the file.
-  /// Notes: None.
-  static Future<ProfileData> load() async {
-    try {
-      final file = await _file();
-      if (!await file.exists()) return ProfileData();
-      final text = await file.readAsString();
-      if (text.trim().isEmpty) return ProfileData();
-      return ProfileData.fromJson(jsonDecode(text));
-    } catch (_) {
-      return ProfileData();
-    }
-  }
-
-  /// Purpose: Apply one change to the profile and save it.
-  /// Inputs: `mutate` — returns the new profile from the loaded one.
-  /// Returns: `Future<ProfileData>` — the profile after the change.
-  /// Side effects: Writes the file atomically and notifies auto-sync, but
-  /// only when the bytes changed.
-  /// Notes: Calls are queued, so concurrent updates apply one after another.
-  /// Throws a [FormatException] and leaves the file untouched when it exists
-  /// but cannot be parsed; a blank file counts as empty.
+  /// Purpose: Delegate update to the shared repository
+  /// Inputs: ProfileData Function(ProfileData data) mutate.
+  /// Returns: `Future<ProfileData>`.
+  /// Side effects: Reads or writes profile storage as appropriate.
+  /// Notes: Public app API retained.
   static Future<ProfileData> update(
     ProfileData Function(ProfileData data) mutate,
-  ) {
-    final done = Completer<ProfileData>();
-    _tail = _tail.then((_) async {
-      try {
-        done.complete(await _apply(mutate));
-      } catch (e, s) {
-        done.completeError(e, s);
-      }
-    });
-    return done.future;
-  }
+  ) => _repository.update(mutate);
 
-  /// Purpose: Run one queued update.
-  /// Inputs: `mutate`.
+  /// Purpose: Delegate setName to the shared repository
+  /// Inputs: String name.
   /// Returns: `Future<ProfileData>`.
-  /// Side effects: See [update].
-  /// Notes: Internal helper used within this file only.
-  static Future<ProfileData> _apply(
-    ProfileData Function(ProfileData data) mutate,
-  ) async {
-    final file = await _file();
-    final before = await file.exists() ? await file.readAsString() : null;
-    ProfileData data;
-    if (before == null || before.trim().isEmpty) {
-      data = ProfileData();
-    } else {
-      try {
-        data = ProfileData.fromJson(jsonDecode(before));
-      } catch (e) {
-        // Saving over an unreadable file would erase the profile on every
-        // device once synced. The bytes stay on disk untouched.
-        throw FormatException('profile.json is unreadable: $e');
-      }
-    }
-    data = mutate(data);
-    final after = encodeProfile(data);
-    if (after == before) return data;
-    await atomicWriteString(file, after);
-    AutoSyncService.instance.notifySaved();
-    return data;
-  }
+  /// Side effects: Reads or writes profile storage as appropriate.
+  /// Notes: Public app API retained.
+  static Future<ProfileData> setName(String name) => _repository.setName(name);
 
-  /// Purpose: Set or clear the display name.
-  /// Inputs: `name` — trimmed; empty clears it.
+  /// Purpose: Delegate readAvatarBytes to the shared repository
+  /// Inputs: None.
+  /// Returns: `Future<Uint8List?>`.
+  /// Side effects: Reads or writes profile storage as appropriate.
+  /// Notes: Public app API retained.
+  static Future<Uint8List?> readAvatarBytes() => _repository.readAvatarBytes();
+
+  /// Purpose: Delegate setAvatarJpeg to the shared repository
+  /// Inputs: Uint8List jpeg.
   /// Returns: `Future<ProfileData>`.
-  /// Side effects: Writes the file when the name changed.
-  /// Notes: An unchanged name keeps its old timestamp, so it does not win a
-  /// merge it should not.
-  static Future<ProfileData> setName(String name) {
-    final trimmed = name.trim();
-    final value = trimmed.isEmpty ? null : trimmed;
-    return update(
-      (d) => d.name == value ? d : d.withName(value, DateTime.now().toUtc()),
-    );
-  }
+  /// Side effects: Reads or writes profile storage as appropriate.
+  /// Notes: Public app API retained.
+  static Future<ProfileData> setAvatarJpeg(Uint8List jpeg) =>
+      _repository.setAvatarJpeg(jpeg);
+
+  /// Purpose: Delegate removeAvatar to the shared repository
+  /// Inputs: None.
+  /// Returns: `Future<ProfileData>`.
+  /// Side effects: Reads or writes profile storage as appropriate.
+  /// Notes: Public app API retained.
+  static Future<ProfileData> removeAvatar() => _repository.removeAvatar();
+
+  /// Purpose: Delegate resolveImage to the shared repository
+  /// Inputs: String relativePath.
+  /// Returns: `Future<File>`.
+  /// Side effects: Reads or writes profile storage as appropriate.
+  /// Notes: Public app API retained.
+  static Future<File> resolveImage(String relativePath) =>
+      _repository.resolveImage(relativePath);
 
   /// Purpose: Let the user pick an image to edit into an avatar (0.4.1).
   /// Inputs: None.
@@ -158,76 +92,5 @@ class ProfileStore {
     final picked = result.files.single;
     return picked.bytes ??
         (picked.path == null ? null : await File(picked.path!).readAsBytes());
-  }
-
-  /// Purpose: Read the current avatar image, to adjust it again (0.4.1).
-  /// Inputs: None.
-  /// Returns: `Future<Uint8List?>` — the avatar's bytes, or null when there
-  /// is no avatar or its file has not arrived on this device yet.
-  /// Side effects: Reads one file under `images/`.
-  /// Notes: The stored avatar is already a 512-pixel square, so adjusting it
-  /// can only zoom further in, rotate or re-centre.
-  static Future<Uint8List?> readAvatarBytes() async {
-    final rel = (await load()).avatar;
-    if (rel == null) return null;
-    try {
-      final file = await resolveImage(rel);
-      return await file.exists() ? await file.readAsBytes() : null;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  /// Purpose: Store an edited avatar (0.4.1).
-  /// Inputs: `jpeg` — the editor's square JPEG ([avatarSize] pixels).
-  /// Returns: `Future<ProfileData>` — the new profile.
-  /// Side effects: Writes a new `images/avatar_<uuid>.jpg`, writes
-  /// `profile.json`, and deletes the previous avatar file on this device.
-  /// Notes: Every avatar gets a fresh file name, because image sync never
-  /// overwrites a file that already exists on the other side.
-  static Future<ProfileData> setAvatarJpeg(Uint8List jpeg) async {
-    final appDir = await TranscribeStorage.getAppDir();
-    final imagesDir = Directory(p.join(appDir.path, 'images'));
-    await imagesDir.create(recursive: true);
-    final rel = 'images/avatar_${const Uuid().v4()}.jpg';
-    await File(p.join(appDir.path, rel)).writeAsBytes(jpeg, flush: true);
-    String? previous;
-    final data = await update((d) {
-      previous = d.avatar;
-      return d.withAvatar(rel, DateTime.now().toUtc());
-    });
-    await _deleteQuietly(previous);
-    return data;
-  }
-
-  /// Purpose: Remove the avatar.
-  /// Inputs: None.
-  /// Returns: `Future<ProfileData>`.
-  /// Side effects: Writes `profile.json` with an explicit removal and
-  /// deletes the avatar file on this device.
-  /// Notes: The removal is timestamped, so it syncs to other devices.
-  static Future<ProfileData> removeAvatar() async {
-    String? previous;
-    final data = await update((d) {
-      previous = d.avatar;
-      if (d.avatar == null) return d;
-      return d.withAvatar(null, DateTime.now().toUtc());
-    });
-    await _deleteQuietly(previous);
-    return data;
-  }
-
-  /// Purpose: Delete a replaced avatar file, ignoring failures.
-  /// Inputs: `rel` — relative path, or null.
-  /// Returns: None.
-  /// Side effects: May delete one file under `images/`.
-  /// Notes: Internal helper used within this file only. Only files this
-  /// store created (`images/avatar_*`) are ever deleted, never anything else.
-  static Future<void> _deleteQuietly(String? rel) async {
-    if (rel == null || !p.basename(rel).startsWith('avatar_')) return;
-    try {
-      final file = await resolveImage(rel);
-      if (await file.exists()) await file.delete();
-    } catch (_) {}
   }
 }

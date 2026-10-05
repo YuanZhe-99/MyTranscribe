@@ -1,5 +1,7 @@
 # Backup, restore and ZIP transfer
 
+P3 shared profile ownership and adapters: [shared-ui.md](shared-ui.md). Existing formats and module order are retained.
+
 Two ways to keep a copy of the configuration: local bundles kept on the device, and a ZIP file the
 user can put anywhere. Both carry **only** what the module registry lists: the settings file, the
 transcripts projection and the profile. Neither carries API keys or recordings.

@@ -1,5 +1,7 @@
 # WebDAV sync
 
+P3 shared profile ownership and adapters: [shared-ui.md](shared-ui.md). Existing formats and module order are retained.
+
 Sync is off until the user configures it, and it talks only to the server they entered. It carries
 **configuration** — sources, models and defaults — the **transcripts** of finished transcriptions,
 and, when the endpoint is secure, their API keys. Recordings never sync. The converted listening
