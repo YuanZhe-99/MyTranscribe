@@ -1,5 +1,8 @@
 # Shared UI foundations
 
+DATA v1.0.5 owns WebDAV connection and operation controls. Endpoint security and
+audio-sync settings remain application-owned and use injected content/callbacks.
+
 MyApps-UI v0.1.6 owns appearance/navigation row layout and full-width choices.
 MyApps-DATA v1.0.4 owns data actions and backup preferences. Transcription,
 provider, secret and local-model settings remain application-owned.

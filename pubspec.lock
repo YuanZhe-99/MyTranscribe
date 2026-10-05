@@ -533,7 +533,7 @@ packages:
       path: "packages/myapps_data"
       relative: true
     source: path
-    version: "1.0.4"
+    version: "1.0.5"
   myapps_profile:
     dependency: "direct main"
     description:

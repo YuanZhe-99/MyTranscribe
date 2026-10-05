@@ -1,5 +1,8 @@
 # MyTranscribe `lib/` 函数索引
 
+WebDAVConfigPage.build 使用 myapps_data 连接和操作控件，端点安全及音频同步
+策略留在应用适配器。
+
 外观设置行使用 MyAppsSettingsSegmentRow，数据操作和备份偏好委托给 myapps_data。
 回调和领域设置由应用负责。
 

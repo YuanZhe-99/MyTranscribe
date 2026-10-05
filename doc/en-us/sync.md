@@ -1,5 +1,9 @@
 # WebDAV sync
 
+MyApps-DATA renders connection fields and shared operation controls. Endpoint
+security information is injected after the server field and updates on URL edits.
+Audio sync, secret policies, confirmations and conflict resolution stay app-owned.
+
 P3 shared profile ownership and adapters: [shared-ui.md](shared-ui.md). Existing formats and module order are retained.
 
 Sync is off until the user configures it, and it talks only to the server they entered. It carries

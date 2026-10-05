@@ -1,5 +1,10 @@
 # Version history
 
+## 0.5.6 — Shared WebDAV configuration controls
+
+Adopt DATA v1.0.5 WebDAV controls, injecting endpoint security content and URL
+change callbacks. Keep secret policy, audio sync and confirmation workflows local.
+
 ## 0.5.5 — Unified settings presentation
 
 Use MyApps-UI v0.1.6 full-width appearance/navigation rows and MyApps-DATA v1.0.4

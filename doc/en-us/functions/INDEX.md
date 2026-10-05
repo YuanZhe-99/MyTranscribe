@@ -1,5 +1,8 @@
 # MyTranscribe `lib/` Function Index
 
+WebDAVConfigPage.build uses myapps_data connection and operation controls;
+endpoint security and audio-sync policies stay in application adapters.
+
 Settings rendering delegates to myapps_ui; see [shared-ui.md](../shared-ui.md).
 Appearance rows use MyAppsSettingsSegmentRow; data actions and backup preferences
 delegate to myapps_data. Callbacks and domain settings stay application-owned.
