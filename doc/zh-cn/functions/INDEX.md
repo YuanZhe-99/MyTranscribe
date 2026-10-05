@@ -1,5 +1,7 @@
 # MyTranscribe `lib/` 函数索引
 
+设置显示委托 myapps_ui，见 [shared-ui.md](../shared-ui.md)。
+
 资料条目现在描述公共导出和应用适配，实现归属见 [shared-ui.md](../shared-ui.md)。
 
 `lib/` 手写函数说明层文档的顶层索引。每一行链接到与 `lib/` 目录结构对应的单个源文件页面，`.dart` 换成

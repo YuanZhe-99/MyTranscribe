@@ -1,5 +1,10 @@
 # Version history
 
+## 0.5.3 — Shared settings and catalogs
+
+- Adopt MyApps-UI v0.1.4 settings components and common ARB checks.
+- Complete the extraction and remove the library's completed roadmap.
+
 ## 0.5.2 — P3 shared profile and avatar
 
 - Adopt MyApps-UI v0.1.2 through app storage, sync and localization adapters.
