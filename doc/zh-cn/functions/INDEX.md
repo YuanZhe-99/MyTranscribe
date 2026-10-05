@@ -1,5 +1,8 @@
 # MyTranscribe `lib/` 函数索引
 
+外观设置行使用 MyAppsSettingsSegmentRow，数据操作和备份偏好委托给 myapps_data。
+回调和领域设置由应用负责。
+
 设置显示委托 myapps_ui，见 [shared-ui.md](../shared-ui.md)。
 
 资料条目现在描述公共导出和应用适配，实现归属见 [shared-ui.md](../shared-ui.md)。

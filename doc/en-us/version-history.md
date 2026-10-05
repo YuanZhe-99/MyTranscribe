@@ -1,5 +1,11 @@
 # Version history
 
+## 0.5.5 — Unified settings presentation
+
+Use MyApps-UI v0.1.6 full-width appearance/navigation rows and MyApps-DATA v1.0.4
+data actions and backup preferences. Keep transcription and local-model settings
+application-owned.
+
 ## 0.5.4 — P5 settings regions and shared-license attribution
 
 Settings consumes feature-aware designed panes from MyApps-UI v0.1.5.

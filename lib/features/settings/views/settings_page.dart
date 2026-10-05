@@ -13,8 +13,10 @@ library;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:myapps_data/myapps_data.dart'
+    show MyAppsDataSettingsTile, DataSettingsAction;
 import 'package:myapps_ui/myapps_ui.dart'
-    show MyAppsSettingsSection, MyAppsSettingsSegments, MyAppsPaneBody;
+    show MyAppsSettingsSection, MyAppsSettingsSegmentRow, MyAppsPaneBody;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -330,113 +332,93 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         // below. Tapping opens the edit dialog.
         const ProfileHeader(),
         _section(l10n.settingsGeneral, [
-          ListTile(
+          MyAppsSettingsSegmentRow<ThemeMode>(
             leading: const Icon(Icons.palette_outlined),
-            title: Text(l10n.settingsTheme),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: MyAppsSettingsSegments<ThemeMode>(
-              segments: [
-                ButtonSegment(
-                  value: ThemeMode.system,
-                  icon: const Icon(Icons.brightness_auto, size: 18),
-                  label: Text(l10n.settingsThemeSystem),
-                ),
-                ButtonSegment(
-                  value: ThemeMode.light,
-                  icon: const Icon(Icons.light_mode, size: 18),
-                  label: Text(l10n.settingsThemeLight),
-                ),
-                ButtonSegment(
-                  value: ThemeMode.dark,
-                  icon: const Icon(Icons.dark_mode, size: 18),
-                  label: Text(l10n.settingsThemeDark),
-                ),
-              ],
-              selected: {settings.themeMode},
-              onSelectionChanged: (s) => notifier.setThemeMode(s.first),
-            ),
+            title: l10n.settingsTheme,
+            segments: [
+              ButtonSegment(
+                value: ThemeMode.system,
+                icon: const Icon(Icons.brightness_auto, size: 18),
+                label: Text(l10n.settingsThemeSystem),
+              ),
+              ButtonSegment(
+                value: ThemeMode.light,
+                icon: const Icon(Icons.light_mode, size: 18),
+                label: Text(l10n.settingsThemeLight),
+              ),
+              ButtonSegment(
+                value: ThemeMode.dark,
+                icon: const Icon(Icons.dark_mode, size: 18),
+                label: Text(l10n.settingsThemeDark),
+              ),
+            ],
+            selected: {settings.themeMode},
+            onSelectionChanged: (s) => notifier.setThemeMode(s.first),
           ),
           // Interface style (0.4.0): Expressive (default) also floats the
           // bottom bar, Material 3 keeps the classic one. Laid out like the
           // theme picker above.
-          ListTile(
+          MyAppsSettingsSegmentRow<AppUiStyle>(
             leading: const Icon(Icons.auto_awesome_outlined),
-            title: Text(l10n.settingsUiStyle),
-            subtitle: Text(l10n.settingsUiStyleDesc),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: MyAppsSettingsSegments<AppUiStyle>(
-              segments: [
-                ButtonSegment(
-                  value: AppUiStyle.material3,
-                  label: Text(l10n.settingsUiStyleMaterial3),
-                ),
-                ButtonSegment(
-                  value: AppUiStyle.expressive,
-                  label: Text(l10n.settingsUiStyleExpressive),
-                ),
-              ],
-              selected: {settings.uiStyle},
-              onSelectionChanged: (s) => notifier.setUiStyle(s.first),
-            ),
+            title: l10n.settingsUiStyle,
+            description: l10n.settingsUiStyleDesc,
+            segments: [
+              ButtonSegment(
+                value: AppUiStyle.material3,
+                label: Text(l10n.settingsUiStyleMaterial3),
+              ),
+              ButtonSegment(
+                value: AppUiStyle.expressive,
+                label: Text(l10n.settingsUiStyleExpressive),
+              ),
+            ],
+            selected: {settings.uiStyle},
+            onSelectionChanged: (s) => notifier.setUiStyle(s.first),
           ),
           // Navigation position (0.4.1, both styles): bottom everywhere (the
           // default), side rail on wide windows only, or side rail everywhere
           // (not recommended on phones). Left/right shows for either side
           // option.
-          ListTile(
+          MyAppsSettingsSegmentRow<NavPlacement>(
             leading: const Icon(Icons.view_sidebar_outlined),
-            title: Text(l10n.settingsNavPlacement),
-            subtitle: Text(l10n.settingsNavPlacementDesc),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: MyAppsSettingsSegments<NavPlacement>(
-              segments: [
-                ButtonSegment(
-                  value: NavPlacement.bottom,
-                  label: Text(l10n.settingsNavPlacementBottom),
-                ),
-                ButtonSegment(
-                  value: NavPlacement.sideOnWide,
-                  label: Text(l10n.settingsNavPlacementSideOnWide),
-                ),
-                ButtonSegment(
-                  value: NavPlacement.side,
-                  label: Text(l10n.settingsNavPlacementSide),
-                ),
-              ],
-              selected: {settings.navPlacement},
-              onSelectionChanged: (s) => notifier.setNavPlacement(s.first),
-            ),
+            title: l10n.settingsNavPlacement,
+            description: l10n.settingsNavPlacementDesc,
+            segments: [
+              ButtonSegment(
+                value: NavPlacement.bottom,
+                label: Text(l10n.settingsNavPlacementBottom),
+              ),
+              ButtonSegment(
+                value: NavPlacement.sideOnWide,
+                label: Text(l10n.settingsNavPlacementSideOnWide),
+              ),
+              ButtonSegment(
+                value: NavPlacement.side,
+                label: Text(l10n.settingsNavPlacementSide),
+              ),
+            ],
+            selected: {settings.navPlacement},
+            onSelectionChanged: (s) => notifier.setNavPlacement(s.first),
           ),
           if (settings.navPlacement != NavPlacement.bottom) ...[
-            ListTile(
+            MyAppsSettingsSegmentRow<bool>(
               leading: const Icon(Icons.swap_horiz),
-              title: Text(l10n.settingsRailSide),
-              subtitle: Text(l10n.settingsRailSideDesc),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: MyAppsSettingsSegments<bool>(
-                segments: [
-                  ButtonSegment(
-                    value: false,
-                    icon: const Icon(Icons.align_horizontal_left, size: 18),
-                    label: Text(l10n.settingsRailSideLeft),
-                  ),
-                  ButtonSegment(
-                    value: true,
-                    icon: const Icon(Icons.align_horizontal_right, size: 18),
-                    label: Text(l10n.settingsRailSideRight),
-                  ),
-                ],
-                selected: {settings.navRailOnRight},
-                onSelectionChanged: (s) => notifier.setNavRailOnRight(s.first),
-              ),
+              title: l10n.settingsRailSide,
+              description: l10n.settingsRailSideDesc,
+              segments: [
+                ButtonSegment(
+                  value: false,
+                  icon: const Icon(Icons.align_horizontal_left, size: 18),
+                  label: Text(l10n.settingsRailSideLeft),
+                ),
+                ButtonSegment(
+                  value: true,
+                  icon: const Icon(Icons.align_horizontal_right, size: 18),
+                  label: Text(l10n.settingsRailSideRight),
+                ),
+              ],
+              selected: {settings.navRailOnRight},
+              onSelectionChanged: (s) => notifier.setNavRailOnRight(s.first),
             ),
           ],
           ListTile(
@@ -543,30 +525,28 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ),
         ]),
         _section(l10n.settingsData, [
-          ListTile(
-            leading: const Icon(Icons.cloud_sync_outlined),
+          MyAppsDataSettingsTile(
+            action: DataSettingsAction.sync,
             title: Text(l10n.settingsWebDAVSync),
             subtitle: Text(l10n.settingsSyncSubtitle),
-            trailing: const Icon(Icons.chevron_right),
             selected: _twoPane && _detail == _SettingsDetail.webdav,
             onTap: () => _open(_SettingsDetail.webdav),
           ),
-          ListTile(
-            leading: const Icon(Icons.backup_outlined),
+          MyAppsDataSettingsTile(
+            action: DataSettingsAction.backup,
             title: Text(l10n.backupTitle),
             subtitle: Text(l10n.backupSubtitle),
-            trailing: const Icon(Icons.chevron_right),
             selected: _twoPane && _detail == _SettingsDetail.backup,
             onTap: () => _open(_SettingsDetail.backup),
           ),
-          ListTile(
-            leading: const Icon(Icons.upload_file_outlined),
+          MyAppsDataSettingsTile(
+            action: DataSettingsAction.export,
             title: Text(l10n.exportData),
             subtitle: Text(l10n.settingsExportSubtitle),
             onTap: _exportZip,
           ),
-          ListTile(
-            leading: const Icon(Icons.download_outlined),
+          MyAppsDataSettingsTile(
+            action: DataSettingsAction.import,
             title: Text(l10n.importData),
             subtitle: Text(l10n.settingsImportSubtitle),
             onTap: _importZip,

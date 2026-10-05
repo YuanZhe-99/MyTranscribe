@@ -1,5 +1,9 @@
 # Shared UI foundations
 
+MyApps-UI v0.1.6 owns appearance/navigation row layout and full-width choices.
+MyApps-DATA v1.0.4 owns data actions and backup preferences. Transcription,
+provider, secret and local-model settings remain application-owned.
+
 ## P5 region policies and attribution
 
 Settings consumes MyApps-UI v0.1.5 MyAppsPaneBody with its existing gate and width

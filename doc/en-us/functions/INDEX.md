@@ -1,6 +1,8 @@
 # MyTranscribe `lib/` Function Index
 
 Settings rendering delegates to myapps_ui; see [shared-ui.md](../shared-ui.md).
+Appearance rows use MyAppsSettingsSegmentRow; data actions and backup preferences
+delegate to myapps_data. Callbacks and domain settings stay application-owned.
 
 Profile rows now document shared exports and app adapters; implementation ownership is in [shared-ui.md](../shared-ui.md).
 
