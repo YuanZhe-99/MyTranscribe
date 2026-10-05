@@ -314,3 +314,9 @@ on Gitea would leave every public clone unable to run `flutter pub get`.
 **Never commit:** secrets, API keys, credentials, WebDAV configuration, signing keys
 (`key.properties`, `*.jks`), a user's recordings or transcripts, generated app data, or local-only
 machine addresses.
+
+## MyApps milestone releases
+
+For each completed P milestone, increment the application patch version by 0.0.1.
+Publish the shared dependency first. Add accurate co-author trailers for materially
+participating agents; do not invent participation or an agent identity.

@@ -1,5 +1,7 @@
 # 自适应布局
 
+P2 使用公共导航和实际内容约束，见 [shared-ui.md](shared-ui.md)。
+
 公共实现归属及全新克隆的接入说明见 [shared-ui.md](shared-ui.md)。
 
 这个应用里所有的布局决策都由一个不从 Flutter 引入任何东西的模块做出：

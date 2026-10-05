@@ -260,7 +260,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       );
     }
 
-    final contentWidth = shellContentWidth(screen.width);
+    final contentWidth = shellContentWidth(screen.width, context: context);
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: Row(
@@ -324,7 +324,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       padding: navBarAwarePadding(
         context,
         EdgeInsets.only(
-          bottom: shellListBottomInset(MediaQuery.sizeOf(context).width),
+          bottom: shellListBottomInset(
+            MediaQuery.sizeOf(context).width,
+            context: context,
+          ),
         ),
       ),
       children: [

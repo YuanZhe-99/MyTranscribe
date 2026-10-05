@@ -1,5 +1,7 @@
 # Adaptive layout
 
+P2 uses shared navigation and measured content constraints; see [shared-ui.md](shared-ui.md).
+
 Shared implementation ownership and fresh-clone instructions: [shared-ui.md](shared-ui.md).
 
 Every layout decision in this app is made by one module that imports nothing from Flutter:

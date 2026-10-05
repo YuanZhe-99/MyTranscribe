@@ -150,7 +150,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       );
     }
 
-    final contentWidth = shellContentWidth(screen.width);
+    final contentWidth = shellContentWidth(screen.width, context: context);
     return Scaffold(
       appBar: AppBar(title: Text(l10n.libraryTitle)),
       body: Row(
@@ -251,7 +251,11 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
             context,
             EdgeInsets.only(
               bottom:
-                  shellListBottomInset(MediaQuery.sizeOf(context).width) + 72,
+                  shellListBottomInset(
+                    MediaQuery.sizeOf(context).width,
+                    context: context,
+                  ) +
+                  72,
             ),
           ),
           children: [

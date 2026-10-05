@@ -322,7 +322,7 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
         !configured.contains(provider.id);
 
     final width = MediaQuery.sizeOf(context).width;
-    final contentWidth = shellContentWidth(width);
+    final contentWidth = shellContentWidth(width, context: context);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.newJobTitle)),

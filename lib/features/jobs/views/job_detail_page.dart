@@ -307,7 +307,12 @@ class _Body extends ConsumerWidget {
     return ListView(
       padding: navBarAwarePadding(
         context,
-        EdgeInsets.fromLTRB(16, 16, 16, shellListBottomInset(width) + 16),
+        EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          shellListBottomInset(width, context: context) + 16,
+        ),
       ),
       children: [
         if (embedded)

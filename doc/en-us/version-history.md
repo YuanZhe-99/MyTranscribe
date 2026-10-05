@@ -1,5 +1,11 @@
 # Version history
 
+## 0.5.1 — P2 navigation
+
+P2 adopts MyApps-UI `v0.1.1`, published to both remotes before app pointer updates. Shared navigation preserves app routes, optional destinations, badges and callbacks. Pages read actual shell content constraints; full-window routes subtract no rail. A stable content slot retains page state during resize, style and left/right rail changes. Split thresholds and data formats remain unchanged. Version `0.5.1+15`.
+
+Local verification: analysis passed; full Flutter suite 638 passed, 20 skipped.
+
 ## 0.5.0 — 2026-10-04
 
 Adopt MyApps-UI `v0.1.0` after its publication to both remotes. Theme construction,

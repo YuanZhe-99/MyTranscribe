@@ -135,7 +135,7 @@ class _JobsPageState extends ConsumerState<JobsPage> {
       );
     }
 
-    final contentWidth = shellContentWidth(screen.width);
+    final contentWidth = shellContentWidth(screen.width, context: context);
     return Scaffold(
       appBar: _homeAppBar(context, l10n),
       body: Row(
@@ -204,7 +204,10 @@ class _JobsPageState extends ConsumerState<JobsPage> {
           padding: navBarAwarePadding(
             context,
             EdgeInsets.only(
-              bottom: shellListBottomInset(MediaQuery.sizeOf(context).width),
+              bottom: shellListBottomInset(
+                MediaQuery.sizeOf(context).width,
+                context: context,
+              ),
             ),
           ),
           itemCount: records.length,
