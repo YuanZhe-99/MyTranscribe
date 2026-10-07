@@ -59,3 +59,5 @@ TDT v3、Qwen3-ASR 0.6B —— 以同样的方式、用派生 id 预置，也以
 
 不属于来源记录。它们放在一个单独的文件里，绝不进入备份或 ZIP 导出，只有在连接符合条件时才会到达另一台设备。
 见 [`secure-secrets-sync.md`](secure-secrets-sync.md)。
+
+共享接入：[shared-ai.md](../shared-ai.md)。ASR、模型包安装、设备状态、路由及在线传输交由 MyApps-AI v0.5.2。密钥使用 MyApps-DATA SecretStore/SecretExchange，保留 provider 命名空间和已有文件格式。来源与下载从设置管理，任务仍独立选择模型。WebDAV 与在线音频需要设备本地、带版本的隐私确认。

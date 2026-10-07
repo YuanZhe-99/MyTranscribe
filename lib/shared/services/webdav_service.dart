@@ -22,6 +22,7 @@ import '../../features/providers/models/transcribe_settings.dart';
 import '../../features/secrets/services/secrets_sync_service.dart';
 import 'sync_merge.dart';
 import 'transcribe_storage.dart';
+import 'webdav_privacy.dart';
 
 // The config and transport value types are the package's. They are
 // re-exported under their original names so call sites import one file.
@@ -222,8 +223,8 @@ class WebDAVService {
   /// Returns: `Future<bool>` — true for HTTP 207 or 404.
   /// Side effects: Issues one PROPFIND.
   /// Notes: 404 counts as reachable because the collection may not exist yet.
-  static Future<bool> testConnection(shared.WebDAVConfig config) =>
-      _engine.testConnection(config);
+  static Future<bool> testConnection(shared.WebDAVConfig config) async =>
+      await WebDavPrivacy.allowed() && await _engine.testConnection(config);
 
   /// Purpose: Run a full two-way sync under the remote upload lock.
   /// Inputs: `config`, `autoResolve` (false everywhere in production, I4).
@@ -243,6 +244,12 @@ class WebDAVService {
     bool autoResolve = false,
   }) async {
     final ({String? before, String after}) projection;
+    if (!await WebDavPrivacy.allowed()) {
+      return const SyncResult(
+        success: false,
+        error: 'webdavPrivacyAcknowledgementRequired',
+      );
+    }
     try {
       projection = await TranscriptSyncService.writeProjection();
     } catch (error) {
@@ -290,6 +297,7 @@ class WebDAVService {
     Map<String, TranscriptSyncRecord> transcriptResolutions = const {},
   }) async {
     final enginePending = pending.enginePending;
+    if (!await WebDavPrivacy.allowed()) return false;
     if (enginePending == null) return false;
 
     // What the engine is about to replace, and therefore the base that says
@@ -323,6 +331,12 @@ class WebDAVService {
   /// Notes: Remote changes since the last sync are lost. Runs under the remote
   /// `.lock` and the in-flight guard, like a normal sync.
   static Future<SyncResult> forceUpload(shared.WebDAVConfig config) async {
+    if (!await WebDavPrivacy.allowed()) {
+      return const SyncResult(
+        success: false,
+        error: 'webdavPrivacyAcknowledgementRequired',
+      );
+    }
     try {
       await TranscriptSyncService.writeProjection();
     } catch (error) {
@@ -331,9 +345,12 @@ class WebDAVService {
         error: 'Could not read the transcriptions: $error',
       );
     }
-    final result = _toSyncResult(
-      await _engine.forceUpload(config),
-    ).withSecrets(await _exchangeSecrets(config));
+    final result = _toSyncResult(await _engine.forceUpload(config)).withSecrets(
+      await _exchangeSecrets(
+        config,
+        mode: shared.SecretExchangeMode.forceUpload,
+      ),
+    );
     return result.withAudio(
       await _exchangeAudio(config, mode: AudioSyncMode.uploadOnly),
     );
@@ -349,6 +366,12 @@ class WebDAVService {
   /// to tell "the server never had this" apart from "somebody deleted this".
   /// A transcription only this device has simply uploads again next time.
   static Future<SyncResult> forceDownload(shared.WebDAVConfig config) async {
+    if (!await WebDavPrivacy.allowed()) {
+      return const SyncResult(
+        success: false,
+        error: 'webdavPrivacyAcknowledgementRequired',
+      );
+    }
     try {
       await TranscriptSyncService.writeProjection();
     } catch (error) {
@@ -365,7 +388,12 @@ class WebDAVService {
     );
     result = result
         .withWarnings(applied.warnings)
-        .withSecrets(await _exchangeSecrets(config));
+        .withSecrets(
+          await _exchangeSecrets(
+            config,
+            mode: shared.SecretExchangeMode.forceDownload,
+          ),
+        );
     return result.withAudio(
       await _exchangeAudio(config, mode: AudioSyncMode.downloadOnly),
     );
@@ -453,11 +481,13 @@ class WebDAVService {
   /// entry point calls this, including auto-sync, so a key set on one device
   /// reaches the other without anybody pressing anything.
   static Future<SecretsSyncOutcome> _exchangeSecrets(
-    shared.WebDAVConfig config,
-  ) async => SecretsSyncService.exchange(
+    shared.WebDAVConfig config, {
+    shared.SecretExchangeMode mode = shared.SecretExchangeMode.sync,
+  }) async => SecretsSyncService.exchange(
     config,
     trustedHosts: await TranscribeStorage.getSecretsTrustedHosts(),
     clientFactory: clientFactory,
+    mode: mode,
   );
 
   /// Purpose: Convert an engine result into the app-typed result.

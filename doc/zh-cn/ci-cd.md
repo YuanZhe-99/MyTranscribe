@@ -48,20 +48,20 @@ P2 使用公共导航和实际内容约束，见 [shared-ui.md](shared-ui.md)。
 
 CI 不构建 MSIX：打包它需要签名证书，而本仓库没有。要产出它，仍然是在本地运行 `dart run msix:create`。
 
-没有任何作业编译原生代码（[`decisions.md`](decisions.md) 中的决定 D21）。`packages/local_asr_whisper` 的构建钩子下载目标所对应的预编译
+没有任何作业编译原生代码（[`decisions.md`](decisions.md) 中的决定 D21）。`packages/myapps_ai/packages/myapps_ai_asr_whisper` 的构建钩子下载目标所对应的预编译
 whisper.cpp 压缩包，按 `native/binaries.json` 核对其 SHA-256，再打包其中的库 —— 作为 `flutter build` 的一部分，
 在 Ubuntu 作业中则作为 `flutter test` 的一部分，为主机准备。每个作业都缓存钩子的共享文件夹，以清单和钩子为键，
 因此普通的推送什么也不用下载。
 
-`.github/workflows/native-prebuild.yml` 负责构建上游没有以可用形式发布的那些压缩包 —— Android arm64-v8a 与
+`packages/myapps_ai/.github/workflows/asr-native-prebuild.yml` 负责构建上游没有以可用形式发布的那些压缩包 —— Android arm64-v8a 与
 x86_64、ARMv8.2 且不带 OpenMP 的 Windows ARM64，以及 Windows x64 —— 连同它们的 GPU 后端（OpenCL、Vulkan），并把它们作为一个 GitHub Release 的附件发布，标签为
 `whisper-bin-<上游版本>-<n>`，`v*` 发布触发器会忽略它。它从 Actions 页手动运行，每个上游版本一次，输入是上游
 标签和发布标签；它用到的工具链 —— NDK、ARM64 运行器上的 clang、x64 运行器上的 MSVC 与固定版本的 Vulkan SDK、Khronos
 的头文件与加载器 —— 在别处都不需要。哪个压缩包服务哪个目标、
 原因为何，见 `platform-notes.md`。
 
-`.github/workflows/apple-prebuild.yml` 同样手动运行，用 `xcodebuild` 为 macOS、iOS 和模拟器构建神经网络引擎
-桥接层（`packages/local_asr_apple/bridge`，FluidAudio 外面包一层 C API），并以 `apple-bin-<桥接层修订>` 为标签
+`packages/myapps_ai/.github/workflows/asr-apple-prebuild.yml` 同样手动运行，用 `xcodebuild` 为 macOS、iOS 和模拟器构建神经网络引擎
+桥接层（`packages/myapps_ai/packages/myapps_ai_asr_apple/bridge`，FluidAudio 外面包一层 C API），并以 `apple-bin-<桥接层修订>` 为标签
 发布。桥接层或 FluidAudio 的固定版本变化时才运行它。
 
 ## 全新克隆
@@ -71,9 +71,6 @@ git clone git@github.com:YuanZhe-99/MyTranscribe.git     # 或使用 Gitea 远�
 cd MyTranscribe
 git submodule update --init          # myapps_data 是子模块
 flutter pub get
-dart pub get -C packages/local_asr_whisper   # 它自己的测试，flutter analyze 会读到
-dart pub get -C packages/local_asr_sherpa
-dart pub get -C packages/local_asr_apple
 flutter gen-l10n
 ```
 
@@ -132,7 +129,7 @@ flutter test test/media_toolkit_live_test.dart --dart-define=live_download=true
 
 ```bash
 flutter test test/local_asr_live_test.dart --dart-define=live_model=true
-cd packages/local_asr_whisper && LASR_TEST_MODEL=/path/to/ggml-tiny.bin dart test
+cd packages/myapps_ai/packages/myapps_ai_asr_whisper && LASR_TEST_MODEL=/path/to/ggml-tiny.bin dart test
 ```
 
 ## 运行
@@ -183,3 +180,5 @@ dart run flutter_launcher_icons          # Android mipmap、iOS appiconset、Win
 `AGENTS.md` 里有完整清单。简而言之：版本号在 `pubspec.yaml` 中出现两次（版本本身与 MSIX 版本），在
 `installer.iss` 中出现三次，它们必须一起变。设置页显示的版本不在其中 —— 它在运行时读取包信息，绝不能手工
 改动。
+
+共享接入：[shared-ai.md](shared-ai.md)。ASR、模型包安装、设备状态、路由及在线传输交由 MyApps-AI v0.5.2。密钥使用 MyApps-DATA SecretStore/SecretExchange，保留 provider 命名空间和已有文件格式。来源与下载从设置管理，任务仍独立选择模型。WebDAV 与在线音频需要设备本地、带版本的隐私确认。

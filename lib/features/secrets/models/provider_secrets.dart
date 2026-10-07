@@ -32,13 +32,18 @@ class ProviderSecret {
   /// source, and the later edit wins. A local-time value read on a device in
   /// another zone would resolve the wrong way.
   final DateTime updatedAt;
+  final Map<String, dynamic> extraJson;
 
   /// Purpose: Create a stored key.
   /// Inputs: [apiKey] (null for a tombstone), [updatedAt].
   /// Returns: A new immutable value.
   /// Side effects: None.
   /// Notes: None.
-  const ProviderSecret({required this.apiKey, required this.updatedAt});
+  const ProviderSecret({
+    required this.apiKey,
+    required this.updatedAt,
+    this.extraJson = const {},
+  });
 
   /// Purpose: Report whether a usable key is present.
   /// Inputs: None.
@@ -57,6 +62,11 @@ class ProviderSecret {
     final key = json['apiKey'];
     return ProviderSecret(
       apiKey: key is String && key.isNotEmpty ? key : null,
+      extraJson: {
+        for (final entry in json.entries)
+          if (entry.key != 'apiKey' && entry.key != 'updatedAt')
+            entry.key: entry.value,
+      },
       updatedAt:
           DateTime.tryParse('${json['updatedAt']}')?.toUtc() ??
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
@@ -70,6 +80,7 @@ class ProviderSecret {
   /// Notes: A tombstone is written as an explicit null, because the entry has
   /// to exist for the deletion to propagate.
   Map<String, dynamic> toJson() => {
+    ...extraJson,
     'apiKey': apiKey,
     'updatedAt': updatedAt.toUtc().toIso8601String(),
   };
@@ -154,6 +165,7 @@ class SecretsFile {
       keys: {
         ...keys,
         providerId: ProviderSecret(
+          extraJson: keys[providerId]?.extraJson ?? const {},
           apiKey: trimmed == null || trimmed.isEmpty ? null : trimmed,
           updatedAt: (now ?? DateTime.now()).toUtc(),
         ),

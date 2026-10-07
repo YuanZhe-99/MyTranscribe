@@ -5,8 +5,9 @@ advertising. Nothing is collected about you.
 
 ## Your recordings and transcripts
 
-They are stored on your device, in the app's own folder. They are never uploaded anywhere by the app
-itself, and they are not included in backups, ZIP exports or WebDAV sync.
+They are stored on your device, in the app's own folder. Original recordings are uploaded only to the transcription service you select.
+Finished transcript text is included in backups, ZIP exports and configured WebDAV sync.
+Converted audio sync is opt-in; original recordings are never synced.
 
 ## Transcription
 
@@ -38,13 +39,13 @@ the transcription service they belong to, and to nowhere else.
 
 They are never written into a local backup or a ZIP export. They are only copied to your WebDAV
 server when that server is reached over HTTPS, or over a private network address such as your local
-network, a Tailscale or ZeroTier address, or a machine name on your own network. Over plain HTTP to
+network, a Tailscale or EasyTier address, or a machine name on your own network. Over plain HTTP to
 a public address, the app syncs your other settings and leaves the keys on the device.
 
 ## WebDAV sync
 
 Sync is off until you configure it, and it talks only to the server you entered. It carries your
-sources, models and preferences, and — subject to the rule above — your API keys.
+sources, models, profile and preferences, finished transcript text, and — subject to the rule above — your API keys. Converted audio travels only when you enable audio sync.
 
 ## Permissions
 
@@ -55,3 +56,10 @@ speech recognition only if you choose the system's recognition as the fallback.
 ## Questions
 
 yuanzhe1999@outlook.com
+
+Before WebDAV network operations, each device must acknowledge the privacy notice.
+Existing configurations pause until acknowledgement. Server files are not encrypted by
+the app; HTTPS encrypts transport. Public HTTP trusted hosts require a risk warning and
+explicit device-local confirmation before keys may travel. Online transcription has a
+separate provider/address acknowledgement covering audio, hints, prompts, keywords and
+enabled speaker samples.

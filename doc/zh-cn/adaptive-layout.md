@@ -149,3 +149,5 @@ bool useViewerSidebar(double screenWidth, double screenHeight, double contentWid
 
 有两个坑值得记住：默认的 800×600 测试视口已经通过 `canSplitLayout`，所以凡是在意尺寸的测试都要明确固定
 视口；另外每个 `TextFormField` 都会带来自己的 `Scrollable`，所以绝不要按位置去定位其中之一。
+
+共享接入：[shared-ai.md](shared-ai.md)。ASR、模型包安装、设备状态、路由及在线传输交由 MyApps-AI v0.5.2。密钥使用 MyApps-DATA SecretStore/SecretExchange，保留 provider 命名空间和已有文件格式。来源与下载从设置管理，任务仍独立选择模型。WebDAV 与在线音频需要设备本地、带版本的隐私确认。

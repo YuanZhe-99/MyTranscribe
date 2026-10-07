@@ -12,7 +12,7 @@ auto-sync switch. Below them: sync now, and — behind a confirmation that says 
 force upload and force download.
 
 A banner under the address says whether your API keys will travel with the rest. They do over
-HTTPS, and over a private address such as your own network, Tailscale or ZeroTier; over plain HTTP
+HTTPS, and over a private address such as your own network, Tailscale or EasyTier; over plain HTTP
 to a public server, your settings still sync and the keys stay here. See
 [`secure-secrets-sync.md`](secure-secrets-sync.md).
 

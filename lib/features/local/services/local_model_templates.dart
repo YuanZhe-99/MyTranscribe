@@ -527,7 +527,9 @@ List<LocalModelTemplate> buildLocalModelTemplates() => [
 /// Notes: A package the user added from a file has no template manifest; its
 /// manifest exists only in its installed folder.
 ArtifactManifest? templateArtifact(String artifactId) {
-  if (artifactId == speakerLabelsManifest.artifactId) return speakerLabelsManifest;
+  if (artifactId == speakerLabelsManifest.artifactId) {
+    return speakerLabelsManifest;
+  }
   for (final template in buildLocalModelTemplates()) {
     for (final artifact in template.artifacts) {
       if (artifact.artifactId == artifactId) return artifact;

@@ -132,7 +132,7 @@ Windows 上为 false，因为它没有文件转写 API，所以回退设置在�
 
 ### whisper.cpp
 
-应用构建不编译任何原生代码（[`decisions.md`](decisions.md) 中的决定 D21）。`packages/local_asr_whisper` 里有一份清单
+应用构建不编译任何原生代码（[`decisions.md`](decisions.md) 中的决定 D21）。`packages/myapps_ai/packages/myapps_ai_asr_whisper` 里有一份清单
 `native/binaries.json`，按 URL 和 SHA-256 为每个目标固定一个压缩包。它的构建钩子下载正在构建的目标所对应的
 压缩包，核对哈希，把列出的库解压到 `.dart_tool/` 下它的共享缓存中，再作为代码资源交给 Flutter 工具。哈希不
 符时构建失败，而不是打包一个不同的二进制文件。所有压缩包都来自 whisper.cpp v1.9.4（提交 `927cfce3`），并且每个都在
@@ -151,7 +151,7 @@ Whisper 的库旁边带着 whisper.cpp 自带的 Parakeet 运行时（`parakeet`
 其中三个是我们自己的，因为上游的不合格：它的 Windows ARM64 压缩包需要 Visual Studio `debug_nonredist` 文件夹
 里的 `libomp140.aarch64.dll`，而那是不能分发的，并且以 ARMv8.7 为目标，较旧的骁龙笔记本跑不了；它没有为
 Android 发布任何东西；它的 Windows x64 压缩包没有 GPU 后端，而在这里单独构建一个后端又无法与它其余的库在 ABI 上
-对齐。`.github/workflows/native-prebuild.yml` 从同一个上游提交构建这三者，每个版本一次（见 `ci-cd.md`）。32 位
+对齐。`packages/myapps_ai/.github/workflows/asr-native-prebuild.yml` 从同一个上游提交构建这三者，每个版本一次（见 `ci-cd.md`）。32 位
 Android 没有条目 —— 大的 Whisper 模型装不进 32 位地址空间 —— 引擎在那里报告自己未构建。
 
 GPU 后端（L3）是各自独立的库，ggml 把它们和 CPU 后端一起加载，而每个只在设备自己的运行库存在时才能加载：
@@ -184,13 +184,13 @@ OpenMP 运行库 `VCOMP140.DLL`）。本应用本来就依赖这个运行库 —
 `MSVCP140.dll` 与 `VCRUNTIME140.dll`，安装程序也不附带任何运行库 —— 因此 whisper.cpp 只在 x64 上多出一个
 `VCOMP140.DLL`，而它由同一个 Visual C++ 可再发行组件包安装。
 
-升级到更新的上游版本会一次涉及以上全部：用新标签运行 `native-prebuild.yml`，把 `native/binaries.json` 指向新的
+升级到更新的上游版本会一次涉及以上全部：用新标签运行 `asr-native-prebuild.yml`，把 `native/binaries.json` 指向新的
 压缩包及其哈希，把新的头文件复制到 `third_party/`，重新生成绑定，默认值有变时更新布局检查，并提高
 `whisper_cpp_engine.dart` 中的 `_bindingsVersion`，让每台设备重新检查它的路线。
 
 ### sherpa-onnx
 
-Qwen3-ASR 运行在 sherpa-onnx 上（决定 D22），通过 `packages/local_asr_sherpa`，其构建方式与 `local_asr_whisper`
+Qwen3-ASR 运行在 sherpa-onnx 上（决定 D22），通过 `packages/myapps_ai/packages/myapps_ai_asr_sherpa`，其构建方式与 `local_asr_whisper`
 完全相同：`native/binaries.json` 按 URL 与 SHA-256 固定 sherpa-onnx v1.13.8 自己的发布资源，钩子下载并打包它们，
 `third_party/sherpa-onnx/c-api.h` 与许可证（Apache-2.0）一起放在仓库里，`dart run tool/ffigen.dart` 生成
 `lib/src/sherpa_bindings.g.dart`。不使用 pub 包 `sherpa_onnx`：1.13.8 不带 Windows ARM64 的 DLL，这台机器根本
@@ -216,10 +216,10 @@ Android 的压缩包是所有目标里最大的下载（48 MiB），由钩子下
 ### 神经网络引擎桥接层
 
 在 iOS 和 macOS 上，Parakeet 还能通过 FluidAudio 0.17.4 在神经网络引擎上运行（L4）。FluidAudio 要编译 C、C++
-和 Swift，所以按决定 D21，它只被封装一次，而不在应用构建中编译：`packages/local_asr_apple/bridge` 是一个小
+和 Swift，所以按决定 D21，它只被封装一次，而不在应用构建中编译：`packages/myapps_ai/packages/myapps_ai_asr_apple/bridge` 是一个小
 Swift 包，它的五个 `@_cdecl` 函数（`lasr_apple.h`）在关闭 FluidAudio 自带下载器（`ModelHub.offlineMode`）的
 情况下加载已就位的 Core ML 文件夹，把样本转写成带 token 时间的 JSON，释放字符串与模型。
-`.github/workflows/apple-prebuild.yml` 在 macOS 运行器上用 `xcodebuild` 为 macOS、iOS 和 iOS 模拟器构建它，
+`packages/myapps_ai/.github/workflows/asr-apple-prebuild.yml` 在 macOS 运行器上用 `xcodebuild` 为 macOS、iOS 和 iOS 模拟器构建它，
 并把这三个二进制作为一个发布放出；包的钩子按哈希下载该压缩包，交出正在构建的那个切片，`tool/ffigen.dart`
 从头文件生成绑定。每个函数都会在一个分离的任务上阻塞它的调用方 —— 引擎的工作 isolate。
 
@@ -227,3 +227,5 @@ Swift 包，它的五个 `@_cdecl` 函数（`lasr_apple.h`）在关闭 FluidAudi
 的模型（`Preprocessor`、int8 的 `Encoder`、`Decoder`、`JointDecisionv3`）和 `parakeet_vocab.json`，共 483 MB。
 这些文件只标给 iOS 和 macOS，引擎也只在那里注册，因此其他平台不会提供这个模型包。Core ML 不报告每个运算
 在哪里执行，所以这条路线记录为 `mixed`（配置为 CPU 加神经网络引擎）。
+
+共享接入：[shared-ai.md](shared-ai.md)。ASR、模型包安装、设备状态、路由及在线传输交由 MyApps-AI v0.5.2。密钥使用 MyApps-DATA SecretStore/SecretExchange，保留 provider 命名空间和已有文件格式。来源与下载从设置管理，任务仍独立选择模型。WebDAV 与在线音频需要设备本地、带版本的隐私确认。

@@ -28,7 +28,7 @@ A key is copied to the user's WebDAV server only when the app can reach that ser
   - carrier-grade NAT: `100.64/10` — the range Tailscale assigns
   - IPv6 unique local: `fc00::/7`, which covers Tailscale's own range
   - a Tailscale name: any host ending `.ts.net`
-  - a ZeroTier name: any host ending `.et.net`
+  - a EasyTier name: any host ending `.et.net`
   - a local name: any host ending `.local`, or a host with no dot at all
 - `http://` to a host the user added to their **trusted hosts** list, by exact name or as
   `*.suffix`.
@@ -91,3 +91,5 @@ Keys are excluded from local backups. Restoring a backup on a fresh device gives
 and models, and you re-enter your keys — or sync once from a device that has them, over a connection
 that qualifies. That is a deliberate choice: a backup bundle is a plain file people copy around, and
 a key in one is a key in every copy of it.
+
+Shared integration: [shared-ai.md](../shared-ai.md). ASR, artifact install, device state, routing and online transport now delegate to MyApps-AI v0.5.2. Keys use MyApps-DATA SecretStore/SecretExchange with the existing provider namespace and file format. Sources and downloads are managed from Settings; jobs still select their own model. WebDAV and online audio require device-local versioned privacy acknowledgement.

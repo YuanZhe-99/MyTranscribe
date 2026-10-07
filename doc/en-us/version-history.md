@@ -1,5 +1,20 @@
 # Version history
 
+## 0.5.8 — Shared ASR and unified AI settings
+
+Adopt MyApps-AI v0.5.2, MyApps-UI v0.1.8 and MyApps-DATA v1.1.0.
+Move native ASR, routing, self-tests, model installation and online transport
+to shared packages while preserving existing model records, downloads and job
+recovery. Sources, model records, downloads and keys are managed from Settings;
+the shell now has Transcribe and Settings. Online audio and WebDAV require
+device-local privacy acknowledgement. Secret exchange preserves unknown fields,
+uses one-way forced transfers, and requires a risk warning for public HTTP trust.
+
+Validated on the host with analysis, full regression tests, real whisper tiny
+transcription/cancellation and seven shared-settings geometries. Android arm64
+release APK built with whisper/sherpa/ggml and no llama backend. Other platform
+inference and real online providers remain unverified.
+
 ## 0.5.7 — Compact horizontal settings choices
 
 Pin MyApps-UI v0.1.7 for centered wrapped labels and horizontal fold-pane choices.
@@ -433,7 +448,7 @@ identity across the pieces, and refuse to send an API key anywhere it should not
 **Keys**
 
 - API keys travel to a WebDAV server only over HTTPS, or over plain HTTP to an address that cannot
-  leave the user's own network — a private range, a Tailscale or ZeroTier name, an mDNS name, or a
+  leave the user's own network — a private range, a Tailscale or EasyTier name, an mDNS name, or a
   host they trusted on that device. Everything else syncs regardless.
 - A refused address makes no request at all, in either direction.
 

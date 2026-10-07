@@ -273,3 +273,5 @@ rename fails outright while anything else holds the file open — a virus scanne
 the list reading it. The collision lasts milliseconds, and losing an hour-long job or a page of
 corrections to it would be absurd, so `retryingFileOperation` makes six attempts over about a tenth
 of a second before giving up.
+
+Shared integration: [shared-ai.md](shared-ai.md). ASR, artifact install, device state, routing and online transport now delegate to MyApps-AI v0.5.2. Keys use MyApps-DATA SecretStore/SecretExchange with the existing provider namespace and file format. Sources and downloads are managed from Settings; jobs still select their own model. WebDAV and online audio require device-local versioned privacy acknowledgement.

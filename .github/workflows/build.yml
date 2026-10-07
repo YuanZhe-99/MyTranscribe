@@ -49,10 +49,10 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: |
-            .dart_tool/hooks_runner/shared/local_asr_whisper
-            .dart_tool/hooks_runner/shared/local_asr_sherpa
-            .dart_tool/hooks_runner/shared/local_asr_apple
-          key: native-bin-${{ github.job }}-${{ hashFiles('packages/local_asr_*/native/**', 'packages/local_asr_*/hook/**') }}
+            .dart_tool/hooks_runner/shared/myapps_ai_asr_whisper
+            .dart_tool/hooks_runner/shared/myapps_ai_asr_sherpa
+            .dart_tool/hooks_runner/shared/myapps_ai_asr_apple
+          key: native-bin-${{ github.job }}-${{ hashFiles('packages/myapps_ai/packages/myapps_ai_asr_*/native/**', 'packages/myapps_ai/packages/myapps_ai_asr_*/hook/**') }}
 
       - uses: actions/setup-java@v5
         with:
@@ -67,13 +67,6 @@ jobs:
       - run: flutter pub get
 
       - run: flutter gen-l10n
-
-      # the local_asr_* packages have tests and tools of their own,
-      # which flutter analyze reads; without each package's own dependencies it
-      # reports every `test` and `expect` in them as undefined.
-      - run: dart pub get -C packages/local_asr_whisper
-      - run: dart pub get -C packages/local_asr_sherpa
-      - run: dart pub get -C packages/local_asr_apple
 
       - run: flutter analyze
 
@@ -134,10 +127,10 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: |
-            .dart_tool/hooks_runner/shared/local_asr_whisper
-            .dart_tool/hooks_runner/shared/local_asr_sherpa
-            .dart_tool/hooks_runner/shared/local_asr_apple
-          key: native-bin-${{ github.job }}-${{ hashFiles('packages/local_asr_*/native/**', 'packages/local_asr_*/hook/**') }}
+            .dart_tool/hooks_runner/shared/myapps_ai_asr_whisper
+            .dart_tool/hooks_runner/shared/myapps_ai_asr_sherpa
+            .dart_tool/hooks_runner/shared/myapps_ai_asr_apple
+          key: native-bin-${{ github.job }}-${{ hashFiles('packages/myapps_ai/packages/myapps_ai_asr_*/native/**', 'packages/myapps_ai/packages/myapps_ai_asr_*/hook/**') }}
 
       - uses: subosito/flutter-action@v2
         with:
@@ -193,10 +186,10 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: |
-            .dart_tool/hooks_runner/shared/local_asr_whisper
-            .dart_tool/hooks_runner/shared/local_asr_sherpa
-            .dart_tool/hooks_runner/shared/local_asr_apple
-          key: native-bin-${{ github.job }}-${{ hashFiles('packages/local_asr_*/native/**', 'packages/local_asr_*/hook/**') }}
+            .dart_tool/hooks_runner/shared/myapps_ai_asr_whisper
+            .dart_tool/hooks_runner/shared/myapps_ai_asr_sherpa
+            .dart_tool/hooks_runner/shared/myapps_ai_asr_apple
+          key: native-bin-${{ github.job }}-${{ hashFiles('packages/myapps_ai/packages/myapps_ai_asr_*/native/**', 'packages/myapps_ai/packages/myapps_ai_asr_*/hook/**') }}
 
       - name: Cache the Flutter SDK
         uses: actions/cache@v4
@@ -248,10 +241,10 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: |
-            .dart_tool/hooks_runner/shared/local_asr_whisper
-            .dart_tool/hooks_runner/shared/local_asr_sherpa
-            .dart_tool/hooks_runner/shared/local_asr_apple
-          key: native-bin-${{ github.job }}-${{ hashFiles('packages/local_asr_*/native/**', 'packages/local_asr_*/hook/**') }}
+            .dart_tool/hooks_runner/shared/myapps_ai_asr_whisper
+            .dart_tool/hooks_runner/shared/myapps_ai_asr_sherpa
+            .dart_tool/hooks_runner/shared/myapps_ai_asr_apple
+          key: native-bin-${{ github.job }}-${{ hashFiles('packages/myapps_ai/packages/myapps_ai_asr_*/native/**', 'packages/myapps_ai/packages/myapps_ai_asr_*/hook/**') }}
 
       - uses: subosito/flutter-action@v2
         with:
@@ -291,10 +284,10 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: |
-            .dart_tool/hooks_runner/shared/local_asr_whisper
-            .dart_tool/hooks_runner/shared/local_asr_sherpa
-            .dart_tool/hooks_runner/shared/local_asr_apple
-          key: native-bin-${{ github.job }}-${{ hashFiles('packages/local_asr_*/native/**', 'packages/local_asr_*/hook/**') }}
+            .dart_tool/hooks_runner/shared/myapps_ai_asr_whisper
+            .dart_tool/hooks_runner/shared/myapps_ai_asr_sherpa
+            .dart_tool/hooks_runner/shared/myapps_ai_asr_apple
+          key: native-bin-${{ github.job }}-${{ hashFiles('packages/myapps_ai/packages/myapps_ai_asr_*/native/**', 'packages/myapps_ai/packages/myapps_ai_asr_*/hook/**') }}
 
       - uses: subosito/flutter-action@v2
         with:

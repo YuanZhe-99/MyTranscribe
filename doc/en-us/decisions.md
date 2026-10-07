@@ -38,8 +38,8 @@ section of that plan (§7, report §11.1 and so on), the plan is in the reposito
   the one milestone left that this machine can actually run.
 - **2026-09-25** — L4: **A prebuilt bridge, not a Swift plugin.** The plan had a SwiftPM plugin
   with a Pigeon API; under D21 no Swift may compile in the app build, and FluidAudio compiles C, C++
-  and Swift. So `packages/local_asr_apple/bridge` wraps it in five `@_cdecl` functions,
-  `apple-prebuild.yml` builds it once with `xcodebuild` (a multi-arch `swift build` could not find
+  and Swift. So `packages/myapps_ai/packages/myapps_ai_asr_apple/bridge` wraps it in five `@_cdecl` functions,
+  `asr-apple-prebuild.yml` builds it once with `xcodebuild` (a multi-arch `swift build` could not find
   FluidAudio's prebuilt text-processing library), and the app binds it with ffigen like the other
   engines. The Core ML package is Parakeet v3 only — FluidAudio dropped Qwen3-ASR — pinned file by
   file. The first release packed the frameworks' dSYMs by mistake and was deleted; the workflow now
@@ -71,7 +71,7 @@ section of that plan (§7, report §11.1 and so on), the plan is in the reposito
   `b5130` release assets (the v1.9.4 commit) were listed and unpacked the same day: Windows x64,
   the Apple xcframework and Linux x64 qualify; the Windows ARM64 zip does not (a
   `debug_nonredist` OpenMP DLL, ARMv8.7); Android has none. Our own set for those two is built
-  once by `native-prebuild.yml`. The C shim goes with the compiling — a shim is itself compiled —
+  once by `asr-native-prebuild.yml`. The C shim goes with the compiling — a shim is itself compiled —
   and the risk it removed is guarded by generated bindings plus a defaults read-back. The earlier
   L1 entries about the CPU variants, the shim and the hook's toolchain describe the superseded
   source build and stay as its record.

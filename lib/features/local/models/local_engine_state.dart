@@ -90,6 +90,7 @@ class SmokeTestRecord {
 
   /// When it was checked, in UTC.
   final DateTime checkedAt;
+  final Map<String, dynamic> extraJson;
 
   /// Purpose: Create a check record.
   /// Inputs: All fields; [routeKey], [outcome] and [checkedAt] are required.
@@ -104,6 +105,7 @@ class SmokeTestRecord {
     this.similarity,
     this.realTimeFactor,
     this.reason,
+    this.extraJson = const {},
   });
 
   /// Purpose: Summarise the record for the router.
@@ -122,6 +124,19 @@ class SmokeTestRecord {
   factory SmokeTestRecord.fromJson(Map<String, dynamic> json) =>
       SmokeTestRecord(
         routeKey: json['routeKey'] as String? ?? '',
+        extraJson: {
+          for (final entry in json.entries)
+            if (!{
+              'routeKey',
+              'outcome',
+              'checkedAt',
+              'text',
+              'similarity',
+              'realTimeFactor',
+              'reason',
+            }.contains(entry.key))
+              entry.key: entry.value,
+        },
         outcome: SmokeTestOutcome.parse(json['outcome']),
         checkedAt:
             DateTime.tryParse('${json['checkedAt']}')?.toUtc() ??
@@ -138,6 +153,7 @@ class SmokeTestRecord {
   /// Side effects: None.
   /// Notes: None.
   Map<String, dynamic> toJson() => {
+    ...extraJson,
     'routeKey': routeKey,
     'outcome': outcome.name,
     'checkedAt': checkedAt.toUtc().toIso8601String(),

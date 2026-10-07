@@ -109,8 +109,8 @@ void main() {
       allows('http://nas.tailnet-example.ts.net/dav', EndpointReason.tailnet);
     });
 
-    test('a ZeroTier name', () {
-      allows('http://node.et.net/dav', EndpointReason.zerotier);
+    test('an EasyTier name', () {
+      allows('http://node.et.net/dav', EndpointReason.easytier);
     });
 
     test('an mDNS name', () {

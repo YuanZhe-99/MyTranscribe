@@ -22,6 +22,7 @@ import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
 import '../../../shared/services/auto_sync_service.dart';
+import '../../providers/models/provider_config.dart';
 import '../../../shared/services/transcribe_storage.dart';
 import '../../media/models/media_info.dart';
 import '../../local/services/local_asr_engine.dart';
@@ -86,6 +87,7 @@ class JobRunner {
     required SettingsRepository repository,
     TranscriptionClient Function()? clientFactory,
     Future<String?> Function(String providerId)? keyLookup,
+    Future<bool> Function(ProviderConfig provider)? onlineAllowed,
     Future<bool> Function()? writeTranscriptFiles,
     LocalTranscriptionBackend? localBackend,
     Uuid? uuid,
@@ -93,6 +95,7 @@ class JobRunner {
        _repository = repository,
        _clientFactory = clientFactory ?? TranscriptionClient.new,
        _keyLookup = keyLookup ?? SecretsStore.keyFor,
+       _onlineAllowed = onlineAllowed ?? ((_) async => true),
        _writeTranscriptFiles =
            writeTranscriptFiles ?? TranscribeStorage.getAutoSaveTranscriptFiles,
        _localBackend = localBackend,
@@ -103,6 +106,7 @@ class JobRunner {
   final SettingsRepository _repository;
   final TranscriptionClient Function() _clientFactory;
   final Future<String?> Function(String) _keyLookup;
+  final Future<bool> Function(ProviderConfig) _onlineAllowed;
   final Future<bool> Function() _writeTranscriptFiles;
   final Uuid _uuid;
 
@@ -553,6 +557,14 @@ class JobRunner {
       );
     }
 
+    if (!await _onlineAllowed(provider)) {
+      throw _JobFailed(
+        JobError(
+          kind: JobFailureKind.configurationMissing,
+          message: 'Online privacy acknowledgement is required on this device.',
+        ),
+      );
+    }
     final source = File(job.sourcePath);
     if (!source.existsSync()) {
       throw _JobFailed(
@@ -1504,7 +1516,8 @@ class JobRunner {
   JobError _requestFailure(TranscriptionException error) => JobError(
     kind: switch (error.failure) {
       TranscriptionFailure.unauthorized => JobFailureKind.noApiKey,
-      TranscriptionFailure.network => JobFailureKind.network,
+      TranscriptionFailure.network ||
+      TranscriptionFailure.timeout => JobFailureKind.network,
       TranscriptionFailure.cancelled => JobFailureKind.unknown,
       _ => JobFailureKind.requestRejected,
     },

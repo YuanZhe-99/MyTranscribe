@@ -25,6 +25,22 @@ void main() {
   );
 
   group('merging', () {
+    test('unknown entry fields survive reads and key edits', () {
+      final file = SecretsFile.fromJson({
+        'version': 1,
+        'keys': {
+          'provider:openai': {
+            'apiKey': 'test-key',
+            'updatedAt': earlier.toIso8601String(),
+            'futureMetadata': {'revision': 3},
+          },
+        },
+      });
+      final changed = file.withKey('provider:openai', null, now: later);
+      expect(changed.toJson()['keys']['provider:openai']['futureMetadata'], {
+        'revision': 3,
+      });
+    });
     test('a key set on one device reaches the other', () {
       final merged = mergeSecrets(
         const SecretsFile(),

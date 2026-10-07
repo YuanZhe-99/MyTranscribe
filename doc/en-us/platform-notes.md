@@ -163,7 +163,7 @@ which has no file-transcription API, so the fallback setting is absent there rat
 
 ### whisper.cpp
 
-The app build compiles nothing native (decision D21 in [`decisions.md`](decisions.md)). `packages/local_asr_whisper`
+The app build compiles nothing native (decision D21 in [`decisions.md`](decisions.md)). `packages/myapps_ai/packages/myapps_ai_asr_whisper`
 keeps a manifest, `native/binaries.json`, that pins one archive per target by URL and SHA-256. Its
 build hook downloads the archive for the target being built, checks the hash, unpacks the listed
 libraries into its shared cache under `.dart_tool/`, and hands them to the Flutter tool as code
@@ -185,7 +185,7 @@ Three of them are ours because upstream's do not qualify: its Windows ARM64 zips
 `libomp140.aarch64.dll` from Visual Studio's `debug_nonredist` folder, which may not be shipped, and
 target ARMv8.7, which older Snapdragon laptops cannot run; it publishes nothing for Android; and its
 Windows x64 zip has no GPU backend, while one built here would not be ABI-matched to its other
-libraries. `.github/workflows/native-prebuild.yml` builds all three from the same upstream commit,
+libraries. `packages/myapps_ai/.github/workflows/asr-native-prebuild.yml` builds all three from the same upstream commit,
 once per version (`ci-cd.md`). 32-bit Android has no entry — a large Whisper model does not fit a
 32-bit address space — and the engine reports itself as not built there.
 
@@ -230,14 +230,14 @@ runtime — its own executable and its plugins link `MSVCP140.dll` and `VCRUNTIM
 installer copies none of it — so whisper.cpp adds only `VCOMP140.DLL` on x64, which the same Visual
 C++ Redistributable installs.
 
-Moving to a newer upstream version touches all of it at once: run `native-prebuild.yml` for the new
+Moving to a newer upstream version touches all of it at once: run `asr-native-prebuild.yml` for the new
 tag, point `native/binaries.json` at the new archives with their hashes, copy the new headers into
 `third_party/`, regenerate the bindings, update the layout check if the defaults moved, and bump
 `_bindingsVersion` in `whisper_cpp_engine.dart` so every device checks its routes again.
 
 ### sherpa-onnx
 
-Qwen3-ASR runs on sherpa-onnx (decision D22), through `packages/local_asr_sherpa`, built exactly
+Qwen3-ASR runs on sherpa-onnx (decision D22), through `packages/myapps_ai/packages/myapps_ai_asr_sherpa`, built exactly
 like `local_asr_whisper`: `native/binaries.json` pins sherpa-onnx v1.13.8's own release assets by URL
 and SHA-256, the hook downloads and bundles them, `third_party/sherpa-onnx/c-api.h` is vendored with
 the licence (Apache-2.0), and `dart run tool/ffigen.dart` generates `lib/src/sherpa_bindings.g.dart`.
@@ -267,10 +267,10 @@ Like Qwen3-ASR, it is absent on iOS.
 
 On iOS and macOS, Parakeet also runs on the Neural Engine through FluidAudio 0.17.4 (L4).
 FluidAudio compiles C, C++ and Swift, so under decision D21 it is wrapped once, not in the app
-build: `packages/local_asr_apple/bridge` is a small Swift package whose five `@_cdecl` functions
+build: `packages/myapps_ai/packages/myapps_ai_asr_apple/bridge` is a small Swift package whose five `@_cdecl` functions
 (`lasr_apple.h`) load a staged Core ML folder with FluidAudio's own downloader switched off
 (`ModelHub.offlineMode`), transcribe samples to JSON with token times, free and release.
-`.github/workflows/apple-prebuild.yml` builds it with `xcodebuild` on a macOS runner for macOS,
+`packages/myapps_ai/.github/workflows/asr-apple-prebuild.yml` builds it with `xcodebuild` on a macOS runner for macOS,
 iOS and the iOS Simulator and publishes the three binaries as a release; the package's hook
 downloads that archive by hash and hands over the slice being built, and `tool/ffigen.dart`
 generates the bindings from the header. Every function blocks its caller — the engine's worker
@@ -282,3 +282,5 @@ and hashed file by file: four compiled models (`Preprocessor`, `Encoder` at int8
 and the engine is registered only there, so no other platform offers the package. Core ML reports
 no per-operation placement, so the route records `mixed` (configured for the CPU and the Neural
 Engine).
+
+Shared integration: [shared-ai.md](shared-ai.md). ASR, artifact install, device state, routing and online transport now delegate to MyApps-AI v0.5.2. Keys use MyApps-DATA SecretStore/SecretExchange with the existing provider namespace and file format. Sources and downloads are managed from Settings; jobs still select their own model. WebDAV and online audio require device-local versioned privacy acknowledgement.

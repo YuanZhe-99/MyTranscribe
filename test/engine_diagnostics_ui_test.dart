@@ -11,7 +11,8 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:local_asr_whisper/local_asr_whisper.dart';
+import 'package:myapps_ai_asr_whisper/myapps_ai_asr_whisper.dart'
+    show WhisperDevice;
 import 'package:my_transcribe/features/local/engines/whisper_cpp_engine.dart';
 import 'package:my_transcribe/features/local/models/engine_capability.dart';
 import 'package:my_transcribe/features/local/services/local_model_templates.dart';

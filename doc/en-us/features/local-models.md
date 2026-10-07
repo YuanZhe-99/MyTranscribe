@@ -255,3 +255,5 @@ experimental one runs only when the user chooses it. If it misbehaves on a long 
 in-flight marker, the fallback policy and the per-window record bound the damage to one window. The
 diagnostics page copies a report of the device, the route, its check and its speed — no file
 names and no text — that the user may send by hand; the app sends it nowhere.
+
+Shared integration: [shared-ai.md](../shared-ai.md). ASR, artifact install, device state, routing and online transport now delegate to MyApps-AI v0.5.2. Keys use MyApps-DATA SecretStore/SecretExchange with the existing provider namespace and file format. Sources and downloads are managed from Settings; jobs still select their own model. WebDAV and online audio require device-local versioned privacy acknowledgement.

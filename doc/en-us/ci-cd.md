@@ -56,12 +56,12 @@ MSIX is not built in CI: packaging one needs a signing certificate, and this rep
 none. `dart run msix:create` locally is still the way to produce it.
 
 No job compiles native code (decision D21 in [`decisions.md`](decisions.md)). The build hook of
-`packages/local_asr_whisper` downloads the prebuilt whisper.cpp archive for the target, checks its
+`packages/myapps_ai/packages/myapps_ai_asr_whisper` downloads the prebuilt whisper.cpp archive for the target, checks its
 SHA-256 against `native/binaries.json` and bundles the libraries — as part of `flutter build`, and
 in the Ubuntu job as part of `flutter test`, for the host. Each job caches the hook's shared folder,
 keyed by the manifest and the hook, so an ordinary push downloads nothing.
 
-`.github/workflows/native-prebuild.yml` builds the archives upstream does not publish in a usable
+`packages/myapps_ai/.github/workflows/asr-native-prebuild.yml` builds the archives upstream does not publish in a usable
 form — Android arm64-v8a and x86_64, Windows ARM64 at ARMv8.2 without OpenMP, and Windows x64 —
 with their GPU backends (OpenCL, Vulkan), and publishes
 them as the assets of a GitHub Release tagged `whisper-bin-<upstream version>-<n>`, which the `v*`
@@ -70,8 +70,8 @@ upstream tag and the release tag as inputs; its toolchains — the NDK, clang on
 MSVC and the pinned Vulkan SDK on the x64 runner, the Khronos headers and loaders — are needed
 nowhere else. `platform-notes.md` says which archive serves which target and why.
 
-`.github/workflows/apple-prebuild.yml`, also manual, builds the Neural Engine bridge
-(`packages/local_asr_apple/bridge`, FluidAudio behind a C API) with `xcodebuild` for macOS, iOS and
+`packages/myapps_ai/.github/workflows/asr-apple-prebuild.yml`, also manual, builds the Neural Engine bridge
+(`packages/myapps_ai/packages/myapps_ai_asr_apple/bridge`, FluidAudio behind a C API) with `xcodebuild` for macOS, iOS and
 the Simulator, and publishes it as a release tagged `apple-bin-<bridge revision>`. It runs when the
 bridge or FluidAudio's pinned version changes.
 
@@ -80,11 +80,8 @@ bridge or FluidAudio's pinned version changes.
 ```bash
 git clone git@github.com:YuanZhe-99/MyTranscribe.git     # or the Gitea remote
 cd MyTranscribe
-git submodule update --init          # myapps_data is a submodule
+git submodule update --init --recursive
 flutter pub get
-dart pub get -C packages/local_asr_whisper   # its own tests, which flutter analyze reads
-dart pub get -C packages/local_asr_sherpa
-dart pub get -C packages/local_asr_apple
 flutter gen-l10n
 ```
 
@@ -149,7 +146,7 @@ model path:
 
 ```bash
 flutter test test/local_asr_live_test.dart --dart-define=live_model=true
-cd packages/local_asr_whisper && LASR_TEST_MODEL=/path/to/ggml-tiny.bin dart test
+cd packages/myapps_ai/packages/myapps_ai_asr_whisper && LASR_TEST_MODEL=/path/to/ggml-tiny.bin dart test
 ```
 
 ## Run
@@ -205,3 +202,5 @@ source and rerun both commands.
 version itself and the MSIX version) and in `installer.iss` three times, and all of them move
 together. The settings page's version display is not one of them — it reads the package info at
 runtime and must never be hand-edited.
+
+Shared integration: [shared-ai.md](shared-ai.md). ASR, artifact install, device state, routing and online transport now delegate to MyApps-AI v0.5.2. Keys use MyApps-DATA SecretStore/SecretExchange with the existing provider namespace and file format. Sources and downloads are managed from Settings; jobs still select their own model. WebDAV and online audio require device-local versioned privacy acknowledgement.

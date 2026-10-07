@@ -8,6 +8,10 @@
 /// `doc/en-us/features/secure-secrets-sync.md`.
 library;
 
+import 'package:myapps_ui/myapps_ui.dart' show MyAppsEndpointField;
+
+import '../services/online_privacy.dart';
+
 import 'dart:io' show FileSystemException;
 
 import 'package:flutter/material.dart';
@@ -101,6 +105,7 @@ class _ProviderEditorPageState extends ConsumerState<ProviderEditorPage> {
     final original = _original;
     if (original == null) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (MyAppsEndpointField.parse(_baseUrl.text) == null) return;
 
     final messenger = ScaffoldMessenger.of(context);
     final l10n = AppLocalizations.of(context)!;
@@ -114,6 +119,7 @@ class _ProviderEditorPageState extends ConsumerState<ProviderEditorPage> {
       clearAuthHeaderName: _authScheme != AuthScheme.header,
     );
 
+    if (!await OnlinePrivacy.ensure(context, updated) || !mounted) return;
     await ref.read(settingsRepositoryProvider).saveProvider(updated);
     ref.refresh(settingsLibraryProvider);
     if (!mounted) return;
@@ -373,26 +379,11 @@ class _ProviderEditorPageState extends ConsumerState<ProviderEditorPage> {
                       (value ?? '').trim().isEmpty ? l10n.libraryName : null,
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
+                MyAppsEndpointField(
                   controller: _baseUrl,
-                  keyboardType: TextInputType.url,
-                  autocorrect: false,
-                  decoration: InputDecoration(
-                    labelText: l10n.libraryBaseUrl,
-                    border: const OutlineInputBorder(),
-                    helperText: 'https://api.example.com/v1',
-                  ),
-                  validator: (value) {
-                    final text = (value ?? '').trim();
-                    if (text.isEmpty) return l10n.libraryBaseUrl;
-                    final uri = Uri.tryParse(text);
-                    if (uri == null ||
-                        !uri.hasScheme ||
-                        (uri.scheme != 'http' && uri.scheme != 'https')) {
-                      return l10n.settingsWebDAVConnectionFailed;
-                    }
-                    return null;
-                  },
+                  label: l10n.libraryBaseUrl,
+                  invalidText: l10n.settingsWebDAVConnectionFailed,
+                  helperText: 'https://api.example.com/v1',
                 ),
                 const SizedBox(height: 24),
                 Text(

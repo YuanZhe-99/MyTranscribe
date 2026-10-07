@@ -10,6 +10,8 @@
 /// app directory, as in the sibling apps; that is stated in the privacy policy.
 library;
 
+import '../services/webdav_privacy.dart';
+
 import 'package:flutter/material.dart';
 import 'package:myapps_data/myapps_data.dart'
     show
@@ -153,6 +155,9 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
   /// Notes: Internal helper used within this file only.
   Future<void> _saveConfig() async {
     final config = _currentConfig;
+    if (config.isConfigured && !await WebDavPrivacy.ensure(context, config)) {
+      return;
+    }
     await WebDAVService.saveConfig(config);
     if (config.isConfigured && config.autoSync) {
       AutoSyncService.instance.requestSyncNow();
@@ -175,6 +180,7 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
   /// Side effects: Performs a network request; shows a snackbar.
   /// Notes: Internal helper used within this file only.
   Future<void> _testConnection() async {
+    if (!await WebDavPrivacy.ensure(context, _currentConfig)) return;
     setState(() => _testing = true);
     final ok = await WebDAVService.testConnection(_currentConfig);
     if (mounted) {
@@ -200,6 +206,7 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
   /// `_syncing` busy flag are both reset in `finally` so a thrown request
   /// cannot leak them.
   Future<void> _syncNow() async {
+    if (!await WebDavPrivacy.ensure(context, _currentConfig)) return;
     setState(() => _syncing = true);
     await SyncWakeLock.acquire();
     SyncResult result;
@@ -311,6 +318,8 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
   /// lock while the upload runs.
   /// Notes: Internal helper used within this file only.
   Future<void> _forceUpload() async {
+    if (!await WebDavPrivacy.ensure(context, _currentConfig)) return;
+    if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await _confirmForceAction(
       title: l10n.settingsWebDAVForceUploadConfirmTitle,
@@ -340,6 +349,8 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
   /// lock while the download runs.
   /// Notes: Internal helper used within this file only.
   Future<void> _forceDownload() async {
+    if (!await WebDavPrivacy.ensure(context, _currentConfig)) return;
+    if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await _confirmForceAction(
       title: l10n.settingsWebDAVForceDownloadConfirmTitle,
@@ -569,6 +580,27 @@ class _WebDAVConfigPageState extends ConsumerState<WebDAVConfigPage> {
           : ListView(
               padding: navBarAwarePadding(context, const EdgeInsets.all(16)),
               children: [
+                FutureBuilder<bool>(
+                  future: WebDavPrivacy.allowed(),
+                  builder: (context, snapshot) => snapshot.data == true
+                      ? const SizedBox.shrink()
+                      : Card(
+                          child: ListTile(
+                            leading: const Icon(Icons.privacy_tip_outlined),
+                            title: Text(l10n.webdavPrivacyTitle),
+                            subtitle: Text(l10n.webdavPrivacyPaused),
+                            onTap: () async {
+                              if (await WebDavPrivacy.ensure(
+                                    context,
+                                    _currentConfig,
+                                  ) &&
+                                  mounted) {
+                                setState(() {});
+                              }
+                            },
+                          ),
+                        ),
+                ),
                 Row(
                   children: [
                     OutlinedButton.icon(

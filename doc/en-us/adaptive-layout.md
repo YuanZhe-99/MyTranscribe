@@ -174,3 +174,5 @@ reason is in [`architecture.md`](architecture.md).
 Two traps worth remembering: the default 800 by 600 test viewport already passes `canSplitLayout`,
 so pin an explicit size in any test that cares; and every `TextFormField` contributes its own
 `Scrollable`, so never address one positionally.
+
+Shared integration: [shared-ai.md](shared-ai.md). ASR, artifact install, device state, routing and online transport now delegate to MyApps-AI v0.5.2. Keys use MyApps-DATA SecretStore/SecretExchange with the existing provider namespace and file format. Sources and downloads are managed from Settings; jobs still select their own model. WebDAV and online audio require device-local versioned privacy acknowledgement.

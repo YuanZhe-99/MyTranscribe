@@ -15,6 +15,7 @@ import '../../local/services/route_smoke_test.dart';
 import '../../local/services/smoke_clip.dart';
 import '../../media/services/media_toolkit_provider.dart';
 import '../../providers/services/settings_repository.dart';
+import '../../providers/services/online_privacy.dart';
 import '../models/transcription_job.dart';
 import 'job_runner.dart';
 import 'job_store.dart';
@@ -26,6 +27,7 @@ final jobRunnerProvider = Provider<JobRunner>((ref) {
     // app is open does not have to restart it before the next job can split.
     toolkit: () => ref.read(mediaToolkitProvider.future),
     repository: ref.read(settingsRepositoryProvider),
+    onlineAllowed: OnlinePrivacy.allowed,
     // Local jobs route through the engine registry; every route passes the
     // check clip on this device before its first job.
     localBackend: LocalTranscriptionBackend(

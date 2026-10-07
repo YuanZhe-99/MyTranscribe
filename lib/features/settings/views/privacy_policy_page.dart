@@ -97,7 +97,7 @@ Your API keys
 
   They are never written into a local backup or a ZIP export. They are only
   copied to your WebDAV server when that server is reached over HTTPS, or over
-  a private network address such as your local network, a Tailscale or ZeroTier
+  a private network address such as your local network, a Tailscale or EasyTier
   address, or a machine name on your own network. Over plain HTTP to a public
   address, the app syncs your other settings and leaves the keys on the device.
 
@@ -106,6 +106,16 @@ WebDAV sync
   entered. It carries your sources, models and preferences, the text of your
   transcriptions, and — subject to the rule above — your API keys. Audio
   travels only when you turn it on.
+
+  Before any WebDAV network operation, this device must acknowledge the
+  privacy notice. Existing configurations are paused until acknowledgement.
+  Server files are not encrypted by the app; HTTPS protects transport only.
+  Public HTTP hosts may receive keys only after a device-local risk warning
+  and explicit trusted-host confirmation.
+
+  Online transcription requires a separate acknowledgement for the selected
+  provider and server address. Language hints, prompts, keywords and enabled
+  speaker samples accompany the audio. Changing the address asks again.
 
 Permissions
   The app asks for network access, to reach the transcription service, your

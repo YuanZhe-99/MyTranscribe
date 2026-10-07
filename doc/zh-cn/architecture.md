@@ -36,7 +36,7 @@ packages/myapps_data/       共享的同步、备份与 ZIP 引擎（git 子模�
 
 - **状态管理使用 `flutter_riverpod` 1.x** —— UI 会修改的数据用 `StateNotifierProvider`，依赖用普通的
   `Provider`，一次性读取用 `FutureProvider`。不使用 Provider 和 Bloc，也不应引入。
-- **路由使用 `go_router`，只有一个 `ShellRoute`。** 三个标签页在其中。新建任务和阅读转写稿是外壳
+- **路由使用 `go_router`，只有一个 `ShellRoute`。** 两个标签页在其中。新建任务和阅读转写稿是外壳
   **之外**的整窗路由：这两件事都是针对某一份录音做的，做完就离开，而转写稿需要整个窗口。放在外壳之外
   还意味着它们没有导航栏需要扣除，而布局规则正依赖这一点。`buildAppRouter` 接收初始位置，根部件用
   `late final` 持有路由器，这样主题或语言变化不会重建它、把导航历史清空。
@@ -127,3 +127,5 @@ packages/myapps_data/       共享的同步、备份与 ZIP 引擎（git 子模�
 纯粹的规则按纯函数测试；渲染的页面按具名设备的逻辑像素尺寸测试。控件测试以简体中文运行：`flutter_test`
 的默认字体把每个字形都渲染成一个全角方块，这会让拉丁字母标签膨胀到实际宽度的约两倍半，在生产中本来宽松
 的宽度上报告溢出。而 CJK 字形本来就是方的，因此中文环境量到的才是生产布局。
+
+共享接入：[shared-ai.md](shared-ai.md)。ASR、模型包安装、设备状态、路由及在线传输交由 MyApps-AI v0.5.2。密钥使用 MyApps-DATA SecretStore/SecretExchange，保留 provider 命名空间和已有文件格式。来源与下载从设置管理，任务仍独立选择模型。WebDAV 与在线音频需要设备本地、带版本的隐私确认。

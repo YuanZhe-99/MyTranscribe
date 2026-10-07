@@ -17,6 +17,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_transcribe/app/data_modules.dart';
 import 'package:my_transcribe/features/providers/models/provider_templates.dart';
 import 'package:my_transcribe/features/providers/services/settings_repository.dart';
+import 'package:my_transcribe/features/providers/services/online_sources_controller.dart';
+import 'package:my_transcribe/features/providers/services/online_privacy.dart';
+import 'package:myapps_ai_online/myapps_ai_online.dart' as online;
 import 'package:my_transcribe/features/secrets/services/secrets_store.dart';
 import 'package:my_transcribe/shared/services/transcribe_storage.dart';
 import 'package:path/path.dart' as p;
@@ -79,6 +82,49 @@ void main() {
     expect(library.models, isNotEmpty);
     expect(await rawSettings(), isNotEmpty);
   });
+
+  test(
+    'shared online edit preserves records and consent follows the host',
+    () async {
+      await repository.load();
+      final controller = TranscribeOnlineSources(repository, 'Audio and hints');
+      addTearDown(controller.dispose);
+      await controller.reload();
+      final original = controller.providers.first;
+      expect(controller.templates.templates, isNotEmpty);
+      controller.privacyNotice(original);
+      await controller.acknowledge(
+        original.id,
+        online.OnlinePrivacyAcknowledgement(
+          noticeVersion: 1,
+          recipientHost: original.recipientHost!,
+          acknowledgedAt: DateTime.now().toUtc(),
+        ),
+      );
+      final before = (await repository.load()).provider(original.id)!;
+      expect(await OnlinePrivacy.allowed(before), isTrue);
+      await controller.save(
+        original.copyWith(name: 'Edited source'),
+        newKey: 'test-local-key',
+      );
+      final edited = (await repository.load()).provider(original.id)!;
+      expect(edited.templateId, before.templateId);
+      expect(edited.maxFileBytes, before.maxFileBytes);
+      expect(edited.defaultModelId, before.defaultModelId);
+      expect(await rawSettings(), isNot(contains('test-local-key')));
+      await controller.save(
+        original.copyWith(baseUrl: 'https://other.example.com/v1'),
+      );
+      expect(
+        await OnlinePrivacy.allowed(
+          (await repository.load()).provider(original.id)!,
+        ),
+        isFalse,
+      );
+      await controller.remove(original.id);
+      expect(await SecretsStore.keyFor(original.id), isNull);
+    },
+  );
 
   test('a second launch reads back exactly what the first wrote', () async {
     await repository.load();

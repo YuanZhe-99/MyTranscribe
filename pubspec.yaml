@@ -2,12 +2,32 @@ name: my_transcribe
 description: "MyTranscribe!!!!! — Your speech-to-text companion"
 publish_to: 'none'
 
-version: 0.5.7+21
+version: 0.5.8+22
 
 environment:
   sdk: ^3.11.3
 
 dependencies:
+  myapps_ai_core:
+    path: packages/myapps_ai/packages/myapps_ai_core
+  myapps_ai_asr:
+    path: packages/myapps_ai/packages/myapps_ai_asr
+  myapps_ai_asr_whisper:
+    path: packages/myapps_ai/packages/myapps_ai_asr_whisper
+  myapps_ai_asr_sherpa:
+    path: packages/myapps_ai/packages/myapps_ai_asr_sherpa
+  myapps_ai_asr_apple:
+    path: packages/myapps_ai/packages/myapps_ai_asr_apple
+  myapps_ai_models:
+    path: packages/myapps_ai/packages/myapps_ai_models
+  myapps_ai_online:
+    path: packages/myapps_ai/packages/myapps_ai_online
+  myapps_ai_online_ui:
+    path: packages/myapps_ai/packages/myapps_ai_online_ui
+  myapps_ai_local_ui:
+    path: packages/myapps_ai/packages/myapps_ai_local_ui
+  myapps_ai_ui:
+    path: packages/myapps_ai/packages/myapps_ai_ui
   myapps_profile:
     path: packages/myapps_ui/packages/myapps_profile
   # Shared theme and adaptive foundation, pinned by the MyApps-UI submodule.
@@ -77,15 +97,7 @@ dependencies:
   ffmpeg_kit_flutter_new_audio:
     path: packages/ffmpeg_kit_flutter_new_audio
 
-  # whisper.cpp, compiled from the pinned submodule at packages/whisper.cpp by
-  # a build hook, behind a small C ABI. See packages/local_asr_whisper and
-  # doc/en-us/platform-notes.md.
-  local_asr_apple:
-    path: packages/local_asr_apple
-  local_asr_sherpa:
-    path: packages/local_asr_sherpa
-  local_asr_whisper:
-    path: packages/local_asr_whisper
+  # ASR runtimes arrive as pinned prebuilt assets from MyApps-AI above.
 
   # Playing the converted audio beside the transcript. Chosen over just_audio
   # and media_kit because its Windows backend is Media Foundation compiled from
@@ -139,7 +151,7 @@ msix_config:
   display_name: MyTranscribe!!!!!
   publisher_display_name: yuanzhe
   identity_name: com.yuanzhe.mytranscribe
-  msix_version: 0.5.7.0
+  msix_version: 0.5.8.0
   logo_path: assets/icon/app_icon.png
   capabilities: internetClient
   install_certificate: false

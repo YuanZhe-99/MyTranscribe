@@ -11,6 +11,8 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:myapps_data/myapps_data.dart'
+    show showMyAppsTrustedHostWarning, MyAppsTrustedHostWarningLabels;
 
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/services/transcribe_storage.dart';
@@ -32,7 +34,7 @@ String endpointReasonText(AppLocalizations l10n, EndpointReason reason) =>
       EndpointReason.cgnat => l10n.secretsReasonCgnat,
       EndpointReason.privateIpv6 => l10n.secretsReasonPrivateIpv6,
       EndpointReason.tailnet => l10n.secretsReasonTailnet,
-      EndpointReason.zerotier => l10n.secretsReasonZerotier,
+      EndpointReason.easytier => l10n.secretsReasonZerotier,
       EndpointReason.mdns => l10n.secretsReasonMdns,
       EndpointReason.singleLabelHost => l10n.secretsReasonSingleLabel,
       EndpointReason.trustedHost => l10n.secretsReasonTrusted,
@@ -243,6 +245,19 @@ class _SecretsEndpointSectionState extends State<SecretsEndpointSection> {
       return;
     }
     if (_trusted.contains(entry)) return;
+    if (!mounted) return;
+    final confirmed = await showMyAppsTrustedHostWarning(
+      context,
+      host: entry,
+      labels: MyAppsTrustedHostWarningLabels(
+        title: l10n.secretsTrustWarningTitle,
+        body: (host) => l10n.secretsTrustWarningBody(host),
+        acknowledgement: l10n.secretsTrustWarningAcknowledgement,
+        confirmLabel: l10n.secretsTrustedHostAdd,
+        cancelLabel: l10n.cancel,
+      ),
+    );
+    if (!confirmed || !mounted) return;
     await _save([..._trusted, entry]);
   }
 

@@ -207,7 +207,9 @@ class LocalModelPage extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        content: Text(l10n.localModelRemoveBody(model.displayName)),
+        content: Text(
+          '${l10n.localModelRemoveBody(model.displayName)}\n\n${l10n.localDownloadRemoveNotice}',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),

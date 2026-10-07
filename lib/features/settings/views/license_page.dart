@@ -58,6 +58,12 @@ Copyright (C) 2026 yuanzhe and contributors. GNU GPL version 3.
 Source: https://github.com/YuanZhe-99/MyApps-UI
 License: https://www.gnu.org/licenses/gpl-3.0.html
 
+MyApps-AI / MyApps-DATA: GNU GPL version 3.
+Source: https://github.com/YuanZhe-99/MyApps-AI
+Source: https://github.com/YuanZhe-99/MyApps-DATA
+ASR runtimes: whisper.cpp (MIT), sherpa-onnx (Apache-2.0),
+FluidAudio (Apache-2.0). Model license and provenance are shown before download.
+
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 

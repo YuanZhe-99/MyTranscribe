@@ -9,6 +9,8 @@
 /// old value, so nothing is lost by not showing it.
 library;
 
+import 'package:myapps_ui/myapps_ui.dart' show MyAppsSecretField;
+
 import 'dart:io' show FileSystemException;
 
 import 'package:flutter/material.dart';
@@ -45,7 +47,6 @@ class _ApiKeyFieldState extends ConsumerState<ApiKeyField> {
   /// Only ever reveals a key the user typed in this session, never a stored
   /// one — there is nothing to reveal for a stored key, because it is not
   /// loaded into the field.
-  bool _visible = false;
 
   /// Purpose: Release the controller.
   /// Inputs: None.
@@ -85,7 +86,7 @@ class _ApiKeyFieldState extends ConsumerState<ApiKeyField> {
     ref.refresh(configuredProvidersProvider);
     if (!mounted) return;
     _controller.clear();
-    setState(() => _visible = false);
+    setState(() {});
     messenger.showSnackBar(SnackBar(content: Text(l10n.libraryApiKeySet)));
   }
 
@@ -148,26 +149,14 @@ class _ApiKeyFieldState extends ConsumerState<ApiKeyField> {
           ],
         ),
         const SizedBox(height: 8),
-        TextField(
+        MyAppsSecretField(
           controller: _controller,
-          obscureText: !_visible,
-          autocorrect: false,
-          enableSuggestions: false,
-          decoration: InputDecoration(
-            border: const OutlineInputBorder(),
-            // Never the stored key: a hint that showed it would defeat the
-            // point of obscuring the field.
-            hintText: hasKey ? '••••••••' : null,
-            suffixIcon: IconButton(
-              tooltip: _visible ? l10n.commonClose : l10n.commonEdit,
-              icon: Icon(
-                _visible
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
-              ),
-              onPressed: () => setState(() => _visible = !_visible),
-            ),
-          ),
+          label: l10n.libraryApiKey,
+          hasSavedValue: hasKey,
+          showTooltip: l10n.commonEdit,
+          hideTooltip: l10n.commonClose,
+          clearTooltip: l10n.libraryApiKeyClear,
+          onClear: _clear,
           onSubmitted: (_) => _save(),
         ),
         const SizedBox(height: 8),

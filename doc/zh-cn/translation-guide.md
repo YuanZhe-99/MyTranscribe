@@ -56,6 +56,14 @@
 | dynamic color | 动态取色 | 動態色彩 |
 | seed color | 种子色 | 種子色 |
 
+| privacy notice | 隐私提醒 | 隱私提醒 |
+| acknowledgement | 确认 | 確認 |
+| secure endpoint | 安全端点 | 安全端點 |
+| trusted host | 受信任主机 | 受信任主機 |
+| sync paused | 同步已暂停 | 同步已暫停 |
+| tombstone | 删除标记 | 刪除標記 |
+| secret namespace | 密钥命名空间 | 金鑰命名空間 |
+
 ### 5.2 本应用专有术语
 
 | English | 简体 | 繁體 | 说明 |

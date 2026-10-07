@@ -142,13 +142,18 @@ class LocalTranscriptionBackend {
       final engine = registry.engine(route.adapterId);
       final manifest = await manifestOf(registry.artifacts, route);
       if (engine == null || manifest == null) break;
-      await tester.run(
-        engine: engine,
-        route: route,
-        manifest: manifest,
-        artifactDir: await registry.artifacts.artifactDir(route.artifactId),
-        clip: clip,
-      );
+      final lease = registry.artifacts.lease(route.artifactId);
+      try {
+        await tester.run(
+          engine: engine,
+          route: route,
+          manifest: manifest,
+          artifactDir: await registry.artifacts.artifactDir(route.artifactId),
+          clip: clip,
+        );
+      } finally {
+        lease.release();
+      }
       (routing, decision) = await decide();
     }
 

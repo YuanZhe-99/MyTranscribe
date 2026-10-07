@@ -9,7 +9,7 @@ Shared theme and adaptive foundations now come from MyApps-UI; see
 
 ## Shape
 
-MyTranscribe is a Flutter app with three tabs and no backend of its own. Everything it does is
+MyTranscribe is a Flutter app with two tabs and no backend of its own. Everything it does is
 either local file work, a model running on the device, or a request to a server the user configured.
 
 ```
@@ -39,7 +39,7 @@ resume and merge are shared by uploaded and local jobs; see
 - **State management is `flutter_riverpod` 1.x** — `StateNotifierProvider` for anything the UI
   edits, plain `Provider` for a dependency, `FutureProvider` for a one-shot read. Provider and Bloc
   are not used and should not be introduced.
-- **Routing is `go_router` with a single `ShellRoute`.** The three tabs live inside it. Starting a
+- **Routing is `go_router` with a single `ShellRoute`.** The two tabs live inside it. Starting a
   job and reading a transcript are full-window routes *outside* the shell: both are things you do to
   one recording and leave when finished, and a transcript wants the whole window. Keeping them
   outside also means they have no navigation rail to subtract, which the layout rules rely on.
@@ -153,3 +153,5 @@ named devices. Widget tests run in Simplified Chinese: `flutter_test`'s default 
 glyph as a full em square, which inflates Latin labels to roughly two and a half times their real
 width and reports overflow at widths that are comfortable in production. CJK glyphs really are
 square, so a Chinese locale measures the production layout.
+
+Shared integration: [shared-ai.md](shared-ai.md). ASR, artifact install, device state, routing and online transport now delegate to MyApps-AI v0.5.2. Keys use MyApps-DATA SecretStore/SecretExchange with the existing provider namespace and file format. Sources and downloads are managed from Settings; jobs still select their own model. WebDAV and online audio require device-local versioned privacy acknowledgement.

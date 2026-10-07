@@ -19,7 +19,7 @@ class ShellScaffold extends ConsumerWidget {
 
   /// The three tab routes, in display order. `lib/app/router.dart` declares the
   /// same three; keep them in step.
-  static const routes = ['/jobs', '/library', '/settings'];
+  static const routes = ['/jobs', '/settings'];
 
   /// Purpose: Find which tab the current location belongs to.
   /// Inputs: `context`.
@@ -47,11 +47,6 @@ class ShellScaffold extends ConsumerWidget {
         Icons.graphic_eq_outlined,
         Icons.graphic_eq,
         l10n.navTranscribe,
-      ),
-      _ShellDestination(
-        Icons.library_books_outlined,
-        Icons.library_books,
-        l10n.navLibrary,
       ),
       _ShellDestination(
         Icons.settings_outlined,

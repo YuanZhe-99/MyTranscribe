@@ -9,6 +9,8 @@
 /// open across midnight still gets its backup.
 library;
 
+import 'webdav_privacy.dart';
+
 import 'package:flutter/widgets.dart';
 import 'package:myapps_data/myapps_data.dart' as shared;
 
@@ -29,7 +31,10 @@ class AutoSyncService {
   late final shared.AutoSyncScheduler _scheduler = shared.AutoSyncScheduler(
     isAutoSyncActive: () async {
       final config = await WebDAVService.loadConfig();
-      return config != null && config.isConfigured && config.autoSync;
+      return config != null &&
+          config.isConfigured &&
+          config.autoSync &&
+          await WebDavPrivacy.allowed();
     },
     runSync: () async {
       final config = await WebDAVService.loadConfig();

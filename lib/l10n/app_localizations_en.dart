@@ -9,6 +9,98 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get onlineSourceRemoveNotice =>
+      'Remove this source and its saved API key? Transcription history is kept.';
+
+  @override
+  String get onlineSourceModelSettings => 'Models, capabilities and templates';
+
+  @override
+  String get onlinePrivacySelectedOnly =>
+      'Online transcription is used only for the source you select for a job.';
+
+  @override
+  String get localDownloadRemoveNotice =>
+      'Only downloaded files are removed. Model records and transcription history are kept.';
+
+  @override
+  String get onlinePrivacyTitle => 'Before online transcription';
+
+  @override
+  String onlinePrivacyBody(String host) {
+    return 'Audio windows, language hints, prompts, keywords and any speaker samples you enable will be sent to $host. The provider may store them under its own policy. API keys are stored in plain text on this device and sent for authentication. Continue only if you trust this provider.';
+  }
+
+  @override
+  String get webdavPrivacyTitle => 'Before using WebDAV';
+
+  @override
+  String get webdavPrivacyIntro =>
+      'Sync sends the following data to the server you choose.';
+
+  @override
+  String get webdavPrivacyData => 'Data to sync';
+
+  @override
+  String get webdavPrivacyOptional => 'Optional content';
+
+  @override
+  String get webdavPrivacyDestination => 'Your server';
+
+  @override
+  String get webdavPrivacyEncryption => 'Storage on the server';
+
+  @override
+  String get webdavPrivacyTransport => 'Connection';
+
+  @override
+  String get webdavPrivacyHttps =>
+      'HTTPS encrypts data while it travels to your server.';
+
+  @override
+  String get webdavPrivacyHttp =>
+      'HTTP does not encrypt data in transit. Other people on the network may read it.';
+
+  @override
+  String get webdavPrivacyNoThirdParties =>
+      'The app sends sync data only to the WebDAV server you configure.';
+
+  @override
+  String get webdavPrivacyConfirm => 'I understand, continue';
+
+  @override
+  String get webdavPrivacyInventory =>
+      'Source and model settings, finished transcripts and profile (including avatar).';
+
+  @override
+  String get webdavPrivacyAudio =>
+      'Converted audio only when audio sync is enabled. Original recordings are never synced.';
+
+  @override
+  String get webdavPrivacySecrets =>
+      'API keys through a separate exchange only when the endpoint passes the secure connection policy.';
+
+  @override
+  String get webdavPrivacyPlaintext =>
+      'The app does not encrypt files stored on your server. Server administrators may read them.';
+
+  @override
+  String get webdavPrivacyPaused =>
+      'Sync is paused until you acknowledge the privacy notice on this device.';
+
+  @override
+  String get secretsTrustWarningTitle => 'Trust an unencrypted connection?';
+
+  @override
+  String secretsTrustWarningBody(String host) {
+    return 'API keys sent to $host over HTTP can be read by anyone on the network between this device and that server.';
+  }
+
+  @override
+  String get secretsTrustWarningAcknowledgement =>
+      'I understand and trust this connection.';
+
+  @override
   String get appTitle => 'MyTranscribe!!!!!';
 
   @override
@@ -639,7 +731,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get secretsReasonUnparseable => 'That address could not be read.';
 
   @override
-  String get secretsReasonZerotier => 'A ZeroTier name.';
+  String get secretsReasonZerotier => 'An EasyTier name.';
 
   @override
   String get secretsSectionTitle => 'API keys';

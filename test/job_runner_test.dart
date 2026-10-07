@@ -860,6 +860,23 @@ void main() {
   });
 
   group('failures', () {
+    test('unacknowledged online source fails before upload', () async {
+      final server = FakeTranscriptionServer([]);
+      final run = JobRunner(
+        toolkit: () async => _FakeToolkit(),
+        repository: repository,
+        onlineAllowed: (_) async => false,
+        clientFactory: () => TranscriptionClient(clientFactory: () => server),
+        keyLookup: (_) async => 'sk-test',
+      );
+      final job = await createJob(run);
+      await runToCompletion(run, job.id);
+      expect(
+        (await JobStore.load(job.id))?.error?.kind,
+        JobFailureKind.configurationMissing,
+      );
+      expect(server.requests, isEmpty);
+    });
     test('says when there is no key for the source', () async {
       final run = JobRunner(
         toolkit: () async => _FakeToolkit(),

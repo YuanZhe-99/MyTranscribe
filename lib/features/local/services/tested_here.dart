@@ -12,9 +12,12 @@ library;
 
 import 'dart:ffi' show Abi;
 import 'dart:io' show Platform;
+import 'package:myapps_ai_asr/myapps_ai_asr.dart' as shared;
+import 'package:myapps_ai_asr_whisper/myapps_ai_asr_whisper.dart' as whisper;
 
 import '../../../shared/utils/platform_capabilities.dart';
 import '../models/engine_capability.dart';
+import 'shared_asr_adapter.dart';
 
 /// One verified route: a device class, an adapter and a backend.
 typedef TestedRoute = ({String deviceClass, String adapterId, String backend});
@@ -51,15 +54,10 @@ String currentDeviceClass() => localDeviceClass(
 /// Side effects: None.
 /// Notes: None.
 bool isTestedHere(EngineRoute route, {String? deviceClass}) {
-  final here = deviceClass ?? currentDeviceClass();
-  for (final tested in testedRoutes) {
-    if (tested.deviceClass == here &&
-        tested.adapterId == route.adapterId &&
-        tested.backend == route.backend) {
-      return true;
-    }
-  }
-  return false;
+  return shared.TestedRouteTable(
+    rows: testedRoutes,
+    deviceClass: deviceClass ?? currentDeviceClass(),
+  ).covers(sharedRoute(route));
 }
 
 /// Purpose: The evidence grade of whisper.cpp's CPU route on this device.
@@ -84,11 +82,7 @@ EvidenceLevel get cpuEvidence => currentDeviceClass() == 'android'
 /// tested-here table use, so it must not depend on how a device happens to be
 /// numbered.
 String gpuBackendName(String name) {
-  final lower = name.toLowerCase();
-  if (lower.contains('vulkan')) return 'vulkan';
-  if (lower.contains('opencl')) return 'opencl';
-  if (lower.startsWith('mtl') || lower.contains('metal')) return 'metal';
-  return lower.replaceAll(RegExp('[^a-z0-9]'), '');
+  return whisper.gpuBackendName(name);
 }
 
 /// Purpose: The evidence grade of a whisper.cpp GPU route on this device.

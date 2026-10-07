@@ -13,6 +13,7 @@ library;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:myapps_ai_ui/myapps_ai_ui.dart';
 import 'package:myapps_data/myapps_data.dart'
     show MyAppsDataSettingsTile, DataSettingsAction;
 import 'package:myapps_ui/myapps_ui.dart'
@@ -36,6 +37,9 @@ import '../../local/views/engine_diagnostics_page.dart';
 import '../../profile/views/profile_header.dart';
 import '../../local/views/speaker_labels_tile.dart';
 import '../../media/widgets/media_tools_tile.dart';
+import '../../providers/views/source_management_page.dart';
+import '../../providers/views/online_sources_page.dart';
+import '../../local/views/model_downloads_page.dart';
 import 'backup_page.dart';
 import 'license_page.dart';
 import 'privacy_policy_page.dart';
@@ -48,6 +52,9 @@ enum _SettingsDetail {
   mediaTools,
   speakerNames,
   diagnostics,
+  sources,
+  onlineSources,
+  localModels,
   privacy,
   license,
 }
@@ -140,6 +147,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     _SettingsDetail.mediaTools => const MediaToolsPage(),
     _SettingsDetail.speakerNames => const SpeakerNamesPage(),
     _SettingsDetail.diagnostics => const EngineDiagnosticsPage(),
+    _SettingsDetail.sources => const SourceManagementPage(),
+    _SettingsDetail.onlineSources => const OnlineSourcesPage(),
+    _SettingsDetail.localModels => const ModelDownloadsPage(),
     _SettingsDetail.privacy => const PrivacyPolicyPage(),
     _SettingsDetail.license => const AppLicensePage(),
   };
@@ -480,48 +490,85 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ),
         ]),
         _section(l10n.settingsLocalModels, [
-          ListTile(
-            leading: const Icon(Icons.swap_horiz_outlined),
-            title: Text(l10n.settingsFallbackPolicy),
-            subtitle: DropdownButton<FallbackPolicy>(
-              isExpanded: true,
-              value:
-                  ref.watch(localEngineStateProvider).value?.fallbackPolicy ??
-                  FallbackPolicy.sameModelOnCpu,
-              items: [
-                DropdownMenuItem(
-                  value: FallbackPolicy.sameModelOnCpu,
-                  child: Text(l10n.settingsFallbackCpu),
-                ),
-                DropdownMenuItem(
-                  value: FallbackPolicy.none,
-                  child: Text(l10n.settingsFallbackNone),
-                ),
-                // The operating system's recogniser, on the device only (L6):
-                // Apple's, where the bridge exists.
-                if (hasNeuralEngineBridge)
-                  DropdownMenuItem(
-                    value: FallbackPolicy.systemRecognizer,
-                    child: Text(l10n.settingsFallbackSystem),
-                  ),
-              ],
-              onChanged: (policy) async {
-                if (policy == null) return;
-                await ref
-                    .read(localEngineStateStoreProvider)
-                    .update((state) => state.copyWith(fallbackPolicy: policy));
-                ref.refresh(localEngineStateProvider);
-              },
+          MyAppsAiSettingsSkeleton(
+            enabled: true,
+            headings: {
+              MyAppsAiSettingsSection.source: l10n.libraryTitle,
+              MyAppsAiSettingsSection.models: l10n.settingsLocalModels,
+              MyAppsAiSettingsSection.diagnostics: l10n.settingsDiagnostics,
+            },
+            master: const SizedBox.shrink(),
+            source: [
+              ListTile(
+                leading: const Icon(Icons.tune_outlined),
+                title: Text(l10n.libraryTitle),
+                subtitle: Text(l10n.libraryAddSource),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _open(_SettingsDetail.sources),
+              ),
+            ],
+            localModels: ListTile(
+              leading: const Icon(Icons.download_outlined),
+              title: Text(l10n.settingsLocalModels),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _open(_SettingsDetail.localModels),
             ),
-          ),
-          if (hasSpeakerLabels) const SpeakerLabelsTile(),
-          ListTile(
-            leading: const Icon(Icons.memory_outlined),
-            title: Text(l10n.settingsDiagnostics),
-            subtitle: Text(l10n.settingsDiagnosticsSubtitle),
-            trailing: const Icon(Icons.chevron_right),
-            selected: _twoPane && _detail == _SettingsDetail.diagnostics,
-            onTap: () => _open(_SettingsDetail.diagnostics),
+            onlineSources: ListTile(
+              leading: const Icon(Icons.cloud_outlined),
+              title: Text(l10n.libraryTitle),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _open(_SettingsDetail.onlineSources),
+            ),
+            device: [
+              ListTile(
+                leading: const Icon(Icons.swap_horiz_outlined),
+                title: Text(l10n.settingsFallbackPolicy),
+                subtitle: DropdownButton<FallbackPolicy>(
+                  isExpanded: true,
+                  value:
+                      ref
+                          .watch(localEngineStateProvider)
+                          .value
+                          ?.fallbackPolicy ??
+                      FallbackPolicy.sameModelOnCpu,
+                  items: [
+                    DropdownMenuItem(
+                      value: FallbackPolicy.sameModelOnCpu,
+                      child: Text(l10n.settingsFallbackCpu),
+                    ),
+                    DropdownMenuItem(
+                      value: FallbackPolicy.none,
+                      child: Text(l10n.settingsFallbackNone),
+                    ),
+                    // The operating system's recogniser, on the device only (L6):
+                    // Apple's, where the bridge exists.
+                    if (hasNeuralEngineBridge)
+                      DropdownMenuItem(
+                        value: FallbackPolicy.systemRecognizer,
+                        child: Text(l10n.settingsFallbackSystem),
+                      ),
+                  ],
+                  onChanged: (policy) async {
+                    if (policy == null) return;
+                    await ref
+                        .read(localEngineStateStoreProvider)
+                        .update(
+                          (state) => state.copyWith(fallbackPolicy: policy),
+                        );
+                    ref.refresh(localEngineStateProvider);
+                  },
+                ),
+              ),
+            ],
+            features: [if (hasSpeakerLabels) const SpeakerLabelsTile()],
+            diagnostics: ListTile(
+              leading: const Icon(Icons.memory_outlined),
+              title: Text(l10n.settingsDiagnostics),
+              subtitle: Text(l10n.settingsDiagnosticsSubtitle),
+              trailing: const Icon(Icons.chevron_right),
+              selected: _twoPane && _detail == _SettingsDetail.diagnostics,
+              onTap: () => _open(_SettingsDetail.diagnostics),
+            ),
           ),
         ]),
         _section(l10n.settingsData, [

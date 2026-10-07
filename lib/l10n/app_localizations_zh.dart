@@ -9,6 +9,85 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get onlineSourceRemoveNotice => '移除此来源及保存的 API 密钥？转写历史保留。';
+
+  @override
+  String get onlineSourceModelSettings => '模型、能力与模板';
+
+  @override
+  String get onlinePrivacySelectedOnly => '在线转写仅使用你为任务选择的来源。';
+
+  @override
+  String get localDownloadRemoveNotice => '仅移除下载文件，模型记录与转写历史保留。';
+
+  @override
+  String get onlinePrivacyTitle => '在线转写前';
+
+  @override
+  String onlinePrivacyBody(String host) {
+    return '音频窗口、语言提示、提示词、关键词及你启用的说话人样本将发送到 $host。服务商可能按其政策保存这些内容。API 密钥以明文保存在此设备并用于身份验证。请仅在信任此来源时继续。';
+  }
+
+  @override
+  String get webdavPrivacyTitle => '使用 WebDAV 前';
+
+  @override
+  String get webdavPrivacyIntro => '同步会将以下数据发送到你选择的服务器。';
+
+  @override
+  String get webdavPrivacyData => '同步的数据';
+
+  @override
+  String get webdavPrivacyOptional => '可选内容';
+
+  @override
+  String get webdavPrivacyDestination => '你的服务器';
+
+  @override
+  String get webdavPrivacyEncryption => '服务器上的存储';
+
+  @override
+  String get webdavPrivacyTransport => '连接';
+
+  @override
+  String get webdavPrivacyHttps => 'HTTPS 会加密传输到服务器的数据。';
+
+  @override
+  String get webdavPrivacyHttp => 'HTTP 不加密传输数据，网络上的其他人可能读取。';
+
+  @override
+  String get webdavPrivacyNoThirdParties => '应用仅向你配置的 WebDAV 服务器发送同步数据。';
+
+  @override
+  String get webdavPrivacyConfirm => '我已理解，继续';
+
+  @override
+  String get webdavPrivacyInventory => '来源与模型设置、已完成的转写和个人资料（含头像）。';
+
+  @override
+  String get webdavPrivacyAudio => '仅在启用音频同步时同步转换后的音频，原始录音不会同步。';
+
+  @override
+  String get webdavPrivacySecrets => 'API 密钥仅在端点通过安全连接策略时通过独立通道交换。';
+
+  @override
+  String get webdavPrivacyPlaintext => '应用不会加密服务器上保存的文件，服务器管理员可能读取。';
+
+  @override
+  String get webdavPrivacyPaused => '同步已暂停，请在此设备确认隐私提醒。';
+
+  @override
+  String get secretsTrustWarningTitle => '信任未加密连接？';
+
+  @override
+  String secretsTrustWarningBody(String host) {
+    return '通过 HTTP 发送到 $host 的 API 密钥可被此设备与服务器之间网络上的其他人读取。';
+  }
+
+  @override
+  String get secretsTrustWarningAcknowledgement => '我理解风险并信任此连接。';
+
+  @override
   String get appTitle => 'MyTranscribe!!!!!';
 
   @override
@@ -618,7 +697,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get secretsReasonUnparseable => '无法解析该地址。';
 
   @override
-  String get secretsReasonZerotier => '属于 ZeroTier 域名。';
+  String get secretsReasonZerotier => '属于 EasyTier 域名。';
 
   @override
   String get secretsSectionTitle => 'API Key';
@@ -1411,6 +1490,85 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   AppLocalizationsZhTw() : super('zh_TW');
 
   @override
+  String get onlineSourceRemoveNotice => '移除此來源與儲存的 API 金鑰？轉寫歷史保留。';
+
+  @override
+  String get onlineSourceModelSettings => '模型、功能與範本';
+
+  @override
+  String get onlinePrivacySelectedOnly => '線上轉寫僅使用你為工作選擇的來源。';
+
+  @override
+  String get localDownloadRemoveNotice => '僅移除下載檔案，模型記錄與轉寫歷史保留。';
+
+  @override
+  String get onlinePrivacyTitle => '線上轉寫前';
+
+  @override
+  String onlinePrivacyBody(String host) {
+    return '音訊片段、語言提示、提示詞、關鍵字及你啟用的說話者樣本將傳送至 $host。服務供應商可能依其政策儲存這些內容。API 金鑰以明文儲存在此裝置並用於身分驗證。請僅在信任此來源時繼續。';
+  }
+
+  @override
+  String get webdavPrivacyTitle => '使用 WebDAV 前';
+
+  @override
+  String get webdavPrivacyIntro => '同步會將以下資料傳送至你選擇的伺服器。';
+
+  @override
+  String get webdavPrivacyData => '同步的資料';
+
+  @override
+  String get webdavPrivacyOptional => '選用內容';
+
+  @override
+  String get webdavPrivacyDestination => '你的伺服器';
+
+  @override
+  String get webdavPrivacyEncryption => '伺服器上的儲存';
+
+  @override
+  String get webdavPrivacyTransport => '連線';
+
+  @override
+  String get webdavPrivacyHttps => 'HTTPS 會加密傳送至伺服器的資料。';
+
+  @override
+  String get webdavPrivacyHttp => 'HTTP 不加密傳輸資料，網路上的其他人可能讀取。';
+
+  @override
+  String get webdavPrivacyNoThirdParties => '應用程式僅向你設定的 WebDAV 伺服器傳送同步資料。';
+
+  @override
+  String get webdavPrivacyConfirm => '我已了解，繼續';
+
+  @override
+  String get webdavPrivacyInventory => '來源與模型設定、已完成的轉寫與個人資料（含頭像）。';
+
+  @override
+  String get webdavPrivacyAudio => '僅在啟用音訊同步時同步轉換後的音訊，原始錄音不會同步。';
+
+  @override
+  String get webdavPrivacySecrets => 'API 金鑰僅在端點通過安全連線原則時透過獨立管道交換。';
+
+  @override
+  String get webdavPrivacyPlaintext => '應用程式不會加密伺服器上儲存的檔案，伺服器管理員可能讀取。';
+
+  @override
+  String get webdavPrivacyPaused => '同步已暫停，請在此裝置確認隱私提醒。';
+
+  @override
+  String get secretsTrustWarningTitle => '信任未加密連線？';
+
+  @override
+  String secretsTrustWarningBody(String host) {
+    return '透過 HTTP 傳送至 $host 的 API 金鑰可被此裝置與伺服器之間網路上的其他人讀取。';
+  }
+
+  @override
+  String get secretsTrustWarningAcknowledgement => '我了解風險並信任此連線。';
+
+  @override
   String get appTitle => 'MyTranscribe!!!!!';
 
   @override
@@ -2020,7 +2178,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get secretsReasonUnparseable => '無法解析該位址。';
 
   @override
-  String get secretsReasonZerotier => '屬於 ZeroTier 網域名稱。';
+  String get secretsReasonZerotier => '屬於 EasyTier 網域名稱。';
 
   @override
   String get secretsSectionTitle => 'API Key';

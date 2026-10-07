@@ -13,18 +13,19 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:myapps_ai_asr/myapps_ai_asr.dart' as shared;
 
 import '../../../shared/utils/platform_capabilities.dart';
 import '../engines/fluid_audio_engine.dart';
 import '../engines/sherpa_onnx_engine.dart';
 import '../engines/system_recognizer_engine.dart';
 import '../engines/whisper_cpp_engine.dart';
-import '../models/artifact_manifest.dart';
 import '../models/engine_capability.dart';
 import 'artifact_manager.dart';
 import 'local_asr_engine.dart';
 import 'local_engine_state_store.dart';
 import 'speaker_labeler.dart';
+import 'shared_asr_adapter.dart';
 
 /// The adapters this build contains.
 class EngineRegistry {
@@ -38,7 +39,13 @@ class EngineRegistry {
     required List<LocalAsrEngine> engines,
     required this.artifacts,
     required this.state,
-  }) : engines = List.unmodifiable(engines);
+  }) : engines = List.unmodifiable(engines) {
+    _registry = shared.AsrEngineRegistry(
+      engines: engines.map(AppAsrAdapter.new).toList(),
+      artifacts: shared.AsrArtifactSource.manager(artifacts.sharedManager),
+      state: state.sharedStore,
+    );
+  }
 
   /// The adapters, in the order they were registered.
   final List<LocalAsrEngine> engines;
@@ -49,7 +56,7 @@ class EngineRegistry {
   /// The device-local engine state.
   final LocalEngineStateStore state;
 
-  List<EngineRoute>? _probed;
+  late final shared.AsrEngineRegistry _registry;
 
   /// Purpose: Find an adapter by id.
   /// Inputs: [adapterId].
@@ -71,27 +78,19 @@ class EngineRegistry {
   /// Notes: An adapter whose probe throws contributes no routes rather than
   /// taking the others down with it.
   Future<List<EngineRoute>> routes({bool refresh = false}) async {
-    if (refresh || _probed == null) {
-      final installed = await artifacts.installedAll();
-      final probed = <EngineRoute>[];
-      for (final engine in engines) {
-        final mine = <ArtifactManifest>[
-          for (final manifest in installed)
-            if (manifest.adapterId == engine.adapterId) manifest,
-        ];
-        try {
-          probed.addAll(await engine.probe(mine));
-        } catch (_) {
-          // A broken adapter is reported by its absence on the diagnostics
-          // page; it must not hide the routes of the adapters that work.
-        }
-      }
-      _probed = probed;
-    }
+    final routes = (await _registry.routes(
+      refresh: refresh,
+    )).map(appRoute).toList();
     final current = await state.load();
     return [
-      for (final route in _probed!)
-        route.withSmokeTest(current.smokeTestFor(route.smokeKey)),
+      for (final route in routes)
+        () {
+          final adapter = _registry.engine(route.adapterId) as AppAsrAdapter?;
+          final original = adapter?.probedRoutes[route.key] ?? route;
+          return original.withSmokeTest(
+            current.smokeTestFor(original.smokeKey),
+          );
+        }(),
     ];
   }
 
@@ -100,7 +99,7 @@ class EngineRegistry {
   /// Returns: None.
   /// Side effects: The next [routes] call probes again.
   /// Notes: Called after a package is installed or removed.
-  void invalidate() => _probed = null;
+  void invalidate() => _registry.invalidate();
 }
 
 /// The artifact manager, shared so leases are seen by every holder.

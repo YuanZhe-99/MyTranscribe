@@ -161,6 +161,9 @@ enum TranscriptionFailure {
   /// The request never got there, or never came back.
   network,
 
+  /// No response within the configured timeout; retryable.
+  timeout,
+
   /// The reply was not something this dialect could read.
   badResponse,
 
@@ -207,6 +210,7 @@ class TranscriptionException implements Exception {
   /// Whether trying the same request again could reasonably work.
   bool get isRetryable =>
       failure == TranscriptionFailure.network ||
+      failure == TranscriptionFailure.timeout ||
       failure == TranscriptionFailure.serverError ||
       failure == TranscriptionFailure.rateLimited;
 

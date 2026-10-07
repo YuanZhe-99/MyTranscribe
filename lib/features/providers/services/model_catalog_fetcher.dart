@@ -11,12 +11,14 @@
 library;
 
 import 'dart:convert';
+import 'package:myapps_ai_online/myapps_ai_online.dart' as shared;
 
 import 'package:http/http.dart' as http;
 
 import '../models/model_config.dart';
 import '../models/provider_config.dart';
 import '../models/provider_templates.dart';
+import 'shared_online_adapter.dart';
 
 /// A model the source said it has.
 class CatalogEntry {
@@ -84,21 +86,32 @@ class ModelCatalogFetcher {
 
     final client = clientFactory();
     try {
-      final response = await client
-          .get(uri, headers: _headers(provider, apiKey))
-          .timeout(Duration(seconds: provider.requestTimeoutSeconds));
-
-      if (response.statusCode == 401 || response.statusCode == 403) {
+      final entries = await shared.fetchOnlineModels(
+        client,
+        onlineProvider(provider),
+        apiKey: apiKey,
+        path: path,
+      );
+      return _parse(
+        jsonEncode({
+          'data': [
+            for (final entry in entries)
+              {
+                'id': entry.id,
+                if (entry.displayName != null) 'name': entry.displayName,
+              },
+          ],
+        }),
+      );
+    } on shared.OnlineException catch (error) {
+      if (error.kind == shared.OnlineErrorKind.unauthorized) {
         throw const CatalogException(
           'The source refused the request. Check the API key.',
         );
       }
-      if (response.statusCode != 200) {
-        throw CatalogException(
-          'The source answered with status ${response.statusCode}.',
-        );
-      }
-      return _parse(utf8.decode(response.bodyBytes));
+      throw CatalogException(
+        error.message ?? 'The model list could not be fetched.',
+      );
     } on CatalogException {
       rethrow;
     } catch (error) {
@@ -107,25 +120,6 @@ class ModelCatalogFetcher {
       client.close();
     }
   }
-
-  /// Purpose: Build the request headers for a source.
-  /// Inputs: [provider], [apiKey].
-  /// Returns: The headers.
-  /// Side effects: None.
-  /// Notes: Internal helper used within this file only.
-  Map<String, String> _headers(ProviderConfig provider, String? apiKey) => {
-    ...provider.extraHeaders,
-    if (apiKey != null && apiKey.isNotEmpty)
-      switch (provider.authScheme) {
-        AuthScheme.bearer => 'Authorization',
-        AuthScheme.header => provider.authHeaderName ?? 'Authorization',
-        AuthScheme.none => 'X-Unused',
-      }: switch (provider.authScheme) {
-        AuthScheme.bearer => 'Bearer $apiKey',
-        AuthScheme.header => apiKey,
-        AuthScheme.none => '',
-      },
-  }..removeWhere((key, value) => key == 'X-Unused');
 
   /// Purpose: Read the model list out of a response body.
   /// Inputs: [body].

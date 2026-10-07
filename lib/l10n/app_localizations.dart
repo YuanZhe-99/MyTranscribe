@@ -99,6 +99,156 @@ abstract class AppLocalizations {
     Locale('zh', 'TW'),
   ];
 
+  /// No description provided for @onlineSourceRemoveNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this source and its saved API key? Transcription history is kept.'**
+  String get onlineSourceRemoveNotice;
+
+  /// No description provided for @onlineSourceModelSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Models, capabilities and templates'**
+  String get onlineSourceModelSettings;
+
+  /// No description provided for @onlinePrivacySelectedOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Online transcription is used only for the source you select for a job.'**
+  String get onlinePrivacySelectedOnly;
+
+  /// No description provided for @localDownloadRemoveNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Only downloaded files are removed. Model records and transcription history are kept.'**
+  String get localDownloadRemoveNotice;
+
+  /// No description provided for @onlinePrivacyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Before online transcription'**
+  String get onlinePrivacyTitle;
+
+  /// No description provided for @onlinePrivacyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio windows, language hints, prompts, keywords and any speaker samples you enable will be sent to {host}. The provider may store them under its own policy. API keys are stored in plain text on this device and sent for authentication. Continue only if you trust this provider.'**
+  String onlinePrivacyBody(String host);
+
+  /// No description provided for @webdavPrivacyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Before using WebDAV'**
+  String get webdavPrivacyTitle;
+
+  /// No description provided for @webdavPrivacyIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync sends the following data to the server you choose.'**
+  String get webdavPrivacyIntro;
+
+  /// No description provided for @webdavPrivacyData.
+  ///
+  /// In en, this message translates to:
+  /// **'Data to sync'**
+  String get webdavPrivacyData;
+
+  /// No description provided for @webdavPrivacyOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional content'**
+  String get webdavPrivacyOptional;
+
+  /// No description provided for @webdavPrivacyDestination.
+  ///
+  /// In en, this message translates to:
+  /// **'Your server'**
+  String get webdavPrivacyDestination;
+
+  /// No description provided for @webdavPrivacyEncryption.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage on the server'**
+  String get webdavPrivacyEncryption;
+
+  /// No description provided for @webdavPrivacyTransport.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection'**
+  String get webdavPrivacyTransport;
+
+  /// No description provided for @webdavPrivacyHttps.
+  ///
+  /// In en, this message translates to:
+  /// **'HTTPS encrypts data while it travels to your server.'**
+  String get webdavPrivacyHttps;
+
+  /// No description provided for @webdavPrivacyHttp.
+  ///
+  /// In en, this message translates to:
+  /// **'HTTP does not encrypt data in transit. Other people on the network may read it.'**
+  String get webdavPrivacyHttp;
+
+  /// No description provided for @webdavPrivacyNoThirdParties.
+  ///
+  /// In en, this message translates to:
+  /// **'The app sends sync data only to the WebDAV server you configure.'**
+  String get webdavPrivacyNoThirdParties;
+
+  /// No description provided for @webdavPrivacyConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand, continue'**
+  String get webdavPrivacyConfirm;
+
+  /// No description provided for @webdavPrivacyInventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Source and model settings, finished transcripts and profile (including avatar).'**
+  String get webdavPrivacyInventory;
+
+  /// No description provided for @webdavPrivacyAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Converted audio only when audio sync is enabled. Original recordings are never synced.'**
+  String get webdavPrivacyAudio;
+
+  /// No description provided for @webdavPrivacySecrets.
+  ///
+  /// In en, this message translates to:
+  /// **'API keys through a separate exchange only when the endpoint passes the secure connection policy.'**
+  String get webdavPrivacySecrets;
+
+  /// No description provided for @webdavPrivacyPlaintext.
+  ///
+  /// In en, this message translates to:
+  /// **'The app does not encrypt files stored on your server. Server administrators may read them.'**
+  String get webdavPrivacyPlaintext;
+
+  /// No description provided for @webdavPrivacyPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync is paused until you acknowledge the privacy notice on this device.'**
+  String get webdavPrivacyPaused;
+
+  /// No description provided for @secretsTrustWarningTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust an unencrypted connection?'**
+  String get secretsTrustWarningTitle;
+
+  /// No description provided for @secretsTrustWarningBody.
+  ///
+  /// In en, this message translates to:
+  /// **'API keys sent to {host} over HTTP can be read by anyone on the network between this device and that server.'**
+  String secretsTrustWarningBody(String host);
+
+  /// No description provided for @secretsTrustWarningAcknowledgement.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand and trust this connection.'**
+  String get secretsTrustWarningAcknowledgement;
+
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
@@ -1236,7 +1386,7 @@ abstract class AppLocalizations {
   /// No description provided for @secretsReasonZerotier.
   ///
   /// In en, this message translates to:
-  /// **'A ZeroTier name.'**
+  /// **'An EasyTier name.'**
   String get secretsReasonZerotier;
 
   /// No description provided for @secretsSectionTitle.

@@ -207,6 +207,7 @@ class LocalModelsController
     final clip = await loadSmokeClip();
     if (engine == null || manifest == null || clip == null) return;
     _set(model.id, const LocalModelActivity(checking: true));
+    final lease = ref.read(artifactManagerProvider).lease(route.artifactId);
     try {
       await RouteSmokeTester(
         state: ref.read(localEngineStateStoreProvider),
@@ -218,6 +219,7 @@ class LocalModelsController
         clip: clip,
       );
     } finally {
+      lease.release();
       _set(model.id, const LocalModelActivity());
       ref.refresh(localEngineStateProvider);
     }

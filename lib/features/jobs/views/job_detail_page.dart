@@ -16,6 +16,8 @@ import '../../../shared/utils/adaptive_layout.dart';
 import '../../../shared/utils/byte_format.dart';
 import '../../local/models/engine_capability.dart';
 import '../../local/views/local_text.dart';
+import '../../providers/services/online_privacy.dart';
+import '../../providers/services/settings_repository.dart';
 import '../models/transcription_job.dart';
 import '../services/job_providers.dart';
 import '../services/job_runner.dart';
@@ -561,7 +563,7 @@ class _Actions extends ConsumerWidget {
           // is the same situation. The button would only produce a failure.
           if (canRerun)
             OutlinedButton.icon(
-              onPressed: () => _confirmRunAgain(context, l10n, runner),
+              onPressed: () => _confirmRunAgain(context, l10n, runner, ref),
               icon: const Icon(Icons.replay),
               label: Text(l10n.jobRunAgain),
             ),
@@ -570,7 +572,18 @@ class _Actions extends ConsumerWidget {
       final resuming = job.chunks.isNotEmpty;
       buttons.add(
         FilledButton.icon(
-          onPressed: () => runner.enqueue(job.id),
+          onPressed: () async {
+            if (job.modelId.startsWith('local:')) {
+              runner.enqueue(job.id);
+              return;
+            }
+            final provider = (await ref.read(settingsRepositoryProvider).load())
+                .provider(job.providerId);
+            if (!context.mounted || provider == null) return;
+            if (await OnlinePrivacy.ensure(context, provider)) {
+              runner.enqueue(job.id);
+            }
+          },
           icon: Icon(resuming ? Icons.play_arrow : Icons.play_arrow_outlined),
           label: Text(
             resuming
@@ -609,6 +622,7 @@ class _Actions extends ConsumerWidget {
     BuildContext context,
     AppLocalizations l10n,
     JobRunner runner,
+    WidgetRef ref,
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -627,7 +641,14 @@ class _Actions extends ConsumerWidget {
         ],
       ),
     );
-    if (confirmed == true) runner.enqueue(job.id);
+    if (confirmed != true || !context.mounted) return;
+    if (!job.modelId.startsWith('local:')) {
+      final provider = (await ref.read(settingsRepositoryProvider).load())
+          .provider(job.providerId);
+      if (!context.mounted || provider == null) return;
+      if (!await OnlinePrivacy.ensure(context, provider)) return;
+    }
+    runner.enqueue(job.id);
   }
 }
 

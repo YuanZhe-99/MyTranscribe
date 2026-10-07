@@ -9,6 +9,9 @@
 /// `doc/en-us/features/chunking-and-resume.md`.
 library;
 
+import '../../providers/services/online_privacy.dart';
+import '../../settings/views/settings_page.dart';
+
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -226,6 +229,11 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
 
     final model = library.model(_modelId);
     if (file == null || model == null) return;
+    final provider = library.provider(model.providerId);
+    if (provider == null || !await OnlinePrivacy.ensure(context, provider)) {
+      return;
+    }
+    if (!mounted) return;
     final job = await runner.create(
       sourcePath: file.path,
       providerId: model.providerId,
@@ -336,6 +344,21 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
               _recordingCard(l10n),
               const SizedBox(height: 16),
               _sourceAndModel(l10n, library),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  icon: const Icon(Icons.settings_outlined),
+                  label: Text(l10n.libraryTitle),
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const SettingsPage(),
+                      ),
+                    );
+                    if (mounted) ref.refresh(settingsLibraryProvider);
+                  },
+                ),
+              ),
               if (local != null) ..._localNotes(l10n, local, installed),
               if (missingKey)
                 Padding(

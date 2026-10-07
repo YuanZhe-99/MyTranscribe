@@ -29,7 +29,7 @@
   一个。
 - **2026-09-25** —— L4：**预编译桥接层，而不是 Swift 插件。** 计划中原本是带 Pigeon API 的 SwiftPM 插件；在
   D21 之下，应用构建中不得编译任何 Swift，而 FluidAudio 要编译 C、C++ 和 Swift。所以
-  `packages/local_asr_apple/bridge` 用五个 `@_cdecl` 函数把它包装起来，`apple-prebuild.yml` 用 `xcodebuild`
+  `packages/myapps_ai/packages/myapps_ai_asr_apple/bridge` 用五个 `@_cdecl` 函数把它包装起来，`asr-apple-prebuild.yml` 用 `xcodebuild`
   构建一次（多架构的 `swift build` 找不到 FluidAudio 预编译的文本处理库），应用则像其他引擎一样用 ffigen 绑定
   它。Core ML 模型包只有 Parakeet v3 —— FluidAudio 放弃了 Qwen3-ASR —— 并逐个文件固定。第一次发布误把各框架的
   dSYM 打包了进去，已被删除；工作流现在拒绝动态库以外的任何东西。
@@ -52,7 +52,7 @@
   analyze 步骤和 x64 工具链又先后在 `_GNU_SOURCE`、`-fPIC`、ccache 和较新的 clang 上失败。上游 `b5130` 发布的
   资源（v1.9.4 提交）在同一天被列出并解包：Windows x64、Apple xcframework 和 Linux x64 符合条件；Windows
   ARM64 的 zip 不符合（一个 `debug_nonredist` 的 OpenMP DLL，ARMv8.7）；Android 则没有。这两个平台用我们自己的
-  一套，由 `native-prebuild.yml` 构建一次。C 适配层随编译一并去掉 —— 适配层本身也要编译 —— 它曾消除的风险改由
+  一套，由 `asr-native-prebuild.yml` 构建一次。C 适配层随编译一并去掉 —— 适配层本身也要编译 —— 它曾消除的风险改由
   生成的绑定加上默认值回读来防范。早先关于 CPU 变体、适配层和钩子工具链的 L1 条目描述的是被取代的源码构建，作
   为其记录保留。
 - **2026-09-24** —— L1：**CPU 代码在哪里于运行时选择，在哪里不是。** 固定版本的 ggml 会构建每个 CPU 变体，并

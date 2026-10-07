@@ -69,3 +69,5 @@ first engine; see [`local-models.md`](local-models.md).
 Not part of a source record. They live in a separate file that never enters a backup or a ZIP
 export, and reach another device only over a connection that qualifies. See
 [`secure-secrets-sync.md`](secure-secrets-sync.md).
+
+Shared integration: [shared-ai.md](../shared-ai.md). ASR, artifact install, device state, routing and online transport now delegate to MyApps-AI v0.5.2. Keys use MyApps-DATA SecretStore/SecretExchange with the existing provider namespace and file format. Sources and downloads are managed from Settings; jobs still select their own model. WebDAV and online audio require device-local versioned privacy acknowledgement.

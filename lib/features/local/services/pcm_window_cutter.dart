@@ -12,6 +12,7 @@ library;
 
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:myapps_ai_asr/myapps_ai_asr.dart' as shared;
 
 import '../../media/services/media_toolkit.dart';
 
@@ -82,53 +83,19 @@ class PcmWindow {
 /// [MediaException] with [MediaFailureKind.toolError] for anything that is not
 /// exactly the format local engines take.
 Future<PcmWindow> readPcmWindow(File file) async {
-  final bytes = await file.readAsBytes();
-  Never bad(String why) => throw MediaException(
-    MediaFailureKind.toolError,
-    'The audio window is not 16 kHz mono 16-bit PCM: $why.',
-  );
-
-  if (bytes.length < 12) bad('the file is too short');
-  final data = ByteData.sublistView(bytes);
-  String tag(int at) => String.fromCharCodes(bytes, at, at + 4);
-  if (tag(0) != 'RIFF' || tag(8) != 'WAVE') bad('it is not a WAV file');
-
-  int? format, channels, rate, bits, dataOffset, dataBytes;
-  var at = 12;
-  while (at + 8 <= bytes.length) {
-    final id = tag(at);
-    final size = data.getUint32(at + 4, Endian.little);
-    final body = at + 8;
-    if (id == 'fmt ' && body + 16 <= bytes.length) {
-      format = data.getUint16(body, Endian.little);
-      channels = data.getUint16(body + 2, Endian.little);
-      rate = data.getUint32(body + 4, Endian.little);
-      bits = data.getUint16(body + 14, Endian.little);
-    } else if (id == 'data') {
-      dataOffset = body;
-      // A size FFmpeg could not fill in (a stream it never finished) reads as
-      // "to the end of the file".
-      final left = bytes.length - body;
-      dataBytes = size == 0 || size > left ? left : size;
-      break;
-    }
-    at = body + size + (size.isOdd ? 1 : 0);
+  try {
+    final window = await shared.readPcmWindow(file);
+    return PcmWindow(
+      file: window.file,
+      sampleRate: window.sampleRate,
+      channels: window.channels,
+      bitsPerSample: window.bitsPerSample,
+      dataOffset: window.dataOffset,
+      sampleCount: window.sampleCount,
+    );
+  } on shared.PcmFormatException catch (error) {
+    throw MediaException(MediaFailureKind.toolError, error.message);
   }
-
-  if (format != 1) bad('the encoding is $format, not PCM');
-  if (channels != 1) bad('it has $channels channels');
-  if (rate != pcmSampleRate) bad('it runs at $rate Hz');
-  if (bits != 16) bad('it has $bits bits per sample');
-  if (dataOffset == null || dataBytes == null) bad('it has no samples');
-
-  return PcmWindow(
-    file: file,
-    sampleRate: rate!,
-    channels: channels!,
-    bitsPerSample: bits!,
-    dataOffset: dataOffset,
-    sampleCount: dataBytes ~/ 2,
-  );
 }
 
 /// Cuts PCM windows.

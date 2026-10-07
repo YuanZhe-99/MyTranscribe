@@ -15,7 +15,7 @@ not matter.
 **Plain HTTP to somewhere the traffic cannot leave.** Concretely: loopback; the private IPv4 ranges;
 link-local; the carrier-grade NAT range that Tailscale hands out; IPv6 loopback, link-local and
 unique-local, which covers Tailscale's own range; a host ending `.ts.net` (Tailscale) or `.et.net`
-(ZeroTier); a host ending `.local`; and a host with no dot in it at all, which on a home network
+(EasyTier); a host ending `.local`; and a host with no dot in it at all, which on a home network
 means a machine name.
 
 **A host the user vouched for.** A trusted-hosts list, by exact name or as a `*.suffix` pattern.
