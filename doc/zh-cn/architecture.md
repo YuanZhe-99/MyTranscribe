@@ -128,4 +128,4 @@ packages/myapps_data/       共享的同步、备份与 ZIP 引擎（git 子模�
 的默认字体把每个字形都渲染成一个全角方块，这会让拉丁字母标签膨胀到实际宽度的约两倍半，在生产中本来宽松
 的宽度上报告溢出。而 CJK 字形本来就是方的，因此中文环境量到的才是生产布局。
 
-共享接入：[shared-ai.md](shared-ai.md)。ASR、模型包安装、设备状态、路由及在线传输交由 MyApps-AI v0.5.2。密钥使用 MyApps-DATA SecretStore/SecretExchange，保留 provider 命名空间和已有文件格式。来源与下载从设置管理，任务仍独立选择模型。WebDAV 与在线音频需要设备本地、带版本的隐私确认。
+共享接入：[shared-ai.md](shared-ai.md)。ASR、模型包安装、设备状态、路由及在线传输交由 MyApps-AI v0.6.0。密钥使用 MyApps-DATA SecretStore/SecretExchange，保留 provider 命名空间和已有文件格式。来源与下载从设置管理，任务仍独立选择模型。WebDAV 与在线音频需要设备本地、带版本的隐私确认。

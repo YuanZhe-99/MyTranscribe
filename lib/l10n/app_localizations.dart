@@ -2810,6 +2810,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Drag to move. Pinch or scroll to zoom.'**
   String get profileAvatarEditorHint;
+
+  /// No description provided for @aiOnlineAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an online source'**
+  String get aiOnlineAddTitle;
+
+  /// No description provided for @aiOnlineSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get aiOnlineSearch;
+
+  /// No description provided for @aiOnlineEndpointChoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Service endpoint'**
+  String get aiOnlineEndpointChoice;
+
+  /// No description provided for @aiOnlineCustomEndpoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Other address'**
+  String get aiOnlineCustomEndpoint;
+
+  /// No description provided for @aiOnlineDocs.
+  ///
+  /// In en, this message translates to:
+  /// **'Documentation'**
+  String get aiOnlineDocs;
+
+  /// No description provided for @aiOnlineModels.
+  ///
+  /// In en, this message translates to:
+  /// **'Models'**
+  String get aiOnlineModels;
+
+  /// No description provided for @aiOnlineNoModels.
+  ///
+  /// In en, this message translates to:
+  /// **'No models yet. Fetch the source\'s models or add a model ID.'**
+  String get aiOnlineNoModels;
+
+  /// No description provided for @aiOnlineFetchModels.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch models'**
+  String get aiOnlineFetchModels;
+
+  /// No description provided for @aiOnlineFetchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not list the source\'s models ({detail})'**
+  String aiOnlineFetchFailed(String detail);
+
+  /// No description provided for @aiOnlineFromCatalog.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing models from the built-in catalog instead. The source may not offer all of them.'**
+  String get aiOnlineFromCatalog;
+
+  /// No description provided for @aiOnlineAddModelId.
+  ///
+  /// In en, this message translates to:
+  /// **'Add model ID'**
+  String get aiOnlineAddModelId;
+
+  /// No description provided for @aiOnlineModelIdHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For example gpt-4o-mini'**
+  String get aiOnlineModelIdHint;
+
+  /// No description provided for @aiOnlineAlias.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get aiOnlineAlias;
+
+  /// No description provided for @aiOnlineAliasHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave empty to use the generated name'**
+  String get aiOnlineAliasHint;
+
+  /// No description provided for @aiOnlineOriginalId.
+  ///
+  /// In en, this message translates to:
+  /// **'Model ID: {id}'**
+  String aiOnlineOriginalId(String id);
+
+  /// No description provided for @aiOnlineShowAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Also show non-chat models'**
+  String get aiOnlineShowAll;
+
+  /// No description provided for @aiOnlineContext.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} context'**
+  String aiOnlineContext(String size);
+
+  /// No description provided for @aiOnlineSelectModels.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose models'**
+  String get aiOnlineSelectModels;
+
+  /// No description provided for @aiOnlineDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get aiOnlineDone;
+
+  /// No description provided for @aiOnlineRemoveModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove model'**
+  String get aiOnlineRemoveModel;
+
+  /// No description provided for @aiOnlineLocalServer.
+  ///
+  /// In en, this message translates to:
+  /// **'On your own machine'**
+  String get aiOnlineLocalServer;
 }
 
 class _AppLocalizationsDelegate

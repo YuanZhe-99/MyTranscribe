@@ -1,5 +1,18 @@
 # Version history
 
+## 0.6.0 — Online library with several models per source
+
+Adopt the shared online library UI: provider icons, models under each source, a
+searchable template grid, a model picker, aliases and a two-pane layout on wide
+windows. A source can hold several speech-recognition models; models can be
+fetched from the endpoint (OpenRouter asks for transcription models only) and
+only transcription ids are shown by default. Saving creates records for new
+models, renames existing ones and deletes removed ones only when they are not a
+default and no job uses them. Capabilities, overridden fields, record ids and
+the sync format are unchanged; jobs still choose their own model. Pin MyApps-AI
+v0.6.0 (this app does not use the LLM source router, custom models or the GPU
+switch).
+
 ## 0.5.8 — Shared ASR and unified AI settings
 
 Adopt MyApps-AI v0.5.2, MyApps-UI v0.1.8 and MyApps-DATA v1.1.0.

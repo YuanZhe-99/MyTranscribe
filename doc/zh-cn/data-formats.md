@@ -243,4 +243,4 @@ payload。无法识别的 `kind` 读作 `unknown`，会被原样带过而不是�
 杀毒软件、搜索索引器、正在读它的列表 —— 重命名就会直接失败。这种冲突只持续几毫秒，却可能让一小时的任务或
 一整页修正付诸东流，所以 `retryingFileOperation` 会在约十分之一秒内重试六次才放弃。
 
-共享接入：[shared-ai.md](shared-ai.md)。ASR、模型包安装、设备状态、路由及在线传输交由 MyApps-AI v0.5.2。密钥使用 MyApps-DATA SecretStore/SecretExchange，保留 provider 命名空间和已有文件格式。来源与下载从设置管理，任务仍独立选择模型。WebDAV 与在线音频需要设备本地、带版本的隐私确认。
+共享接入：[shared-ai.md](shared-ai.md)。ASR、模型包安装、设备状态、路由及在线传输交由 MyApps-AI v0.6.0。密钥使用 MyApps-DATA SecretStore/SecretExchange，保留 provider 命名空间和已有文件格式。来源与下载从设置管理，任务仍独立选择模型。WebDAV 与在线音频需要设备本地、带版本的隐私确认。

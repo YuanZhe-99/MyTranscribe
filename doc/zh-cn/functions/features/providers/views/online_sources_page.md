@@ -11,4 +11,5 @@
 | `ConsumerState<OnlineSourcesPage> createState() => _OnlineSourcesPageState();` | Create state. Inputs: None. Returns: State. |
 | `void didChangeDependencies() {` | Initialize localized controller. Inputs: None. Returns: None. |
 | `void dispose() {` | Release controller. Inputs: None. Returns: None. |
-| `Widget build(BuildContext context) {` | Render shared source UI. Inputs: context. Returns: Page. |
+| `Widget build(BuildContext context) {` | Render the shared online library (provider icons, models under each source, searchable template grid, model picker, aliases, two panes on wide windows). Inputs: context. Returns: Page. |
+| `MyAppsOnlineLabels transcribeOnlineLabels(AppLocalizations l) =>` | Build all shared online-library labels (sources, templates, search, models, fetch, aliases, picker); also used by the privacy dialog. Inputs: localizations. Returns: Labels. |

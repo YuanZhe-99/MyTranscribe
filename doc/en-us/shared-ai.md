@@ -1,6 +1,6 @@
 # Shared AI integration
 
-MyApps-AI v0.5.2 owns ASR runtimes, routing, model artifact infrastructure and
+MyApps-AI v0.6.0 owns ASR runtimes, routing, model artifact infrastructure and
 online transcription transport. The application retains record identities,
 job recovery, FFmpeg windowing, storage paths and fallback preferences.
 

@@ -9,3 +9,5 @@
 | `static WebDavPrivacyAcknowledgementStore _store(ProviderConfig provider) {` | Locate host consent. Inputs: provider. Returns: Store. |
 | `static Future<bool> allowed(ProviderConfig provider) async =>` | Gate audio requests. Inputs: provider. Returns: Consent. |
 | `static Future<bool> ensure(` | Ask before online audio upload. Inputs: context, provider. |
+
+隐私对话框的标签现取自 `online_sources_page.dart` 中的 `transcribeOnlineLabels`。

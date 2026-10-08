@@ -6,6 +6,7 @@ import 'package:myapps_ai_online_ui/myapps_ai_online_ui.dart';
 import '../../../app/data_modules.dart';
 import '../../../l10n/app_localizations.dart';
 import '../models/provider_config.dart';
+import '../views/online_sources_page.dart';
 
 /// Versioned per-device permission to send audio to each provider host.
 class OnlinePrivacy {
@@ -60,29 +61,7 @@ class OnlinePrivacy {
           ),
         ],
       ),
-      labels: MyAppsOnlineLabels(
-        empty: l.libraryEmptyBody,
-        add: l.libraryAddSource,
-        templateName: (template) => template.name,
-        status: (provider, _) => provider.name,
-        remove: l.delete,
-        removeTitle: (_) => l.delete,
-        removeBody: l.onlineSourceRemoveNotice,
-        removeConfirm: l.delete,
-        cancel: l.cancel,
-        name: l.libraryName,
-        model: l.libraryTitle,
-        save: l.save,
-        saveFailed: l.settingsWebDAVConnectionFailed,
-        invalidEndpoint: l.settingsWebDAVConnectionFailed,
-        testResult: (_) => l.settingsWebDAVConnectionFailed,
-        privacyTitle: l.onlinePrivacyTitle,
-        privacyIntro: (host, _) => host,
-        dataItem: (item) => item.description ?? '',
-        keySync: (_) => l.webdavPrivacySecrets,
-        onlyWhenSelected: l.onlinePrivacySelectedOnly,
-        privacyConfirm: l.webdavPrivacyConfirm,
-      ),
+      labels: transcribeOnlineLabels(l),
     );
     if (accepted) await acknowledgement.acknowledge(version);
     return accepted;

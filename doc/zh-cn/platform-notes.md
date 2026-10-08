@@ -228,4 +228,4 @@ Swift 包，它的五个 `@_cdecl` 函数（`lasr_apple.h`）在关闭 FluidAudi
 这些文件只标给 iOS 和 macOS，引擎也只在那里注册，因此其他平台不会提供这个模型包。Core ML 不报告每个运算
 在哪里执行，所以这条路线记录为 `mixed`（配置为 CPU 加神经网络引擎）。
 
-共享接入：[shared-ai.md](shared-ai.md)。ASR、模型包安装、设备状态、路由及在线传输交由 MyApps-AI v0.5.2。密钥使用 MyApps-DATA SecretStore/SecretExchange，保留 provider 命名空间和已有文件格式。来源与下载从设置管理，任务仍独立选择模型。WebDAV 与在线音频需要设备本地、带版本的隐私确认。
+共享接入：[shared-ai.md](shared-ai.md)。ASR、模型包安装、设备状态、路由及在线传输交由 MyApps-AI v0.6.0。密钥使用 MyApps-DATA SecretStore/SecretExchange，保留 provider 命名空间和已有文件格式。来源与下载从设置管理，任务仍独立选择模型。WebDAV 与在线音频需要设备本地、带版本的隐私确认。

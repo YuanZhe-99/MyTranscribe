@@ -202,4 +202,4 @@ ASR 引擎已经处理完这个窗口。标注失败时，该窗口没有说话�
 把损失限制在一个窗口之内。诊断页面会复制一份诊断报告，包含设备、路线、它的检查和速度 —— 不含文件名，也不
 含文本 —— 用户可以手动发送；应用不会把它发送到任何地方。
 
-共享接入：[shared-ai.md](../shared-ai.md)。ASR、模型包安装、设备状态、路由及在线传输交由 MyApps-AI v0.5.2。密钥使用 MyApps-DATA SecretStore/SecretExchange，保留 provider 命名空间和已有文件格式。来源与下载从设置管理，任务仍独立选择模型。WebDAV 与在线音频需要设备本地、带版本的隐私确认。
+共享接入：[shared-ai.md](../shared-ai.md)。ASR、模型包安装、设备状态、路由及在线传输交由 MyApps-AI v0.6.0。密钥使用 MyApps-DATA SecretStore/SecretExchange，保留 provider 命名空间和已有文件格式。来源与下载从设置管理，任务仍独立选择模型。WebDAV 与在线音频需要设备本地、带版本的隐私确认。

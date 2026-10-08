@@ -63,32 +63,7 @@ class _OnlineSourcesPageState extends ConsumerState<OnlineSourcesPage> {
           title: l.libraryTitle,
           editorTitle: l.libraryName,
           controller: _controller!,
-          labels: MyAppsOnlineLabels(
-            empty: l.libraryEmptyBody,
-            add: l.libraryAddSource,
-            templateName: (template) => template.name,
-            status: (provider, gaps) =>
-                gaps.isEmpty ? l.localStateReady : l.libraryApiKeyNote,
-            remove: l.delete,
-            removeTitle: (_) => l.delete,
-            removeBody: l.onlineSourceRemoveNotice,
-            removeConfirm: l.delete,
-            cancel: l.cancel,
-            name: l.libraryName,
-            model: l.libraryTitle,
-            save: l.save,
-            saveFailed: l.settingsWebDAVConnectionFailed,
-            invalidEndpoint: l.settingsWebDAVConnectionFailed,
-            testResult: (report) => report.status.name == 'available'
-                ? l.localStateReady
-                : l.settingsWebDAVConnectionFailed,
-            privacyTitle: l.onlinePrivacyTitle,
-            privacyIntro: (host, _) => host,
-            dataItem: (item) => item.description ?? '',
-            keySync: (_) => l.webdavPrivacySecrets,
-            onlyWhenSelected: l.onlinePrivacySelectedOnly,
-            privacyConfirm: l.webdavPrivacyConfirm,
-          ),
+          labels: transcribeOnlineLabels(l),
           fields: MyAppsOnlineFieldBuilders(
             endpoint: (context, controller, error) => MyAppsEndpointField(
               controller: controller,
@@ -133,3 +108,59 @@ class _OnlineSourcesPageState extends ConsumerState<OnlineSourcesPage> {
     );
   }
 }
+
+/// Purpose: Build shared online-source labels. Inputs: localizations.
+/// Returns: Labels. Side effects: None. Notes: Also used by the privacy dialog.
+MyAppsOnlineLabels transcribeOnlineLabels(
+  AppLocalizations l,
+) => MyAppsOnlineLabels(
+  empty: l.libraryEmptyBody,
+  add: l.libraryAddSource,
+  templateName: (template) => template.name,
+  status: (provider, gaps) =>
+      gaps.isEmpty ? l.localStateReady : l.libraryApiKeyNote,
+  remove: l.delete,
+  removeTitle: (_) => l.delete,
+  removeBody: l.onlineSourceRemoveNotice,
+  removeConfirm: l.delete,
+  cancel: l.cancel,
+  name: l.libraryName,
+  model: l.libraryTitle,
+  save: l.save,
+  saveFailed: l.settingsWebDAVConnectionFailed,
+  invalidEndpoint: l.settingsWebDAVConnectionFailed,
+  testResult: (report) => report.status.name == 'available'
+      ? l.localStateReady
+      : l.settingsWebDAVConnectionFailed,
+  privacyTitle: l.onlinePrivacyTitle,
+  privacyIntro: (host, _) => host,
+  dataItem: (item) => item.description ?? '',
+  keySync: (_) => l.webdavPrivacySecrets,
+  onlyWhenSelected: l.onlinePrivacySelectedOnly,
+  privacyConfirm: l.webdavPrivacyConfirm,
+  addSourceTitle: l.aiOnlineAddTitle,
+  searchHint: l.aiOnlineSearch,
+  endpointLabel: l.aiOnlineEndpointChoice,
+  customEndpoint: l.aiOnlineCustomEndpoint,
+  docs: l.aiOnlineDocs,
+  models: l.aiOnlineModels,
+  noModels: l.aiOnlineNoModels,
+  fetchModels: l.aiOnlineFetchModels,
+  fetchFailed: l.aiOnlineFetchFailed,
+  fromCatalog: l.aiOnlineFromCatalog,
+  addModelId: l.aiOnlineAddModelId,
+  modelIdHint: l.aiOnlineModelIdHint,
+  alias: l.aiOnlineAlias,
+  aliasHint: l.aiOnlineAliasHint,
+  originalId: l.aiOnlineOriginalId,
+  showAllModels: l.aiOnlineShowAll,
+  contextTokens: (tokens) => l.aiOnlineContext(
+    tokens >= 1000000
+        ? '${(tokens / 1000000).toStringAsFixed(tokens % 1000000 == 0 ? 0 : 1)}M'
+        : '${(tokens / 1000).round()}K',
+  ),
+  selectModels: l.aiOnlineSelectModels,
+  done: l.aiOnlineDone,
+  removeModel: l.aiOnlineRemoveModel,
+  localServer: l.aiOnlineLocalServer,
+);

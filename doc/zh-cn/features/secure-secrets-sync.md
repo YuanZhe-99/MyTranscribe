@@ -75,4 +75,4 @@
 的设备上，经由符合条件的连接同步一次。这是有意的选择：备份包是人们会到处复制的普通文件，其中的密钥，在它的
 每一份副本里都是密钥。
 
-共享接入：[shared-ai.md](../shared-ai.md)。ASR、模型包安装、设备状态、路由及在线传输交由 MyApps-AI v0.5.2。密钥使用 MyApps-DATA SecretStore/SecretExchange，保留 provider 命名空间和已有文件格式。来源与下载从设置管理，任务仍独立选择模型。WebDAV 与在线音频需要设备本地、带版本的隐私确认。
+共享接入：[shared-ai.md](../shared-ai.md)。ASR、模型包安装、设备状态、路由及在线传输交由 MyApps-AI v0.6.0。密钥使用 MyApps-DATA SecretStore/SecretExchange，保留 provider 命名空间和已有文件格式。来源与下载从设置管理，任务仍独立选择模型。WebDAV 与在线音频需要设备本地、带版本的隐私确认。

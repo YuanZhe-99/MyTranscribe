@@ -6,6 +6,7 @@ import 'package:myapps_ai_core/myapps_ai_core.dart';
 import 'package:myapps_data/myapps_data.dart';
 
 import '../../../app/data_modules.dart';
+import '../../jobs/services/job_store.dart';
 import '../models/provider_config.dart';
 import '../models/model_config.dart';
 import '../../secrets/services/secrets_store.dart';
@@ -21,10 +22,15 @@ class TranscribeOnlineSources extends ChangeNotifier
     this.repository,
     this.sentDescription, {
     this.onSaved,
-  });
+    http.Client Function()? clientFactory,
+    Future<Set<String>> Function()? jobModelIds,
+  }) : _clientFactory = clientFactory ?? http.Client.new,
+       _jobModelIds = jobModelIds ?? _storedJobModelIds;
   final SettingsRepository repository;
   final String sentDescription;
   final VoidCallback? onSaved;
+  final http.Client Function() _clientFactory;
+  final Future<Set<String>> Function() _jobModelIds;
   List<ProviderConfig> _records = [];
   final Map<String, shared.OnlineProvider> _drafts = {};
   SettingsLibrary? _library;
@@ -52,9 +58,18 @@ class TranscribeOnlineSources extends ChangeNotifier
   @override
   List<shared.OnlineProvider> get providers => [
     for (final record in _records)
-      onlineProvider(
-        record,
-      ).copyWith(modelId: _library?.model(record.defaultModelId)?.modelName),
+      onlineProvider(record).copyWith(
+        modelId: _library?.model(record.defaultModelId)?.modelName,
+        models: [
+          for (final m
+              in _library?.modelsOf(record.id) ?? const <ModelConfig>[])
+            shared.OnlineModel(
+              modelName: m.modelName,
+              alias: m.displayName != m.modelName ? m.displayName : null,
+              origin: shared.OnlineModelOrigin.manual,
+            ),
+        ],
+      ),
   ];
 
   /// Purpose: Observe state. Inputs: None. Returns: Listenable.
@@ -102,9 +117,11 @@ class TranscribeOnlineSources extends ChangeNotifier
         );
   }
 
-  /// Purpose: Save provider and key. Inputs: provider, newKey, clearKey.
-  /// Returns: Completion. Side effects: Writes records and secrets.
-  /// Notes: Shared editor obtains privacy acknowledgement first.
+  /// Purpose: Save provider, its model records and key. Inputs: provider,
+  /// newKey, clearKey. Returns: Completion. Side effects: Writes records and
+  /// secrets. Notes: Shared editor obtains privacy acknowledgement first.
+  /// New models get unknown capabilities; existing records only change their
+  /// display name. Removed models are deleted only when nothing refers to them.
   @override
   Future<void> save(
     shared.OnlineProvider provider, {
@@ -112,25 +129,58 @@ class TranscribeOnlineSources extends ChangeNotifier
     bool clearKey = false,
   }) async {
     var record = _record(provider);
-    if (provider.modelId?.isNotEmpty ?? false) {
+    final models = provider.models;
+    final defaultName = (provider.modelId?.isNotEmpty ?? false)
+        ? provider.modelId
+        : models.firstOrNull?.modelName;
+    if (models.isNotEmpty || (defaultName?.isNotEmpty ?? false)) {
       final library = await repository.load();
-      final existing = library
-          .modelsOf(provider.id)
-          .where((model) => model.modelName == provider.modelId)
-          .firstOrNull;
-      final id = existing?.id ?? repository.newModelId();
-      if (existing == null) {
-        await repository.saveProvider(record);
-        await repository.saveModel(
-          ModelConfig(
-            id: id,
+      final existingRecords = library.modelsOf(provider.id);
+      final wanted = [
+        ...models,
+        if (defaultName != null &&
+            !models.any((m) => m.modelName == defaultName))
+          shared.OnlineModel(modelName: defaultName),
+      ];
+      String? defaultId;
+      var providerSaved = false;
+      for (final model in wanted) {
+        final display = model.alias?.trim().isNotEmpty ?? false
+            ? model.alias!.trim()
+            : model.modelName;
+        final existing = existingRecords
+            .where((item) => item.modelName == model.modelName)
+            .firstOrNull;
+        if (existing == null) {
+          if (!providerSaved) {
+            await repository.saveProvider(record);
+            providerSaved = true;
+          }
+          final created = ModelConfig(
+            id: repository.newModelId(),
             providerId: provider.id,
-            modelName: provider.modelId!,
-            displayName: provider.modelId!,
-          ),
-        );
+            modelName: model.modelName,
+            displayName: display,
+          );
+          await repository.saveModel(created);
+          if (model.modelName == defaultName) defaultId = created.id;
+        } else {
+          if (existing.displayName != display) {
+            await repository.saveModel(existing.copyWith(displayName: display));
+          }
+          if (model.modelName == defaultName) defaultId = existing.id;
+        }
       }
-      record = record.copyWith(defaultModelId: id);
+      if (defaultId != null) {
+        record = record.copyWith(defaultModelId: defaultId);
+      }
+      await _removeDropped(
+        library,
+        existingRecords,
+        {for (final m in wanted) m.modelName},
+        defaultId ?? record.defaultModelId,
+        provider.id,
+      );
     }
     await repository.saveProvider(record);
     if (clearKey || newKey != null) {
@@ -139,6 +189,86 @@ class TranscribeOnlineSources extends ChangeNotifier
     await reload();
     onSaved?.call();
   }
+
+  /// Purpose: Delete records of models removed in the editor. Inputs: library,
+  /// the provider's earlier records, kept names, default id, provider id.
+  /// Returns: Completion. Side effects: Deletes model records.
+  /// Notes: Keeps the default, the app default selection, and any model a job
+  /// still refers to; if jobs cannot be read nothing is deleted.
+  Future<void> _removeDropped(
+    SettingsLibrary library,
+    List<ModelConfig> previous,
+    Set<String> keptNames,
+    String? defaultId,
+    String providerId,
+  ) async {
+    final dropped = [
+      for (final m in previous)
+        if (!keptNames.contains(m.modelName) &&
+            m.id != defaultId &&
+            m.id != library.defaults.modelId)
+          m,
+    ];
+    if (dropped.isEmpty) return;
+    final Set<String> used;
+    try {
+      used = await _jobModelIds();
+    } catch (_) {
+      return;
+    }
+    for (final m in dropped) {
+      if (!used.contains(m.id)) await repository.deleteModel(m.id);
+    }
+  }
+
+  static Future<Set<String>> _storedJobModelIds() async => {
+    for (final job in await JobStore.loadAll()) job.modelId,
+  };
+
+  /// Purpose: List a draft's models. Inputs: draft, draftKey. Returns: Entries.
+  /// Side effects: One GET models. Notes: Only transcription models are
+  /// marked chat so the picker shows them by default.
+  @override
+  Future<List<shared.OnlineModelEntry>> fetchModels(
+    shared.OnlineProvider draft,
+    String? draftKey,
+  ) async {
+    final client = _clientFactory();
+    try {
+      final entries = await shared.fetchOnlineModels(
+        client,
+        draft,
+        apiKey: draftKey ?? await SecretsStore.keyFor(draft.id),
+        path: draft.dialect == shared.OnlineDialect.openrouter
+            ? 'models?output_modalities=transcription'
+            : 'models',
+      );
+      return [
+        for (final e in entries)
+          shared.OnlineModelEntry(
+            e.id,
+            displayName: e.displayName,
+            vendor: e.vendor,
+            contextTokens: e.contextTokens,
+            inputModalities: e.inputModalities,
+            chat: _asrId.hasMatch(e.id),
+          ),
+      ];
+    } finally {
+      client.close();
+    }
+  }
+
+  static final _asrId = RegExp(
+    'whisper|transcribe|asr|stt|speech-to-text|parakeet|sensevoice|paraformer',
+    caseSensitive: false,
+  );
+
+  /// Purpose: Built-in catalog models. Inputs: provider. Returns: Empty.
+  /// Side effects: None. Notes: This app ships no chat model catalog.
+  @override
+  List<shared.OnlineModelEntry> catalogModels(shared.OnlineProvider provider) =>
+      const [];
 
   /// Purpose: Delete source and key. Inputs: providerId. Returns: Completion.
   /// Side effects: Writes tombstone and settings. Notes: Job history is retained.

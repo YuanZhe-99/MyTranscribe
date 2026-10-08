@@ -49,9 +49,29 @@ This is the escape hatch for everything the app cannot know. A provider raises a
 gains speaker support, a self-hosted server behaves differently — the user changes the field and
 carries on, without waiting for a release.
 
+## Several models per source
+
+A source holds any number of speech-recognition models. The online library lists them under each
+source, with the provider's icon; a new source starts from a searchable grid of templates. Jobs
+still choose their own model; the source default is only the preselection.
+
+Saving a source creates records for added models (capabilities `unknown`, display name = the alias
+or the model name), changes only the display name of models that already have a record, and
+deletes the records of removed models only when they are not the source default, not the app
+default and not used by any job. Capability fields, overridden marks, record ids and the sync
+format are unchanged.
+
+## Aliases
+
+Each model can carry an alias, shown instead of the model name; it is stored as the display name.
+The original id stays visible in the editor.
+
 ## Importing models
 
-A source can be asked for its own model list. Imported models arrive with capabilities from a
+A source can be asked for its own model list ("Fetch models"; OpenRouter is asked only for
+`output_modalities=transcription`). The picker marks only transcription ids (whisper, transcribe,
+asr, stt and similar) as shown by default; "Show all" reveals the rest. The app ships no model
+catalog. Imported models arrive with capabilities from a
 matching template where one exists and `unknown` where none does — the app does not guess, because a
 wrong guess turns into a failed job with a confusing message.
 
@@ -70,4 +90,4 @@ Not part of a source record. They live in a separate file that never enters a ba
 export, and reach another device only over a connection that qualifies. See
 [`secure-secrets-sync.md`](secure-secrets-sync.md).
 
-Shared integration: [shared-ai.md](../shared-ai.md). ASR, artifact install, device state, routing and online transport now delegate to MyApps-AI v0.5.2. Keys use MyApps-DATA SecretStore/SecretExchange with the existing provider namespace and file format. Sources and downloads are managed from Settings; jobs still select their own model. WebDAV and online audio require device-local versioned privacy acknowledgement.
+Shared integration: [shared-ai.md](../shared-ai.md). ASR, artifact install, device state, routing and online transport now delegate to MyApps-AI v0.6.0. Keys use MyApps-DATA SecretStore/SecretExchange with the existing provider namespace and file format. Sources and downloads are managed from Settings; jobs still select their own model. WebDAV and online audio require device-local versioned privacy acknowledgement.

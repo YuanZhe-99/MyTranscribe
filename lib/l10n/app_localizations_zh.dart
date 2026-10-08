@@ -1483,6 +1483,75 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get profileAvatarEditorHint => '拖动以移动，双指缩放或滚动鼠标滚轮以缩放。';
+
+  @override
+  String get aiOnlineAddTitle => '添加在线来源';
+
+  @override
+  String get aiOnlineSearch => '搜索';
+
+  @override
+  String get aiOnlineEndpointChoice => '服务端点';
+
+  @override
+  String get aiOnlineCustomEndpoint => '其他地址';
+
+  @override
+  String get aiOnlineDocs => '文档';
+
+  @override
+  String get aiOnlineModels => '模型';
+
+  @override
+  String get aiOnlineNoModels => '还没有模型。获取该来源的模型列表，或手动添加模型 ID。';
+
+  @override
+  String get aiOnlineFetchModels => '获取模型';
+
+  @override
+  String aiOnlineFetchFailed(String detail) {
+    return '无法获取该来源的模型列表（$detail）';
+  }
+
+  @override
+  String get aiOnlineFromCatalog => '改为显示内置目录中的模型，该来源不一定全部提供。';
+
+  @override
+  String get aiOnlineAddModelId => '添加模型 ID';
+
+  @override
+  String get aiOnlineModelIdHint => '例如 gpt-4o-mini';
+
+  @override
+  String get aiOnlineAlias => '名称';
+
+  @override
+  String get aiOnlineAliasHint => '留空则使用自动生成的名称';
+
+  @override
+  String aiOnlineOriginalId(String id) {
+    return '模型 ID：$id';
+  }
+
+  @override
+  String get aiOnlineShowAll => '同时显示非对话模型';
+
+  @override
+  String aiOnlineContext(String size) {
+    return '上下文 $size';
+  }
+
+  @override
+  String get aiOnlineSelectModels => '选择模型';
+
+  @override
+  String get aiOnlineDone => '完成';
+
+  @override
+  String get aiOnlineRemoveModel => '移除模型';
+
+  @override
+  String get aiOnlineLocalServer => '运行在你自己的设备上';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -2964,4 +3033,73 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get profileAvatarEditorHint => '拖曳以移動，雙指縮放或捲動滑鼠滾輪以縮放。';
+
+  @override
+  String get aiOnlineAddTitle => '新增線上來源';
+
+  @override
+  String get aiOnlineSearch => '搜尋';
+
+  @override
+  String get aiOnlineEndpointChoice => '服務端點';
+
+  @override
+  String get aiOnlineCustomEndpoint => '其他位址';
+
+  @override
+  String get aiOnlineDocs => '文件';
+
+  @override
+  String get aiOnlineModels => '模型';
+
+  @override
+  String get aiOnlineNoModels => '還沒有模型。取得該來源的模型清單，或手動新增模型 ID。';
+
+  @override
+  String get aiOnlineFetchModels => '取得模型';
+
+  @override
+  String aiOnlineFetchFailed(String detail) {
+    return '無法取得該來源的模型清單（$detail）';
+  }
+
+  @override
+  String get aiOnlineFromCatalog => '改為顯示內建目錄中的模型，該來源不一定全部提供。';
+
+  @override
+  String get aiOnlineAddModelId => '新增模型 ID';
+
+  @override
+  String get aiOnlineModelIdHint => '例如 gpt-4o-mini';
+
+  @override
+  String get aiOnlineAlias => '名稱';
+
+  @override
+  String get aiOnlineAliasHint => '留空則使用自動產生的名稱';
+
+  @override
+  String aiOnlineOriginalId(String id) {
+    return '模型 ID：$id';
+  }
+
+  @override
+  String get aiOnlineShowAll => '同時顯示非對話模型';
+
+  @override
+  String aiOnlineContext(String size) {
+    return '上下文 $size';
+  }
+
+  @override
+  String get aiOnlineSelectModels => '選擇模型';
+
+  @override
+  String get aiOnlineDone => '完成';
+
+  @override
+  String get aiOnlineRemoveModel => '移除模型';
+
+  @override
+  String get aiOnlineLocalServer => '執行在你自己的裝置上';
 }

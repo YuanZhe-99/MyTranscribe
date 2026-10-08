@@ -1541,4 +1541,75 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get profileAvatarEditorHint =>
       'Drag to move. Pinch or scroll to zoom.';
+
+  @override
+  String get aiOnlineAddTitle => 'Add an online source';
+
+  @override
+  String get aiOnlineSearch => 'Search';
+
+  @override
+  String get aiOnlineEndpointChoice => 'Service endpoint';
+
+  @override
+  String get aiOnlineCustomEndpoint => 'Other address';
+
+  @override
+  String get aiOnlineDocs => 'Documentation';
+
+  @override
+  String get aiOnlineModels => 'Models';
+
+  @override
+  String get aiOnlineNoModels =>
+      'No models yet. Fetch the source\'s models or add a model ID.';
+
+  @override
+  String get aiOnlineFetchModels => 'Fetch models';
+
+  @override
+  String aiOnlineFetchFailed(String detail) {
+    return 'Could not list the source\'s models ($detail)';
+  }
+
+  @override
+  String get aiOnlineFromCatalog =>
+      'Showing models from the built-in catalog instead. The source may not offer all of them.';
+
+  @override
+  String get aiOnlineAddModelId => 'Add model ID';
+
+  @override
+  String get aiOnlineModelIdHint => 'For example gpt-4o-mini';
+
+  @override
+  String get aiOnlineAlias => 'Name';
+
+  @override
+  String get aiOnlineAliasHint => 'Leave empty to use the generated name';
+
+  @override
+  String aiOnlineOriginalId(String id) {
+    return 'Model ID: $id';
+  }
+
+  @override
+  String get aiOnlineShowAll => 'Also show non-chat models';
+
+  @override
+  String aiOnlineContext(String size) {
+    return '$size context';
+  }
+
+  @override
+  String get aiOnlineSelectModels => 'Choose models';
+
+  @override
+  String get aiOnlineDone => 'Done';
+
+  @override
+  String get aiOnlineRemoveModel => 'Remove model';
+
+  @override
+  String get aiOnlineLocalServer => 'On your own machine';
 }
