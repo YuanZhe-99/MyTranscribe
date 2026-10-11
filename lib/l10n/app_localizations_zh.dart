@@ -1349,7 +1349,40 @@ class AppLocalizationsZh extends AppLocalizations {
   String get placementUnknown => '未报告';
 
   @override
-  String get settingsLocalModels => '本地模型';
+  String get settingsModelsServices => '模型与服务';
+
+  @override
+  String get settingsOnlineServices => '在线转写服务';
+
+  @override
+  String get settingsOnlineServicesSubtitle => '管理服务地址、密钥和转写模型';
+
+  @override
+  String get settingsLocalModelsSubtitle => '下载并检查在本设备上转写的模型';
+
+  @override
+  String get localStateInstalled => '已下载';
+
+  @override
+  String get localStateVerifyingFiles => '正在校验文件';
+
+  @override
+  String get localInstallFailed => '安装失败';
+
+  @override
+  String get localInstallNetwork => '下载中断，请检查网络后重试。';
+
+  @override
+  String get localInstallDiskFull => '存储空间不足，请释放空间后重试。';
+
+  @override
+  String get localInstallUnpack => '无法解压模型，请重试安装。';
+
+  @override
+  String get localInstallBusy => '模型正在使用，请在完成后重试。';
+
+  @override
+  String get settingsLocalModels => '本地转写模型';
 
   @override
   String get settingsFallbackPolicy => '所选处理器失败时';
@@ -1364,7 +1397,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsFallbackSystem => '使用系统自带的语音识别（在本设备上）';
 
   @override
-  String get settingsSpeakerLabels => '说话人标签';
+  String get settingsSpeakerLabels => '区分说话人（本地）';
 
   @override
   String settingsSpeakerLabelsSubtitle(int megabytes) {
@@ -1520,7 +1553,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiOnlineAddModelId => '添加模型 ID';
 
   @override
-  String get aiOnlineModelIdHint => '例如 gpt-4o-mini';
+  String get aiOnlineModelIdHint => '例如 gpt-4o-mini-transcribe';
 
   @override
   String get aiOnlineAlias => '名称';
@@ -1534,7 +1567,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get aiOnlineShowAll => '同时显示非对话模型';
+  String get aiOnlineShowAll => '显示所有模型（包括非转写模型）';
 
   @override
   String aiOnlineContext(String size) {
@@ -2899,7 +2932,40 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get placementUnknown => '未回報';
 
   @override
-  String get settingsLocalModels => '本機模型';
+  String get settingsModelsServices => '模型與服務';
+
+  @override
+  String get settingsOnlineServices => '線上轉寫服務';
+
+  @override
+  String get settingsOnlineServicesSubtitle => '管理服務位址、金鑰和轉寫模型';
+
+  @override
+  String get settingsLocalModelsSubtitle => '下載並檢查在本裝置上轉寫的模型';
+
+  @override
+  String get localStateInstalled => '已下載';
+
+  @override
+  String get localStateVerifyingFiles => '正在驗證檔案';
+
+  @override
+  String get localInstallFailed => '安裝失敗';
+
+  @override
+  String get localInstallNetwork => '下載中斷，請檢查網路後重試。';
+
+  @override
+  String get localInstallDiskFull => '儲存空間不足，請釋出空間後重試。';
+
+  @override
+  String get localInstallUnpack => '無法解壓縮模型，請重試安裝。';
+
+  @override
+  String get localInstallBusy => '模型正在使用，請在完成後重試。';
+
+  @override
+  String get settingsLocalModels => '本機轉寫模型';
 
   @override
   String get settingsFallbackPolicy => '所選處理器失敗時';
@@ -2914,7 +2980,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get settingsFallbackSystem => '使用系統內建的語音辨識（在本機上）';
 
   @override
-  String get settingsSpeakerLabels => '說話人標籤';
+  String get settingsSpeakerLabels => '區分說話者（本機）';
 
   @override
   String settingsSpeakerLabelsSubtitle(int megabytes) {
@@ -3070,7 +3136,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get aiOnlineAddModelId => '新增模型 ID';
 
   @override
-  String get aiOnlineModelIdHint => '例如 gpt-4o-mini';
+  String get aiOnlineModelIdHint => '例如 gpt-4o-mini-transcribe';
 
   @override
   String get aiOnlineAlias => '名稱';
@@ -3084,7 +3150,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get aiOnlineShowAll => '同時顯示非對話模型';
+  String get aiOnlineShowAll => '顯示所有模型（包括非轉寫模型）';
 
   @override
   String aiOnlineContext(String size) {

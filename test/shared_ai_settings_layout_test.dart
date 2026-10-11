@@ -8,6 +8,7 @@ import 'package:my_transcribe/features/local/services/engine_registry.dart';
 import 'package:my_transcribe/features/local/views/model_downloads_page.dart';
 import 'package:my_transcribe/features/providers/services/settings_repository.dart';
 import 'package:my_transcribe/features/providers/views/online_sources_page.dart';
+import 'package:my_transcribe/features/settings/views/settings_page.dart';
 import 'package:my_transcribe/l10n/app_localizations.dart';
 import 'package:my_transcribe/shared/services/transcribe_storage.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -51,6 +52,7 @@ void main() {
         await root.delete(recursive: true);
       });
       for (final page in [
+        const SettingsPage(),
         const OnlineSourcesPage(),
         const ModelDownloadsPage(),
       ]) {
@@ -81,6 +83,23 @@ void main() {
         });
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
+        if (page is SettingsPage) {
+          final l = await AppLocalizations.delegate.load(const Locale('zh'));
+          await tester.scrollUntilVisible(
+            find.text(l.settingsOnlineServices),
+            200,
+            scrollable: find.byType(Scrollable).first,
+          );
+          expect(find.text(l.libraryTitle, skipOffstage: false), findsNothing);
+          expect(
+            find.text(l.settingsOnlineServices, skipOffstage: false),
+            findsOneWidget,
+          );
+          expect(
+            find.text(l.settingsLocalModels, skipOffstage: false),
+            findsOneWidget,
+          );
+        }
         await tester.pumpWidget(const SizedBox.shrink());
         await tester.pumpAndSettle();
       }

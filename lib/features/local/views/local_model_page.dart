@@ -133,7 +133,20 @@ class LocalModelPage extends ConsumerWidget {
               ].join(' · '),
             ),
           const SizedBox(height: 24),
-          Text(l10n.localModelRoutes, style: theme.textTheme.titleSmall),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(
+              l10n.localModelRoutes,
+              style: theme.textTheme.titleSmall,
+            ),
+            trailing: IconButton(
+              tooltip: l10n.localModelRoutes,
+              icon: const Icon(Icons.refresh),
+              onPressed: activity?.busy ?? false
+                  ? null
+                  : () => ref.refresh(localRoutesProvider),
+            ),
+          ),
           const SizedBox(height: 8),
           if (routes.isEmpty)
             Text(

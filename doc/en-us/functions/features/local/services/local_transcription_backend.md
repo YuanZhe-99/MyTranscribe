@@ -5,6 +5,9 @@ Application contracts and orchestration over shared AI/data services; storage pa
 
 ## Declarations
 
+`_native` shares the device state's exclusive execution queue with self-tests,
+preventing concurrent calls from overwriting each other's crash markers.
+
 | Declaration | Purpose |
 |---|---|
 | `library;` | What the job runner talks to when a job's model runs on the |

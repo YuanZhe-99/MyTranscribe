@@ -5,6 +5,8 @@
 
 ## 声明
 
+`_native` 与自检共用设备状态的独占执行队列，避免并发调用覆盖彼此的崩溃标记。
+
 | Declaration | Purpose |
 |---|---|
 | `library;` | What the job runner talks to when a job's model runs on the |

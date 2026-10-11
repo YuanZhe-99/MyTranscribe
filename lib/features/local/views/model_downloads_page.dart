@@ -11,6 +11,7 @@ import '../../providers/services/settings_repository.dart';
 import '../services/engine_registry.dart';
 import '../services/local_models_controller.dart';
 import 'local_model_page.dart';
+import 'local_text.dart';
 
 /// Shared downloadable artifact list with application record and check navigation.
 class ModelDownloadsPage extends ConsumerStatefulWidget {
@@ -46,14 +47,15 @@ class _ModelDownloadsPageState extends ConsumerState<ModelDownloadsPage> {
     final library = ref.watch(settingsLibraryProvider).value;
     final manager = ref.read(artifactManagerProvider).sharedManager;
     final controller = ref.read(localModelsControllerProvider.notifier);
+    final activities = ref.watch(localModelsControllerProvider);
     final labels = MyAppsLocalModelLabels(
       modelName: (entry) =>
           library?.localModel(entry.modelId)?.displayName ?? entry.modelId,
       state: (state) => switch (state) {
-        shared.ModelInstallState.installed => l.localStateReady,
+        shared.ModelInstallState.installed => l.localStateInstalled,
         shared.ModelInstallState.downloading => l.localStateDownloading('…'),
-        shared.ModelInstallState.verifying => l.localStateChecking,
-        shared.ModelInstallState.failed ||
+        shared.ModelInstallState.verifying => l.localStateVerifyingFiles,
+        shared.ModelInstallState.failed => l.localInstallFailed,
         shared.ModelInstallState.corrupt => l.localModelVerifyBad,
         shared.ModelInstallState.unknown => l.localStateNoEngine,
         shared.ModelInstallState.notInstalled => l.localStateNotDownloaded,
@@ -65,9 +67,17 @@ class _ModelDownloadsPageState extends ConsumerState<ModelDownloadsPage> {
         shared.ModelAction.verify => l.localModelVerify,
         shared.ModelAction.remove => l.localModelRemove,
       },
-      failure: (_) => l.localModelVerifyBad,
+      failure: (failure) => switch (failure) {
+        shared.ArtifactFailure.network ||
+        shared.ArtifactFailure.httpError => l.localInstallNetwork,
+        shared.ArtifactFailure.diskFull => l.localInstallDiskFull,
+        shared.ArtifactFailure.hashMismatch => l.localModelVerifyBad,
+        shared.ArtifactFailure.unpackFailed => l.localInstallUnpack,
+        shared.ArtifactFailure.leased => l.localInstallBusy,
+        _ => l.localInstallFailed,
+      },
       progress: (fraction, _) => fraction == null
-          ? l.localStateChecking
+          ? l.localStateVerifyingFiles
           : '${(fraction * 100).round()}%',
       systemManaged: l.localStateNoEngine,
       removeTitle: l.localModelRemoveBody,
@@ -75,7 +85,7 @@ class _ModelDownloadsPageState extends ConsumerState<ModelDownloadsPage> {
       removeConfirm: l.localModelRemove,
       storage: (used, _) => used ?? '',
       empty: l.libraryEmptyBody,
-      actionFailed: l.localModelVerifyBad,
+      actionFailed: l.localInstallFailed,
       cancel: l.cancel,
     );
     final tiles = <Widget>[];
@@ -98,72 +108,108 @@ class _ModelDownloadsPageState extends ConsumerState<ModelDownloadsPage> {
           MyAppsLocalModelTile(
             entry: entry,
             labels: labels,
+            busy: activities[model.id]?.checking ?? false,
+            error: activities[model.id]?.error,
             formatBytes: formatBytes,
             onAction: (action) async {
               if (action == shared.ModelAction.cancel) {
                 controller.cancel(model);
                 return;
               }
-              if (action == shared.ModelAction.verify) {
-                await controller.verify(model);
-                await manager.refresh(manifest.artifactId);
-                return;
-              }
-              final removing = action == shared.ModelAction.remove;
-              final confirmed =
-                  await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text(
-                        removing
-                            ? l.localModelRemove
-                            : l.localModelDownloadTitle(model.displayName),
-                      ),
-                      content: Text(
-                        removing
-                            ? l.localDownloadRemoveNotice
-                            : l.localModelDownloadBody(
-                                formatBytes(manifest.downloadBytesFor()),
-                                manifest.files
-                                    .map(
-                                      (file) =>
-                                          Uri.tryParse(file.sourceUrl)?.host ??
-                                          '',
-                                    )
-                                    .toSet()
-                                    .join(', '),
-                              ),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: Text(l.cancel),
+              try {
+                if (action == shared.ModelAction.verify) {
+                  await controller.verify(model);
+                  await manager.refresh(manifest.artifactId);
+                  return;
+                }
+                final removing = action == shared.ModelAction.remove;
+                final confirmed =
+                    await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text(
+                          removing
+                              ? l.localModelRemove
+                              : l.localModelDownloadTitle(model.displayName),
                         ),
-                        FilledButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: Text(
-                            removing
-                                ? l.localModelRemove
-                                : l.localModelDownload,
+                        content: Text(
+                          removing
+                              ? l.localDownloadRemoveNotice
+                              : l.localModelDownloadBody(
+                                  formatBytes(manifest.downloadBytesFor()),
+                                  manifest.files
+                                      .map(
+                                        (file) =>
+                                            Uri.tryParse(
+                                              file.sourceUrl,
+                                            )?.host ??
+                                            '',
+                                      )
+                                      .toSet()
+                                      .join(', '),
+                                ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: Text(l.cancel),
                           ),
-                        ),
-                      ],
-                    ),
-                  ) ??
-                  false;
-              if (!confirmed) return;
-              if (removing) {
-                await controller.remove(model);
-              } else {
-                await controller.download(model);
+                          FilledButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: Text(
+                              removing
+                                  ? l.localModelRemove
+                                  : l.localModelDownload,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ) ??
+                    false;
+                if (!confirmed) return;
+                if (removing) {
+                  await controller.remove(model);
+                } else {
+                  await controller.download(model);
+                }
+                await manager.refresh(manifest.artifactId);
+              } catch (error) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l.localStateFailed('$error'))),
+                  );
+                }
               }
-              await manager.refresh(manifest.artifactId);
             },
           ),
         );
+        if (activities[model.id]?.progress case final progress?) {
+          tiles.add(
+            ListTile(
+              title: Text(
+                localModelStateLabel(
+                  l,
+                  model,
+                  installed: false,
+                  canRun: true,
+                  activity: activities[model.id],
+                ),
+              ),
+              trailing: progress.stage == shared.InstallStage.downloading
+                  ? null
+                  : TextButton(
+                      onPressed: () => controller.cancel(model),
+                      child: Text(l.localModelCancel),
+                    ),
+            ),
+          );
+        }
         tiles.add(
           ListTile(
             title: Text(l.localModelRoutes),
+            subtitle: activities[model.id]?.checking == true
+                ? Text(l.localStateChecking)
+                : null,
             trailing: const Icon(Icons.chevron_right),
             onTap: () async {
               await Navigator.of(context).push(

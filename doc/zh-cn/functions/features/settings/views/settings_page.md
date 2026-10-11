@@ -4,6 +4,9 @@
 
 ## 声明
 
+`_buildSettingsList` 渲染一个模型与服务分组：在线服务、本地下载、区分说话人、
+回退和诊断，没有重复来源库或嵌套标题。管理入口跟踪详情窗格选择。
+
 | Declaration | Purpose |
 |---|---|
 | `library;` | The settings tab — appearance, transcription defaults, data, and |

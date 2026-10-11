@@ -483,19 +483,20 @@ class LocalJobSession {
   /// Notes: Internal helper used within this file only. The marker is cleared
   /// on success, failure and cancellation alike; only a process that dies
   /// inside the call leaves it behind, which is the point (D20).
-  Future<T> _native<T>(Future<T> Function() call) async {
-    final state = _backend.registry.state;
-    await state.markInFlight(
-      routeKey: _route.key,
-      smokeKey: _route.smokeKey,
-      jobId: jobId,
-    );
-    try {
-      return await call();
-    } finally {
-      await state.clearInFlight();
-    }
-  }
+  Future<T> _native<T>(Future<T> Function() call) =>
+      _backend.registry.state.sharedStore.runExclusive(() async {
+        final state = _backend.registry.state;
+        await state.markInFlight(
+          routeKey: _route.key,
+          smokeKey: _route.smokeKey,
+          jobId: jobId,
+        );
+        try {
+          return await call();
+        } finally {
+          await state.clearInFlight();
+        }
+      });
 }
 
 /// Purpose: The package a route runs.

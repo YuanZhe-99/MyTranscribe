@@ -4,6 +4,8 @@
 
 ## 声明
 
+`build` 将已安装文件标为已下载。安装不自动刷新原生路线，运行方式区域提供手动刷新按钮。
+
 | Declaration | Purpose |
 |---|---|
 | `library;` | One local model on this device: what it is, whether it is here, |

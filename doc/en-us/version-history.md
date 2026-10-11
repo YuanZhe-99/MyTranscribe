@@ -1,5 +1,18 @@
 # Version history
 
+## 0.6.1 — Clearer settings and responsive model installation
+
+Group settings under Models and services with distinct online transcription and
+local model entries. Download completion installs files without probing native
+engines; runtime checks run explicitly or before first transcription. Distinguish
+downloaded files from runtime readiness and report installation failures by cause.
+MyApps-AI v0.6.1 moves extraction and hashing off the UI isolate, retains archives
+for retries, serializes native execution and settles requests when a worker exits.
+
+Validated with application analysis, 657 passing tests (20 skipped), shared package
+analysis/tests and an Android ARM64 release build. The reported Android crash still
+requires reproduction on the affected device; native hangs are not forcibly stopped.
+
 ## 0.6.0 — Online library with several models per source
 
 Adopt the shared online library UI: provider icons, models under each source, a

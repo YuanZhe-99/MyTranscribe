@@ -37,7 +37,6 @@ import '../../local/views/engine_diagnostics_page.dart';
 import '../../profile/views/profile_header.dart';
 import '../../local/views/speaker_labels_tile.dart';
 import '../../media/widgets/media_tools_tile.dart';
-import '../../providers/views/source_management_page.dart';
 import '../../providers/views/online_sources_page.dart';
 import '../../local/views/model_downloads_page.dart';
 import 'backup_page.dart';
@@ -52,7 +51,6 @@ enum _SettingsDetail {
   mediaTools,
   speakerNames,
   diagnostics,
-  sources,
   onlineSources,
   localModels,
   privacy,
@@ -147,7 +145,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     _SettingsDetail.mediaTools => const MediaToolsPage(),
     _SettingsDetail.speakerNames => const SpeakerNamesPage(),
     _SettingsDetail.diagnostics => const EngineDiagnosticsPage(),
-    _SettingsDetail.sources => const SourceManagementPage(),
     _SettingsDetail.onlineSources => const OnlineSourcesPage(),
     _SettingsDetail.localModels => const ModelDownloadsPage(),
     _SettingsDetail.privacy => const PrivacyPolicyPage(),
@@ -489,36 +486,28 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             onChanged: notifier.setAutoSaveTranscriptFiles,
           ),
         ]),
-        _section(l10n.settingsLocalModels, [
+        _section(l10n.settingsModelsServices, [
           MyAppsAiSettingsSkeleton(
             enabled: true,
-            headings: {
-              MyAppsAiSettingsSection.source: l10n.libraryTitle,
-              MyAppsAiSettingsSection.models: l10n.settingsLocalModels,
-              MyAppsAiSettingsSection.diagnostics: l10n.settingsDiagnostics,
-            },
             master: const SizedBox.shrink(),
             source: [
               ListTile(
-                leading: const Icon(Icons.tune_outlined),
-                title: Text(l10n.libraryTitle),
-                subtitle: Text(l10n.libraryAddSource),
+                leading: const Icon(Icons.cloud_outlined),
+                title: Text(l10n.settingsOnlineServices),
+                subtitle: Text(l10n.settingsOnlineServicesSubtitle),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () => _open(_SettingsDetail.sources),
+                selected: _twoPane && _detail == _SettingsDetail.onlineSources,
+                onTap: () => _open(_SettingsDetail.onlineSources),
+              ),
+              ListTile(
+                leading: const Icon(Icons.download_outlined),
+                title: Text(l10n.settingsLocalModels),
+                subtitle: Text(l10n.settingsLocalModelsSubtitle),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _open(_SettingsDetail.localModels),
+                selected: _twoPane && _detail == _SettingsDetail.localModels,
               ),
             ],
-            localModels: ListTile(
-              leading: const Icon(Icons.download_outlined),
-              title: Text(l10n.settingsLocalModels),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => _open(_SettingsDetail.localModels),
-            ),
-            onlineSources: ListTile(
-              leading: const Icon(Icons.cloud_outlined),
-              title: Text(l10n.libraryTitle),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => _open(_SettingsDetail.onlineSources),
-            ),
             device: [
               ListTile(
                 leading: const Icon(Icons.swap_horiz_outlined),

@@ -4,6 +4,11 @@ Application contracts and orchestration over shared AI/data services; storage pa
 
 ## Declarations
 
+`build` observes install status and controller activity without probing engines.
+Installed means downloaded, not runtime-ready. Network, storage, corruption and
+unpack failures have separate labels. Install phases expose cancellation and action
+exceptions are displayed. Route checking remains an explicit detail-page action.
+
 | Declaration | Purpose |
 |---|---|
 | `const ModelDownloadsPage({super.key});` | Create downloads page. Inputs: None. Returns: Page. |

@@ -4,6 +4,9 @@ Application contracts and orchestration over shared AI/data services; storage pa
 
 ## Declarations
 
+`build` labels installed files as downloaded. Installation does not refresh native
+routes automatically; the route section offers an explicit refresh control.
+
 | Declaration | Purpose |
 |---|---|
 | `library;` | One local model on this device: what it is, whether it is here, |

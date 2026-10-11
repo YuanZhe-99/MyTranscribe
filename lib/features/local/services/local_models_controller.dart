@@ -4,10 +4,8 @@
 /// Returns: Riverpod providers — the installed packages, the routes, the
 /// engine state — and a controller holding each download's progress.
 /// Side effects: Downloads, removes and checks packages when asked.
-/// Notes: A download is followed by the route check ("checking this device")
-/// on every route the new package has, so a model is ready — or says why it is
-/// not — before the user starts a job with it (decision D20 of the
-/// local-models plan). See `doc/en-us/features/local-models.md`.
+/// Notes: Download completion does not probe or load native engines. Runtime
+/// checks run explicitly or before the selected route's first transcription.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,7 +31,6 @@ final installedArtifactsProvider =
 
 /// Every route this device has, with its check results.
 final localRoutesProvider = FutureProvider<List<EngineRoute>>((ref) async {
-  ref.watch(installedArtifactsProvider);
   ref.watch(localEngineStateProvider);
   return ref.watch(engineRegistryProvider).routes();
 });
@@ -100,10 +97,10 @@ class LocalModelsController
     ];
   }
 
-  /// Purpose: Download a model's packages, then check its routes.
+  /// Purpose: Download and install a model's packages without loading engines.
   /// Inputs: [model].
   /// Returns: None.
-  /// Side effects: Downloads and installs; runs the route checks; updates the
+  /// Side effects: Downloads and installs; updates the
   /// state as it goes.
   /// Notes: A failure is kept in the state for the page to show, not thrown.
   Future<void> download(LocalModelConfig model) async {
@@ -125,7 +122,7 @@ class LocalModelsController
         );
       }
       _refreshInstalled();
-      await checkAll(model);
+      _set(model.id, const LocalModelActivity());
     } on ArtifactException catch (error) {
       _set(
         model.id,
@@ -168,20 +165,25 @@ class LocalModelsController
 
   /// Purpose: Check a model's installed files against their hashes.
   /// Inputs: [model].
-  /// Returns: Whether every installed package is intact.
+  /// Returns: Whether at least one package is installed and all installed packages are intact.
   /// Side effects: Reads every file.
   /// Notes: None.
   Future<bool> verify(LocalModelConfig model) async {
     final artifacts = ref.read(artifactManagerProvider);
-    final installed = ref.read(installedArtifactsProvider).value ?? const {};
+    final installed = {
+      for (final manifest in await artifacts.installedAll())
+        manifest.artifactId,
+    };
+    var found = false;
     for (final id in model.artifactIds) {
-      if (!installed.containsKey(id)) continue;
+      if (!installed.contains(id)) continue;
+      found = true;
       if (!await artifacts.verify(id)) return false;
     }
-    return true;
+    return found;
   }
 
-  /// Purpose: Check every route of a model on this device.
+  /// Purpose: Check unchecked CPU routes of a model on this device.
   /// Inputs: [model].
   /// Returns: None.
   /// Side effects: Runs the route checks; records their results.
@@ -189,7 +191,12 @@ class LocalModelsController
   Future<void> checkAll(LocalModelConfig model) async {
     final routes = await ref.read(engineRegistryProvider).routes();
     for (final route in routes) {
-      if (route.modelId != model.id || !route.available) continue;
+      if (route.modelId != model.id ||
+          !route.available ||
+          route.device != ComputeDevice.cpu ||
+          route.smokeTest.outcome != SmokeTestOutcome.notRun) {
+        continue;
+      }
       await check(model, route);
     }
   }
@@ -201,27 +208,44 @@ class LocalModelsController
   /// result.
   /// Notes: None.
   Future<void> check(LocalModelConfig model, EngineRoute route) async {
-    final registry = ref.read(engineRegistryProvider);
-    final engine = registry.engine(route.adapterId);
-    final manifest = await manifestOf(registry.artifacts, route);
-    final clip = await loadSmokeClip();
-    if (engine == null || manifest == null || clip == null) return;
+    if (state.values.any((activity) => activity.checking) ||
+        (state[model.id]?.busy ?? false)) {
+      return;
+    }
     _set(model.id, const LocalModelActivity(checking: true));
-    final lease = ref.read(artifactManagerProvider).lease(route.artifactId);
     try {
-      await RouteSmokeTester(
-        state: ref.read(localEngineStateStoreProvider),
-      ).run(
-        engine: engine,
-        route: route,
-        manifest: manifest,
-        artifactDir: await registry.artifacts.artifactDir(route.artifactId),
-        clip: clip,
-      );
+      final registry = ref.read(engineRegistryProvider);
+      final engine = registry.engine(route.adapterId);
+      final manifest = await manifestOf(registry.artifacts, route);
+      final clip = await loadSmokeClip();
+      if (engine == null || manifest == null || clip == null) return;
+      final lease = ref.read(artifactManagerProvider).lease(route.artifactId);
+      try {
+        final result =
+            await RouteSmokeTester(
+              state: ref.read(localEngineStateStoreProvider),
+            ).run(
+              engine: engine,
+              route: route,
+              manifest: manifest,
+              artifactDir: await registry.artifacts.artifactDir(
+                route.artifactId,
+              ),
+              clip: clip,
+            );
+        if (result.outcome != SmokeTestOutcome.passed) {
+          _set(model.id, LocalModelActivity(error: result.reason));
+        }
+      } finally {
+        lease.release();
+        ref.refresh(localEngineStateProvider);
+      }
+    } catch (error) {
+      _set(model.id, LocalModelActivity(error: '$error'));
     } finally {
-      lease.release();
-      _set(model.id, const LocalModelActivity());
-      ref.refresh(localEngineStateProvider);
+      if (state[model.id]?.checking ?? false) {
+        _set(model.id, const LocalModelActivity());
+      }
     }
   }
 

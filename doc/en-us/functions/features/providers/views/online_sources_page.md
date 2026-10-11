@@ -5,6 +5,9 @@ Application contracts and orchestration over shared AI/data services; storage pa
 
 ## Declarations
 
+The title is Online transcription services; model labels and examples refer to
+transcription. Capability/template editing remains reachable here.
+
 | Declaration | Purpose |
 |---|---|
 | `const OnlineSourcesPage({super.key});` | Create source page. Inputs: None. Returns: Page. |

@@ -1401,7 +1401,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get placementUnknown => 'Not reported';
 
   @override
-  String get settingsLocalModels => 'Local models';
+  String get settingsModelsServices => 'Models and services';
+
+  @override
+  String get settingsOnlineServices => 'Online transcription services';
+
+  @override
+  String get settingsOnlineServicesSubtitle =>
+      'Manage services, API keys and transcription models';
+
+  @override
+  String get settingsLocalModelsSubtitle =>
+      'Download and check models that transcribe on this device';
+
+  @override
+  String get localStateInstalled => 'Downloaded';
+
+  @override
+  String get localStateVerifyingFiles => 'Verifying files';
+
+  @override
+  String get localInstallFailed => 'Installation failed';
+
+  @override
+  String get localInstallNetwork =>
+      'Download interrupted. Check your connection and retry.';
+
+  @override
+  String get localInstallDiskFull =>
+      'Not enough storage. Free space and retry.';
+
+  @override
+  String get localInstallUnpack =>
+      'Could not unpack the model. Retry installation.';
+
+  @override
+  String get localInstallBusy =>
+      'The model is in use. Try again when it finishes.';
+
+  @override
+  String get settingsLocalModels => 'Local transcription models';
 
   @override
   String get settingsFallbackPolicy => 'If the chosen processor fails';
@@ -1417,7 +1456,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Use the system\'s speech recognition, on this device';
 
   @override
-  String get settingsSpeakerLabels => 'Speaker labels';
+  String get settingsSpeakerLabels => 'Separate speakers (on device)';
 
   @override
   String settingsSpeakerLabelsSubtitle(int megabytes) {
@@ -1580,7 +1619,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiOnlineAddModelId => 'Add model ID';
 
   @override
-  String get aiOnlineModelIdHint => 'For example gpt-4o-mini';
+  String get aiOnlineModelIdHint => 'For example gpt-4o-mini-transcribe';
 
   @override
   String get aiOnlineAlias => 'Name';
@@ -1594,7 +1633,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get aiOnlineShowAll => 'Also show non-chat models';
+  String get aiOnlineShowAll =>
+      'Show all models, including non-transcription models';
 
   @override
   String aiOnlineContext(String size) {

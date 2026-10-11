@@ -1,6 +1,6 @@
 # Shared AI integration
 
-MyApps-AI v0.6.0 owns ASR runtimes, routing, model artifact infrastructure and
+MyApps-AI v0.6.1 owns ASR runtimes, routing, model artifact infrastructure and
 online transcription transport. The application retains record identities,
 job recovery, FFmpeg windowing, storage paths and fallback preferences.
 
@@ -12,6 +12,15 @@ model files and self-test records must remain usable without another download.
 Native runtime versions and hashes are pinned by the shared release.
 
 ## Settings
+
+Settings groups management under “Models and services”, with one online service
+entry and one local model entry. Capabilities and templates remain inside the
+online page. Speaker separation downloads are distinct from saved speaker names.
+Downloads finish at installation without probing or testing native engines. The
+user checks a route explicitly in model details, or the first transcription checks
+its selected route. Download completion never automatically tests experimental
+GPU routes. Installed files do not mean a passed runtime check; network or storage
+errors do not mean corrupt files.
 
 Source records remain synced configuration. Downloads, engine health and privacy acknowledgements remain device-local.
 API keys use the separate secure WebDAV exchange and never enter backups or ZIP exports. Task selection remains per

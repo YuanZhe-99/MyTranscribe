@@ -98,7 +98,7 @@ String placementLabel(AppLocalizations l10n, PlacementKind placement) =>
 /// [activity], and whether this build [canRun] it.
 /// Returns: One short phrase for a list row.
 /// Side effects: None.
-/// Notes: None.
+/// Notes: Installed files do not imply a passed runtime check; unpacking and verification have distinct labels.
 String localModelStateLabel(
   AppLocalizations l10n,
   LocalModelConfig model, {
@@ -109,9 +109,10 @@ String localModelStateLabel(
   final progress = activity?.progress;
   if (progress != null) {
     return switch (progress.stage) {
-      InstallStage.unpacking ||
+      InstallStage.unpacking => l10n.localStateUnpacking,
       InstallStage.verifying ||
-      InstallStage.installing => l10n.localStateUnpacking,
+      InstallStage.installing => l10n.localStateVerifyingFiles,
+      InstallStage.done => l10n.localStateInstalled,
       _ => l10n.localStateDownloading(
         ((progress.fraction ?? 0) * 100).floor().toString(),
       ),
@@ -120,5 +121,5 @@ String localModelStateLabel(
   if (activity?.checking ?? false) return l10n.localStateChecking;
   if (activity?.error case final error?) return l10n.localStateFailed(error);
   if (!canRun) return l10n.localStateNoEngine;
-  return installed ? l10n.localStateReady : l10n.localStateNotDownloaded;
+  return installed ? l10n.localStateInstalled : l10n.localStateNotDownloaded;
 }

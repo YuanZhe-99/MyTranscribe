@@ -135,11 +135,18 @@ check failed is not used here, and the reason is kept for the diagnostics page.
 
 The check clip is bundled with the app: the opening of President Kennedy's 1961 inaugural address,
 eleven seconds of public-domain speech, as whisper.cpp ships it for the same purpose. A route is
-checked right after its package is installed ("checking this device"), again whenever its key
-changes, and whenever the user asks from the model's page or the diagnostics page. The speed the
+checked before its first transcription under the current key, or when the user
+asks from the model's page or diagnostics. Download completion does not probe or
+load native runtimes. The speed the
 check measures is what Auto compares an untested accelerator against the CPU with.
 
 ## When the app stops inside a route
+
+Download rows distinguish unpacking, file verification and installed files.
+`localModelStateLabel` calls a completed installation “Downloaded”; runtime
+readiness is reported separately by the route check. Cancellation during unpacking
+or hashing takes effect at the next stage boundary, and verified archives remain
+available for retry until installation succeeds.
 
 Before every native call — loading a model, running a window, a check — the app writes an
 **in-flight marker** naming the route, and clears it when the call returns, whether it succeeded,

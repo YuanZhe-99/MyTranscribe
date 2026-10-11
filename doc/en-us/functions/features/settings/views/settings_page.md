@@ -4,6 +4,10 @@ Application contracts and orchestration over shared AI/data services; storage pa
 
 ## Declarations
 
+`_buildSettingsList` renders one Models and services group: online services,
+local downloads, speaker separation, fallback and diagnostics, without duplicate
+source libraries or nested headings. Management entries track pane selection.
+
 | Declaration | Purpose |
 |---|---|
 | `library;` | The settings tab — appearance, transcription defaults, data, and |

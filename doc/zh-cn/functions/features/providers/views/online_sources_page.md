@@ -5,6 +5,8 @@
 
 ## 声明
 
+标题为在线转写服务；模型标签和示例用于转写。能力与模板编辑仍可从此进入。
+
 | Declaration | Purpose |
 |---|---|
 | `const OnlineSourcesPage({super.key});` | Create source page. Inputs: None. Returns: Page. |

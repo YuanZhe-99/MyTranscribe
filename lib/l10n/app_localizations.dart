@@ -2547,10 +2547,76 @@ abstract class AppLocalizations {
   /// **'Not reported'**
   String get placementUnknown;
 
+  /// No description provided for @settingsModelsServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Models and services'**
+  String get settingsModelsServices;
+
+  /// No description provided for @settingsOnlineServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Online transcription services'**
+  String get settingsOnlineServices;
+
+  /// No description provided for @settingsOnlineServicesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage services, API keys and transcription models'**
+  String get settingsOnlineServicesSubtitle;
+
+  /// No description provided for @settingsLocalModelsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Download and check models that transcribe on this device'**
+  String get settingsLocalModelsSubtitle;
+
+  /// No description provided for @localStateInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloaded'**
+  String get localStateInstalled;
+
+  /// No description provided for @localStateVerifyingFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying files'**
+  String get localStateVerifyingFiles;
+
+  /// No description provided for @localInstallFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Installation failed'**
+  String get localInstallFailed;
+
+  /// No description provided for @localInstallNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Download interrupted. Check your connection and retry.'**
+  String get localInstallNetwork;
+
+  /// No description provided for @localInstallDiskFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough storage. Free space and retry.'**
+  String get localInstallDiskFull;
+
+  /// No description provided for @localInstallUnpack.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not unpack the model. Retry installation.'**
+  String get localInstallUnpack;
+
+  /// No description provided for @localInstallBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'The model is in use. Try again when it finishes.'**
+  String get localInstallBusy;
+
   /// No description provided for @settingsLocalModels.
   ///
   /// In en, this message translates to:
-  /// **'Local models'**
+  /// **'Local transcription models'**
   String get settingsLocalModels;
 
   /// No description provided for @settingsFallbackPolicy.
@@ -2580,7 +2646,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsSpeakerLabels.
   ///
   /// In en, this message translates to:
-  /// **'Speaker labels'**
+  /// **'Separate speakers (on device)'**
   String get settingsSpeakerLabels;
 
   /// No description provided for @settingsSpeakerLabelsSubtitle.
@@ -2880,7 +2946,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiOnlineModelIdHint.
   ///
   /// In en, this message translates to:
-  /// **'For example gpt-4o-mini'**
+  /// **'For example gpt-4o-mini-transcribe'**
   String get aiOnlineModelIdHint;
 
   /// No description provided for @aiOnlineAlias.
@@ -2904,7 +2970,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiOnlineShowAll.
   ///
   /// In en, this message translates to:
-  /// **'Also show non-chat models'**
+  /// **'Show all models, including non-transcription models'**
   String get aiOnlineShowAll;
 
   /// No description provided for @aiOnlineContext.

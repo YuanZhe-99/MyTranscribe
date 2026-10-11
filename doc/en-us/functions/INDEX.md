@@ -26,6 +26,10 @@ These are historical extraction counts; the tables below cover the current sourc
 
 ## Status
 
+Settings, local downloads/details, online services and the local controller now
+document distinct install states and deferred runtime checks. The local backend
+documents serialized native work; see their rows below.
+
 The per-file pages are written as each area is implemented; the table below lists the files that
 exist today and the concept page that currently describes each one. A file gains its own page when
 its behaviour stops being fully described by the concept documentation. Shared AI migration

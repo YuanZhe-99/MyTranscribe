@@ -60,7 +60,7 @@ class _OnlineSourcesPageState extends ConsumerState<OnlineSourcesPage> {
           return const Center(child: CircularProgressIndicator());
         }
         return MyAppsOnlineSourcesPage(
-          title: l.libraryTitle,
+          title: l.settingsOnlineServices,
           editorTitle: l.libraryName,
           controller: _controller!,
           labels: transcribeOnlineLabels(l),
@@ -125,7 +125,7 @@ MyAppsOnlineLabels transcribeOnlineLabels(
   removeConfirm: l.delete,
   cancel: l.cancel,
   name: l.libraryName,
-  model: l.libraryTitle,
+  model: l.aiOnlineModels,
   save: l.save,
   saveFailed: l.settingsWebDAVConnectionFailed,
   invalidEndpoint: l.settingsWebDAVConnectionFailed,

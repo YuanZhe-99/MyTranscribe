@@ -134,7 +134,7 @@ void main() {
       final l10n = await AppLocalizations.delegate.load(const Locale('zh'));
       await pumpPage(tester, entry.value, installed: true);
 
-      expect(find.text(l10n.localStateReady), findsOneWidget);
+      expect(find.text(l10n.localStateInstalled), findsOneWidget);
       // The routes may be below the fold of a short window.
       await tester.scrollUntilVisible(
         find.text(l10n.localRouteUntested),
