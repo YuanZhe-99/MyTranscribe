@@ -7,11 +7,13 @@ the models it offers. The user's word for it is 来源; in code it is a provider
 
 ## Built-in templates
 
-Three, seeded on first launch:
+Four, with the first three seeded on first launch:
 
 - **OpenAI** — the official API.
 - **OpenRouter** — a gateway to many models, with its own request shape for provider-specific
   options.
+- **Google AI Studio** — Gemini API (`gemini-3.5-transcribe` over `/v1beta/interactions` and
+  multimodal Gemini models over `:generateContent`).
 - **OpenAI-compatible** — a blank endpoint for anything that speaks the same protocol: a local
   `whisper.cpp` or `faster-whisper` server, or another gateway. Authentication can be switched off
   entirely, which is what a server on your own machine usually wants.

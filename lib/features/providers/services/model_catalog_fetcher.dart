@@ -175,7 +175,11 @@ ModelConfig modelFromCatalog(
   String id,
 ) {
   for (final template in buildProviderTemplates()) {
-    if (template.provider.id != provider.id) continue;
+    if (template.provider.id != provider.id &&
+        (provider.templateId == null ||
+            template.provider.templateId != provider.templateId)) {
+      continue;
+    }
     for (final model in template.models) {
       if (model.modelName != entry.modelName) continue;
       return ModelConfig(

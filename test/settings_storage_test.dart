@@ -78,7 +78,7 @@ void main() {
   test('a first launch seeds the library and writes it', () async {
     final library = await repository.load();
 
-    expect(library.providers, hasLength(2));
+    expect(library.providers, hasLength(3));
     expect(library.models, isNotEmpty);
     expect(await rawSettings(), isNotEmpty);
   });
@@ -137,7 +137,7 @@ void main() {
     // single modifiedAt. If it did, every launch would look like a change to
     // sync and re-upload the whole file.
     expect(afterSecond, afterFirst);
-    expect(library.providers, hasLength(2));
+    expect(library.providers, hasLength(3));
   });
 
   test('an edit survives a reload and is marked as the user\'s', () async {
@@ -192,9 +192,10 @@ void main() {
       await repository.load();
       await repository.deleteProvider(openaiProviderId);
       await repository.deleteProvider(openrouterProviderId);
+      await repository.deleteProvider(geminiProviderId);
 
       final after = await repository.load();
-      expect(after.providers, hasLength(2));
+      expect(after.providers, hasLength(3));
     },
   );
 

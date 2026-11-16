@@ -7,10 +7,12 @@
 
 ## 内置模板
 
-三个，首次启动时生成：
+四个，其中前三个在首次启动时生成：
 
 - **OpenAI** —— 官方 API。
 - **OpenRouter** —— 通往众多模型的网关，有自己的请求形态用于服务方特有的选项。
+- **Google AI Studio** —— Gemini API（经 `/v1beta/interactions` 调用 `gemini-3.5-transcribe`，以及经
+  `:generateContent` 调用多模态 Gemini 模型）。
 - **OpenAI 兼容** —— 一个空白端点，适用于任何讲同一套协议的服务：本地的 `whisper.cpp` 或
   `faster-whisper` 服务器，或者另一个网关。认证可以完全关闭，这通常正是自己机器上的服务器所需要的。
 

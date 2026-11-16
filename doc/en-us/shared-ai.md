@@ -1,7 +1,8 @@
 # Shared AI integration
 
-MyApps-AI v0.6.1 owns ASR runtimes, routing, model artifact infrastructure and
-online transcription transport. The application retains record identities,
+MyApps-AI v0.6.5 owns ASR runtimes, routing, model artifact infrastructure and
+online transcription transport (OpenAI, OpenRouter, Google AI Studio Gemini and
+compatible endpoints). The application retains record identities,
 job recovery, FFmpeg windowing, storage paths and fallback preferences.
 
 ## Compatibility

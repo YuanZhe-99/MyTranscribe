@@ -1,5 +1,16 @@
 # Version history
 
+## 0.6.2 — Google AI Studio (Gemini) transcription support
+
+Add Google AI Studio (`provider:gemini`, `ProviderDialect.gemini`) as a built-in
+online source template and adopt MyApps-AI v0.6.5. Seed `gemini-3.5-transcribe`
+(dedicated STT via `/v1beta/interactions` with `x-goog-api-key`, BCP-47
+`language_codes`, `custom_vocabulary` or verbatim speaker diarization and word
+timestamps aggregated into timed segments) alongside general multimodal Gemini
+models (`gemini-4-hydrogen`, `gemini-3.8-flash` and `gemini-3.5-flash-lite` via
+`:generateContent` with `audioTimestamp` and structured JSON segments). Align
+the new-job plan preview's JSON base64 byte budget with the selected dialect.
+
 ## 0.6.1 — Clearer settings and responsive model installation
 
 Group settings under Models and services with distinct online transcription and

@@ -15,3 +15,4 @@
 | `const OpenAiDialect() : super(shared.OnlineDialect.openai);` | Bind OpenAI. Inputs: None. Returns: Handler. |
 | `const OpenRouterDialect() : super(shared.OnlineDialect.openrouter);` | Bind OpenRouter. Inputs: None. Returns: Handler. |
 | `const OpenAiCompatibleDialect()` | Bind compatible endpoint. Inputs: None. Returns: Handler. |
+| `const GeminiDialect() : super(shared.OnlineDialect.gemini);` | Bind Google AI Studio (Gemini). Inputs: None. Returns: Handler. |

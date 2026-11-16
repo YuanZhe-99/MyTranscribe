@@ -1,5 +1,15 @@
 # 版本历史
 
+## 0.6.2 — Google AI Studio（Gemini）转写支持
+
+新增 Google AI Studio（`provider:gemini`，`ProviderDialect.gemini`）内置在线来源模板，
+并接入 MyApps-AI v0.6.5。内置专用语音转写模型 `gemini-3.5-transcribe`（经
+`/v1beta/interactions` 发送 `x-goog-api-key`、BCP-47 `language_codes`、
+`custom_vocabulary` 或 verbatim 说话人分离与词级时间戳，并聚合为带时间段落）以及通用
+多模态 Gemini 模型（`gemini-4-hydrogen`、`gemini-3.8-flash`、`gemini-3.5-flash-lite`，
+经 `:generateContent` 启用 `audioTimestamp` 与结构化 JSON 段落）。新建任务页的切窗预览
+按所选方言同步计算 JSON Base64 字节预算。
+
 ## 0.6.1 — 清晰设置与流畅模型安装
 
 设置统一归入“模型与服务”，区分在线转写与本地模型入口。下载完成只安装文件，

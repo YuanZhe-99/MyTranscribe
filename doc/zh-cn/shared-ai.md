@@ -1,6 +1,7 @@
 # 共享 AI 接入
 
-MyApps-AI v0.6.1 负责 ASR 运行时、路由、模型包基础设施及在线转写传输。
+MyApps-AI v0.6.5 负责 ASR 运行时、路由、模型包基础设施及在线转写传输（OpenAI、OpenRouter、
+Google AI Studio Gemini 与兼容端点）。
 应用保留记录 ID、任务恢复、FFmpeg 切窗、存储路径与回退偏好。
 
 ## 兼容性

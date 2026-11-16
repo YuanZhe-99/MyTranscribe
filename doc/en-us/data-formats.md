@@ -58,7 +58,7 @@ travels anyway: it is a projection of the job folders, described below.
 
 | Kind | Payload |
 |---|---|
-| `provider` | `name`, `dialect` (`openai`, `openrouter`, `openaiCompatible`), `baseUrl`, `authScheme` (`bearer`, `none`, `header`) and `authHeaderName`, `extraHeaders`, `maxFileBytes`, `maxRequestSeconds`, `requestTimeoutSeconds`, `defaultModelId`, `templateId`, `overriddenFields`, `templateVersion` |
+| `provider` | `name`, `dialect` (`openai`, `openrouter`, `openaiCompatible`, `gemini`), `baseUrl`, `authScheme` (`bearer`, `none`, `header`) and `authHeaderName`, `extraHeaders`, `maxFileBytes`, `maxRequestSeconds`, `requestTimeoutSeconds`, `defaultModelId`, `templateId`, `overriddenFields`, `templateVersion` |
 | `model` | `providerId`, `modelName` (what goes on the wire), `displayName`, `maxFileBytes`, `maxDurationSeconds`, `diarization` / `wordTimestamps` / `segmentTimestamps` (each `supported`, `unsupported` or `unknown`), `supportsPrompt`, `supportsKeywords`, `languageParamStyle` (`languages`, `language`, `none`), `responseFormats`, `inputFormats`, `maxKnownSpeakers`, `requiresChunkingStrategy`, `templateId`, `overriddenFields`, `templateVersion` |
 | `defaults` | `providerId`, `modelId`, `languages`, `prompt`, `keywords`, `diarize` (true, false, or absent for "whatever the model does best"), `plainOverlapSeconds`, `diarizedOverlapSeconds`, `enrollmentEnabled`, `knownSpeakerNames` |
 | `localModel` | `displayName`, `family` (`whisper`, `parakeet`, `qwen`, `custom`), `languages` (empty: no restriction), `maxDurationSeconds`, `diarization` / `wordTimestamps` / `segmentTimestamps`, `supportsPrompt`, `supportsKeywords`, `artifacts` (package ids by adapter id), `templateId`, `overriddenFields`, `templateVersion` — nothing about any one device |

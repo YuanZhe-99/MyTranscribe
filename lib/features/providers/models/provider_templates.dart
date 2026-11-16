@@ -32,6 +32,9 @@ const openaiProviderId = 'provider:openai';
 /// The id of the built-in OpenRouter source.
 const openrouterProviderId = 'provider:openrouter';
 
+/// The id of the built-in Google AI Studio source.
+const geminiProviderId = 'provider:gemini';
+
 /// Purpose: Derive a model's record id from its source and wire name.
 /// Inputs: [providerId], [modelName].
 /// Returns: The id.
@@ -66,12 +69,13 @@ class ProviderTemplate {
 /// Inputs: None.
 /// Returns: The templates, in the order the library lists them.
 /// Side effects: None.
-/// Notes: Only OpenAI and OpenRouter are seeded. The compatible dialect is not
-/// seeded as a source because there is no address to seed it with — it is
-/// offered instead as a starter preset when the user adds one.
+/// Notes: OpenAI, OpenRouter and Google AI Studio are seeded. The compatible
+/// dialect is not seeded as a source because there is no address to seed it
+/// with — it is offered instead as a starter preset when the user adds one.
 List<ProviderTemplate> buildProviderTemplates() => [
   _openaiTemplate(),
   _openrouterTemplate(),
+  _geminiTemplate(),
 ];
 
 /// Purpose: The official OpenAI audio API and its transcription models.
@@ -276,6 +280,86 @@ ProviderTemplate _openrouterTemplate() {
   );
 }
 
+/// Purpose: Google AI Studio (Gemini) and its dedicated and multimodal audio
+/// transcription models.
+/// Inputs: None.
+/// Returns: The template.
+/// Side effects: None.
+/// Notes: Internal helper used within this file only. `gemini-3.5-transcribe`
+/// uses the Interactions API (`transcription_config`) with speaker labels,
+/// word timestamps and custom vocabulary; general Gemini 4 and 3.x models use
+/// `:generateContent` with `audioTimestamp` and structured JSON segments.
+ProviderTemplate _geminiTemplate() {
+  const providerId = geminiProviderId;
+  const inputFormats = [
+    'wav',
+    'mp3',
+    'aiff',
+    'aac',
+    'ogg',
+    'flac',
+    'mpeg',
+    'm4a',
+    'opus',
+    'webm',
+  ];
+  ModelConfig model(
+    String wireName, {
+    required String display,
+    int maxFileBytes = _twentyMegabytes,
+    int maxDurationSeconds = 1800,
+    Capability diarization = Capability.supported,
+    Capability wordTimestamps = Capability.unsupported,
+    Capability segmentTimestamps = Capability.supported,
+    bool prompt = true,
+    bool keywords = true,
+  }) => ModelConfig(
+    id: templateModelId(providerId, wireName),
+    providerId: providerId,
+    templateId: wireName,
+    modelName: wireName,
+    displayName: display,
+    maxFileBytes: maxFileBytes,
+    maxDurationSeconds: maxDurationSeconds,
+    diarization: diarization,
+    wordTimestamps: wordTimestamps,
+    segmentTimestamps: segmentTimestamps,
+    supportsPrompt: prompt,
+    supportsKeywords: keywords,
+    languageParamStyle: LanguageParamStyle.languages,
+    inputFormats: inputFormats,
+    templateVersion: templateVersion,
+  );
+
+  return ProviderTemplate(
+    provider: const ProviderConfig(
+      id: providerId,
+      name: 'Google AI Studio',
+      templateId: 'gemini',
+      dialect: ProviderDialect.gemini,
+      baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+      maxFileBytes: _twentyFiveMegabytes,
+      // Gemini 3.5 Transcribe caps diarized and timestamped requests at 30
+      // minutes and truncates audio past that limit without an error.
+      maxRequestSeconds: 1800,
+      defaultModelId: 'model:gemini:gemini-3.5-transcribe',
+      templateVersion: templateVersion,
+    ),
+    models: [
+      model(
+        'gemini-3.5-transcribe',
+        display: 'Gemini 3.5 Transcribe',
+        maxFileBytes: _twentyFiveMegabytes,
+        wordTimestamps: Capability.supported,
+        prompt: false,
+      ),
+      model('gemini-4-hydrogen', display: 'Gemini 4 Hydrogen'),
+      model('gemini-3.8-flash', display: 'Gemini 3.8 Flash'),
+      model('gemini-3.5-flash-lite', display: 'Gemini 3.5 Flash-Lite'),
+    ],
+  );
+}
+
 /// A prefilled source the "add a source" sheet offers.
 ///
 /// Not seeded, because the user may want none of them, and an unwanted source
@@ -390,3 +474,6 @@ List<ProviderPreset> buildProviderPresets() => [
 
 /// The upload limit every one of these services states.
 const _twentyFiveMegabytes = 25 * 1024 * 1024;
+
+/// The inline audio payload limit for general Gemini multimodal models.
+const _twentyMegabytes = 20 * 1024 * 1024;

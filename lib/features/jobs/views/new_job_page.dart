@@ -34,6 +34,8 @@ import '../../media/services/media_toolkit.dart';
 import '../../media/services/media_toolkit_provider.dart';
 import '../../providers/models/model_config.dart';
 import '../../providers/models/provider_config.dart';
+import '../../providers/services/dialects.dart';
+import '../../providers/services/provider_dialect.dart';
 import '../../providers/services/settings_repository.dart';
 import '../../secrets/services/secrets_store.dart';
 import '../models/chunk_plan.dart';
@@ -166,6 +168,16 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
     final model = library.model(_modelId);
     if (file == null || provider == null || model == null) return null;
 
+    final handler = dialectHandler(provider.dialect);
+    final probe = TranscriptionRequest(
+      file: file,
+      mimeType: mimeTypeForPath(file.path),
+      languages: _split(_languages.text),
+      prompt: _prompt.text.trim().isEmpty ? null : _prompt.text.trim(),
+      keywords: _split(_keywords.text),
+      diarize: _diarize,
+    );
+
     return ChunkPlanner.plan(
       PlanRequest(
         sourceBytes: file.existsSync() ? file.lengthSync() : 0,
@@ -174,7 +186,7 @@ class _NewJobPageState extends ConsumerState<NewJobPage> {
         model: model,
         provider: provider,
         diarize: _diarize,
-        jsonMode: false,
+        jsonMode: handler.needsJsonBody(probe, model),
         overlapSeconds: _diarize
             ? library.defaults.diarizedOverlapSeconds.toDouble()
             : library.defaults.plainOverlapSeconds.toDouble(),

@@ -289,6 +289,8 @@ String mimeTypeForPath(String path) {
     'flac' => 'audio/flac',
     'ogg' || 'oga' => 'audio/ogg',
     'aac' => 'audio/aac',
+    'opus' => 'audio/opus',
+    'aiff' || 'aif' => 'audio/aiff',
     _ => 'application/octet-stream',
   };
 }
@@ -313,12 +315,21 @@ String audioFormatForPath(String path) {
 /// Returns: The headers, empty when the source needs none.
 /// Side effects: None.
 /// Notes: Shared by every dialect, so a source configured with a custom header
-/// works the same way everywhere.
+/// works the same way everywhere. Gemini uses `x-goog-api-key` by default.
 Map<String, String> authHeaders(ProviderConfig provider, String? apiKey) {
   if (apiKey == null || apiKey.isEmpty) return const {};
   return switch (provider.authScheme) {
     AuthScheme.none => const {},
-    AuthScheme.bearer => {'Authorization': 'Bearer $apiKey'},
-    AuthScheme.header => {(provider.authHeaderName ?? 'Authorization'): apiKey},
+    AuthScheme.bearer =>
+      provider.dialect == ProviderDialect.gemini
+          ? {'x-goog-api-key': apiKey}
+          : {'Authorization': 'Bearer $apiKey'},
+    AuthScheme.header => {
+      (provider.authHeaderName ??
+              (provider.dialect == ProviderDialect.gemini
+                  ? 'x-goog-api-key'
+                  : 'Authorization')):
+          apiKey,
+    },
   };
 }

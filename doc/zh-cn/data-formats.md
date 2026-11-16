@@ -56,7 +56,7 @@ P3 公共资料实现与适配见 [shared-ui.md](shared-ui.md)，格式和模块
 
 | kind | payload |
 |---|---|
-| `provider` | `name`、`dialect`（`openai`、`openrouter`、`openaiCompatible`）、`baseUrl`、`authScheme`（`bearer`、`none`、`header`）与 `authHeaderName`、`extraHeaders`、`maxFileBytes`、`maxRequestSeconds`、`requestTimeoutSeconds`、`defaultModelId`、`templateId`、`overriddenFields`、`templateVersion` |
+| `provider` | `name`、`dialect`（`openai`、`openrouter`、`openaiCompatible`、`gemini`）、`baseUrl`、`authScheme`（`bearer`、`none`、`header`）与 `authHeaderName`、`extraHeaders`、`maxFileBytes`、`maxRequestSeconds`、`requestTimeoutSeconds`、`defaultModelId`、`templateId`、`overriddenFields`、`templateVersion` |
 | `model` | `providerId`、`modelName`（实际发出的名称）、`displayName`、`maxFileBytes`、`maxDurationSeconds`、`diarization` / `wordTimestamps` / `segmentTimestamps`（各为 `supported`、`unsupported` 或 `unknown`）、`supportsPrompt`、`supportsKeywords`、`languageParamStyle`（`languages`、`language`、`none`）、`responseFormats`、`inputFormats`、`maxKnownSpeakers`、`requiresChunkingStrategy`、`templateId`、`overriddenFields`、`templateVersion` |
 | `defaults` | `providerId`、`modelId`、`languages`、`prompt`、`keywords`、`diarize`（true、false，或缺省表示"照该模型最擅长的来"）、`plainOverlapSeconds`、`diarizedOverlapSeconds`、`enrollmentEnabled`、`knownSpeakerNames` |
 | `localModel` | `displayName`、`family`（`whisper`、`parakeet`、`qwen`、`custom`）、`languages`（为空表示不限）、`maxDurationSeconds`、`diarization` / `wordTimestamps` / `segmentTimestamps`、`supportsPrompt`、`supportsKeywords`、`artifacts`（按适配器 id 列出的模型包 id）、`templateId`、`overriddenFields`、`templateVersion` —— 不含任何关于某一台设备的内容 |

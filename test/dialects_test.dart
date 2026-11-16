@@ -15,6 +15,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_transcribe/features/providers/models/model_config.dart';
 import 'package:my_transcribe/features/providers/models/provider_config.dart';
+import 'package:my_transcribe/features/providers/services/dialects.dart';
 import 'package:my_transcribe/features/providers/services/provider_dialect.dart';
 import 'package:my_transcribe/features/providers/services/transcription_client.dart';
 import 'package:path/path.dart' as p;
@@ -376,6 +377,85 @@ void main() {
       );
       expect(request.field('response_format'), 'json');
     });
+  });
+
+  group('the Gemini dialect', () {
+    test(
+      'sends gemini-3.5-transcribe to /interactions with x-goog-api-key',
+      () async {
+        final server = FakeTranscriptionServer([
+          FakeReply(
+            jsonEncode({
+              'id': 'interactions/1',
+              'status': 'completed',
+              'steps': [
+                {
+                  'type': 'model_output',
+                  'content': [
+                    {
+                      'type': 'text',
+                      'text': 'Hello there.',
+                      'annotations': [
+                        {
+                          'type': 'word_info',
+                          'text': 'Hello',
+                          'speaker': 'spk_1',
+                          'start_offset': '0.0s',
+                          'end_offset': '0.4s',
+                        },
+                        {
+                          'type': 'word_info',
+                          'text': 'there.',
+                          'speaker': 'spk_1',
+                          'start_offset': '0.5s',
+                          'end_offset': '0.9s',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            }),
+          ),
+        ]);
+        final chosen = const ModelConfig(
+          id: 'model:gemini:gemini-3.5-transcribe',
+          providerId: 'provider:gemini',
+          modelName: 'gemini-3.5-transcribe',
+          diarization: Capability.supported,
+          segmentTimestamps: Capability.supported,
+          wordTimestamps: Capability.supported,
+          supportsKeywords: true,
+          languageParamStyle: LanguageParamStyle.languages,
+        );
+        final handler = dialectHandler(ProviderDialect.gemini);
+        expect(
+          handler.needsJsonBody(
+            TranscriptionRequest(file: audio, mimeType: 'audio/mpeg'),
+            chosen,
+          ),
+          isTrue,
+        );
+        final request = await send(
+          provider: const ProviderConfig(
+            id: 'provider:gemini',
+            name: 'Google AI Studio',
+            dialect: ProviderDialect.gemini,
+            baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+          ),
+          chosen: chosen,
+          server: server,
+          diarize: true,
+          languages: const ['zh', 'en'],
+        );
+        expect(
+          request.url.toString(),
+          'https://generativelanguage.googleapis.com/v1beta/interactions',
+        );
+        expect(request.headers['x-goog-api-key'], 'sk-test');
+        expect(request.json!['model'], 'gemini-3.5-transcribe');
+      },
+    );
   });
 
   group('reading replies', () {

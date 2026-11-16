@@ -16,6 +16,7 @@ ProviderDialectHandler dialectHandler(ProviderDialect dialect) =>
       ProviderDialect.openai => const OpenAiDialect(),
       ProviderDialect.openrouter => const OpenRouterDialect(),
       ProviderDialect.openaiCompatible => const OpenAiCompatibleDialect(),
+      ProviderDialect.gemini => const GeminiDialect(),
     };
 
 /// Shared dialect facade used by the application planner.
@@ -85,4 +86,10 @@ class OpenAiCompatibleDialect extends _SharedDialect {
   /// Side effects: None. Notes: None.
   const OpenAiCompatibleDialect()
     : super(shared.OnlineDialect.openaiCompatible);
+}
+
+class GeminiDialect extends _SharedDialect {
+  /// Purpose: Bind Google AI Studio (Gemini). Inputs: None. Returns: Handler.
+  /// Side effects: None. Notes: None.
+  const GeminiDialect() : super(shared.OnlineDialect.gemini);
 }

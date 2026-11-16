@@ -520,84 +520,84 @@ packages:
       path: "packages/myapps_ai/packages/myapps_ai"
       relative: true
     source: path
-    version: "0.6.1"
+    version: "0.6.5"
   myapps_ai_asr:
     dependency: "direct main"
     description:
       path: "packages/myapps_ai/packages/myapps_ai_asr"
       relative: true
     source: path
-    version: "0.6.1"
+    version: "0.6.5"
   myapps_ai_asr_apple:
     dependency: "direct main"
     description:
       path: "packages/myapps_ai/packages/myapps_ai_asr_apple"
       relative: true
     source: path
-    version: "0.6.1"
+    version: "0.6.5"
   myapps_ai_asr_sherpa:
     dependency: "direct main"
     description:
       path: "packages/myapps_ai/packages/myapps_ai_asr_sherpa"
       relative: true
     source: path
-    version: "0.6.1"
+    version: "0.6.5"
   myapps_ai_asr_whisper:
     dependency: "direct main"
     description:
       path: "packages/myapps_ai/packages/myapps_ai_asr_whisper"
       relative: true
     source: path
-    version: "0.6.1"
+    version: "0.6.5"
   myapps_ai_core:
     dependency: "direct main"
     description:
       path: "packages/myapps_ai/packages/myapps_ai_core"
       relative: true
     source: path
-    version: "0.6.1"
+    version: "0.6.5"
   myapps_ai_llm:
     dependency: transitive
     description:
       path: "packages/myapps_ai/packages/myapps_ai_llm"
       relative: true
     source: path
-    version: "0.6.1"
+    version: "0.6.5"
   myapps_ai_local_ui:
     dependency: "direct main"
     description:
       path: "packages/myapps_ai/packages/myapps_ai_local_ui"
       relative: true
     source: path
-    version: "0.6.1"
+    version: "0.6.5"
   myapps_ai_models:
     dependency: "direct main"
     description:
       path: "packages/myapps_ai/packages/myapps_ai_models"
       relative: true
     source: path
-    version: "0.6.1"
+    version: "0.6.5"
   myapps_ai_online:
     dependency: "direct main"
     description:
       path: "packages/myapps_ai/packages/myapps_ai_online"
       relative: true
     source: path
-    version: "0.6.1"
+    version: "0.6.5"
   myapps_ai_online_ui:
     dependency: "direct main"
     description:
       path: "packages/myapps_ai/packages/myapps_ai_online_ui"
       relative: true
     source: path
-    version: "0.6.1"
+    version: "0.6.5"
   myapps_ai_ui:
     dependency: "direct main"
     description:
       path: "packages/myapps_ai/packages/myapps_ai_ui"
       relative: true
     source: path
-    version: "0.6.1"
+    version: "0.6.5"
   myapps_data:
     dependency: "direct main"
     description:

@@ -105,14 +105,19 @@ void main() {
       }
     });
 
-    test('seeds both built-in sources, their models and the defaults', () {
+    test('seeds all built-in sources, their models and the defaults', () {
       final library = repository.read(seeded());
       expect(
         library.providers.map((p) => p.id),
-        containsAll(<String>[openaiProviderId, openrouterProviderId]),
+        containsAll(<String>[
+          openaiProviderId,
+          openrouterProviderId,
+          geminiProviderId,
+        ]),
       );
       expect(library.modelsOf(openaiProviderId), isNotEmpty);
       expect(library.modelsOf(openrouterProviderId), isNotEmpty);
+      expect(library.modelsOf(geminiProviderId), isNotEmpty);
       expect(library.defaults.plainOverlapSeconds, 5);
       expect(library.defaults.diarizedOverlapSeconds, 20);
     });
@@ -210,6 +215,29 @@ void main() {
         for (final model in library.modelsOf(openrouterProviderId)) {
           expect(model.supportsPrompt, isFalse, reason: model.id);
         }
+      },
+      'gemini-3.5-transcribe supports speakers, times and keywords': (library) {
+        final provider = library.provider(geminiProviderId)!;
+        expect(provider.dialect, ProviderDialect.gemini);
+        expect(provider.maxRequestSeconds, 1800);
+        final model = library.model(
+          templateModelId(geminiProviderId, 'gemini-3.5-transcribe'),
+        )!;
+        expect(model.diarization, Capability.supported);
+        expect(model.wordTimestamps, Capability.supported);
+        expect(model.segmentTimestamps, Capability.supported);
+        expect(model.supportsKeywords, isTrue);
+        expect(model.supportsPrompt, isFalse);
+        expect(model.languageParamStyle, LanguageParamStyle.languages);
+      },
+      'general Gemini models support prompt, keywords and speakers': (library) {
+        final model = library.model(
+          templateModelId(geminiProviderId, 'gemini-4-hydrogen'),
+        )!;
+        expect(model.diarization, Capability.supported);
+        expect(model.segmentTimestamps, Capability.supported);
+        expect(model.supportsPrompt, isTrue);
+        expect(model.supportsKeywords, isTrue);
       },
     };
 

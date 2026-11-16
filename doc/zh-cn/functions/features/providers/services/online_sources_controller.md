@@ -16,7 +16,7 @@
 | `String newProviderId() => repository.newProviderId();` | Allocate record ID. Inputs: None. Returns: ID. |
 | `Future<bool> hasKey(String providerId) async =>` | Check saved key. Inputs: providerId. Returns: Presence. |
 | `ProviderConfig _record(shared.OnlineProvider draft) {` | Convert draft to app record. Inputs: draft. Returns: Record. |
-| `Future<void> save(` | Save provider, its model records and key. New models get unknown capabilities and display name = alias or model name; existing records only change display name; removed models are deleted via `_removeDropped`. Inputs: provider, newKey, clearKey. |
+| `Future<void> save(` | Save provider, its model records and key. New models get capabilities from a matching built-in template or unknown, and display name = alias or model name; existing records only change display name; removed models are deleted via `_removeDropped`. Inputs: provider, newKey, clearKey. |
 | `Future<void> _removeDropped(` | Delete records of models removed in the editor, except the source default, the app default and any model a job uses; deletes nothing if jobs cannot be read. Inputs: library, previous records, kept names, default id, provider id. |
 | `static Future<Set<String>> _storedJobModelIds() async => {` | Collect model ids used by saved jobs. Returns: Ids. |
 | `Future<List<shared.OnlineModelEntry>> fetchModels(` | List the source's models (OpenRouter with `output_modalities=transcription`); only ids matching `_asrId` (whisper, transcribe, asr, stt, ...) are marked shown by default. Inputs: draft, draftKey. Returns: Entries. |

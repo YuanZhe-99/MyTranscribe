@@ -25,6 +25,11 @@ enum ProviderDialect {
   /// Anything else that speaks the OpenAI protocol: another gateway, or a
   /// server on the user's own machine.
   openaiCompatible,
+
+  /// Google AI Studio (Gemini API): inline base64 JSON to `/interactions` for
+  /// dedicated transcribe models and `:generateContent` for general Gemini
+  /// models.
+  gemini,
 }
 
 /// How a request proves who it is.
